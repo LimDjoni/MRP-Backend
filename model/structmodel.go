@@ -84,11 +84,12 @@ type Transaction struct {
 	BillOfLadingDate time.Time `json:"bill_of_lading_date"`
 	BillOfLadingNumber string `json:"bill_of_lading_number"`
 	RoyaltyRate float64 `json:"royalty_rate"`
-	RoyaltyPrice float64 `json:"royalty_price"`
+	DpRoyaltyPrice float64 `json:"dp_royalty_price"`
 	DpRoyaltyDate time.Time `json:"dp_royalty_date"`
 	DpRoyaltyNtpn string `json:"dp_royalty_ntpn"`
 	DpRoyaltyBillingCode string `json:"dp_royalty_billing_code"`
 	DpRoyaltyTotal float64 `json:"dp_royalty_total"`
+	PaymentDpRoyaltyPrice float64 `json:"payment_dp_royalty_price"`
 	PaymentDpRoyaltyDate time.Time `json:"payment_dp_royalty_date"`
 	PaymentDpRoyaltyNtpn string `json:"payment_dp_royalty_ntpn"`
 	PaymentDpRoyaltyBillingCode string `json:"payment_dp_royalty_billing_code"`
