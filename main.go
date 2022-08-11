@@ -2,11 +2,42 @@ package main
 
 import (
 	"ajebackend/handler"
+	"ajebackend/model/transaction"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	"log"
 )
 
 func main() {
+	dbUrl := ""
+	dbUrlStg := "host=localhost user=postgres password=postgres dbname=deli_aje_development port=5432 sslmode=disable TimeZone=Asia/Shanghai"
+
+	var dsn string
+
+	if len(dbUrl) > 0 {
+		dsn = dbUrl
+	} else {
+		dsn = dbUrlStg
+	}
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+
+	if err != nil {
+		createDB(dsn)
+	}
+
+	if db != nil {
+		// Auto Migrate All Table
+		errMigrate := db.AutoMigrate(
+			&transaction.Test{},
+		)
+
+		fmt.Println(errMigrate)
+	}
+
+
 	transactionHandler := handler.NewTransactionHandler()
 
 	app := fiber.New()
@@ -16,4 +47,31 @@ func main() {
 	apiV1.Get("/list", transactionHandler.HelloWorld)
 
 	log.Fatal(app.Listen(":3000"))
+}
+
+func createDB(dsn string) {
+
+	// Base DSN use for if there is no database (only for creating new database)
+
+	baseDsn := "host=localhost user=postgres password=postgres dbname=postgres port=5432 sslmode=disable TimeZone=Asia/Shanghai"
+	db, err := gorm.Open(postgres.Open(baseDsn), &gorm.Config{})
+
+	if err != nil {
+		fmt.Println("Success connect base db")
+		return
+	} else {
+		db = db.Exec("CREATE DATABASE deli_aje_development;")
+
+		if db.Error != nil {
+			fmt.Println(db.Error)
+			fmt.Println("Unable to create DB deli_aje_development, attempting to connect assuming it exists...")
+		}
+	}
+
+	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+
+	if err != nil {
+		fmt.Println("Cannot connect db")
+		return
+	}
 }
