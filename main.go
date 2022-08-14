@@ -2,12 +2,14 @@ package main
 
 import (
 	"ajebackend/handler"
+	"ajebackend/model/dmo"
 	"ajebackend/model/transaction"
 	"fmt"
+	"log"
+
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
 )
 
 func main() {
@@ -31,12 +33,12 @@ func main() {
 	if db != nil {
 		// Auto Migrate All Table
 		errMigrate := db.AutoMigrate(
-			&transaction.Test{},
+			&transaction.Transaction{},
+			&dmo.Dmo{},
 		)
 
 		fmt.Println(errMigrate)
 	}
-
 
 	transactionHandler := handler.NewTransactionHandler()
 
