@@ -40,13 +40,19 @@ func main() {
 		fmt.Println(errMigrate)
 	}
 
-	transactionHandler := handler.NewTransactionHandler()
+	transactionRepository := transaction.NewRepository(db)
+	transactionService := transaction.NewService(transactionRepository)
+
+	transactionHandler := handler.NewTransactionHandler(transactionService)
 
 	app := fiber.New()
 
 	apiV1 := app.Group("/api/v1") // /api
 
-	apiV1.Get("/list", transactionHandler.HelloWorld)
+	apiV1.Post("/create/dn", transactionHandler.CreateTransactionDN)
+	apiV1.Get("/list/dn", transactionHandler.ListDataDN)
+	apiV1.Get("/detail/dn/:id", transactionHandler.DetailTransactionDN)
+	apiV1.Delete("/delete/dn/:id", transactionHandler.DeleteTransaction)
 
 	log.Fatal(app.Listen(":3000"))
 }
