@@ -1,9 +1,18 @@
 package main
 
 import (
-	"ajebackend/handler"
 	"ajebackend/model/dmo"
+	"ajebackend/model/dmotongkang"
+	"ajebackend/model/dmovessel"
+	"ajebackend/model/history"
+	"ajebackend/model/logs"
+	"ajebackend/model/minerba"
+	"ajebackend/model/minerbatransaction"
+	"ajebackend/model/routing"
+	"ajebackend/model/trader"
+	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
+	"ajebackend/model/user"
 	"fmt"
 	"log"
 
@@ -33,26 +42,27 @@ func main() {
 	if db != nil {
 		// Auto Migrate All Table
 		errMigrate := db.AutoMigrate(
-			&transaction.Transaction{},
 			&dmo.Dmo{},
+			&dmotongkang.DmoTongkang{},
+			&dmovessel.DmoVessel{},
+			&history.History{},
+			&logs.Logs{},
+			&minerba.Minerba{},
+			&minerbatransaction.MinerbaTransaction{},
+			&trader.Trader{},
+			&traderdmo.TraderDmo{},
+			&transaction.Transaction{},
+			&user.User{},
 		)
 
 		fmt.Println(errMigrate)
 	}
 
-	transactionRepository := transaction.NewRepository(db)
-	transactionService := transaction.NewService(transactionRepository)
-
-	transactionHandler := handler.NewTransactionHandler(transactionService)
-
 	app := fiber.New()
-
 	apiV1 := app.Group("/api/v1") // /api
 
-	apiV1.Post("/create/dn", transactionHandler.CreateTransactionDN)
-	apiV1.Get("/list/dn", transactionHandler.ListDataDN)
-	apiV1.Get("/detail/dn/:id", transactionHandler.DetailTransactionDN)
-	apiV1.Delete("/delete/dn/:id", transactionHandler.DeleteTransaction)
+	routing.TransactionRouting(db, apiV1)
+	routing.UserRouting(db, apiV1)
 
 	log.Fatal(app.Listen(":3000"))
 }

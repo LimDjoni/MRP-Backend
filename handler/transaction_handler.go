@@ -2,17 +2,21 @@ package handler
 
 import (
 	"ajebackend/model/transaction"
+	"ajebackend/model/user"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v4"
 	"strconv"
 )
 
 type transactionHandler struct {
 	transactionService transaction.Service
+	userService user.Service
 }
 
-func NewTransactionHandler(transactionService transaction.Service) *transactionHandler {
+func NewTransactionHandler(transactionService transaction.Service, userService user.Service) *transactionHandler {
 	return &transactionHandler{
 		transactionService,
+		userService,
 	}
 }
 
@@ -35,6 +39,18 @@ func (h *transactionHandler) CreateTransactionDN(c *fiber.Ctx) error {
 }
 
 func (h *transactionHandler) ListDataDN(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+
+	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil {
+		response := map[string]interface{}{
+			"error": "unauthorized",
+		}
+		return c.Status(401).JSON(response)
+	}
+
 	page := c.Query("page")
 
 	pageNumber, err := strconv.Atoi(page)
