@@ -2,6 +2,7 @@ package routing
 
 import (
 	"ajebackend/handler"
+	"ajebackend/model/history"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 	"github.com/gofiber/fiber/v2"
@@ -16,7 +17,10 @@ func TransactionRouting(db *gorm.DB, app fiber.Router) {
 	userRepository := user.NewRepository(db)
 	userService := user.NewService(userRepository)
 
-	transactionHandler := handler.NewTransactionHandler(transactionService, userService)
+	historyRepository := history.NewRepository(db)
+	historyService := history.NewService(historyRepository)
+
+	transactionHandler := handler.NewTransactionHandler(transactionService, userService, historyService)
 
 	transactionRouting := app.Group("/transaction") // /api
 

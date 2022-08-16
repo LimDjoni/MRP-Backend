@@ -1,26 +1,47 @@
 package handler
 
 import (
+	"ajebackend/model/history"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
+	"reflect"
 	"strconv"
 )
 
 type transactionHandler struct {
 	transactionService transaction.Service
 	userService user.Service
+	historyService history.Service
 }
 
-func NewTransactionHandler(transactionService transaction.Service, userService user.Service) *transactionHandler {
+func NewTransactionHandler(transactionService transaction.Service, userService user.Service, historyService history.Service) *transactionHandler {
 	return &transactionHandler{
 		transactionService,
 		userService,
+		historyService,
 	}
 }
 
 func (h *transactionHandler) CreateTransactionDN(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	response := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(response)
+	}
+
+	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil {
+
+		return c.Status(401).JSON(response)
+	}
+
 	transactionInput := new(transaction.DataTransactionInput)
 
 	// Binds the request body to the Person struct
@@ -28,7 +49,7 @@ func (h *transactionHandler) CreateTransactionDN(c *fiber.Ctx) error {
 		return c.Status(400).JSON(err)
 	}
 
-	createdTransaction, createdTransactionErr := h.transactionService.CreateTransactionDN(*transactionInput)
+	createdTransaction, createdTransactionErr := h.historyService.CreateTransactionDN(*transactionInput, uint(claims["id"].(float64)))
 	//response := map[string]interface{}{}
 	//
 	if createdTransactionErr != nil {
@@ -41,13 +62,18 @@ func (h *transactionHandler) CreateTransactionDN(c *fiber.Ctx) error {
 func (h *transactionHandler) ListDataDN(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
+	response := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(response)
+	}
 
 	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
 	if checkUserErr != nil {
-		response := map[string]interface{}{
-			"error": "unauthorized",
-		}
+
 		return c.Status(401).JSON(response)
 	}
 
@@ -99,6 +125,23 @@ func (h *transactionHandler) DetailTransactionDN(c *fiber.Ctx) error {
 }
 
 func (h *transactionHandler) DeleteTransaction(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil {
+
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
 	id := c.Params("id")
 
 	idInt, err := strconv.Atoi(id)
@@ -110,24 +153,25 @@ func (h *transactionHandler) DeleteTransaction(c *fiber.Ctx) error {
 		return c.Status(404).JSON(response)
 	}
 
-	deleteTransaction, deleteTransactionErr := h.transactionService.DeleteTransaction(idInt)
+	deleteTransaction, deleteTransactionErr := h.historyService.DeleteTransaction(idInt, uint(claims["id"].(float64)))
 
 	if deleteTransactionErr != nil {
 		response := map[string]interface{}{
+			"message": "failed to delete transaction",
 			"error": deleteTransactionErr.Error(),
 		}
 		return c.Status(400).JSON(response)
 	}
 
-	if deleteTransaction == false {
+	if deleteTransaction == false && deleteTransactionErr != nil {
 		response := map[string]interface{}{
-			"message": "data tidak terhapus",
+			"message": "failed to delete transaction",
 		}
 		return c.Status(400).JSON(response)
 	}
 
 	response := map[string]interface{}{
-		"message": "data berhasil dihapus",
+		"message": "success delete transaction",
 	}
 	return c.Status(200).JSON(response)
 }

@@ -31,11 +31,13 @@ type Transaction struct {
 	BillOfLadingDate *string `json:"bill_of_lading_date" gorm:"type:DATE"`
 	BillOfLadingNumber string `json:"bill_of_lading_number"`
 	RoyaltyRate float64 `json:"royalty_rate"`
+	DpRoyaltyCurrency string `json:"dp_royalty_currency"`
 	DpRoyaltyPrice float64 `json:"dp_royalty_price"`
 	DpRoyaltyDate *string `json:"dp_royalty_date" gorm:"type:DATE"`
 	DpRoyaltyNtpn string `json:"dp_royalty_ntpn"`
 	DpRoyaltyBillingCode string `json:"dp_royalty_billing_code"`
 	DpRoyaltyTotal float64 `json:"dp_royalty_total"`
+	PaymentDpRoyaltyCurrency string `json:"payment_dp_royalty_currency"`
 	PaymentDpRoyaltyPrice float64 `json:"payment_dp_royalty_price"`
 	PaymentDpRoyaltyDate *string `json:"payment_dp_royalty_date" gorm:"type:DATE"`
 	PaymentDpRoyaltyNtpn string `json:"payment_dp_royalty_ntpn"`
