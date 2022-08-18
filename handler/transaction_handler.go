@@ -27,19 +27,18 @@ func NewTransactionHandler(transactionService transaction.Service, userService u
 func (h *transactionHandler) CreateTransactionDN(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
-	response := map[string]interface{}{
+	responseUnauthorized := map[string]interface{}{
 		"error": "unauthorized",
 	}
 
 	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
-		return c.Status(401).JSON(response)
+		return c.Status(401).JSON(responseUnauthorized)
 	}
 
 	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
 	if checkUserErr != nil {
-
-		return c.Status(401).JSON(response)
+		return c.Status(401).JSON(responseUnauthorized)
 	}
 
 	transactionInput := new(transaction.DataTransactionInput)
@@ -62,19 +61,18 @@ func (h *transactionHandler) CreateTransactionDN(c *fiber.Ctx) error {
 func (h *transactionHandler) ListDataDN(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
-	response := map[string]interface{}{
+	responseUnauthorized := map[string]interface{}{
 		"error": "unauthorized",
 	}
 
 	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
-		return c.Status(401).JSON(response)
+		return c.Status(401).JSON(responseUnauthorized)
 	}
 
 	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
 	if checkUserErr != nil {
-
-		return c.Status(401).JSON(response)
+		return c.Status(401).JSON(responseUnauthorized)
 	}
 
 	page := c.Query("page")
@@ -101,6 +99,22 @@ func (h *transactionHandler) ListDataDN(c *fiber.Ctx) error {
 }
 
 func (h *transactionHandler) DetailTransactionDN(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
 	id := c.Params("id")
 
 	idInt, err := strconv.Atoi(id)
@@ -124,7 +138,7 @@ func (h *transactionHandler) DetailTransactionDN(c *fiber.Ctx) error {
 	return c.Status(200).JSON(detailTransactionDN)
 }
 
-func (h *transactionHandler) DeleteTransaction(c *fiber.Ctx) error {
+func (h *transactionHandler) DeleteTransactionDN(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	responseUnauthorized := map[string]interface{}{
@@ -138,7 +152,6 @@ func (h *transactionHandler) DeleteTransaction(c *fiber.Ctx) error {
 	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
 	if checkUserErr != nil {
-
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -153,7 +166,7 @@ func (h *transactionHandler) DeleteTransaction(c *fiber.Ctx) error {
 		return c.Status(404).JSON(response)
 	}
 
-	deleteTransaction, deleteTransactionErr := h.historyService.DeleteTransaction(idInt, uint(claims["id"].(float64)))
+	deleteTransaction, deleteTransactionErr := h.historyService.DeleteTransactionDN(idInt, uint(claims["id"].(float64)))
 
 	if deleteTransactionErr != nil {
 		response := map[string]interface{}{
@@ -174,4 +187,83 @@ func (h *transactionHandler) DeleteTransaction(c *fiber.Ctx) error {
 		"message": "success delete transaction",
 	}
 	return c.Status(200).JSON(response)
+}
+
+func (h *transactionHandler) UpdateTransactionDN(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	id := c.Params("id")
+
+	idInt, err := strconv.Atoi(id)
+
+	if err != nil {
+		response := map[string]interface{}{
+			"error": "data tidak ditemukan",
+		}
+		return c.Status(404).JSON(response)
+	}
+
+	transactionInput := new(transaction.DataTransactionInput)
+
+	// Binds the request body to the Person struct
+	if errParsing := c.BodyParser(transactionInput); errParsing != nil {
+		return c.Status(400).JSON(errParsing)
+	}
+
+
+	updateTransaction, updateTransactionErr := h.historyService.UpdateTransactionDN(idInt, *transactionInput ,uint(claims["id"].(float64)))
+
+	if updateTransactionErr != nil {
+		response := map[string]interface{}{
+			"message": "failed to update transaction",
+			"error": updateTransactionErr.Error(),
+		}
+		return c.Status(400).JSON(response)
+	}
+
+	return c.Status(200).JSON(updateTransaction)
+}
+
+func (h *transactionHandler) UpdateDocumentTransactionDN (c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	id := c.Params("id")
+
+	idInt, err := strconv.Atoi(id)
+
+	if err != nil {
+		response := map[string]interface{}{
+			"error": "data tidak ditemukan",
+		}
+		return c.Status(404).JSON(response)
+	}
+
 }

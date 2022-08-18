@@ -6,8 +6,8 @@ import (
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/gorm"
 	jwtware "github.com/gofiber/jwt/v3"
+	"gorm.io/gorm"
 )
 
 func TransactionRouting(db *gorm.DB, app fiber.Router) {
@@ -28,10 +28,17 @@ func TransactionRouting(db *gorm.DB, app fiber.Router) {
 	transactionRouting.Use(jwtware.New(jwtware.Config{
 		SigningKey:    []byte("aFhF234aiI"),
 		SigningMethod: jwtware.HS256,
+		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
+			return ctx.Status(401).JSON(fiber.Map{
+				"error": "unauthorized",
+			})
+		},
 	}))
 
 	transactionRouting.Post("/create/dn", transactionHandler.CreateTransactionDN)
 	transactionRouting.Get("/list/dn", transactionHandler.ListDataDN)
 	transactionRouting.Get("/detail/dn/:id", transactionHandler.DetailTransactionDN)
-	transactionRouting.Delete("/delete/dn/:id", transactionHandler.DeleteTransaction)
+	transactionRouting.Delete("/delete/dn/:id", transactionHandler.DeleteTransactionDN)
+	transactionRouting.Post("/update/dn/:id", transactionHandler.UpdateTransactionDN)
+	transactionRouting.Post("/update/document/dn/:id", transactionHandler.UpdateDocumentTransactionDN)
 }

@@ -4,6 +4,7 @@ import (
 	"ajebackend/helper"
 	"errors"
 	"gorm.io/gorm"
+	"strings"
 )
 
 type Repository interface {
@@ -25,7 +26,7 @@ func (r *repository) RegisterUser(user RegisterUserInput) (User, error) {
 
 	newUser.Username = user.Username
 	newUser.Password = user.Password
-	newUser.Email = user.Email
+	newUser.Email = strings.ToLower(user.Email)
 
 	err := r.db.Create(&newUser).Error
 
@@ -49,7 +50,7 @@ func (r *repository) LoginUser(input LoginUserInput) (TokenUser, error) {
 	}
 	usernameErr := r.db.Where("username = ?", input.Data).First(&username).Error
 
-	emailErr := r.db.Where("email = ?", input.Data).First(&email).Error
+	emailErr := r.db.Where("email = ?", strings.ToLower(input.Data)).First(&email).Error
 
 	if emailErr != nil && usernameErr != nil {
 		return tokenUser, errors.New("invalid Email / Username / Password")

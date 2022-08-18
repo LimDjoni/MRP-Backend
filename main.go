@@ -8,11 +8,11 @@ import (
 	"ajebackend/model/logs"
 	"ajebackend/model/minerba"
 	"ajebackend/model/minerbatransaction"
-	"ajebackend/model/routing"
 	"ajebackend/model/trader"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
+	routing2 "ajebackend/routing"
 	"fmt"
 	"log"
 
@@ -61,8 +61,8 @@ func main() {
 	app := fiber.New()
 	apiV1 := app.Group("/api/v1") // /api
 
-	routing.TransactionRouting(db, apiV1)
-	routing.UserRouting(db, apiV1)
+	routing2.TransactionRouting(db, apiV1)
+	routing2.UserRouting(db, apiV1)
 
 	log.Fatal(app.Listen(":3000"))
 }

@@ -2,6 +2,7 @@ package history
 
 import (
 	"ajebackend/model/transaction"
+	"encoding/json"
 	"fmt"
 	"gorm.io/gorm"
 	"strconv"
@@ -10,7 +11,8 @@ import (
 
 type Repository interface {
 	CreateTransactionDN (inputTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
-	DeleteTransaction(id int, userId uint) (bool, error)
+	DeleteTransactionDN(id int, userId uint) (bool, error)
+	UpdateTransactionDN (idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
 }
 
 type repository struct {
@@ -40,11 +42,7 @@ func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTra
 	createdTransaction.Number = int(totalCount) + 1
 	createdTransaction.IdNumber += fmt.Sprintf("DN-%v-%v-%v", year, int(month), strconv.Itoa(int(totalCount) + 1))
 	createdTransaction.TransactionType = "DN"
-	if inputTransactionDN.ShippingDate != "" {
-		createdTransaction.ShippingDate = &inputTransactionDN.ShippingDate
-	} else {
-		createdTransaction.ShippingDate = nil
-	}
+	createdTransaction.ShippingDate = inputTransactionDN.ShippingDate
 	createdTransaction.Quantity = inputTransactionDN.Quantity
 	createdTransaction.ShipName = inputTransactionDN.ShipName
 	createdTransaction.BargeName = inputTransactionDN.BargeName
@@ -55,64 +53,29 @@ func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTra
 	createdTransaction.UnloadingPortName = inputTransactionDN.UnloadingPortName
 	createdTransaction.UnloadingPortLocation = inputTransactionDN.UnloadingPortLocation
 	createdTransaction.DmoDestinationPort = inputTransactionDN.DmoDestinationPort
-
-	if inputTransactionDN.SkbDate != "" {
-		createdTransaction.SkbDate = &inputTransactionDN.SkbDate
-	} else {
-		createdTransaction.SkbDate = nil
-	}
+	createdTransaction.SkbDate = inputTransactionDN.SkbDate
 	createdTransaction.SkbNumber = inputTransactionDN.SkbNumber
-
-	if inputTransactionDN.SkabDate != "" {
-		createdTransaction.SkabDate = &inputTransactionDN.SkabDate
-	} else {
-		createdTransaction.SkabDate = nil
-	}
+	createdTransaction.SkabDate = inputTransactionDN.SkabDate
 	createdTransaction.SkabNumber = inputTransactionDN.SkabNumber
-	if inputTransactionDN.BillOfLadingDate != "" {
-		createdTransaction.BillOfLadingDate = &inputTransactionDN.BillOfLadingDate
-	} else {
-		createdTransaction.BillOfLadingDate = nil
-	}
+	createdTransaction.BillOfLadingDate = inputTransactionDN.BillOfLadingDate
 	createdTransaction.BillOfLadingNumber = inputTransactionDN.BillOfLadingNumber
 	createdTransaction.RoyaltyRate = inputTransactionDN.RoyaltyRate
 	createdTransaction.DpRoyaltyPrice = inputTransactionDN.DpRoyaltyPrice
-
-	if inputTransactionDN.DpRoyaltyDate != "" {
-		createdTransaction.DpRoyaltyDate = &inputTransactionDN.DpRoyaltyDate
-	} else {
-		createdTransaction.DpRoyaltyDate = nil
-	}
+	createdTransaction.DpRoyaltyDate = inputTransactionDN.DpRoyaltyDate
 	createdTransaction.DpRoyaltyNtpn = inputTransactionDN.DpRoyaltyNtpn
 	createdTransaction.DpRoyaltyBillingCode = inputTransactionDN.DpRoyaltyBillingCode
 	createdTransaction.DpRoyaltyTotal = inputTransactionDN.DpRoyaltyTotal
 	createdTransaction.PaymentDpRoyaltyPrice = inputTransactionDN.PaymentDpRoyaltyPrice
-	if inputTransactionDN.PaymentDpRoyaltyDate != "" {
-		createdTransaction.PaymentDpRoyaltyDate = &inputTransactionDN.PaymentDpRoyaltyDate
-	} else {
-		createdTransaction.PaymentDpRoyaltyDate = nil
-	}
+	createdTransaction.PaymentDpRoyaltyDate = inputTransactionDN.PaymentDpRoyaltyDate
 	createdTransaction.PaymentDpRoyaltyNtpn = inputTransactionDN.PaymentDpRoyaltyNtpn
 	createdTransaction.PaymentDpRoyaltyBillingCode = inputTransactionDN.PaymentDpRoyaltyBillingCode
 	createdTransaction.PaymentDpRoyaltyTotal = inputTransactionDN.PaymentDpRoyaltyTotal
-	if inputTransactionDN.LhvDate != "" {
-		createdTransaction.LhvDate = &inputTransactionDN.LhvDate
-	} else {
-		createdTransaction.LhvDate = nil
-	}
+	createdTransaction.LhvDate = inputTransactionDN.LhvDate
 	createdTransaction.LhvNumber = inputTransactionDN.LhvNumber
 	createdTransaction.SurveyorName = inputTransactionDN.SurveyorName
-	if inputTransactionDN.CowDate != "" {
-		createdTransaction.CowDate = &inputTransactionDN.CowDate
-	} else {
-		createdTransaction.CowDate = nil
-	}
+	createdTransaction.CowDate = inputTransactionDN.CowDate
 	createdTransaction.CowNumber = inputTransactionDN.CowNumber
-	if inputTransactionDN.CoaDate != "" {
-		createdTransaction.CoaDate = &inputTransactionDN.CoaDate
-	} else {
-		createdTransaction.CoaDate = nil
-	}
+	createdTransaction.CoaDate = inputTransactionDN.CoaDate
 	createdTransaction.CoaNumber = inputTransactionDN.CoaNumber
 	createdTransaction.QualityTmAr = inputTransactionDN.QualityTmAr
 	createdTransaction.QualityImAdb = inputTransactionDN.QualityImAdb
@@ -126,20 +89,12 @@ func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTra
 	createdTransaction.QualityCaloriesAdb = inputTransactionDN.QualityCaloriesAdb
 	createdTransaction.BargingDistance = inputTransactionDN.BargingDistance
 	createdTransaction.SalesSystem = inputTransactionDN.SalesSystem
-	if inputTransactionDN.InvoiceDate != "" {
-		createdTransaction.InvoiceDate = &inputTransactionDN.InvoiceDate
-	} else {
-		createdTransaction.InvoiceDate = nil
-	}
+	createdTransaction.InvoiceDate = inputTransactionDN.InvoiceDate
 	createdTransaction.InvoiceNumber = inputTransactionDN.InvoiceNumber
 	createdTransaction.InvoicePriceUnit = inputTransactionDN.InvoicePriceUnit
 	createdTransaction.InvoicePriceTotal = inputTransactionDN.InvoicePriceTotal
 	createdTransaction.DmoReconciliationLetter = inputTransactionDN.DmoReconciliationLetter
-	if inputTransactionDN.ContractDate != "" {
-		createdTransaction.ContractDate = &inputTransactionDN.ContractDate
-	} else {
-		createdTransaction.ContractDate = nil
-	}
+	createdTransaction.ContractDate = inputTransactionDN.ContractDate
 	createdTransaction.ContractNumber = inputTransactionDN.ContractNumber
 	createdTransaction.DmoBuyerName = inputTransactionDN.DmoBuyerName
 	createdTransaction.DmoIndustryType = inputTransactionDN.DmoIndustryType
@@ -169,7 +124,7 @@ func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTra
 	return createdTransaction, createHistoryErr
 }
 
-func (r *repository) DeleteTransaction(id int, userId uint) (bool, error) {
+func (r *repository) DeleteTransactionDN(id int, userId uint) (bool, error) {
 	var transaction transaction.Transaction
 
 	tx := r.db.Begin()
@@ -203,4 +158,72 @@ func (r *repository) DeleteTransaction(id int, userId uint) (bool, error) {
 
 	tx.Commit()
 	return true, createHistoryErr
+}
+
+func (r *repository) UpdateTransactionDN (idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error) {
+	var transaction transaction.Transaction
+
+	tx := r.db.Begin()
+
+	errFind := r.db.Where("id = ?", idTransaction).First(&transaction).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return transaction, errFind
+	}
+
+	beforeData , errorBeforeDataJsonMarshal := json.Marshal(transaction)
+
+	if errorBeforeDataJsonMarshal != nil {
+		tx.Rollback()
+		return transaction, errorBeforeDataJsonMarshal
+	}
+
+	dataInput, errorMarshal := json.Marshal(inputEditTransactionDN)
+
+	if errorMarshal != nil {
+		tx.Rollback()
+		return  transaction, errorMarshal
+	}
+
+	var dataInputMapString map[string]interface{}
+
+	errorUnmarshal := json.Unmarshal(dataInput, &dataInputMapString)
+
+	if errorUnmarshal != nil {
+		tx.Rollback()
+		return  transaction, errorUnmarshal
+	}
+
+	updateErr := tx.Model(&transaction).Updates(dataInputMapString).Error
+
+	if updateErr != nil {
+		tx.Rollback()
+		return  transaction, updateErr
+	}
+
+	afterData , errorAfterDataJsonMarshal := json.Marshal(transaction)
+
+	if errorBeforeDataJsonMarshal != nil {
+		tx.Rollback()
+		return transaction, errorAfterDataJsonMarshal
+	}
+
+	var history History
+
+	history.TransactionId = &transaction.ID
+	history.UserId = userId
+	history.Status = "Updated"
+	history.BeforeData = beforeData
+	history.AfterData = afterData
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return transaction, createHistoryErr
+	}
+
+	tx.Commit()
+	return transaction, nil
 }

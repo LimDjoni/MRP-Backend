@@ -5,6 +5,7 @@ import (
 	"ajebackend/model/minerba"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -19,4 +20,6 @@ type History struct {
 	MinerbaId *uint `json:"minerba_id"`
 	Minerba *minerba.Minerba
 	Status string `json:"status"`
+	BeforeData datatypes.JSON `json:"before_data"`
+	AfterData datatypes.JSON `json:"after_data"`
 }

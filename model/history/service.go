@@ -4,7 +4,8 @@ import "ajebackend/model/transaction"
 
 type Service interface {
 	CreateTransactionDN (inputTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
-	DeleteTransaction(id int, userId uint) (bool, error)
+	DeleteTransactionDN(id int, userId uint) (bool, error)
+	UpdateTransactionDN (idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
 }
 
 type service struct {
@@ -21,8 +22,14 @@ func(s *service) CreateTransactionDN (inputTransactionDN transaction.DataTransac
 	return transaction, transactionErr
 }
 
-func(s *service) DeleteTransaction(id int, userId uint) (bool, error) {
-	isDeletedTransaction, isDeletedTransactionErr := s.repository.DeleteTransaction(id, userId)
+func(s *service) DeleteTransactionDN(id int, userId uint) (bool, error) {
+	isDeletedTransaction, isDeletedTransactionErr := s.repository.DeleteTransactionDN(id, userId)
 
 	return isDeletedTransaction, isDeletedTransactionErr
+}
+
+func (s *service) UpdateTransactionDN (idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error) {
+	updateTransaction, updateTransactionErr := s.repository.UpdateTransactionDN(idTransaction, inputEditTransactionDN, userId)
+
+	return updateTransaction, updateTransactionErr
 }
