@@ -14,7 +14,9 @@ import (
 	"ajebackend/model/user"
 	routing2 "ajebackend/routing"
 	"fmt"
+	"github.com/joho/godotenv"
 	"log"
+	"os"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/driver/postgres"
@@ -22,6 +24,8 @@ import (
 )
 
 func main() {
+	LoadEnv()
+
 	dbUrl := ""
 	dbUrlStg := "host=localhost user=postgres password=postgres dbname=deli_aje_development port=5432 sslmode=disable TimeZone=Asia/Shanghai"
 
@@ -91,5 +95,13 @@ func createDB(dsn string) {
 	if err != nil {
 		fmt.Println("Cannot connect db")
 		return
+	}
+}
+
+func LoadEnv() {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+		os.Exit(1)
 	}
 }
