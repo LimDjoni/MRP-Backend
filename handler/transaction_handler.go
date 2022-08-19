@@ -76,9 +76,25 @@ func (h *transactionHandler) ListDataDN(c *fiber.Ctx) error {
 	if checkUserErr != nil {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
-
+	var sortAndFilter transaction.SortAndFilter
 	page := c.Query("page")
+	sortAndFilter.Field = c.Query("field")
+	sortAndFilter.Sort = c.Query("sort")
 
+	quantity, errParsing := strconv.ParseFloat(c.Query("quantity"), 64)
+	if errParsing != nil {
+		sortAndFilter.Quantity = 0
+	} else {
+		sortAndFilter.Quantity = quantity
+	}
+
+	sortAndFilter.ShipName = c.Query("ship_name")
+	sortAndFilter.BargeName = c.Query("barge_name")
+	sortAndFilter.ShippingFrom = c.Query("shipping_from")
+	sortAndFilter.ShippingTo = c.Query("shipping_to")
+
+
+// quantity, kapal tb, kapal bg, pengapalan dari sampai
 	pageNumber, err := strconv.Atoi(page)
 
 	if err != nil && page != "" {
@@ -91,7 +107,7 @@ func (h *transactionHandler) ListDataDN(c *fiber.Ctx) error {
 		pageNumber = 1
 	}
 
-	listDN, listDNErr := h.transactionService.ListDataDN(pageNumber)
+	listDN, listDNErr := h.transactionService.ListDataDN(pageNumber, sortAndFilter)
 
 	if listDNErr != nil {
 		return c.Status(400).JSON(listDNErr.Error())

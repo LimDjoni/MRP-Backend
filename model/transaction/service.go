@@ -1,7 +1,7 @@
 package transaction
 
 type Service interface {
-	ListDataDN (page int) (Pagination, error)
+	ListDataDN(page int, sortFilter SortAndFilter) (Pagination, error)
 	DetailTransactionDN(id int) (Transaction, error)
 }
 
@@ -13,8 +13,8 @@ func NewService(repository Repository) *service {
 	return &service{repository}
 }
 
-func (s *service) ListDataDN(page int) (Pagination, error) {
-	listDN, listDNErr := s.repository.ListDataDN(page)
+func (s *service) ListDataDN(page int, sortFilter SortAndFilter) (Pagination, error) {
+	listDN, listDNErr := s.repository.ListDataDN(page, sortFilter)
 
 	return listDN, listDNErr
 }

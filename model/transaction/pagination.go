@@ -31,9 +31,9 @@ func (p *Pagination) GetPage() int {
 	return p.Page
 }
 
-func paginateDataDN(value interface{}, pagination *Pagination, db *gorm.DB) func(db *gorm.DB) *gorm.DB {
+func paginateDataDN(value interface{}, pagination *Pagination, db *gorm.DB, queryFilter string) func(db *gorm.DB) *gorm.DB {
 	var totalRows int64
-	db.Where("transaction_type = ?", "DN").Model(value).Count(&totalRows)
+	db.Where(queryFilter).Model(value).Count(&totalRows)
 
 	pagination.TotalRows = totalRows
 	totalPages := int(math.Ceil(float64(totalRows) / float64(pagination.Limit)))

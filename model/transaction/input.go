@@ -61,3 +61,13 @@ type DataTransactionInput struct {
 	DmoIndustryType string `json:"dmo_industry_type"`
 	DmoStatusReconciliationLetter string `json:"dmo_status_reconciliation_letter"`
 }
+
+type SortAndFilter struct {
+	Field string
+	Sort string
+	Quantity float64
+	ShipName string
+	BargeName string
+	ShippingFrom string
+	ShippingTo string
+}
