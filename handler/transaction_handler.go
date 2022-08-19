@@ -110,7 +110,10 @@ func (h *transactionHandler) ListDataDN(c *fiber.Ctx) error {
 	listDN, listDNErr := h.transactionService.ListDataDN(pageNumber, sortAndFilter)
 
 	if listDNErr != nil {
-		return c.Status(400).JSON(listDNErr.Error())
+		response := map[string]interface{}{
+			"error": listDNErr.Error(),
+		}
+		return c.Status(400).JSON(response)
 	}
 
 	return c.Status(200).JSON(listDN)
