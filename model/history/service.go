@@ -6,6 +6,7 @@ type Service interface {
 	CreateTransactionDN (inputTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
 	DeleteTransactionDN(id int, userId uint) (bool, error)
 	UpdateTransactionDN (idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
+	UploadDocument (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error)
 }
 
 type service struct {
@@ -32,4 +33,10 @@ func (s *service) UpdateTransactionDN (idTransaction int, inputEditTransactionDN
 	updateTransaction, updateTransactionErr := s.repository.UpdateTransactionDN(idTransaction, inputEditTransactionDN, userId)
 
 	return updateTransaction, updateTransactionErr
+}
+
+func (s *service) UploadDocument (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error) {
+	uploadedDocument, uploadedDocumentErr := s.repository.UploadDocument(idTransaction, urlS3, userId, documentType)
+
+	return uploadedDocument, uploadedDocumentErr
 }

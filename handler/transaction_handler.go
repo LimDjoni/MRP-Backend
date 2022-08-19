@@ -1,13 +1,11 @@
 package handler
 
 import (
-	"ajebackend/helper"
+	"ajebackend/model/awshelper"
 	"ajebackend/model/history"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
 	"reflect"
@@ -125,7 +123,7 @@ func (h *transactionHandler) DetailTransactionDN(c *fiber.Ctx) error {
 
 	if err != nil {
 		response := map[string]interface{}{
-			"error": "data tidak ditemukan",
+			"error": "data not found",
 		}
 		return c.Status(404).JSON(response)
 	}
@@ -165,7 +163,7 @@ func (h *transactionHandler) DeleteTransactionDN(c *fiber.Ctx) error {
 
 	if err != nil {
 		response := map[string]interface{}{
-			"error": "data tidak ditemukan",
+			"error": "data not found",
 		}
 		return c.Status(404).JSON(response)
 	}
@@ -216,7 +214,7 @@ func (h *transactionHandler) UpdateTransactionDN(c *fiber.Ctx) error {
 
 	if err != nil {
 		response := map[string]interface{}{
-			"error": "data tidak ditemukan",
+			"error": "data not found",
 		}
 		return c.Status(404).JSON(response)
 	}
@@ -243,68 +241,79 @@ func (h *transactionHandler) UpdateTransactionDN(c *fiber.Ctx) error {
 }
 
 func (h *transactionHandler) UpdateDocumentTransactionDN (c *fiber.Ctx) error {
-	//user := c.Locals("user").(*jwt.Token)
-	//claims := user.Claims.(jwt.MapClaims)
-	//responseUnauthorized := map[string]interface{}{
-	//	"error": "unauthorized",
-	//}
-	//
-	//if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
-	//	return c.Status(401).JSON(responseUnauthorized)
-	//}
-	//
-	//_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
-	//
-	//if checkUserErr != nil {
-	//	return c.Status(401).JSON(responseUnauthorized)
-	//}
-	//
-	//id := c.Params("id")
-	//
-	//idInt, err := strconv.Atoi(id)
-	//
-	//if err != nil {
-	//	response := map[string]interface{}{
-	//		"error": "data tidak ditemukan",
-	//	}
-	//	return c.Status(404).JSON(response)
-	//}
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
 
-	month := "Agustus/"
-	fileName := fmt.Sprintf("%sdocudnes.pdf", month)
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
 
-	file, err := c.FormFile("document")
-	fmt.Println(err)
+	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	fileBody, err := file.Open()
+	if checkUserErr != nil {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
 
-	// Save file to root directory:
-	sess, sessErr := helper.ConnectAws()
+	id := c.Params("id")
 
-	if sessErr != nil {
+	documentType := c.Params("type")
+
+	switch documentType {
+		case "skb","skab","bl","royalti_provision","royalti_final","cow","coa","invoice","lhv":
+		default:
+			response := map[string]interface{}{
+				"error": "document type not found",
+			}
+			return c.Status(400).JSON(response)
+	}
+
+
+	idInt, err := strconv.Atoi(id)
+
+	if err != nil {
 		response := map[string]interface{}{
-			"message": "failed to upload document",
-			"error": sessErr.Error(),
+			"error": "data not found",
 		}
 		return c.Status(400).JSON(response)
 	}
 
-	uploader := s3manager.NewUploader(sess)
-	MyBucket := helper.GetEnvWithKey("AWS_BUCKET_NAME")
+	detailTransaction, detailTransactionErr := h.transactionService.DetailTransactionDN(idInt)
 
-	contentType := "application/pdf"
-	contentDisposition := fmt.Sprintf("inline; filename=\"%s\"", fileName)
+	if detailTransactionErr != nil {
+		response := map[string]interface{}{
+			"message": "failed to upload document",
+			"error": detailTransactionErr.Error(),
+		}
+		return c.Status(400).JSON(response)
+	}
 
+	fileName := fmt.Sprintf("%s/%s.pdf", detailTransaction.IdNumber, documentType)
 
-	fmt.Println(contentType, contentDisposition)
-	up, err := uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String(MyBucket),
-		Key:    aws.String(fileName),
-		Body:   fileBody,
-		ContentType: &contentType,
-		ContentDisposition: &contentDisposition,
-	})
+	file, errFormFile := c.FormFile("document")
+	responseErr := map[string]interface{}{
+		"message": "failed to upload document",
+	}
+	if errFormFile != nil {
+		responseErr["error"] = errFormFile.Error()
+		return c.Status(400).JSON(responseErr)
+	}
 
+	up, uploadErr := awshelper.UploadDocument(file, fileName)
 
-	return c.JSON(up)
+	if uploadErr != nil {
+		responseErr["error"] = uploadErr.Error()
+		return c.Status(400).JSON(responseErr)
+	}
+
+	editDocument, editDocumentErr := h.historyService.UploadDocument(detailTransaction.ID, up.Location, uint(claims["id"].(float64)), documentType)
+
+	if editDocumentErr != nil {
+		responseErr["error"] = editDocumentErr.Error()
+		return c.Status(400).JSON(responseErr)
+	}
+
+	return c.Status(200).JSON(editDocument)
 }

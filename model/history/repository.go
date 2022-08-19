@@ -1,11 +1,11 @@
 package history
 
 import (
+	"ajebackend/helper"
 	"ajebackend/model/transaction"
 	"encoding/json"
 	"fmt"
 	"gorm.io/gorm"
-	"strconv"
 	"time"
 )
 
@@ -13,6 +13,7 @@ type Repository interface {
 	CreateTransactionDN (inputTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
 	DeleteTransactionDN(id int, userId uint) (bool, error)
 	UpdateTransactionDN (idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
+	UploadDocument (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error)
 }
 
 type repository struct {
@@ -40,7 +41,7 @@ func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTra
 
 	createdTransaction.DmoId = nil
 	createdTransaction.Number = int(totalCount) + 1
-	createdTransaction.IdNumber += fmt.Sprintf("DN-%v-%v-%v", year, int(month), strconv.Itoa(int(totalCount) + 1))
+	createdTransaction.IdNumber += fmt.Sprintf("DN-%v-%v-%v", year, int(month), helper.CreateIdNumber(int(totalCount + 1)))
 	createdTransaction.TransactionType = "DN"
 	createdTransaction.ShippingDate = inputTransactionDN.ShippingDate
 	createdTransaction.Quantity = inputTransactionDN.Quantity
@@ -226,4 +227,94 @@ func (r *repository) UpdateTransactionDN (idTransaction int, inputEditTransactio
 
 	tx.Commit()
 	return transaction, nil
+}
+
+func (r *repository) UploadDocument (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error) {
+	var uploadedTransaction transaction.Transaction
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("id = ?", idTransaction).First(&uploadedTransaction).Error
+
+	if errFind != nil {
+		return uploadedTransaction, errFind
+	}
+	var isReupload = false
+	editData := make(map[string]interface{})
+
+	switch documentType {
+		case "skb":
+			if uploadedTransaction.SkbDocument != "" {
+				isReupload = true
+			}
+			editData["skb_document"] = urlS3
+		case "skab":
+			if uploadedTransaction.SkabDocument != "" {
+				isReupload = true
+			}
+			editData["skab_document"] = urlS3
+		case "bl":
+			if uploadedTransaction.BLDocument != "" {
+				isReupload = true
+			}
+			editData["bl_document"] = urlS3
+		case "royalti_provision":
+			if uploadedTransaction.RoyaltiProvisionDocument != "" {
+				isReupload = true
+			}
+			editData["royalti_provision_document"] = urlS3
+		case "royalti_final":
+			if uploadedTransaction.RoyaltiFinalDocument != "" {
+				isReupload = true
+			}
+			editData["royalti_final_document"] = urlS3
+		case "cow":
+			if uploadedTransaction.COWDocument != "" {
+				isReupload = true
+			}
+			editData["cow_document"] = urlS3
+		case "coa":
+			if uploadedTransaction.COADocument != "" {
+				isReupload = true
+			}
+			editData["coa_document"] = urlS3
+		case "invoice":
+			if uploadedTransaction.InvoiceAndContractDocument != "" {
+				isReupload = true
+			}
+			editData["invoice_and_contract_document"] = urlS3
+		case "lhv":
+			if uploadedTransaction.LHVDocument != "" {
+				isReupload = true
+			}
+			editData["lhv_document"] = urlS3
+	}
+
+	errEdit := tx.Model(&uploadedTransaction).Updates(editData).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return uploadedTransaction, errEdit
+	}
+	var history History
+
+	history.TransactionId = &uploadedTransaction.ID
+	history.UserId = userId
+	if isReupload == false {
+		history.Status = fmt.Sprintf("Uploaded %s document", documentType)
+	}
+
+	if isReupload == true {
+		history.Status = fmt.Sprintf("Reupload %s document", documentType)
+	}
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return uploadedTransaction, createHistoryErr
+	}
+
+	tx.Commit()
+	return uploadedTransaction, nil
 }
