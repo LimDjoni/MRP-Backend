@@ -10,7 +10,7 @@ import (
 
 type Logs struct {
 	gorm.Model
-	input datatypes.JSON `json:"input"`
+	Input datatypes.JSON `json:"input"`
 	Message	datatypes.JSON `json:"message"`
 	TransactionId *uint `json:"transaction_id"`
 	Transaction *transaction.Transaction `json:"transaction"`

@@ -47,6 +47,10 @@ func (r *repository) ListDataDN(page int, sortFilter SortAndFilter) (Pagination,
 		queryFilter = queryFilter + " AND shipping_date <= '" + sortFilter.ShippingTo + "'"
 	}
 
+	if sortFilter.Quantity != 0 {
+		queryFilter = fmt.Sprintf("%s AND quantity = %v", queryFilter, sortFilter.Quantity)
+	}
+
 	errFind := r.db.Where(queryFilter).Order(sortString).Scopes(paginateDataDN(transactions, &pagination, r.db, queryFilter)).Find(&transactions).Error
 
 	if errFind != nil {

@@ -3,14 +3,16 @@ package routing
 import (
 	"ajebackend/handler"
 	"ajebackend/model/history"
+	"ajebackend/model/logs"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	jwtware "github.com/gofiber/jwt/v3"
 	"gorm.io/gorm"
 )
 
-func TransactionRouting(db *gorm.DB, app fiber.Router) {
+func TransactionRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	transactionRepository := transaction.NewRepository(db)
 	transactionService := transaction.NewService(transactionRepository)
 
@@ -20,7 +22,10 @@ func TransactionRouting(db *gorm.DB, app fiber.Router) {
 	historyRepository := history.NewRepository(db)
 	historyService := history.NewService(historyRepository)
 
-	transactionHandler := handler.NewTransactionHandler(transactionService, userService, historyService)
+	logRepository := logs.NewRepository(db)
+	logService := logs.NewService(logRepository)
+
+	transactionHandler := handler.NewTransactionHandler(transactionService, userService, historyService, validate, logService)
 
 	transactionRouting := app.Group("/transaction") // /api
 

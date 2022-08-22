@@ -2,39 +2,21 @@ package handler
 
 import (
 	"ajebackend/model/user"
+	"ajebackend/validatorfunc"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
-type ErrorResponse struct {
-	FailedField string
-	Tag         string
-	Value       interface{}
-}
 
-var validate = validator.New()
-
-func ValidateStruct(value interface{}) []*ErrorResponse {
-	var errors []*ErrorResponse
-	err := validate.Struct(value)
-	if err != nil {
-		for _, fieldErr := range err.(validator.ValidationErrors) {
-			var element ErrorResponse
-			element.FailedField = fieldErr.StructNamespace()
-			element.Tag = fieldErr.Tag()
-			element.Value = fieldErr.Value()
-			errors = append(errors, &element)
-		}
-	}
-	return errors
-}
 
 type userHandler struct {
 	userService user.Service
+	v               *validator.Validate
 }
 
-func NewUserHandler(userService user.Service) *userHandler {
+func NewUserHandler(userService user.Service, v *validator.Validate) *userHandler {
 	return &userHandler{
 		userService,
+		v,
 	}
 }
 
@@ -43,20 +25,28 @@ func (h *userHandler) RegisterUser(c *fiber.Ctx) error {
 
 	// Binds the request body to the Person struct
 	if err := c.BodyParser(registerInput); err != nil {
-		return c.Status(400).JSON(err)
+		return c.Status(400).JSON(
+			fiber.Map{
+				"error": err.Error(),
+			})
 	}
 
-	errors := ValidateStruct(*registerInput)
+	errors := h.v.Struct(*registerInput)
 
 	if errors != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(errors)
+		dataErrors := validatorfunc.ValidateStruct(errors)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": dataErrors,
+		})
 
 	}
 
 	newUser, newUserErr := h.userService.RegisterUser(*registerInput)
 
 	if newUserErr != nil {
-		return c.Status(400).JSON(newUserErr.Error())
+		return c.Status(400).JSON(fiber.Map{
+			"error": newUserErr.Error(),
+		})
 	}
 
 	return c.Status(201).JSON(newUser)
@@ -67,19 +57,17 @@ func (h *userHandler) LoginUser(c *fiber.Ctx) error {
 
 	// Binds the request body to the Person struct
 	if err := c.BodyParser(loginInput); err != nil {
-		return c.Status(400).JSON(err)
-	}
-
-	errors := ValidateStruct(*loginInput)
-	if errors != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(errors)
-
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
 	loginUser, loginUserErr := h.userService.LoginUser(*loginInput)
 
 	if loginUserErr != nil {
-		return c.Status(400).JSON(loginUserErr.Error())
+		return c.Status(400).JSON(fiber.Map{
+			"error": "wrong email / username / password",
+		})
 	}
 
 	return c.Status(200).JSON(loginUser)

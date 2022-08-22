@@ -13,7 +13,9 @@ import (
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 	routing2 "ajebackend/routing"
+	"ajebackend/validatorfunc"
 	"fmt"
+	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	"log"
 	"os"
@@ -62,11 +64,20 @@ func main() {
 		fmt.Println(errMigrate)
 	}
 
+	var validate = validator.New()
+
+	// Make Validation for Gender
+	errDate := validate.RegisterValidation("DateValidation", validatorfunc.CheckDateString)
+	if errDate != nil {
+		fmt.Println(errDate.Error())
+		fmt.Println("error validate date")
+	}
+
 	app := fiber.New()
 	apiV1 := app.Group("/api/v1") // /api
 
-	routing2.TransactionRouting(db, apiV1)
-	routing2.UserRouting(db, apiV1)
+	routing2.TransactionRouting(db, apiV1, validate)
+	routing2.UserRouting(db, apiV1, validate)
 
 	log.Fatal(app.Listen(":3000"))
 }
