@@ -154,7 +154,9 @@ PARAMS =
 - quantity number
 
 AUTH = BEARER ACCESS_TOKEN
+
 EXAMPLE = {{TRANSACTION_URL}}/list/dn?page=1&sort=desc&ship_name=Black&barge_name=Black&shipping_to=2022-08-20&field=created_at&quantity=10.9&shipping_from=2022-08-10
+
 RESPONSE =
 ```
 {
@@ -270,9 +272,13 @@ RESPONSE =
 ```
 
 **DETAIL TRANSACTION DN**
+
 URL = TRANSACTION_URL/detail/dn/:id
+
 AUTH = BEARER ACCESS_TOKEN
+
 EXAMPLE = {{TRANSACTION_URL}}/detail/dn/5
+
 RESPONSE =
 ```
 {
@@ -387,8 +393,11 @@ RESPONSE_ERROR =
 ```
 
 **CREATE TRANSACTION DN**
+
 URL = TRANSACTION_URL/create/dn
+
 AUTH = BEARER ACCESS_TOKEN
+
 RULES =
 - only define when variable has value otherwise data will automatically define not have value
 - if there is no value in number data will automatically be 0
@@ -631,9 +640,13 @@ RESPONSE_ERROR =
 ```
 
 **DELETE TRANSACTION DN**
+
 URL = TRANSACTION_URL/delete/dn/:id
+
 AUTH = BEARER ACCESS_TOKEN
+
 EXAMPLE = TRANSACTION_URL/delete/dn/5
+
 RESPONSE =
 ```
 {
@@ -649,8 +662,11 @@ RESPONSE_ERROR =
 ```
 
 **UPDATE DATA TRANSACTION DN**
+
 URL = TRANSACTION_URL/update/dn/:id
+
 AUTH = BEARER ACCESS_TOKEN
+
 RULES =
 - can copy response of detail transaction and edit value if want update
 - only data needed to create can be updated (not document)
@@ -941,8 +957,11 @@ RESPONSE_ERROR =
 ```
 
 **UPDATE DOCUMENT TRANSACTION DN**
+
 URL = TRANSACTION_URL/update/document/dn/:id/:type
+
 AUTH = BEARER ACCESS_TOKEN
+
 RULES =
 - only type provided can be upload (skb, skab, bl, royalti_provision, royalti_final, cow, coa, invoice, lhv)
 
