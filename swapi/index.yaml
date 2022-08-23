@@ -1,0 +1,1106 @@
+openapi: 3.0.3
+info:
+  title: Sinar Deli - AJE Dashboard
+  description: |-
+    This is a API for AJE Dashboard build from GOLANG API.
+  contact:
+    email: admin@toktok.id
+  version: 1.0.0
+externalDocs:
+  description: Find your Code Github.
+  url: https://github.com/Toktok-Engineer/Deli-AJE-Backend
+servers:
+  - url: https://api.server.test/v1
+    description: Server Development
+tags:
+  - name: pet
+    description: Everything about your Pets
+  - name: store
+    description: Access to Petstore orders
+  - name: user
+    description: Operations about user
+paths:
+  /pet:
+    put:
+      tags:
+        - pet
+      summary: Update an existing pet
+      description: Update an existing pet by Id
+      operationId: updatePet
+      requestBody:
+        description: Update an existent pet in the store
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pet'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Pet'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Pet'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Pet'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Pet not found
+        '405':
+          description: Validation exception
+      security:
+        - petstore_auth:
+            - write:pets
+            - read:pets
+    post:
+      tags:
+        - pet
+      summary: Add a new pet to the store
+      description: Add a new pet to the store
+      operationId: addPet
+      requestBody:
+        description: Create a new pet in the store
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pet'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Pet'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Pet'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Pet'
+        '405':
+          description: Invalid input
+      security:
+        - petstore_auth:
+            - write:pets
+            - read:pets
+  /pet/findByStatus:
+    get:
+      tags:
+        - pet
+      summary: Finds Pets by status
+      description: Multiple status values can be provided with comma separated strings
+      operationId: findPetsByStatus
+      parameters:
+        - name: status
+          in: query
+          description: Status values that need to be considered for filter
+          required: false
+          explode: true
+          schema:
+            type: string
+            default: available
+            enum:
+              - available
+              - pending
+              - sold
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'          
+            application/xml:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'
+        '400':
+          description: Invalid status value
+      security:
+        - petstore_auth:
+            - write:pets
+            - read:pets
+  /pet/findByTags:
+    get:
+      tags:
+        - pet
+      summary: Finds Pets by tags
+      description: Multiple tags can be provided with comma separated strings. Use tag1, tag2, tag3 for testing.
+      operationId: findPetsByTags
+      parameters:
+        - name: tags
+          in: query
+          description: Tags to filter by
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'          
+            application/xml:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'
+        '400':
+          description: Invalid tag value
+      security:
+        - petstore_auth:
+            - write:pets
+            - read:pets
+  /pet/{petId}:
+    get:
+      tags:
+        - pet
+      summary: Find pet by ID
+      description: Returns a single pet
+      operationId: getPetById
+      parameters:
+        - name: petId
+          in: path
+          description: ID of pet to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Pet'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Pet not found
+      security:
+        - api_key: []
+        - petstore_auth:
+            - write:pets
+            - read:pets
+    post:
+      tags:
+        - pet
+      summary: Updates a pet in the store with form data
+      description: ''
+      operationId: updatePetWithForm
+      parameters:
+        - name: petId
+          in: path
+          description: ID of pet that needs to be updated
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: name
+          in: query
+          description: Name of pet that needs to be updated
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Status of pet that needs to be updated
+          schema:
+            type: string
+      responses:
+        '405':
+          description: Invalid input
+      security:
+        - petstore_auth:
+            - write:pets
+            - read:pets
+    delete:
+      tags:
+        - pet
+      summary: Deletes a pet
+      description: delete a pet
+      operationId: deletePet
+      parameters:
+        - name: api_key
+          in: header
+          description: ''
+          required: false
+          schema:
+            type: string
+        - name: petId
+          in: path
+          description: Pet id to delete
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '400':
+          description: Invalid pet value
+      security:
+        - petstore_auth:
+            - write:pets
+            - read:pets
+  /pet/{petId}/uploadImage:
+    post:
+      tags:
+        - pet
+      summary: uploads an image
+      description: ''
+      operationId: uploadFile
+      parameters:
+        - name: petId
+          in: path
+          description: ID of pet to update
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: additionalMetadata
+          in: query
+          description: Additional Metadata
+          required: false
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+      security:
+        - petstore_auth:
+            - write:pets
+            - read:pets
+  /store/inventory:
+    get:
+      tags:
+        - store
+      summary: Returns pet inventories by status
+      description: Returns a map of status codes to quantities
+      operationId: getInventory
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: integer
+                  format: int32
+      security:
+        - api_key: []
+  /store/order:
+    post:
+      tags:
+        - store
+      summary: Place an order for a pet
+      description: Place a new order in the store
+      operationId: placeOrder
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transactions'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Transactions'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Transactions'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transactions'
+        '405':
+          description: Invalid input
+  /store/order/{orderId}:
+    get:
+      tags:
+        - store
+      summary: Find purchase order by ID
+      description: For valid response try integer IDs with value <= 5 or > 10. Other values will generate exceptions.
+      operationId: getOrderById
+      parameters:
+        - name: orderId
+          in: path
+          description: ID of order that needs to be fetched
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transactions'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Transactions'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Order not found
+    delete:
+      tags:
+        - store
+      summary: Delete purchase order by ID
+      description: For valid response try integer IDs with value < 1000. Anything above 1000 or nonintegers will generate API errors
+      operationId: deleteOrder
+      parameters:
+        - name: orderId
+          in: path
+          description: ID of the order that needs to be deleted
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Order not found
+  /user:
+    post:
+      tags:
+        - user
+      summary: Create user
+      description: This can only be done by the logged in user.
+      operationId: createUser
+      requestBody:
+        description: Created user object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        default:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/User'
+  /user/createWithList:
+    post:
+      tags:
+        - user
+      summary: Creates list of users with given input array
+      description: Creates list of users with given input array
+      operationId: createUsersWithListInput
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/User'
+        default:
+          description: successful operation
+  /user/login:
+    get:
+      tags:
+        - user
+      summary: Logs user into the system
+      description: ''
+      operationId: loginUser
+      parameters:
+        - name: username
+          in: query
+          description: The user name for login
+          required: false
+          schema:
+            type: string
+        - name: password
+          in: query
+          description: The password for login in clear text
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          headers:
+            X-Rate-Limit:
+              description: calls per hour allowed by the user
+              schema:
+                type: integer
+                format: int32
+            X-Expires-After:
+              description: date in UTC when token expires
+              schema:
+                type: string
+                format: date-time
+          content:
+            application/xml:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: string
+        '400':
+          description: Invalid username/password supplied
+  /user/logout:
+    get:
+      tags:
+        - user
+      summary: Logs out current logged in user session
+      description: ''
+      operationId: logoutUser
+      parameters: []
+      responses:
+        default:
+          description: successful operation
+  /user/{username}:
+    get:
+      tags:
+        - user
+      summary: Get user by user name
+      description: ''
+      operationId: getUserByName
+      parameters:
+        - name: username
+          in: path
+          description: 'The name that needs to be fetched. Use user1 for testing. '
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid username supplied
+        '404':
+          description: User not found
+    put:
+      tags:
+        - user
+      summary: Update user
+      description: This can only be done by the logged in user.
+      operationId: updateUser
+      parameters:
+        - name: username
+          in: path
+          description: name that need to be deleted
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Update an existent user in the store
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/User'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        default:
+          description: successful operation
+    delete:
+      tags:
+        - user
+      summary: Delete user
+      description: This can only be done by the logged in user.
+      operationId: deleteUser
+      parameters:
+        - name: username
+          in: path
+          description: The name that needs to be deleted
+          required: true
+          schema:
+            type: string
+      responses:
+        '400':
+          description: Invalid username supplied
+        '404':
+          description: User not found
+components:
+  schemas:
+    InATrade:
+      type: object
+      properties:
+        ID:
+          type: integer
+          uniqueItems: true
+        description_of_good:
+          type: string
+          example: Indonesian Steam Coal In Bulk
+        tarif_pos_hs:
+          type: string
+          example: 2702.10.00
+        volume:
+          type: number
+          format: float
+          example: 74.300
+        unit:
+          type: string
+          default: Metric Ton (MT)
+        value:
+          type: number
+          format: float
+          example: 4.917.174
+        currency:
+          type: string
+          default: USD
+        in_a_trade_loading_port:
+          type: string
+          example: Muara Satui
+        destination_country:
+          type: string
+          example: China
+        data_ls_export_date:
+          type: string
+          format: date
+          example: 2022-12-03
+        data_ls_export_number:
+          type: string
+          example: LSE01.21.0097
+        data_ska_coo_date:
+          type: string
+          format: date
+          example: 2022-12-30
+        data_ska_coo_number:
+          type: string
+          example: 0007373/BJM/2021
+        peb_number:
+          type: string
+          example: 001179
+        peb_date:
+          type: string
+          format: date
+          example: 2022-12-29
+        aju_number:
+          type: string
+          example: 100200-000006-20211229-000113
+        dwt_value:
+          type: string
+          example: 50209
+        insurance_company_name:
+          type: string
+          example: PT ASURANSI UMUM MEGA
+        insurance_polis_number:
+          type: string
+          example: CN-2021-ARTA-01900038
+        navy_ship_name:
+          type: string
+          example: RANGER MARINE - ATHENS, GREECE
+        navy_company_name:
+          type: string
+          example: LARUS
+        navy_imo_number:
+          type: string
+          example: 9241346
+        CreatedAt:
+          type: string
+          format: date-time
+          example: 2022-08-22T11:43:52.374883+07:00
+        UpdatedAt:
+          type: string
+          format: date-time
+          example: 2022-08-22T11:43:52.374883+07:00
+    Transactions:
+      type: object
+      properties:
+        ID:
+          type: integer
+          uniqueItems: true
+        dmo_id:
+          type: integer
+        id_number:
+          type: integer
+          uniqueItems: true
+          example: DN-2022-08-0001
+        transaction_type:
+          type: string
+          enum:
+            - DN
+            - LN
+        shipping_date:
+          type: string
+          format: date-time
+          example: 2022-08-12T00:00:00Z
+        quantity:
+          type: number
+          format: float
+          example: 7504.086
+        ship_name:
+          type: string
+          example: TB. PACIFIC ELEVEN
+        barge_name:
+          type: string
+          example: BG. SOEKAWATI 2710
+        vesel_name:
+          type: string
+          example: MV GERM SUCCESS
+        seller:
+          type: string
+        customer_name:
+          type: string
+          example: PT INTI MUSTIKA KARYATAMA
+        loading_port_name:
+          type: string
+          example: JETTY PT SEBAMBAN TERMINAL UMUM
+        loading_port_location:
+          type: string
+          example: KALSEL
+        unloading_port_name:
+          type: string
+          example: MV MDM BATUR
+        unloading_port_location:
+          type: string
+          example: MUARA BUNTANI'
+        dmo_destination_port:
+          type: string
+          example: Muara Sampara Anchorage
+        skb_date:
+          type: string
+          format: date
+          example: 2021-08-12
+        skb_number:
+          type: string
+          example: 418/SKB/AJE/XI/2021
+        skab_date:
+          type: string
+          format: date
+          example: 2021-08-19
+        skab_number:
+          type: string
+          example: 418/SKAB/AJE/XI/2021
+        bill_of_landing_date:
+          type: string
+          example: 2021-11-28
+        bill_of_lading_number:
+          type: string
+          example: 648/PSS-SBN/XI/2021
+        royalty_rate:
+          type: number
+          format: float
+          example: 0.3
+        dp_royalty_currency:
+          type: string
+          default: IDR
+          example: IDR
+        dp_royalty_price:
+          type: number
+          format: float
+        dp_royalty_date:
+          type: string
+          format: date
+          example: 2021-12-01
+        dp_royalty_ntpn:
+          type: string
+          example: B86FB0N9VHIRLF9U
+        dp_royalty_billing_code:
+          type: string
+          example: 820220201188670
+        dp_royalty_total:
+          type: number
+          format: float
+          example: 232989427
+        payment_dp_royalty_currency:
+          type: string
+          default: IDR
+          example: IDR
+        payment_dp_royalty_price:
+          type: number
+          format: float
+          example: 264451901
+        payment_dp_royalty_date:
+          type: string
+          format: date
+          example: 2021-05-02
+        payment_dp_royalty_ntpn:
+          type: string
+          example: 07F448N3E0OFH3VD
+        payment_dp_royalty_billing_code:
+          type: string
+          example: 820220205600749
+        payment_dp_royalty_total:
+          type: number
+          format: float
+          example: 264451901
+        lhv_date:
+          type: string
+          format: date
+          example: 2022-05-02
+        lhv_number:
+          type: string
+          example: BJB.7356/CS/FEB/2022
+        surveyor_name:
+          type: string
+          example: PT CARSURIN
+        cow_date:
+          type: string
+          format: date
+          example: 2022-04-02
+        cow_number:
+          type: string
+          format: 01.22.0120B/ATQ-MINERBA/212.K/30/DJB/2018/2/2022
+        coa_date:
+          type: string
+          format: date
+          example: 2022-07-02
+        coa_number:
+          type: string
+          example: 01.22.0120B/ATQ-MINERBA/212.K/30/DJB/2018/2/2022
+        quality_tm_ar:
+          type: number
+          format: float
+          example: 38.18
+        quality_im_adb:
+          type: number
+          format: float
+          example: 17.84
+        quality_ash_ar:
+          type: number
+          format: float
+          example: 4.92
+        quality_ash_adb:
+          type: number
+          format: float
+          example: 3.50
+        quality_vm_adb:
+          type: number
+          format: float
+          example: 39.50
+        quality_fc_adb:
+          type: number
+          format: float
+          example: 37.10
+        quality_ts_ar:
+          type: number
+          format: float
+          example: 0.41
+        quality_ts_adb:
+          type: number
+          format: float
+          example: 0.32
+        quality_calories_ar:
+          type: number
+          format: float
+          example: 5193
+        quality_calories_adb:
+          type: number
+          format: float
+          example: 4060
+        barging_distance:
+          type: number
+          format: float
+          example: 35
+        sales_system:
+          type: string
+          enum:
+            - FOB BARGE
+            - FOB VESSEL
+            - CIF
+            - CNF
+        invoice_date:
+          type: string
+          format: date
+          example: 2022-15-03
+        invoice_number:
+          type: string
+          example: 004/INV/AJE/CR/III/2022
+        invoice_price_unit:
+          type: string
+          format: float
+          example: 87.63
+        invoice_price_total:
+          type: string
+          format: float
+          example: 3693604.50
+        dmo_reconciliation_letter:
+          type: string
+        contract_date:
+          type: string
+          format: date
+          example: 2022-01-10
+        contract_number:
+          type: string
+          example: 005/DNS-AJE/X/2020
+        dmo_buyer_name:
+          type: string
+          example: PT Virtue Dragon Nickel Industry
+        dmo_industry_type:
+          type: string
+        dmo_status_reconciliation_letter:
+          type: string
+        skb_document_link:
+          type: string
+          example: https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-0026/skb.pdf
+        skab_document_link:
+          type: string
+          format: binary
+          example: https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-0026/skab.pdf
+        bl_document_link:
+          type: string
+          format: binary
+          example: https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-0026/bl.pdf
+        royalti_provision_document_link:
+          type: string
+          format: binary
+          example: https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-0026/royalti_provision_document.pdf
+        royalti_final_document_link:
+          type: string
+          format: binary
+          example: https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-0026/royalti_final_document.pdf
+        cow_document_link:
+          type: string
+          format: binary
+          example: https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-0026/cow_document.pdf
+        coa_document_link:
+          type: string
+          format: binary
+          example: https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-0026/coa_document.pdf
+        invoice_and_contract_document_link:
+          type: string
+          format: binary
+          example: https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-0026/invoice_and_contract_document.pdf
+        lhv_document_link:
+          type: string
+          format: binary
+          example: https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-0026/lhv_document.pdf
+        CreatedAt:
+          type: string
+          format: date-time
+          example: 2022-08-22T11:43:52.374883+07:00
+        UpdatedAt:
+          type: string
+          format: date-time
+          example: 2022-08-22T11:43:52.374883+07:00
+    Customer:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 100000
+        username:
+          type: string
+          example: fehguy
+        address:
+          type: array
+          xml:
+            name: addresses
+            wrapped: true
+          items:
+            $ref: '#/components/schemas/Address'
+      xml:
+        name: customer
+    Address:
+      type: object
+      properties:
+        street:
+          type: string
+          example: 437 Lytton
+        city:
+          type: string
+          example: Palo Alto
+        state:
+          type: string
+          example: CA
+        zip:
+          type: string
+          example: '94301'
+      xml:
+        name: address
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: Dogs
+      xml:
+        name: category
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        username:
+          type: string
+          example: theUser
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: James
+        email:
+          type: string
+          example: john@email.com
+        password:
+          type: string
+          example: '12345'
+        phone:
+          type: string
+          example: '12345'
+        userStatus:
+          type: integer
+          description: User Status
+          format: int32
+          example: 1
+      xml:
+        name: user
+    Tag:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+      xml:
+        name: tag
+    Pet:
+      required:
+        - name
+        - photoUrls
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        name:
+          type: string
+          example: doggie
+        category:
+          $ref: '#/components/schemas/Category'
+        photoUrls:
+          type: array
+          xml:
+            wrapped: true
+          items:
+            type: string
+            xml:
+              name: photoUrl
+        tags:
+          type: array
+          xml:
+            wrapped: true
+          items:
+            $ref: '#/components/schemas/Tag'
+        status:
+          type: string
+          description: pet status in the store
+          enum:
+            - available
+            - pending
+            - sold
+      xml:
+        name: pet
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        type:
+          type: string
+        message:
+          type: string
+      xml:
+        name: '##default'
+  requestBodies:
+    Pet:
+      description: Pet object that needs to be added to the store
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Pet'
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/Pet'
+    UserArray:
+      description: List of user object
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/User'
+  securitySchemes:
+    petstore_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://petstore3.swagger.io/oauth/authorize
+          scopes:
+            write:pets: modify pets in your account
+            read:pets: read your pets
+    api_key:
+      type: apiKey
+      name: api_key
+      in: header
