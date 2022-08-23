@@ -2,6 +2,7 @@ package routing
 
 import (
 	"ajebackend/handler"
+	"ajebackend/helper"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
 	"ajebackend/model/transaction"
@@ -31,7 +32,7 @@ func TransactionRouting(db *gorm.DB, app fiber.Router, validate *validator.Valid
 
 	// Reference to edit the error - https://www.youtube.com/watch?v=ejEizICXm9w
 	transactionRouting.Use(jwtware.New(jwtware.Config{
-		SigningKey:    []byte("aFhF234aiI"),
+		SigningKey:    []byte(helper.GetEnvWithKey("JWT_SECRET_KEY")),
 		SigningMethod: jwtware.HS256,
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
 			return ctx.Status(401).JSON(fiber.Map{

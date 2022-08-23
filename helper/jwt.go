@@ -5,7 +5,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-var jwtSecretKey = []byte("aFhF234aiI")
+var jwtSecretKey = []byte(GetEnvWithKey("JWT_SECRET_KEY"))
 
 func GenerateToken(id uint, username string, email string) (string, error) {
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ajebackend/helper"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmotongkang"
 	"ajebackend/model/dmovessel"
@@ -27,9 +28,15 @@ import (
 
 func main() {
 	LoadEnv()
+	var port string
+	if len(os.Getenv("PORT")) < 2 {
+		port = "8080"
+	} else {
+		port = helper.GetEnvWithKey("PORT")
+	}
 
-	dbUrl := ""
-	dbUrlStg := "host=localhost user=postgres password=postgres dbname=deli_aje_development port=5432 sslmode=disable TimeZone=Asia/Shanghai"
+	dbUrl := helper.GetEnvWithKey("DATABASE_URL")
+	dbUrlStg := helper.GetEnvWithKey("DATABASE_URL_STAGING")
 
 	var dsn string
 
@@ -79,14 +86,13 @@ func main() {
 	routing2.TransactionRouting(db, apiV1, validate)
 	routing2.UserRouting(db, apiV1, validate)
 
-	log.Fatal(app.Listen(":3000"))
+	app.Listen(":" + port)
 }
 
 func createDB(dsn string) {
 
 	// Base DSN use for if there is no database (only for creating new database)
-
-	baseDsn := "host=localhost user=postgres password=postgres dbname=postgres port=5432 sslmode=disable TimeZone=Asia/Shanghai"
+	baseDsn := helper.GetEnvWithKey("BASE_DATABASE_URL_STAGING")
 	db, err := gorm.Open(postgres.Open(baseDsn), &gorm.Config{})
 
 	if err != nil {
