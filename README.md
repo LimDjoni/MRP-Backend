@@ -7,7 +7,7 @@ URL = {{url}}/api/v1
 ## USER API
 
 **REGISTER**
-REGISTER_URL = URL/register
+REGISTER_URL = URL/user/register
 BODY =
 - username = STRING , UNIQUE
 - email = EMAIL , STRING , UNIQUE
@@ -109,7 +109,7 @@ RESPONSE_ERROR_VALIDATION_EMAIL =
 ```
 
 **LOGIN**
-LOGIN_URL= URL/login
+LOGIN_URL= URL/user/login
 BODY =
 - data = STRING -> email  / username used in register
 - password = STRING
