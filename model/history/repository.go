@@ -39,32 +39,73 @@ func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTra
 		return createdTransaction, findErr
 	}
 
-
+	createdTransaction.DmoId = nil
+	createdTransaction.IdNumber += fmt.Sprintf("DN-%v-%v-%v", year, int(month), helper.CreateIdNumber(int(totalCount + 1)))
+	createdTransaction.TransactionType = "DN"
+	createdTransaction.ShippingDate = inputTransactionDN.ShippingDate
+	createdTransaction.Quantity = inputTransactionDN.Quantity
+	createdTransaction.ShipName = inputTransactionDN.ShipName
+	createdTransaction.BargeName = inputTransactionDN.BargeName
+	createdTransaction.VesselName = inputTransactionDN.VesselName
+	createdTransaction.CustomerName = inputTransactionDN.CustomerName
+	createdTransaction.LoadingPortName = inputTransactionDN.LoadingPortName
+	createdTransaction.LoadingPortLocation = inputTransactionDN.LoadingPortLocation
+	createdTransaction.UnloadingPortName = inputTransactionDN.UnloadingPortName
+	createdTransaction.UnloadingPortLocation = inputTransactionDN.UnloadingPortLocation
+	createdTransaction.DmoDestinationPort = inputTransactionDN.DmoDestinationPort
+	createdTransaction.SkbDate = inputTransactionDN.SkbDate
+	createdTransaction.SkbNumber = inputTransactionDN.SkbNumber
+	createdTransaction.SkabDate = inputTransactionDN.SkabDate
+	createdTransaction.SkabNumber = inputTransactionDN.SkabNumber
+	createdTransaction.BillOfLadingDate = inputTransactionDN.BillOfLadingDate
+	createdTransaction.BillOfLadingNumber = inputTransactionDN.BillOfLadingNumber
+	createdTransaction.RoyaltyRate = inputTransactionDN.RoyaltyRate
+	createdTransaction.DpRoyaltyCurrency = inputTransactionDN.DpRoyaltyCurrency
 	if inputTransactionDN.DpRoyaltyCurrency == "" {
-		inputTransactionDN.DpRoyaltyCurrency = "IDR"
+		createdTransaction.DpRoyaltyCurrency = "IDR"
 	}
-
+	createdTransaction.DpRoyaltyDate = inputTransactionDN.DpRoyaltyDate
+	createdTransaction.DpRoyaltyNtpn = inputTransactionDN.DpRoyaltyNtpn
+	createdTransaction.DpRoyaltyBillingCode = inputTransactionDN.DpRoyaltyBillingCode
+	createdTransaction.DpRoyaltyTotal = inputTransactionDN.DpRoyaltyTotal
+	createdTransaction.PaymentDpRoyaltyCurrency = inputTransactionDN.PaymentDpRoyaltyCurrency
 	if inputTransactionDN.PaymentDpRoyaltyCurrency == "" {
-		inputTransactionDN.PaymentDpRoyaltyCurrency = "IDR"
+		createdTransaction.PaymentDpRoyaltyCurrency = "IDR"
 	}
+	createdTransaction.PaymentDpRoyaltyDate = inputTransactionDN.PaymentDpRoyaltyDate
+	createdTransaction.PaymentDpRoyaltyNtpn = inputTransactionDN.PaymentDpRoyaltyNtpn
+	createdTransaction.PaymentDpRoyaltyBillingCode = inputTransactionDN.PaymentDpRoyaltyBillingCode
+	createdTransaction.PaymentDpRoyaltyTotal = inputTransactionDN.PaymentDpRoyaltyTotal
+	createdTransaction.LhvDate = inputTransactionDN.LhvDate
+	createdTransaction.LhvNumber = inputTransactionDN.LhvNumber
+	createdTransaction.SurveyorName = inputTransactionDN.SurveyorName
+	createdTransaction.CowDate = inputTransactionDN.CowDate
+	createdTransaction.CowNumber = inputTransactionDN.CowNumber
+	createdTransaction.CoaDate = inputTransactionDN.CoaDate
+	createdTransaction.CoaNumber = inputTransactionDN.CoaNumber
+	createdTransaction.QualityTmAr = inputTransactionDN.QualityTmAr
+	createdTransaction.QualityImAdb = inputTransactionDN.QualityImAdb
+	createdTransaction.QualityAshAr = inputTransactionDN.QualityAshAr
+	createdTransaction.QualityAshAdb = inputTransactionDN.QualityAshAdb
+	createdTransaction.QualityVmAdb = inputTransactionDN.QualityVmAdb
+	createdTransaction.QualityFcAdb = inputTransactionDN.QualityFcAdb
+	createdTransaction.QualityTsAr = inputTransactionDN.QualityTsAr
+	createdTransaction.QualityTsAdb = inputTransactionDN.QualityTsAdb
+	createdTransaction.QualityCaloriesAr = inputTransactionDN.QualityCaloriesAr
+	createdTransaction.QualityCaloriesAdb = inputTransactionDN.QualityCaloriesAdb
+	createdTransaction.BargingDistance = inputTransactionDN.BargingDistance
+	createdTransaction.SalesSystem = inputTransactionDN.SalesSystem
+	createdTransaction.InvoiceDate = inputTransactionDN.InvoiceDate
+	createdTransaction.InvoiceNumber = inputTransactionDN.InvoiceNumber
+	createdTransaction.InvoicePriceUnit = inputTransactionDN.InvoicePriceUnit
+	createdTransaction.InvoicePriceTotal = inputTransactionDN.InvoicePriceTotal
+	createdTransaction.DmoReconciliationLetter = inputTransactionDN.DmoReconciliationLetter
+	createdTransaction.ContractDate = inputTransactionDN.ContractDate
+	createdTransaction.ContractNumber = inputTransactionDN.ContractNumber
+	createdTransaction.DmoBuyerName = inputTransactionDN.DmoBuyerName
+	createdTransaction.DmoIndustryType = inputTransactionDN.DmoIndustryType
 
-	inputTransactionJson, errMarshal := json.Marshal(inputTransactionDN)
-
-	if errMarshal != nil {
-		return  createdTransaction, errMarshal
-	}
-	inputMap := make(map[string]interface{})
-	errUnmarshal := json.Unmarshal([]byte(inputTransactionJson), &inputMap)
-
-	if errUnmarshal != nil {
-		return  createdTransaction, errUnmarshal
-	}
-
-	inputMap["dmo_id"] = nil
-	inputMap["id_number"] = fmt.Sprintf("DN-%v-%v-%v", year, int(month), helper.CreateIdNumber(int(totalCount + 1)))
-	inputMap["transaction_type"] = "DN"
-
-	createTransactionErr := tx.Model(&createdTransaction).Create(inputMap).Error
+	createTransactionErr := tx.Create(&createdTransaction).Error
 
 	if createTransactionErr != nil {
 		tx.Rollback()
