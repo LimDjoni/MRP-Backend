@@ -11,7 +11,6 @@ type Transaction struct {
 	Dmo *dmo.Dmo `json:"dmo"`
 	IdNumber string `json:"id_number" gorm:"UNIQUE"`
 	TransactionType string `json:"transaction_type"`
-	Number int `json:"number"`
 	ShippingDate *string `json:"shipping_date" gorm:"type:DATE"`
 	Quantity float64 `json:"quantity"`
 	ShipName string `json:"ship_name"`
@@ -32,13 +31,11 @@ type Transaction struct {
 	BillOfLadingNumber string `json:"bill_of_lading_number"`
 	RoyaltyRate float64 `json:"royalty_rate"`
 	DpRoyaltyCurrency string `json:"dp_royalty_currency"`
-	DpRoyaltyPrice float64 `json:"dp_royalty_price"`
 	DpRoyaltyDate *string `json:"dp_royalty_date" gorm:"type:DATE"`
 	DpRoyaltyNtpn string `json:"dp_royalty_ntpn"`
 	DpRoyaltyBillingCode string `json:"dp_royalty_billing_code"`
 	DpRoyaltyTotal float64 `json:"dp_royalty_total"`
 	PaymentDpRoyaltyCurrency string `json:"payment_dp_royalty_currency"`
-	PaymentDpRoyaltyPrice float64 `json:"payment_dp_royalty_price"`
 	PaymentDpRoyaltyDate *string `json:"payment_dp_royalty_date" gorm:"type:DATE"`
 	PaymentDpRoyaltyNtpn string `json:"payment_dp_royalty_ntpn"`
 	PaymentDpRoyaltyBillingCode string `json:"payment_dp_royalty_billing_code"`
@@ -71,8 +68,19 @@ type Transaction struct {
 	ContractNumber string `json:"contract_number"`
 	DmoBuyerName string `json:"dmo_buyer_name"`
 	DmoIndustryType string `json:"dmo_industry_type"`
-	DmoStatusReconciliationLetter string `json:"dmo_status_reconciliation_letter"`
-	InATradeNumber string `json:"in_a_trade_number"`
+	SkbDocumentLink string `json:"skb_document_link"`
+	SkabDocumentLink string `json:"skab_document_link"`
+	BLDocumentLink string `json:"bl_document_link"`
+	RoyaltiProvisionDocumentLink string `json:"royalti_provision_document_link"`
+	RoyaltiFinalDocumentLink string `json:"royalti_final_document_link"`
+	COWDocumentLink string `json:"cow_document_link"`
+	COADocumentLink string `json:"coa_document_link"`
+	InvoiceAndContractDocumentLink string `json:"invoice_and_contract_document_link"`
+	LHVDocumentLink string `json:"lhv_document_link"`
+}
+
+type InATrade struct {
+	gorm.Model
 	DescriptionOfGood string `json:"description_of_good"`
 	TarifPosHs string `json:"tarif_pos_hs"`
 	Volume float64 `json:"volume"`
@@ -94,13 +102,4 @@ type Transaction struct {
 	NavyShipName string `json:"navy_ship_name"`
 	NavyCompanyName string `json:"navy_company_name"`
 	NavyImoNumber string `json:"navy_imo_number"`
-	SkbDocument string `json:"skb_document"`
-	SkabDocument string `json:"skab_document"`
-	BLDocument string `json:"bl_document"`
-	RoyaltiProvisionDocument string `json:"royalti_provision_document"`
-	RoyaltiFinalDocument string `json:"royalti_final_document"`
-	COWDocument string `json:"cow_document"`
-	COADocument string `json:"coa_document"`
-	InvoiceAndContractDocument string `json:"invoice_and_contract_document"`
-	LHVDocument string `json:"lhv_document"`
 }

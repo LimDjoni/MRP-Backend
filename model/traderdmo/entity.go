@@ -12,4 +12,5 @@ type TraderDmo struct {
 	Dmo dmo.Dmo `json:"dmo"`
 	TraderId uint `json:"trader_id"`
 	Trader trader.Trader `json:"trader"`
+	Order int `json:"order"`
 }

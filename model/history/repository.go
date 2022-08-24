@@ -39,69 +39,32 @@ func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTra
 		return createdTransaction, findErr
 	}
 
-	createdTransaction.DmoId = nil
-	createdTransaction.Number = int(totalCount) + 1
-	createdTransaction.IdNumber += fmt.Sprintf("DN-%v-%v-%v", year, int(month), helper.CreateIdNumber(int(totalCount + 1)))
-	createdTransaction.TransactionType = "DN"
-	createdTransaction.ShippingDate = inputTransactionDN.ShippingDate
-	createdTransaction.Quantity = inputTransactionDN.Quantity
-	createdTransaction.ShipName = inputTransactionDN.ShipName
-	createdTransaction.BargeName = inputTransactionDN.BargeName
-	createdTransaction.VesselName = inputTransactionDN.VesselName
-	createdTransaction.CustomerName = inputTransactionDN.CustomerName
-	createdTransaction.LoadingPortName = inputTransactionDN.LoadingPortName
-	createdTransaction.LoadingPortLocation = inputTransactionDN.LoadingPortLocation
-	createdTransaction.UnloadingPortName = inputTransactionDN.UnloadingPortName
-	createdTransaction.UnloadingPortLocation = inputTransactionDN.UnloadingPortLocation
-	createdTransaction.DmoDestinationPort = inputTransactionDN.DmoDestinationPort
-	createdTransaction.SkbDate = inputTransactionDN.SkbDate
-	createdTransaction.SkbNumber = inputTransactionDN.SkbNumber
-	createdTransaction.SkabDate = inputTransactionDN.SkabDate
-	createdTransaction.SkabNumber = inputTransactionDN.SkabNumber
-	createdTransaction.BillOfLadingDate = inputTransactionDN.BillOfLadingDate
-	createdTransaction.BillOfLadingNumber = inputTransactionDN.BillOfLadingNumber
-	createdTransaction.RoyaltyRate = inputTransactionDN.RoyaltyRate
-	createdTransaction.DpRoyaltyPrice = inputTransactionDN.DpRoyaltyPrice
-	createdTransaction.DpRoyaltyDate = inputTransactionDN.DpRoyaltyDate
-	createdTransaction.DpRoyaltyNtpn = inputTransactionDN.DpRoyaltyNtpn
-	createdTransaction.DpRoyaltyBillingCode = inputTransactionDN.DpRoyaltyBillingCode
-	createdTransaction.DpRoyaltyTotal = inputTransactionDN.DpRoyaltyTotal
-	createdTransaction.PaymentDpRoyaltyPrice = inputTransactionDN.PaymentDpRoyaltyPrice
-	createdTransaction.PaymentDpRoyaltyDate = inputTransactionDN.PaymentDpRoyaltyDate
-	createdTransaction.PaymentDpRoyaltyNtpn = inputTransactionDN.PaymentDpRoyaltyNtpn
-	createdTransaction.PaymentDpRoyaltyBillingCode = inputTransactionDN.PaymentDpRoyaltyBillingCode
-	createdTransaction.PaymentDpRoyaltyTotal = inputTransactionDN.PaymentDpRoyaltyTotal
-	createdTransaction.LhvDate = inputTransactionDN.LhvDate
-	createdTransaction.LhvNumber = inputTransactionDN.LhvNumber
-	createdTransaction.SurveyorName = inputTransactionDN.SurveyorName
-	createdTransaction.CowDate = inputTransactionDN.CowDate
-	createdTransaction.CowNumber = inputTransactionDN.CowNumber
-	createdTransaction.CoaDate = inputTransactionDN.CoaDate
-	createdTransaction.CoaNumber = inputTransactionDN.CoaNumber
-	createdTransaction.QualityTmAr = inputTransactionDN.QualityTmAr
-	createdTransaction.QualityImAdb = inputTransactionDN.QualityImAdb
-	createdTransaction.QualityAshAr = inputTransactionDN.QualityAshAr
-	createdTransaction.QualityAshAdb = inputTransactionDN.QualityAshAdb
-	createdTransaction.QualityVmAdb = inputTransactionDN.QualityVmAdb
-	createdTransaction.QualityFcAdb = inputTransactionDN.QualityFcAdb
-	createdTransaction.QualityTsAr = inputTransactionDN.QualityTsAr
-	createdTransaction.QualityTsAdb = inputTransactionDN.QualityTsAdb
-	createdTransaction.QualityCaloriesAr = inputTransactionDN.QualityCaloriesAr
-	createdTransaction.QualityCaloriesAdb = inputTransactionDN.QualityCaloriesAdb
-	createdTransaction.BargingDistance = inputTransactionDN.BargingDistance
-	createdTransaction.SalesSystem = inputTransactionDN.SalesSystem
-	createdTransaction.InvoiceDate = inputTransactionDN.InvoiceDate
-	createdTransaction.InvoiceNumber = inputTransactionDN.InvoiceNumber
-	createdTransaction.InvoicePriceUnit = inputTransactionDN.InvoicePriceUnit
-	createdTransaction.InvoicePriceTotal = inputTransactionDN.InvoicePriceTotal
-	createdTransaction.DmoReconciliationLetter = inputTransactionDN.DmoReconciliationLetter
-	createdTransaction.ContractDate = inputTransactionDN.ContractDate
-	createdTransaction.ContractNumber = inputTransactionDN.ContractNumber
-	createdTransaction.DmoBuyerName = inputTransactionDN.DmoBuyerName
-	createdTransaction.DmoIndustryType = inputTransactionDN.DmoIndustryType
-	createdTransaction.DmoStatusReconciliationLetter = inputTransactionDN.DmoStatusReconciliationLetter
 
-	createTransactionErr := tx.Create(&createdTransaction).Error
+	if inputTransactionDN.DpRoyaltyCurrency == "" {
+		inputTransactionDN.DpRoyaltyCurrency = "IDR"
+	}
+
+	if inputTransactionDN.PaymentDpRoyaltyCurrency == "" {
+		inputTransactionDN.PaymentDpRoyaltyCurrency = "IDR"
+	}
+
+	inputTransactionJson, errMarshal := json.Marshal(inputTransactionDN)
+
+	if errMarshal != nil {
+		return  createdTransaction, errMarshal
+	}
+	inputMap := make(map[string]interface{})
+	errUnmarshal := json.Unmarshal([]byte(inputTransactionJson), &inputMap)
+
+	if errUnmarshal != nil {
+		return  createdTransaction, errUnmarshal
+	}
+
+	inputMap["dmo_id"] = nil
+	inputMap["id_number"] = fmt.Sprintf("DN-%v-%v-%v", year, int(month), helper.CreateIdNumber(int(totalCount + 1)))
+	inputMap["transaction_type"] = "DN"
+
+	createTransactionErr := tx.Model(&createdTransaction).Create(inputMap).Error
 
 	if createTransactionErr != nil {
 		tx.Rollback()
@@ -244,50 +207,50 @@ func (r *repository) UploadDocument (idTransaction uint, urlS3 string, userId ui
 
 	switch documentType {
 		case "skb":
-			if uploadedTransaction.SkbDocument != "" {
+			if uploadedTransaction.SkbDocumentLink != "" {
 				isReupload = true
 			}
-			editData["skb_document"] = urlS3
+			editData["skb_document_link"] = urlS3
 		case "skab":
-			if uploadedTransaction.SkabDocument != "" {
+			if uploadedTransaction.SkabDocumentLink != "" {
 				isReupload = true
 			}
-			editData["skab_document"] = urlS3
+			editData["skab_document_link"] = urlS3
 		case "bl":
-			if uploadedTransaction.BLDocument != "" {
+			if uploadedTransaction.BLDocumentLink != "" {
 				isReupload = true
 			}
-			editData["bl_document"] = urlS3
+			editData["bl_document_link"] = urlS3
 		case "royalti_provision":
-			if uploadedTransaction.RoyaltiProvisionDocument != "" {
+			if uploadedTransaction.RoyaltiProvisionDocumentLink != "" {
 				isReupload = true
 			}
-			editData["royalti_provision_document"] = urlS3
+			editData["royalti_provision_document_link"] = urlS3
 		case "royalti_final":
-			if uploadedTransaction.RoyaltiFinalDocument != "" {
+			if uploadedTransaction.RoyaltiFinalDocumentLink != "" {
 				isReupload = true
 			}
-			editData["royalti_final_document"] = urlS3
+			editData["royalti_final_document_link"] = urlS3
 		case "cow":
-			if uploadedTransaction.COWDocument != "" {
+			if uploadedTransaction.COWDocumentLink != "" {
 				isReupload = true
 			}
-			editData["cow_document"] = urlS3
+			editData["cow_document_link"] = urlS3
 		case "coa":
-			if uploadedTransaction.COADocument != "" {
+			if uploadedTransaction.COADocumentLink != "" {
 				isReupload = true
 			}
-			editData["coa_document"] = urlS3
+			editData["coa_document_link"] = urlS3
 		case "invoice":
-			if uploadedTransaction.InvoiceAndContractDocument != "" {
+			if uploadedTransaction.InvoiceAndContractDocumentLink != "" {
 				isReupload = true
 			}
-			editData["invoice_and_contract_document"] = urlS3
+			editData["invoice_and_contract_document_link"] = urlS3
 		case "lhv":
-			if uploadedTransaction.LHVDocument != "" {
+			if uploadedTransaction.LHVDocumentLink != "" {
 				isReupload = true
 			}
-			editData["lhv_document"] = urlS3
+			editData["lhv_document_link"] = urlS3
 	}
 
 	errEdit := tx.Model(&uploadedTransaction).Updates(editData).Error

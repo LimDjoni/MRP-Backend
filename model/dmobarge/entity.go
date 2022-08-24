@@ -1,11 +1,11 @@
-package dmotongkang
+package dmobarge
 
 import (
 	"ajebackend/model/dmo"
 	"gorm.io/gorm"
 )
 
-type DmoTongkang struct {
+type DmoBarge struct {
 	gorm.Model
 	DmoId uint `json:"dmo_id"`
 	Dmo dmo.Dmo `json:"dmo"`
