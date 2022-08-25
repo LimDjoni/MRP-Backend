@@ -2,14 +2,12 @@ package routing
 
 import (
 	"ajebackend/handler"
-	"ajebackend/helper"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	jwtware "github.com/gofiber/jwt/v3"
 	"gorm.io/gorm"
 )
 
@@ -28,18 +26,21 @@ func TransactionRouting(db *gorm.DB, app fiber.Router, validate *validator.Valid
 
 	transactionHandler := handler.NewTransactionHandler(transactionService, userService, historyService, validate, logService)
 
+
 	transactionRouting := app.Group("/transaction") // /api
 
-	// Reference to edit the error - https://www.youtube.com/watch?v=ejEizICXm9w
-	transactionRouting.Use(jwtware.New(jwtware.Config{
-		SigningKey:    []byte(helper.GetEnvWithKey("JWT_SECRET_KEY")),
-		SigningMethod: jwtware.HS256,
-		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
-			return ctx.Status(401).JSON(fiber.Map{
-				"error": "unauthorized",
-			})
-		},
-	}))
+	//// Reference to edit the error - https://www.youtube.com/watch?v=ejEizICXm9w
+	//transactionRouting.Use(jwtware.New(jwtware.Config{
+	//	SigningKey:    []byte(helper.GetEnvWithKey("JWT_SECRET_KEY")),
+	//	SigningMethod: jwtware.HS256,
+	//	ErrorHandler: func(ctx *fiber.Ctx, err error) error {
+	//		return ctx.Status(401).JSON(fiber.Map{
+	//			"error": "unauthorize",
+	//		})
+	//	},
+	//}))
+	//
+
 
 	transactionRouting.Post("/create/dn", transactionHandler.CreateTransactionDN)
 	transactionRouting.Get("/list/dn", transactionHandler.ListDataDN)

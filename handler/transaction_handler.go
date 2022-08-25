@@ -93,22 +93,28 @@ func (h *transactionHandler) CreateTransactionDN(c *fiber.Ctx) error {
 	return c.Status(201).JSON(createdTransaction)
 }
 
+func JSON(c *fiber.Ctx, response interface{}) error {
+	err := c.JSON(response)
+	c.Set("content-type", "application/json; charset=utf-8")
+	return err
+}
+
 func (h *transactionHandler) ListDataDN(c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	responseUnauthorized := map[string]interface{}{
-		"error": "unauthorized",
-	}
-
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
-		return c.Status(401).JSON(responseUnauthorized)
-	}
-
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
-
-	if checkUserErr != nil {
-		return c.Status(401).JSON(responseUnauthorized)
-	}
+	//user := c.Locals("user").(*jwt.Token)
+	//claims := user.Claims.(jwt.MapClaims)
+	//responseUnauthorized := map[string]interface{}{
+	//	"error": "unauthorized",
+	//}
+	//
+	//if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	//	return c.Status(401).JSON(responseUnauthorized)
+	//}
+	//
+	//_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	//
+	//if checkUserErr != nil {
+	//	return c.Status(401).JSON(responseUnauthorized)
+	//}
 
 	var sortAndFilter transaction.SortAndFilter
 	page := c.Query("page")
@@ -146,7 +152,10 @@ func (h *transactionHandler) ListDataDN(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(200).JSON(listDN)
+
+	return JSON(c, listDN)
+	//c.Set("content-type", "application/json; charset=utf-8")
+	//return c.Status(200).JSON(listDN)
 }
 
 func (h *transactionHandler) DetailTransactionDN(c *fiber.Ctx) error {

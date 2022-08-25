@@ -17,16 +17,17 @@ import (
 	"ajebackend/validatorfunc"
 	"fmt"
 	"github.com/go-playground/validator/v10"
-	"github.com/joho/godotenv"
-	"log"
-	"os"
-
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"log"
+	"os"
 )
 
 func main() {
+
 	LoadEnv()
 	var port string
 	if len(os.Getenv("PORT")) < 2 {
@@ -81,10 +82,15 @@ func main() {
 	}
 
 	app := fiber.New()
+
+	app.Use(cors.New(cors.Config{
+		AllowCredentials: true,
+		AllowHeaders: "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With",
+	}))
+
 	apiV1 := app.Group("/api/v1") // /api
 
-	routing2.TransactionRouting(db, apiV1, validate)
-	routing2.UserRouting(db, apiV1, validate)
+	Setup(db, validate, apiV1)
 
 	app.Listen(":" + port)
 }
@@ -121,4 +127,10 @@ func LoadEnv() {
 		log.Fatalf("Error loading .env file")
 		os.Exit(1)
 	}
+}
+
+func Setup(db *gorm.DB, validate *validator.Validate, route fiber.Router) {
+	routing2.TransactionRouting(db, route, validate)
+	routing2.UserRouting(db, route, validate)
+
 }
