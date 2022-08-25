@@ -83,10 +83,7 @@ func main() {
 
 	app := fiber.New()
 
-	app.Use(cors.New(cors.Config{
-		AllowCredentials: true,
-		AllowHeaders: "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With",
-	}))
+	app.Use(cors.New())
 
 	apiV1 := app.Group("/api/v1") // /api
 
