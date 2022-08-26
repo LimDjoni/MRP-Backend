@@ -379,7 +379,7 @@ func (h *transactionHandler) UpdateDocumentTransactionDN (c *fiber.Ctx) error {
 	idInt, err := strconv.Atoi(id)
 
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{
+		return c.Status(404).JSON(fiber.Map{
 			"error": "record not found",
 		})
 	}

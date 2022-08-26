@@ -48,6 +48,6 @@ func TransactionRouting(db *gorm.DB, app fiber.Router, validate *validator.Valid
 	transactionRouting.Get("/list/dn", transactionHandler.ListDataDN)
 	transactionRouting.Get("/detail/dn/:id", transactionHandler.DetailTransactionDN)
 	transactionRouting.Delete("/delete/dn/:id", transactionHandler.DeleteTransactionDN)
-	transactionRouting.Post("/update/dn/:id", transactionHandler.UpdateTransactionDN)
-	transactionRouting.Post("/update/document/dn/:id/:type", transactionHandler.UpdateDocumentTransactionDN)
+	transactionRouting.Put("/update/dn/:id", transactionHandler.UpdateTransactionDN)
+	transactionRouting.Put("/update/document/dn/:id/:type", transactionHandler.UpdateDocumentTransactionDN)
 }
