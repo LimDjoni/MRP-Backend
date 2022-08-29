@@ -372,7 +372,6 @@ func (h *transactionHandler) UpdateDocumentTransactionDN (c *fiber.Ctx) error {
 		return c.Status(400).JSON(responseErr)
 	}
 
-
 	if !strings.Contains(file.Filename, ".pdf" ) {
 		responseErr["error"] = "document must be pdf"
 		return c.Status(400).JSON(responseErr)
