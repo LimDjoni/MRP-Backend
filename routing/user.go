@@ -13,6 +13,8 @@ func UserRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	userService := user.NewService(userRepository)
 	userHandler := handler.NewUserHandler(userService, validate)
 
-	app.Post("/register", userHandler.RegisterUser)
-	app.Post("/login", userHandler.LoginUser)
+	userRouting := app.Group("/user") // /api
+
+	userRouting.Post("/register", userHandler.RegisterUser)
+	userRouting.Post("/login", userHandler.LoginUser)
 }
