@@ -1,6 +1,9 @@
 package main
 
 import (
+	"ajebackend/model/awshelper"
+	"ajebackend/model/history"
+	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 	"ajebackend/validatorfunc"
 	"bytes"
@@ -26,6 +29,7 @@ import (
 )
 
 var dataId = 1
+var idNumber = ""
 
 func startSetup() (*gorm.DB, *validator.Validate) {
 	loadEnv()
@@ -526,6 +530,7 @@ func TestCreateTransactionDN(t *testing.T) {
 
 		if res.StatusCode == 201 {
 			dataId = int(mapUnmarshal["ID"].(float64))
+			idNumber = mapUnmarshal["id_number"].(string)
 		}
 		//// Verify, that the reponse body equals the expected body
 		assert.Contains(t, mapUnmarshal, "ID", "create data dn")
@@ -700,7 +705,7 @@ func TestUpdateTransactionDN(t *testing.T) {
 				"invoice_and_contract_document_link": "",
 				"lhv_document_link": "",
 			},
-			id: 49,
+			id: dataId,
 			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbmRhcmluNkBnbWFpbC5jb20iLCJpZCI6NTEsInVzZXJuYW1lIjoiaGVuZGFyaW42In0.77-X-McTZZUsf3yLKV9QNa0zziFBu922W020Xlz6MuU",
 		},
 		{
@@ -1018,7 +1023,7 @@ func TestUpdateDocumentTransactionDN(t *testing.T) {
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: 49,
+			id: dataId,
 			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbmRhcmluNkBnbWFpbC5jb20iLCJpZCI6NTEsInVzZXJuYW1lIjoiaGVuZGFyaW42In0.77-X-McTZZUsf3yLKV9QNa0zziFBu922W020Xlz6MuU",
 			file: "upload_test/output.pdf",
 		},
@@ -1197,14 +1202,14 @@ func TestDeleteTransactionDN(t *testing.T) {
 		},
 		{
 			expectedError: false,
-			expectedCode:  200,
-			id: dataId,
+			expectedCode:  404,
+			id: 1050,
 			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbmRhcmluNkBnbWFpbC5jb20iLCJpZCI6NTEsInVzZXJuYW1lIjoiaGVuZGFyaW42In0.77-X-McTZZUsf3yLKV9QNa0zziFBu922W020Xlz6MuU",
 		},
 		{
 			expectedError: false,
-			expectedCode:  404,
-			id: 1050,
+			expectedCode:  200,
+			id: dataId,
 			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbmRhcmluNkBnbWFpbC5jb20iLCJpZCI6NTEsInVzZXJuYW1lIjoiaGVuZGFyaW42In0.77-X-McTZZUsf3yLKV9QNa0zziFBu922W020Xlz6MuU",
 		},
 	}
@@ -1242,7 +1247,7 @@ func TestDeleteTransactionDN(t *testing.T) {
 		body, err := ioutil.ReadAll(res.Body)
 
 		// Ensure that the body was read correctly
-		assert.Nilf(t, err, "list detail dn")
+		assert.Nilf(t, err, "delete data dn")
 
 		mapUnmarshal := make(map[string]interface{})
 
@@ -1251,6 +1256,16 @@ func TestDeleteTransactionDN(t *testing.T) {
 		fmt.Println(errUnmarshal)
 		if res.StatusCode >= 400 {
 			continue
+		}
+
+
+		if test.expectedCode == 200 {
+			_, isDeletedErr := awshelper.DeleteDocument(idNumber)
+
+			assert.Nilf(t, isDeletedErr, "delete data dn")
+
+			db.Unscoped().Where("transaction_id = ?", dataId).Delete(&history.History{})
+			db.Unscoped().Where("id = ?", dataId).Delete(&transaction.Transaction{})
 		}
 
 		//// Verify, that the reponse body equals the expected body
