@@ -68,6 +68,7 @@ type Transaction struct {
 	ContractNumber string `json:"contract_number"`
 	DmoBuyerName string `json:"dmo_buyer_name"`
 	DmoIndustryType string `json:"dmo_industry_type"`
+	DmoCategory string `json:"dmo_category"`
 	SkbDocumentLink string `json:"skb_document_link"`
 	SkabDocumentLink string `json:"skab_document_link"`
 	BLDocumentLink string `json:"bl_document_link"`
