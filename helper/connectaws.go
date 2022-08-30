@@ -9,6 +9,7 @@ import (
 func ConnectAws() (*session.Session, error) {
 	AccessKeyID := GetEnvWithKey("AWS_ID")
 	SecretAccessKey := GetEnvWithKey("AWS_SECRET_KEY")
+
 	sess, err := session.NewSession(
 		&aws.Config{
 			Region: aws.String("ap-southeast-1"),

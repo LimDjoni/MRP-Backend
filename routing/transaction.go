@@ -28,26 +28,23 @@ func TransactionRouting(db *gorm.DB, app fiber.Router, validate *validator.Valid
 
 	transactionHandler := handler.NewTransactionHandler(transactionService, userService, historyService, validate, logService)
 
+	transactionRouting := app.Group("/transaction")
 
-	transactionRouting := app.Group("/transaction") // /api
-
-	//// Reference to edit the error - https://www.youtube.com/watch?v=ejEizICXm9w
 	transactionRouting.Use(jwtware.New(jwtware.Config{
 		SigningKey:    []byte(helper.GetEnvWithKey("JWT_SECRET_KEY")),
 		SigningMethod: jwtware.HS256,
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
 			return ctx.Status(401).JSON(fiber.Map{
-				"error": "unauthorize",
+				"error": "unauthorized here",
+				"err": err.Error(),
 			})
 		},
 	}))
-
-
 
 	transactionRouting.Post("/create/dn", transactionHandler.CreateTransactionDN)
 	transactionRouting.Get("/list/dn", transactionHandler.ListDataDN)
 	transactionRouting.Get("/detail/dn/:id", transactionHandler.DetailTransactionDN)
 	transactionRouting.Delete("/delete/dn/:id", transactionHandler.DeleteTransactionDN)
-	transactionRouting.Post("/update/dn/:id", transactionHandler.UpdateTransactionDN)
-	transactionRouting.Post("/update/document/dn/:id/:type", transactionHandler.UpdateDocumentTransactionDN)
+	transactionRouting.Put("/update/dn/:id", transactionHandler.UpdateTransactionDN)
+	transactionRouting.Put("/update/document/dn/:id/:type", transactionHandler.UpdateDocumentTransactionDN)
 }

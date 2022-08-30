@@ -14,6 +14,7 @@ import (
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 	routing2 "ajebackend/routing"
+	"ajebackend/seeding"
 	"ajebackend/validatorfunc"
 	"fmt"
 	"github.com/go-playground/validator/v10"
@@ -54,6 +55,8 @@ func main() {
 	}
 
 	if db != nil {
+		seeding.UpdateTransactionsRoyalty(db)
+
 		// Auto Migrate All Table
 		errMigrate := db.AutoMigrate(
 			&dmo.Dmo{},
@@ -83,7 +86,13 @@ func main() {
 
 	app := fiber.New()
 
-	app.Use(cors.New())
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     "https://cdf2-103-121-18-7.ap.ngrok.io",
+		AllowMethods:     "GET, POST, OPTIONS, PUT, DELETE",
+		AllowCredentials: true,
+		AllowHeaders: "Origin, Content-Type, Accept, Content-Length, Accept-Language, Accept-Encoding, Connection, Access-Control-Allow-Origin, Authorization",
+		MaxAge:           2592000,
+	}))
 
 	apiV1 := app.Group("/api/v1") // /api
 

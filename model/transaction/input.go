@@ -22,14 +22,14 @@ type DataTransactionInput struct {
 	DpRoyaltyCurrency string `json:"dp_royalty_currency"`
 	DpRoyaltyPrice float64 `json:"dp_royalty_price"`
 	DpRoyaltyDate *string `json:"dp_royalty_date" validate:"omitempty,DateValidation"`
-	DpRoyaltyNtpn string `json:"dp_royalty_ntpn"`
-	DpRoyaltyBillingCode string `json:"dp_royalty_billing_code"`
+	DpRoyaltyNtpn *string `json:"dp_royalty_ntpn"`
+	DpRoyaltyBillingCode *string `json:"dp_royalty_billing_code"`
 	DpRoyaltyTotal float64 `json:"dp_royalty_total"`
 	PaymentDpRoyaltyCurrency string `json:"payment_dp_royalty_currency"`
 	PaymentDpRoyaltyPrice float64 `json:"payment_dp_royalty_price"`
 	PaymentDpRoyaltyDate *string `json:"payment_dp_royalty_date" validate:"omitempty,DateValidation"`
-	PaymentDpRoyaltyNtpn string `json:"payment_dp_royalty_ntpn"`
-	PaymentDpRoyaltyBillingCode string `json:"payment_dp_royalty_billing_code"`
+	PaymentDpRoyaltyNtpn *string `json:"payment_dp_royalty_ntpn"`
+	PaymentDpRoyaltyBillingCode *string `json:"payment_dp_royalty_billing_code"`
 	PaymentDpRoyaltyTotal float64 `json:"payment_dp_royalty_total"`
 	LhvDate *string `json:"lhv_date" validate:"omitempty,DateValidation"`
 	LhvNumber string `json:"lhv_number"`
@@ -59,7 +59,7 @@ type DataTransactionInput struct {
 	ContractNumber string `json:"contract_number"`
 	DmoBuyerName string `json:"dmo_buyer_name"`
 	DmoIndustryType string `json:"dmo_industry_type"`
-	DmoStatusReconciliationLetter string `json:"dmo_status_reconciliation_letter"`
+	DmoCategory string `json:"dmo_category"`
 }
 
 type SortAndFilter struct {

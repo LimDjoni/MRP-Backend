@@ -32,13 +32,13 @@ type Transaction struct {
 	RoyaltyRate float64 `json:"royalty_rate"`
 	DpRoyaltyCurrency string `json:"dp_royalty_currency"`
 	DpRoyaltyDate *string `json:"dp_royalty_date" gorm:"type:DATE"`
-	DpRoyaltyNtpn string `json:"dp_royalty_ntpn"`
-	DpRoyaltyBillingCode string `json:"dp_royalty_billing_code"`
+	DpRoyaltyNtpn *string `json:"dp_royalty_ntpn" gorm:"UNIQUE"`
+	DpRoyaltyBillingCode *string `json:"dp_royalty_billing_code" gorm:"UNIQUE"`
 	DpRoyaltyTotal float64 `json:"dp_royalty_total"`
 	PaymentDpRoyaltyCurrency string `json:"payment_dp_royalty_currency"`
 	PaymentDpRoyaltyDate *string `json:"payment_dp_royalty_date" gorm:"type:DATE"`
-	PaymentDpRoyaltyNtpn string `json:"payment_dp_royalty_ntpn"`
-	PaymentDpRoyaltyBillingCode string `json:"payment_dp_royalty_billing_code"`
+	PaymentDpRoyaltyNtpn *string `json:"payment_dp_royalty_ntpn" gorm:"UNIQUE"`
+	PaymentDpRoyaltyBillingCode *string `json:"payment_dp_royalty_billing_code" gorm:"UNIQUE"`
 	PaymentDpRoyaltyTotal float64 `json:"payment_dp_royalty_total"`
 	LhvDate *string `json:"lhv_date" gorm:"type:DATE"`
 	LhvNumber string `json:"lhv_number"`
@@ -68,6 +68,7 @@ type Transaction struct {
 	ContractNumber string `json:"contract_number"`
 	DmoBuyerName string `json:"dmo_buyer_name"`
 	DmoIndustryType string `json:"dmo_industry_type"`
+	DmoCategory string `json:"dmo_category"`
 	SkbDocumentLink string `json:"skb_document_link"`
 	SkabDocumentLink string `json:"skab_document_link"`
 	BLDocumentLink string `json:"bl_document_link"`

@@ -104,6 +104,7 @@ func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTra
 	createdTransaction.ContractNumber = inputTransactionDN.ContractNumber
 	createdTransaction.DmoBuyerName = inputTransactionDN.DmoBuyerName
 	createdTransaction.DmoIndustryType = inputTransactionDN.DmoIndustryType
+	createdTransaction.DmoCategory = inputTransactionDN.DmoCategory
 
 	createTransactionErr := tx.Create(&createdTransaction).Error
 

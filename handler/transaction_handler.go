@@ -14,6 +14,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 type transactionHandler struct {
@@ -67,7 +68,6 @@ func (h *transactionHandler) CreateTransactionDN(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"errors": dataErrors,
 		})
-
 	}
 
 	createdTransaction, createdTransactionErr := h.historyService.CreateTransactionDN(*transactionInput, uint(claims["id"].(float64)))
@@ -93,28 +93,22 @@ func (h *transactionHandler) CreateTransactionDN(c *fiber.Ctx) error {
 	return c.Status(201).JSON(createdTransaction)
 }
 
-func JSON(c *fiber.Ctx, response interface{}) error {
-	err := c.JSON(response)
-	c.Set("content-type", "application/json; charset=utf-8")
-	return err
-}
-
 func (h *transactionHandler) ListDataDN(c *fiber.Ctx) error {
-	//user := c.Locals("user").(*jwt.Token)
-	//claims := user.Claims.(jwt.MapClaims)
-	//responseUnauthorized := map[string]interface{}{
-	//	"error": "unauthorized",
-	//}
-	//
-	//if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
-	//	return c.Status(401).JSON(responseUnauthorized)
-	//}
-	//
-	//_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
-	//
-	//if checkUserErr != nil {
-	//	return c.Status(401).JSON(responseUnauthorized)
-	//}
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
 
 	var sortAndFilter transaction.SortAndFilter
 	page := c.Query("page")
@@ -152,10 +146,7 @@ func (h *transactionHandler) ListDataDN(c *fiber.Ctx) error {
 		})
 	}
 
-
-	return JSON(c, listDN)
-	//c.Set("content-type", "application/json; charset=utf-8")
-	//return c.Status(200).JSON(listDN)
+	return c.Status(200).JSON(listDN)
 }
 
 func (h *transactionHandler) DetailTransactionDN(c *fiber.Ctx) error {
@@ -244,7 +235,13 @@ func (h *transactionHandler) DeleteTransactionDN(c *fiber.Ctx) error {
 
 		h.logService.CreateLogs(createdErrLog)
 
-		return c.Status(400).JSON(fiber.Map{
+		status := 400
+
+		if  deleteTransactionErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
 			"message": "failed to delete transaction",
 			"error": deleteTransactionErr.Error(),
 		})
@@ -298,6 +295,15 @@ func (h *transactionHandler) UpdateTransactionDN(c *fiber.Ctx) error {
 		})
 	}
 
+	errors := h.v.Struct(*transactionInput)
+
+	if errors != nil {
+		dataErrors := validatorfunc.ValidateStruct(errors)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": dataErrors,
+		})
+	}
+
 	updateTransaction, updateTransactionErr := h.historyService.UpdateTransactionDN(idInt, *transactionInput ,uint(claims["id"].(float64)))
 
 	if updateTransactionErr != nil {
@@ -320,7 +326,13 @@ func (h *transactionHandler) UpdateTransactionDN(c *fiber.Ctx) error {
 
 		h.logService.CreateLogs(createdErrLog)
 
-		return c.Status(400).JSON(fiber.Map{
+		status := 400
+
+		if  updateTransactionErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
 			"message": "failed to update transaction",
 			"error": updateTransactionErr.Error(),
 		})
@@ -360,9 +372,7 @@ func (h *transactionHandler) UpdateDocumentTransactionDN (c *fiber.Ctx) error {
 		return c.Status(400).JSON(responseErr)
 	}
 
-	contentType := file.Header["Content-Type"]
-
-	if contentType[0] != "application/pdf" {
+	if !strings.Contains(file.Filename, ".pdf" ) {
 		responseErr["error"] = "document must be pdf"
 		return c.Status(400).JSON(responseErr)
 	}
@@ -379,7 +389,7 @@ func (h *transactionHandler) UpdateDocumentTransactionDN (c *fiber.Ctx) error {
 	idInt, err := strconv.Atoi(id)
 
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{
+		return c.Status(404).JSON(fiber.Map{
 			"error": "record not found",
 		})
 	}
@@ -387,7 +397,7 @@ func (h *transactionHandler) UpdateDocumentTransactionDN (c *fiber.Ctx) error {
 	detailTransaction, detailTransactionErr := h.transactionService.DetailTransactionDN(idInt)
 
 	if detailTransactionErr != nil {
-		return c.Status(400).JSON(fiber.Map{
+		return c.Status(404).JSON(fiber.Map{
 			"message": "failed to upload document",
 			"error": detailTransactionErr.Error(),
 		})
@@ -446,7 +456,14 @@ func (h *transactionHandler) UpdateDocumentTransactionDN (c *fiber.Ctx) error {
 		h.logService.CreateLogs(createdErrLog)
 
 		responseErr["error"] = editDocumentErr.Error()
-		return c.Status(400).JSON(responseErr)
+
+		status := 400
+
+		if editDocumentErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(responseErr)
 	}
 
 	return c.Status(200).JSON(editDocument)
