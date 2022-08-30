@@ -20,16 +20,12 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
 	"os"
 )
 
 func main() {
-
-	LoadEnv()
 	var port string
 	if len(os.Getenv("PORT")) < 2 {
 		port = "8080"
@@ -124,15 +120,6 @@ func createDB(dsn string) {
 	if err != nil {
 		fmt.Println("Cannot connect db")
 		return
-	}
-}
-
-func LoadEnv() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		fmt.Println(err)
-		log.Fatalf("Error loading .env file")
-		os.Exit(1)
 	}
 }
 
