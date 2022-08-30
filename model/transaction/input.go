@@ -59,7 +59,7 @@ type DataTransactionInput struct {
 	ContractNumber string `json:"contract_number"`
 	DmoBuyerName string `json:"dmo_buyer_name"`
 	DmoIndustryType string `json:"dmo_industry_type"`
-	DmoStatusReconciliationLetter string `json:"dmo_status_reconciliation_letter"`
+	DmoCategory string `json:"dmo_category"`
 }
 
 type SortAndFilter struct {
