@@ -14,6 +14,7 @@ import (
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 	routing2 "ajebackend/routing"
+	"ajebackend/seeding"
 	"ajebackend/validatorfunc"
 	"fmt"
 	"github.com/go-playground/validator/v10"
@@ -54,6 +55,8 @@ func main() {
 	}
 
 	if db != nil {
+		seeding.UpdateTransactionsRoyalty(db)
+
 		// Auto Migrate All Table
 		errMigrate := db.AutoMigrate(
 			&dmo.Dmo{},

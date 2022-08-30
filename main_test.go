@@ -481,6 +481,20 @@ func TestCreateTransactionDN(t *testing.T) {
 			},
 			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbmRhcmluNkBnbWFpbC5jb20iLCJpZCI6NTEsInVzZXJuYW1lIjoiaGVuZGFyaW42In0.77-X-McTZZUsf3yLKV9QNa0zziFBu922W020Xlz6MuU",
 		},
+		{
+			expectedError: false,
+			expectedCode:  400,
+			body: fiber.Map{
+				"coa_date": "2022-22-01",
+				"quantity": 1023.122,
+				"ship_name": "AJE",
+				"dp_royalty_ntpn": "A123SS",
+				"dp_royalty_billing_code": "A123SS",
+				"payment_dp_royalty_ntpn": "A123SS",
+				"payment_dp_royalty_billing_code": "A123SS",
+			},
+			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbmRhcmluNkBnbWFpbC5jb20iLCJpZCI6NTEsInVzZXJuYW1lIjoiaGVuZGFyaW42In0.77-X-McTZZUsf3yLKV9QNa0zziFBu922W020Xlz6MuU",
+		},
 	}
 
 	db, validate := startSetup()
@@ -524,9 +538,11 @@ func TestCreateTransactionDN(t *testing.T) {
 		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
 
 		fmt.Println(errUnmarshal)
+		fmt.Println(string(body))
 		if res.StatusCode >= 400 {
 			continue
 		}
+
 
 		if res.StatusCode == 201 {
 			dataId = int(mapUnmarshal["ID"].(float64))
@@ -659,13 +675,13 @@ func TestUpdateTransactionDN(t *testing.T) {
 				"royalty_rate": 0,
 				"dp_royalty_currency": "IDR",
 				"dp_royalty_date": nil,
-				"dp_royalty_ntpn": "",
-				"dp_royalty_billing_code": "",
+				"dp_royalty_ntpn": nil,
+				"dp_royalty_billing_code": nil,
 				"dp_royalty_total": 0,
 				"payment_dp_royalty_currency": "IDR",
 				"payment_dp_royalty_date": nil,
-				"payment_dp_royalty_ntpn": "",
-				"payment_dp_royalty_billing_code": "",
+				"payment_dp_royalty_ntpn": nil,
+				"payment_dp_royalty_billing_code": nil,
 				"payment_dp_royalty_total": 0,
 				"lhv_date": nil,
 				"lhv_number": "",
@@ -823,13 +839,13 @@ func TestUpdateTransactionDN(t *testing.T) {
 				"royalty_rate": 0,
 				"dp_royalty_currency": "IDR",
 				"dp_royalty_date": nil,
-				"dp_royalty_ntpn": "",
-				"dp_royalty_billing_code": "",
+				"dp_royalty_ntpn": nil,
+				"dp_royalty_billing_code": nil,
 				"dp_royalty_total": 0,
 				"payment_dp_royalty_currency": "IDR",
 				"payment_dp_royalty_date": nil,
-				"payment_dp_royalty_ntpn": "",
-				"payment_dp_royalty_billing_code": "",
+				"payment_dp_royalty_ntpn": nil,
+				"payment_dp_royalty_billing_code": nil,
 				"payment_dp_royalty_total": 0,
 				"lhv_date": nil,
 				"lhv_number": "",
