@@ -35,7 +35,7 @@ func TransactionRouting(db *gorm.DB, app fiber.Router, validate *validator.Valid
 		SigningMethod: jwtware.HS256,
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
 			return ctx.Status(401).JSON(fiber.Map{
-				"error": "unauthorized here",
+				"error": "unauthorized",
 				"err": err.Error(),
 			})
 		},
