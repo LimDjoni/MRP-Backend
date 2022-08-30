@@ -130,6 +130,7 @@ func createDB(dsn string) {
 func LoadEnv() {
 	err := godotenv.Load(".env")
 	if err != nil {
+		fmt.Println(err)
 		log.Fatalf("Error loading .env file")
 		os.Exit(1)
 	}
