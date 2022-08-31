@@ -83,7 +83,7 @@ func main() {
 	app := fiber.New()
 
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "https://cdf2-103-121-18-7.ap.ngrok.io",
+		AllowOrigins:     "*",
 		AllowMethods:     "GET, POST, OPTIONS, PUT, DELETE",
 		AllowCredentials: true,
 		AllowHeaders: "Origin, Content-Type, Accept, Content-Length, Accept-Language, Accept-Encoding, Connection, Access-Control-Allow-Origin, Authorization",
