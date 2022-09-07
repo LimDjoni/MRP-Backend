@@ -61,12 +61,19 @@ func main() {
 			&history.History{},
 			&logs.Logs{},
 			&minerba.Minerba{},
-			&minerbatransaction.MinerbaTransaction{},
 			&trader.Trader{},
 			&traderdmo.TraderDmo{},
 			&transaction.Transaction{},
 			&user.User{},
 		)
+
+		errDropTable := db.Migrator().DropTable(
+			&minerbatransaction.MinerbaTransaction{},
+		)
+
+		if errDropTable != nil {
+			fmt.Println(errDropTable)
+		}
 
 		fmt.Println(errMigrate)
 	}

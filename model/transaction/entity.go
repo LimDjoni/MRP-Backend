@@ -2,6 +2,7 @@ package transaction
 
 import (
 	"ajebackend/model/dmo"
+	"ajebackend/model/minerba"
 	"gorm.io/gorm"
 )
 
@@ -9,6 +10,8 @@ type Transaction struct {
 	gorm.Model
 	DmoId *uint `json:"dmo_id"`
 	Dmo *dmo.Dmo `json:"dmo"`
+	MinerbaId *uint `json:"minerba_id"`
+	Minerba *minerba.Minerba `json:"minerba"`
 	IdNumber string `json:"id_number" gorm:"UNIQUE"`
 	TransactionType string `json:"transaction_type"`
 	ShippingDate *string `json:"shipping_date" gorm:"type:DATE"`
