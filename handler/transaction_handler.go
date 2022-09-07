@@ -432,7 +432,7 @@ func (h *transactionHandler) UpdateDocumentTransactionDN (c *fiber.Ctx) error {
 		return c.Status(400).JSON(responseErr)
 	}
 
-	editDocument, editDocumentErr := h.historyService.UploadDocument(detailTransaction.ID, up.Location, uint(claims["id"].(float64)), documentType)
+	editDocument, editDocumentErr := h.historyService.UploadDocumentTransactionDN(detailTransaction.ID, up.Location, uint(claims["id"].(float64)), documentType)
 
 	if editDocumentErr != nil {
 		inputMap := make(map[string]interface{})

@@ -2,6 +2,7 @@ package history
 
 import (
 	"ajebackend/helper"
+	"ajebackend/model/minerba"
 	"ajebackend/model/transaction"
 	"encoding/json"
 	"fmt"
@@ -13,7 +14,9 @@ type Repository interface {
 	CreateTransactionDN (inputTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
 	DeleteTransactionDN(id int, userId uint) (bool, error)
 	UpdateTransactionDN (idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
-	UploadDocument (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error)
+	UploadDocumentTransactionDN (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error)
+	CreateMinerba (periode string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error)
+	DeleteMinerba (idMinerba int, userId uint) (bool, error)
 }
 
 type repository struct {
@@ -234,7 +237,7 @@ func (r *repository) UpdateTransactionDN (idTransaction int, inputEditTransactio
 	return transaction, nil
 }
 
-func (r *repository) UploadDocument (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error) {
+func (r *repository) UploadDocumentTransactionDN (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error) {
 	var uploadedTransaction transaction.Transaction
 
 	tx := r.db.Begin()
@@ -322,4 +325,74 @@ func (r *repository) UploadDocument (idTransaction uint, urlS3 string, userId ui
 
 	tx.Commit()
 	return uploadedTransaction, nil
+}
+
+func (r *repository) CreateMinerba (periode string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error) {
+	var createdMinerba minerba.Minerba
+
+	idNumber := baseIdNumber + "-" + helper.CreateIdNumber(100)
+
+	createdMinerba.IdNumber = idNumber
+	createdMinerba.Period = periode
+	tx := r.db.Begin()
+
+	errCreateMinerba := tx.Create(&createdMinerba).Error
+
+	if errCreateMinerba != nil {
+		tx.Rollback()
+		return createdMinerba, errCreateMinerba
+	}
+
+	updateTransactionErr := tx.Table("transactions").Where("id IN ?", updateTransaction).Update("minerba_id", createdMinerba.ID).Error
+
+	if updateTransactionErr != nil {
+		tx.Rollback()
+		return createdMinerba, updateTransactionErr
+	}
+
+	var history History
+
+	history.MinerbaId = &createdMinerba.ID
+	history.Status = "Created Minerba Report"
+	history.UserId = userId
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return createdMinerba, createHistoryErr
+	}
+
+	tx.Commit()
+	return createdMinerba, nil
+}
+
+func (r *repository) DeleteMinerba (idMinerba int, userId uint) (bool, error) {
+
+	tx := r.db.Begin()
+
+
+	updateTransactionErr := tx.Table("transactions").Where("minerba_id = ?", idMinerba).Update("minerba_id", nil).Error
+
+	if updateTransactionErr != nil {
+		tx.Rollback()
+		return false, updateTransactionErr
+	}
+
+	var history History
+
+	id := uint(idMinerba)
+	history.MinerbaId = &id
+	history.Status = "Deleted Minerba Report"
+	history.UserId = userId
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return false, createHistoryErr
+	}
+
+	tx.Commit()
+	return true, nil
 }
