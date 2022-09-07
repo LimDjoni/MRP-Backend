@@ -133,5 +133,5 @@ func createDB(dsn string) {
 func Setup(db *gorm.DB, validate *validator.Validate, route fiber.Router) {
 	routing2.TransactionRouting(db, route, validate)
 	routing2.UserRouting(db, route, validate)
-
+	routing2.MinerbaRouting(db, route)
 }

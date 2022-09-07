@@ -171,6 +171,16 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{
+			"message": "failed to delete minerba",
+			"error": "record not found",
+		})
+	}
+
+	_, getDataMinerbaErr := h.minerbaService.GetDataMinerba(idInt)
+
+	if getDataMinerbaErr != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"message": "failed to delete minerba",
 			"error": "record not found",
 		})
 	}
@@ -203,7 +213,7 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 		}
 
 		return c.Status(status).JSON(fiber.Map{
-			"message": "failed to delete transaction",
+			"message": "failed to delete minerba",
 			"error": deleteMinerbaErr.Error(),
 		})
 	}

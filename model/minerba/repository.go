@@ -7,6 +7,7 @@ import (
 type Repository interface {
 	GetReportMinerbaWithPeriod(period string) (Minerba, error)
 	GetListReportMinerbaAll(page int) (Pagination, error)
+	GetDataMinerba(id int)(Minerba, error)
 }
 
 type repository struct {
@@ -40,4 +41,12 @@ func(r *repository) GetListReportMinerbaAll(page int) (Pagination, error) {
 	pagination.Data = listReportMinerba
 
 	return pagination, nil
+}
+
+func (r *repository) GetDataMinerba(id int)(Minerba, error) {
+	var minerba Minerba
+
+	errFind := r.db.Where("id = ?", id).First(&minerba).Error
+
+	return minerba, errFind
 }

@@ -2,9 +2,11 @@ package history
 
 import (
 	"ajebackend/helper"
+	"ajebackend/model/logs"
 	"ajebackend/model/minerba"
 	"ajebackend/model/transaction"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"gorm.io/gorm"
 	"time"
@@ -336,6 +338,19 @@ func (r *repository) CreateMinerba (period string, baseIdNumber string, updateTr
 	createdMinerba.Period = period
 	tx := r.db.Begin()
 
+	var transactions []transaction.Transaction
+	findTransactionsErr := tx.Where("id IN ?", updateTransaction).Find(&transactions).Error
+
+	if findTransactionsErr != nil {
+		tx.Rollback()
+		return createdMinerba, findTransactionsErr
+	}
+
+	if len(transactions) != len(updateTransaction) {
+		tx.Rollback()
+		return createdMinerba, errors.New("please check some of transactions not found")
+	}
+
 	errCreateMinerba := tx.Create(&createdMinerba).Error
 
 	if errCreateMinerba != nil {
@@ -370,7 +385,14 @@ func (r *repository) CreateMinerba (period string, baseIdNumber string, updateTr
 func (r *repository) DeleteMinerba (idMinerba int, userId uint) (bool, error) {
 
 	tx := r.db.Begin()
+	var minerba minerba.Minerba
 
+	findErr := tx.Where("id = ?", idMinerba).First(&minerba).Error
+
+	if findErr != nil {
+		tx.Rollback()
+		return false, findErr
+	}
 
 	updateTransactionErr := tx.Table("transactions").Where("minerba_id = ?", idMinerba).Update("minerba_id", nil).Error
 
@@ -379,11 +401,32 @@ func (r *repository) DeleteMinerba (idMinerba int, userId uint) (bool, error) {
 		return false, updateTransactionErr
 	}
 
+	var historyDelete History
+	errDeleteHistory := tx.Unscoped().Where("minerba_id = ?", idMinerba).Delete(&historyDelete).Error
+
+	if errDeleteHistory != nil {
+		tx.Rollback()
+		return false, errDeleteHistory
+	}
+
+	var log logs.Logs
+	errDeleteLog := tx.Unscoped().Where("minerba_id = ?", idMinerba).Delete(&log).Error
+
+	if errDeleteLog != nil {
+		tx.Rollback()
+		return false, errDeleteLog
+	}
+
+	errDelete := tx.Unscoped().Where("id = ?", idMinerba).Delete(&minerba).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+		return false, errDelete
+	}
+
 	var history History
 
-	id := uint(idMinerba)
-	history.MinerbaId = &id
-	history.Status = "Deleted Minerba Report"
+	history.Status = fmt.Sprintf("Deleted Minerba Report with id number %s and id %v", minerba.IdNumber, minerba.ID)
 	history.UserId = userId
 
 	createHistoryErr := tx.Create(&history).Error
