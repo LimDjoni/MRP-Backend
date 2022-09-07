@@ -10,7 +10,7 @@ type Service interface {
 	DeleteTransactionDN(id int, userId uint) (bool, error)
 	UpdateTransactionDN (idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
 	UploadDocumentTransactionDN (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error)
-	CreateMinerba (periode string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error)
+	CreateMinerba (period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error)
 	DeleteMinerba (idMinerba int, userId uint) (bool, error)
 }
 
@@ -46,8 +46,8 @@ func (s *service) UploadDocumentTransactionDN (idTransaction uint, urlS3 string,
 	return uploadedDocument, uploadedDocumentErr
 }
 
-func (s *service) CreateMinerba (periode string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error) {
-	createdMinerba, createdMinerbaErr := s.repository.CreateMinerba(periode, baseIdNumber, updateTransaction, userId)
+func (s *service) CreateMinerba (period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error) {
+	createdMinerba, createdMinerbaErr := s.repository.CreateMinerba(period, baseIdNumber, updateTransaction, userId)
 
 	return createdMinerba, createdMinerbaErr
 }

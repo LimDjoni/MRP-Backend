@@ -15,7 +15,7 @@ type Repository interface {
 	DeleteTransactionDN(id int, userId uint) (bool, error)
 	UpdateTransactionDN (idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
 	UploadDocumentTransactionDN (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error)
-	CreateMinerba (periode string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error)
+	CreateMinerba (period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error)
 	DeleteMinerba (idMinerba int, userId uint) (bool, error)
 }
 
@@ -327,13 +327,13 @@ func (r *repository) UploadDocumentTransactionDN (idTransaction uint, urlS3 stri
 	return uploadedTransaction, nil
 }
 
-func (r *repository) CreateMinerba (periode string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error) {
+func (r *repository) CreateMinerba (period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error) {
 	var createdMinerba minerba.Minerba
 
 	idNumber := baseIdNumber + "-" + helper.CreateIdNumber(100)
 
 	createdMinerba.IdNumber = idNumber
-	createdMinerba.Period = periode
+	createdMinerba.Period = period
 	tx := r.db.Begin()
 
 	errCreateMinerba := tx.Create(&createdMinerba).Error
