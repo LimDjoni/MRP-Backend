@@ -8,12 +8,13 @@ import (
 	"ajebackend/model/minerba"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	jwtware "github.com/gofiber/jwt/v3"
 	"gorm.io/gorm"
 )
 
-func MinerbaRouting(db *gorm.DB, app fiber.Router) {
+func MinerbaRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	transactionRepository := transaction.NewRepository(db)
 	transactionService := transaction.NewService(transactionRepository)
 
@@ -29,7 +30,7 @@ func MinerbaRouting(db *gorm.DB, app fiber.Router) {
 	minerbaRepository := minerba.NewRepository(db)
 	minerbaService := minerba.NewService(minerbaRepository)
 
-	minerbaHandler := handler.NewMinerbaHandler(transactionService, userService, historyService, logService, minerbaService)
+	minerbaHandler := handler.NewMinerbaHandler(transactionService, userService, historyService, logService, minerbaService, validate)
 
 	minerbaRouting := app.Group("/minerba")
 

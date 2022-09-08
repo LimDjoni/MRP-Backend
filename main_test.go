@@ -30,6 +30,7 @@ import (
 
 var dataId = 1
 var idNumber = ""
+var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbmRhcmluNkBnbWFpbC5jb20iLCJpZCI6NTEsInVzZXJuYW1lIjoiaGVuZGFyaW42In0.77-X-McTZZUsf3yLKV9QNa0zziFBu922W020Xlz6MuU"
 
 func startSetup() (*gorm.DB, *validator.Validate) {
 	loadEnv()
@@ -39,8 +40,10 @@ func startSetup() (*gorm.DB, *validator.Validate) {
 
 	var validate = validator.New()
 
-	// Make Validation for Gender
+	// Make Validation for Date
 	_ = validate.RegisterValidation("DateValidation", validatorfunc.CheckDateString)
+
+	_ = validate.RegisterValidation("PeriodValidation", validatorfunc.ValidationPeriod)
 
 	return db, validate
 }
@@ -128,6 +131,7 @@ func TestRegisterUser(t *testing.T) {
 		if res.StatusCode == 201 {
 			db.Unscoped().Where("email = ?", test.body["email"]).Delete(&user.User{})
 		}
+
 		//// Verify, that the reponse body equals the expected body
 		assert.Equalf(t, test.body["username"], mapUnmarshal["username"], "register success user")
 		assert.Equalf(t, test.body["email"], mapUnmarshal["email"], "register success user")
@@ -242,7 +246,7 @@ func TestListDataDN(t *testing.T) {
 		{
 			expectedError: false,
 			expectedCode:  200,
-			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbmRhcmluNkBnbWFpbC5jb20iLCJpZCI6NTEsInVzZXJuYW1lIjoiaGVuZGFyaW42In0.77-X-McTZZUsf3yLKV9QNa0zziFBu922W020Xlz6MuU",
+			token: token,
 		},
 	}
 
@@ -315,13 +319,13 @@ func TestDetailTransactionDN(t *testing.T) {
 			expectedError: false,
 			expectedCode:  200,
 			id: 38,
-			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbmRhcmluNkBnbWFpbC5jb20iLCJpZCI6NTEsInVzZXJuYW1lIjoiaGVuZGFyaW42In0.77-X-McTZZUsf3yLKV9QNa0zziFBu922W020Xlz6MuU",
+			token: token,
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
 			id: 1050,
-			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbmRhcmluNkBnbWFpbC5jb20iLCJpZCI6NTEsInVzZXJuYW1lIjoiaGVuZGFyaW42In0.77-X-McTZZUsf3yLKV9QNa0zziFBu922W020Xlz6MuU",
+			token: token,
 		},
 	}
 
@@ -470,7 +474,7 @@ func TestCreateTransactionDN(t *testing.T) {
 				"ship_name": "AJE",
 				"dp_royalty_ntpn": "A123SSSS",
 			},
-			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbmRhcmluNkBnbWFpbC5jb20iLCJpZCI6NTEsInVzZXJuYW1lIjoiaGVuZGFyaW42In0.77-X-McTZZUsf3yLKV9QNa0zziFBu922W020Xlz6MuU",
+			token: token,
 		},
 		{
 			expectedError: false,
@@ -480,7 +484,7 @@ func TestCreateTransactionDN(t *testing.T) {
 				"quantity": 1023.122,
 				"ship_name": "AJE",
 			},
-			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbmRhcmluNkBnbWFpbC5jb20iLCJpZCI6NTEsInVzZXJuYW1lIjoiaGVuZGFyaW42In0.77-X-McTZZUsf3yLKV9QNa0zziFBu922W020Xlz6MuU",
+			token: token,
 		},
 		{
 			expectedError: false,
@@ -494,7 +498,7 @@ func TestCreateTransactionDN(t *testing.T) {
 				"payment_dp_royalty_ntpn": "A123SS",
 				"payment_dp_royalty_billing_code": "A123SS",
 			},
-			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbmRhcmluNkBnbWFpbC5jb20iLCJpZCI6NTEsInVzZXJuYW1lIjoiaGVuZGFyaW42In0.77-X-McTZZUsf3yLKV9QNa0zziFBu922W020Xlz6MuU",
+			token: token,
 		},
 	}
 
@@ -723,7 +727,7 @@ func TestUpdateTransactionDN(t *testing.T) {
 				"lhv_document_link": "",
 			},
 			id: dataId,
-			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbmRhcmluNkBnbWFpbC5jb20iLCJpZCI6NTEsInVzZXJuYW1lIjoiaGVuZGFyaW42In0.77-X-McTZZUsf3yLKV9QNa0zziFBu922W020Xlz6MuU",
+			token: token,
 		},
 		{
 			expectedError: false,
@@ -805,7 +809,7 @@ func TestUpdateTransactionDN(t *testing.T) {
 				"lhv_document_link": "",
 			},
 			id: 49,
-			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbmRhcmluNkBnbWFpbC5jb20iLCJpZCI6NTEsInVzZXJuYW1lIjoiaGVuZGFyaW42In0.77-X-McTZZUsf3yLKV9QNa0zziFBu922W020Xlz6MuU",
+			token: token,
 		},
 		{
 			expectedError: false,
@@ -887,7 +891,7 @@ func TestUpdateTransactionDN(t *testing.T) {
 				"lhv_document_link": "",
 			},
 			id: 904,
-			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbmRhcmluNkBnbWFpbC5jb20iLCJpZCI6NTEsInVzZXJuYW1lIjoiaGVuZGFyaW42In0.77-X-McTZZUsf3yLKV9QNa0zziFBu922W020Xlz6MuU",
+			token: token,
 		},
 	}
 
@@ -1041,21 +1045,21 @@ func TestUpdateDocumentTransactionDN(t *testing.T) {
 			expectedError: false,
 			expectedCode:  200,
 			id: dataId,
-			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbmRhcmluNkBnbWFpbC5jb20iLCJpZCI6NTEsInVzZXJuYW1lIjoiaGVuZGFyaW42In0.77-X-McTZZUsf3yLKV9QNa0zziFBu922W020Xlz6MuU",
+			token: token,
 			file: "upload_test/output.pdf",
 		},
 		{
 			expectedError: false,
 			expectedCode:  400,
 			id: 49,
-			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbmRhcmluNkBnbWFpbC5jb20iLCJpZCI6NTEsInVzZXJuYW1lIjoiaGVuZGFyaW42In0.77-X-McTZZUsf3yLKV9QNa0zziFBu922W020Xlz6MuU",
+			token: token,
 			file: "upload_test/output.png",
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
 			id: 904,
-			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbmRhcmluNkBnbWFpbC5jb20iLCJpZCI6NTEsInVzZXJuYW1lIjoiaGVuZGFyaW42In0.77-X-McTZZUsf3yLKV9QNa0zziFBu922W020Xlz6MuU",
+			token: token,
 			file: "upload_test/output.pdf",
 		},
 	}
@@ -1221,13 +1225,13 @@ func TestDeleteTransactionDN(t *testing.T) {
 			expectedError: false,
 			expectedCode:  404,
 			id: 1050,
-			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbmRhcmluNkBnbWFpbC5jb20iLCJpZCI6NTEsInVzZXJuYW1lIjoiaGVuZGFyaW42In0.77-X-McTZZUsf3yLKV9QNa0zziFBu922W020Xlz6MuU",
+			token: token,
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
 			id: dataId,
-			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhlbmRhcmluNkBnbWFpbC5jb20iLCJpZCI6NTEsInVzZXJuYW1lIjoiaGVuZGFyaW42In0.77-X-McTZZUsf3yLKV9QNa0zziFBu922W020Xlz6MuU",
+			token: token,
 		},
 	}
 
@@ -1290,3 +1294,273 @@ func TestDeleteTransactionDN(t *testing.T) {
 	}
 }
 
+func TestListDataDNWithoutMinerba(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token         string
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			token:         "",
+		},
+		{
+			expectedError: false,
+			expectedCode:  401,
+			token:         "afwifiwgjwigjianveri",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			token:         token,
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		req, _ := http.NewRequest(
+			"GET",
+			"/api/v1/minerba/list",
+			nil,
+		)
+
+		req.Header.Add("Authorization", "Bearer "+test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, err := app.Test(req, -1)
+
+		assert.Equalf(t, test.expectedError, err != nil, "list data dn")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "list data dn")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "list data dn")
+
+		mapUnmarshal := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		//// Verify, that the reponse body equals the expected body
+		assert.Contains(t, mapUnmarshal, "list")
+	}
+}
+
+var idMinerba = 0
+
+func TestCreateMinerba(t *testing.T) {
+	var listDn []int
+	listDn = append(listDn, 7, 8, 9)
+
+	var errorListDn []int
+	errorListDn = append(errorListDn, 1, 2, 3)
+
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token         string
+		body          map[string]interface{}
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			body:          fiber.Map{},
+			token:         "asdawfaeac",
+		},
+		{
+			expectedError: false,
+			expectedCode:  201,
+			body: fiber.Map{
+				"period":       "Juni 2022",
+				"list_data_dn": listDn,
+			},
+			token: token,
+		},
+		{
+			expectedError: false,
+			expectedCode:  400,
+			body: fiber.Map{
+				"period":       "Juni 2022",
+				"list_data_dn": listDn,
+			},
+			token: token,
+		},
+		{
+			expectedError: false,
+			expectedCode:  400,
+			body: fiber.Map{
+				"period":       "Mei 2022",
+				"list_data_dn": listDn,
+			},
+			token: token,
+		},
+		{
+			expectedError: false,
+			expectedCode:  400,
+			body: fiber.Map{
+				"period":       "Mei 2022",
+				"list_data_dn": errorListDn,
+			},
+			token: token,
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		bodyJson, err := json.Marshal(test.body)
+		var payload = bytes.NewBufferString(string(bodyJson))
+		req, _ := http.NewRequest(
+			"POST",
+			"/api/v1/minerba/create",
+			payload,
+		)
+
+		req.Header.Add("Authorization", "Bearer "+test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, err := app.Test(req, -1)
+
+		assert.Equalf(t, test.expectedError, err != nil, "create data minerba")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "create data minerba")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "create data minerba")
+
+		mapUnmarshal := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		if res.StatusCode == 201 {
+			fmt.Println(mapUnmarshal["id_number"])
+			idMinerba = int(mapUnmarshal["ID"].(float64))
+		}
+
+		assert.Contains(t, mapUnmarshal, "ID", "create data minerba")
+		assert.Contains(t, mapUnmarshal, "CreatedAt", "create data minerba")
+		assert.Contains(t, mapUnmarshal, "UpdatedAt", "create data minerba")
+		assert.Contains(t, mapUnmarshal, "DeletedAt", "create data minerba")
+		assert.Contains(t, mapUnmarshal, "period", "create data minerba")
+		assert.Contains(t, mapUnmarshal, "id_number", "create data minerba")
+		assert.Contains(t, mapUnmarshal, "sp3medn_document_link", "create data minerba")
+		assert.Contains(t, mapUnmarshal, "recap_dmo_document_link", "create data minerba")
+		assert.Contains(t, mapUnmarshal, "detail_dmo_document_link", "create data minerba")
+		assert.Contains(t, mapUnmarshal, "sp3meln_document_link", "create data minerba")
+		assert.Contains(t, mapUnmarshal, "insw_export_document_link", "create data minerba")
+	}
+}
+
+func TestDeleteMinerba(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token string
+		id int
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			id: 1,
+			token: "asdawfaeac",
+		},
+		{
+			expectedError: false,
+			expectedCode:  404,
+			id: 1050,
+			token: token,
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			id: idMinerba,
+			token: token,
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		url := fmt.Sprintf("/api/v1/minerba/delete/%v", test.id)
+		req, _ := http.NewRequest(
+			"DELETE",
+			url,
+			nil,
+		)
+
+		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, err := app.Test(req, -1)
+
+		assert.Equalf(t, test.expectedError, err != nil, "delete data minerba")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "delete data minerba")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "delete data minerba")
+
+		mapUnmarshal := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		//// Verify, that the reponse body equals the expected body
+		assert.Contains(t, mapUnmarshal, "message", "delete data minerba")
+	}
+}

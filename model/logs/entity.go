@@ -14,8 +14,8 @@ type Logs struct {
 	Message	datatypes.JSON `json:"message"`
 	TransactionId *uint `json:"transaction_id"`
 	Transaction *transaction.Transaction `json:"transaction"`
-	MinerbaId *uint `json:"minerba_id"`
+	MinerbaId *uint `json:"minerba_id" gorm:"constraint:OnDelete:CASCADE;"`
 	Minerba *minerba.Minerba `json:"minerba"`
-	DmoId *uint `json:"dmo_id"`
+	DmoId *uint `json:"dmo_id" gorm:"constraint:OnDelete:CASCADE;"`
 	Dmo *dmo.Dmo `json:"dmo"`
 }

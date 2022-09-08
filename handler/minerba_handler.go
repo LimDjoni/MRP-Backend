@@ -1,16 +1,21 @@
 package handler
 
 import (
+	"ajebackend/helper"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
 	"ajebackend/model/minerba"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
+	"ajebackend/validatorfunc"
 	"encoding/json"
+	"fmt"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 type minerbaHandler struct {
@@ -19,15 +24,17 @@ type minerbaHandler struct {
 	historyService history.Service
 	logService logs.Service
 	minerbaService minerba.Service
+	v *validator.Validate
 }
 
-func NewMinerbaHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, minerbaService minerba.Service) *minerbaHandler {
+func NewMinerbaHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, minerbaService minerba.Service, v *validator.Validate) *minerbaHandler {
 	return &minerbaHandler{
 		transactionService,
 		userService,
 		historyService,
 		logService,
 		minerbaService,
+		v,
 	}
 }
 
@@ -87,6 +94,31 @@ func (h *minerbaHandler) CreateMinerba(c *fiber.Ctx) error {
 		})
 	}
 
+	errors := h.v.Struct(*inputCreateMinerba)
+
+	if errors != nil {
+		dataErrors := validatorfunc.ValidateStruct(errors)
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["minerba_period"] = inputCreateMinerba.Period
+		inputMap["list_dn"] = inputCreateMinerba.ListDataDn
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"errors": dataErrors,
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": dataErrors,
+		})
+	}
+
 	_, findMinerbaErr := h.minerbaService.GetReportMinerbaWithPeriod(inputCreateMinerba.Period)
 
 	if findMinerbaErr == nil {
@@ -120,7 +152,10 @@ func (h *minerbaHandler) CreateMinerba(c *fiber.Ctx) error {
 		})
 	}
 
-	createMinerba, createMinerbaErr := h.historyService.CreateMinerba(inputCreateMinerba.Period, inputCreateMinerba.Period, inputCreateMinerba.ListDataDn, uint(claims["id"].(float64)))
+	splitPeriod := strings.Split(inputCreateMinerba.Period, " ")
+
+	baseIdNumber := fmt.Sprintf("LM-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
+	createMinerba, createMinerbaErr := h.historyService.CreateMinerba(inputCreateMinerba.Period, baseIdNumber, inputCreateMinerba.ListDataDn, uint(claims["id"].(float64)))
 
 	if createMinerbaErr != nil {
 		inputMap := make(map[string]interface{})

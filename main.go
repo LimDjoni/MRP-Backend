@@ -80,11 +80,19 @@ func main() {
 
 	var validate = validator.New()
 
-	// Make Validation for Gender
+	// Make Validation for Date
 	errDate := validate.RegisterValidation("DateValidation", validatorfunc.CheckDateString)
 	if errDate != nil {
 		fmt.Println(errDate.Error())
 		fmt.Println("error validate date")
+	}
+
+	// Make Validation for Period
+	errPeriod := validate.RegisterValidation("PeriodValidation", validatorfunc.ValidationPeriod)
+
+	if errPeriod != nil {
+		fmt.Println(errPeriod.Error())
+		fmt.Println("error validate period")
 	}
 
 	app := fiber.New()
@@ -133,5 +141,5 @@ func createDB(dsn string) {
 func Setup(db *gorm.DB, validate *validator.Validate, route fiber.Router) {
 	routing2.TransactionRouting(db, route, validate)
 	routing2.UserRouting(db, route, validate)
-	routing2.MinerbaRouting(db, route)
+	routing2.MinerbaRouting(db, route, validate)
 }

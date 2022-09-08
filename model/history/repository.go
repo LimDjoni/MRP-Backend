@@ -2,7 +2,6 @@ package history
 
 import (
 	"ajebackend/helper"
-	"ajebackend/model/logs"
 	"ajebackend/model/minerba"
 	"ajebackend/model/transaction"
 	"encoding/json"
@@ -29,12 +28,26 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
+
+func getLastDateInThisMonth() int {
+	now := time.Now()
+	currentYear, currentMonth, _ := now.Date()
+	currentLocation := now.Location()
+
+	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, currentLocation)
+	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+
+	_, _, d := lastOfMonth.Date()
+
+	return d
+}
+
 func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error) {
 	var createdTransaction transaction.Transaction
 	var totalCount int64
 	year, month, _ := time.Now().Date()
 	startDate := fmt.Sprintf("%v-%v-01  00:00:00", year, int(month))
-	endDate := fmt.Sprintf("%v-%v-31  00:00:00", year, int(month))
+	endDate := fmt.Sprintf("%v-%v-%v  00:00:00", year, int(month), getLastDateInThisMonth())
 
 	tx := r.db.Begin()
 
@@ -332,7 +345,9 @@ func (r *repository) UploadDocumentTransactionDN (idTransaction uint, urlS3 stri
 func (r *repository) CreateMinerba (period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error) {
 	var createdMinerba minerba.Minerba
 
-	idNumber := baseIdNumber + "-" + helper.CreateIdNumber(100)
+	var totalRows int64
+	r.db.Model(minerba.Minerba{}).Count(&totalRows)
+	idNumber := baseIdNumber + "-" + helper.CreateIdNumber(int(totalRows) + 1)
 
 	createdMinerba.IdNumber = idNumber
 	createdMinerba.Period = period
@@ -399,22 +414,6 @@ func (r *repository) DeleteMinerba (idMinerba int, userId uint) (bool, error) {
 	if updateTransactionErr != nil {
 		tx.Rollback()
 		return false, updateTransactionErr
-	}
-
-	var historyDelete History
-	errDeleteHistory := tx.Unscoped().Where("minerba_id = ?", idMinerba).Delete(&historyDelete).Error
-
-	if errDeleteHistory != nil {
-		tx.Rollback()
-		return false, errDeleteHistory
-	}
-
-	var log logs.Logs
-	errDeleteLog := tx.Unscoped().Where("minerba_id = ?", idMinerba).Delete(&log).Error
-
-	if errDeleteLog != nil {
-		tx.Rollback()
-		return false, errDeleteLog
 	}
 
 	errDelete := tx.Unscoped().Where("id = ?", idMinerba).Delete(&minerba).Error
