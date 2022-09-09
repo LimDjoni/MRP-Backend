@@ -257,3 +257,95 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 		"message": "success delete minerba",
 	})
 }
+
+func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	inputUpdateMinerba := new(minerba.InputUpdateDocumentMinerba)
+
+	// Binds the request body to the Person struct
+	if err := c.BodyParser(inputUpdateMinerba); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	errors := h.v.Struct(*inputUpdateMinerba)
+
+	if errors != nil {
+		dataErrors := validatorfunc.ValidateStruct(errors)
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["input"] = inputUpdateMinerba
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"errors": dataErrors,
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": dataErrors,
+		})
+	}
+
+	id := c.Params("id")
+
+	idInt, err := strconv.Atoi(id)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"message": "failed to delete minerba",
+			"error": "record not found",
+		})
+	}
+
+	updateMinerba, updateMinerbaErr := h.historyService.UpdateDocumentMinerba(idInt, *inputUpdateMinerba, uint(claims["id"].(float64)))
+
+	if updateMinerbaErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["input"] = inputUpdateMinerba
+
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": updateMinerbaErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		status := 400
+		if updateMinerbaErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"error": updateMinerbaErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(updateMinerba)
+}

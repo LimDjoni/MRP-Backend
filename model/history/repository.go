@@ -18,6 +18,7 @@ type Repository interface {
 	UploadDocumentTransactionDN (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error)
 	CreateMinerba (period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error)
 	DeleteMinerba (idMinerba int, userId uint) (bool, error)
+	UpdateDocumentMinerba(id int, documentLink minerba.InputUpdateDocumentMinerba, userId uint) (minerba.Minerba, error)
 }
 
 type repository struct {
@@ -437,4 +438,50 @@ func (r *repository) DeleteMinerba (idMinerba int, userId uint) (bool, error) {
 
 	tx.Commit()
 	return true, nil
+}
+
+func (r *repository) UpdateDocumentMinerba(id int, documentLink minerba.InputUpdateDocumentMinerba, userId uint) (minerba.Minerba, error) {
+	tx := r.db.Begin()
+	var minerba minerba.Minerba
+
+
+	errFind := tx.Where("id = ?", id).First(&minerba).Error
+
+
+	if errFind != nil {
+		tx.Rollback()
+		return minerba, errFind
+	}
+
+	editData := make(map[string]interface{})
+
+	editData["sp3_medn_document_link"] = documentLink.SP3MEDNDocumentLink
+	editData["recap_dmo_document_link"] = documentLink.RecapDmoDocumentLink
+	editData["detail_dmo_document_link"] = documentLink.DetailDmoDocumentLink
+	editData["sp3_meln_document_link"] = documentLink.SP3MELNDocumentLink
+	editData["insw_export_document_link"] = documentLink.INSWExportDocumentLink
+
+	errEdit := tx.Model(&minerba).Updates(editData).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return minerba, errEdit
+	}
+
+	var history History
+
+	history.MinerbaId = &minerba.ID
+	history.UserId = userId
+	history.Status = fmt.Sprintf("Update upload document minerba with id = %v", minerba.ID)
+
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return minerba, createHistoryErr
+	}
+
+	tx.Commit()
+	return  minerba, nil
 }

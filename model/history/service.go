@@ -12,6 +12,7 @@ type Service interface {
 	UploadDocumentTransactionDN (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error)
 	CreateMinerba (period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error)
 	DeleteMinerba (idMinerba int, userId uint) (bool, error)
+	UpdateDocumentMinerba(id int, documentLink minerba.InputUpdateDocumentMinerba, userId uint) (minerba.Minerba, error)
 }
 
 type service struct {
@@ -56,4 +57,10 @@ func (s *service) DeleteMinerba (idMinerba int, userId uint) (bool, error) {
 	isDeletedMinerba, isDeletedMinerbaErr := s.repository.DeleteMinerba(idMinerba, userId)
 
 	return isDeletedMinerba, isDeletedMinerbaErr
+}
+
+func (s *service) UpdateDocumentMinerba(id int, documentLink minerba.InputUpdateDocumentMinerba, userId uint) (minerba.Minerba, error) {
+	uploadMinerba, uploadMinerbaErr := s.repository.UpdateDocumentMinerba(id, documentLink, userId)
+
+	return uploadMinerba, uploadMinerbaErr
 }

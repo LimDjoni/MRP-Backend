@@ -1489,6 +1489,123 @@ func TestCreateMinerba(t *testing.T) {
 	}
 }
 
+func TestUpdateDocumentMinerba(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token string
+		id int
+		body map[string]interface{}
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			id: 49,
+			token: "asdawfaeac",
+			body: fiber.Map{
+				"sp3medn_document_link": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-5/lhv.pdf",
+				"recap_dmo_document_link": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-5/lhv.pdf",
+				"detail_dmo_document_link": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-5/lhv.pdf",
+			},
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			id: idMinerba,
+			token: token,
+			body: fiber.Map{
+				"sp3medn_document_link": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-5/lhv.pdf",
+				"recap_dmo_document_link": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-5/lhv.pdf",
+				"detail_dmo_document_link": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-5/lhv.pdf",
+			},
+		},
+		{
+			expectedError: false,
+			expectedCode:  400,
+			id: idMinerba,
+			token: token,
+			body: fiber.Map{
+				"sp3medn_document_link": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-5/lhv.pdf",
+				"recap_dmo_document_link": "asfegaegcece",
+				"detail_dmo_document_link": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-5/lhv.pdf",
+			},
+		},
+		{
+			expectedError: false,
+			expectedCode:  404,
+			id: 904,
+			token: token,
+			body: fiber.Map{
+				"sp3medn_document_link": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-5/lhv.pdf",
+				"recap_dmo_document_link": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-5/lhv.pdf",
+				"detail_dmo_document_link": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-5/lhv.pdf",
+			},
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		bodyJson, err := json.Marshal(test.body)
+		var payload = bytes.NewBufferString(string(bodyJson))
+		urlApi := fmt.Sprintf("/api/v1/minerba/update/document/%v", test.id)
+
+		req, _ := http.NewRequest(
+			"PUT",
+			urlApi,
+			payload,
+		)
+
+		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, errTest := app.Test(req, -1)
+
+
+		assert.Equalf(t, test.expectedError, errTest != nil, "update data document minerba")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "update data document minerba")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "update data document minerba")
+
+		mapUnmarshal := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		//// Verify, that the reponse body equals the expected body
+		assert.Contains(t, mapUnmarshal, "ID", "update data document minerba")
+		assert.Contains(t, mapUnmarshal, "CreatedAt", "update data document minerba")
+		assert.Contains(t, mapUnmarshal, "UpdatedAt", "update data document minerba")
+		assert.Contains(t, mapUnmarshal, "DeletedAt", "update data document minerba")
+		assert.Contains(t, mapUnmarshal, "period", "update data document minerba")
+		assert.Contains(t, mapUnmarshal, "id_number", "update data document minerba")
+		assert.Contains(t, mapUnmarshal, "sp3medn_document_link", "update data document minerba")
+		assert.Contains(t, mapUnmarshal, "recap_dmo_document_link", "update data document minerba")
+		assert.Contains(t, mapUnmarshal, "detail_dmo_document_link", "update data document minerba")
+		assert.Contains(t, mapUnmarshal, "sp3meln_document_link", "update data document minerba")
+		assert.Contains(t, mapUnmarshal, "insw_export_document_link", "update data document minerba")
+	}
+}
+
 func TestDeleteMinerba(t *testing.T) {
 	tests := []struct {
 		expectedError bool
