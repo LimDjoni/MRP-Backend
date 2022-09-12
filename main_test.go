@@ -56,6 +56,8 @@ func loadEnv() {
 	}
 }
 
+// User Handler Test
+
 func TestRegisterUser(t *testing.T) {
 	//Data for each test on the route
 	tests := []struct {
@@ -226,6 +228,8 @@ func TestLoginUser(t *testing.T) {
 		}
 	}
 }
+
+// Transaction Handler Test
 
 func TestListDataDN(t *testing.T) {
 	tests := []struct {
@@ -1294,6 +1298,84 @@ func TestDeleteTransactionDN(t *testing.T) {
 	}
 }
 
+// Minerba Handler Test
+var idMinerba = 0
+
+func TestListMinerba(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token string
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			token: "",
+		},
+		{
+			expectedError: false,
+			expectedCode:  401,
+			token: "afwifiwgjwigjianveri",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			token: token,
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		req, _ := http.NewRequest(
+			"GET",
+			"/api/v1/minerba/list",
+			nil,
+		)
+
+		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, err := app.Test(req, -1)
+
+		assert.Equalf(t, test.expectedError, err != nil, "list data minerba")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "list data minerba")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "list data minerba")
+
+		mapUnmarshal := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		//// Verify, that the reponse body equals the expected body
+		assert.Contains(t, mapUnmarshal, "limit")
+		assert.Contains(t, mapUnmarshal, "page")
+		assert.Contains(t, mapUnmarshal, "total_rows")
+		assert.Contains(t, mapUnmarshal, "total_pages")
+		assert.Contains(t, mapUnmarshal, "data")
+	}
+}
+
 func TestListDataDNWithoutMinerba(t *testing.T) {
 	tests := []struct {
 		expectedError bool
@@ -1326,7 +1408,7 @@ func TestListDataDNWithoutMinerba(t *testing.T) {
 	for _, test := range tests {
 		req, _ := http.NewRequest(
 			"GET",
-			"/api/v1/minerba/list",
+			"/api/v1/minerba/list/transaction",
 			nil,
 		)
 
@@ -1365,8 +1447,6 @@ func TestListDataDNWithoutMinerba(t *testing.T) {
 	}
 }
 
-var idMinerba = 0
-
 func TestCreateMinerba(t *testing.T) {
 	var listDn []int
 	listDn = append(listDn, 7, 8, 9)
@@ -1390,7 +1470,7 @@ func TestCreateMinerba(t *testing.T) {
 			expectedError: false,
 			expectedCode:  201,
 			body: fiber.Map{
-				"period":       "Juni 2022",
+				"period":       "Jun 2022",
 				"list_data_dn": listDn,
 			},
 			token: token,
@@ -1399,16 +1479,7 @@ func TestCreateMinerba(t *testing.T) {
 			expectedError: false,
 			expectedCode:  400,
 			body: fiber.Map{
-				"period":       "Juni 2022",
-				"list_data_dn": listDn,
-			},
-			token: token,
-		},
-		{
-			expectedError: false,
-			expectedCode:  400,
-			body: fiber.Map{
-				"period":       "Mei 2022",
+				"period":       "Jun 2022",
 				"list_data_dn": listDn,
 			},
 			token: token,
@@ -1471,7 +1542,6 @@ func TestCreateMinerba(t *testing.T) {
 		}
 
 		if res.StatusCode == 201 {
-			fmt.Println(mapUnmarshal["id_number"])
 			idMinerba = int(mapUnmarshal["ID"].(float64))
 		}
 
@@ -1486,6 +1556,83 @@ func TestCreateMinerba(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "detail_dmo_document_link", "create data minerba")
 		assert.Contains(t, mapUnmarshal, "sp3meln_document_link", "create data minerba")
 		assert.Contains(t, mapUnmarshal, "insw_export_document_link", "create data minerba")
+	}
+}
+
+func TestDetailMinerba(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token string
+		id int
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			id: 1,
+			token: "asdawfaeac",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			id: idMinerba,
+			token: token,
+		},
+		{
+			expectedError: false,
+			expectedCode:  404,
+			id: 1050,
+			token: token,
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		url := fmt.Sprintf("/api/v1/minerba/detail/%v", test.id)
+		req, _ := http.NewRequest(
+			"GET",
+			url,
+			nil,
+		)
+
+		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, err := app.Test(req, -1)
+
+		assert.Equalf(t, test.expectedError, err != nil, "list detail minerba")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "list detail minerba")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "list detail minerba")
+
+		mapUnmarshal := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		//// Verify, that the reponse body equals the expected body
+		assert.Contains(t, mapUnmarshal, "detail", "list detail minerba")
+		assert.Contains(t, mapUnmarshal, "list", "list detail minerba")
 	}
 }
 

@@ -31,3 +31,4 @@ func (s *service) GetDataMinerba(id int)(Minerba, error) {
 
 	return dataMinerba, dataMinerbaErr
 }
+

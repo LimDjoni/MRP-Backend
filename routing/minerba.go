@@ -45,7 +45,9 @@ func MinerbaRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate)
 		},
 	}))
 
-	minerbaRouting.Get("/list", minerbaHandler.ListDataDNWithoutMinerba)
+	minerbaRouting.Get("/list", minerbaHandler.ListMinerba)
+	minerbaRouting.Get("/list/transaction", minerbaHandler.ListDataDNWithoutMinerba)
+	minerbaRouting.Get("/detail/:id", minerbaHandler.DetailMinerba)
 	minerbaRouting.Post("/create", minerbaHandler.CreateMinerba)
 	minerbaRouting.Delete("/delete/:id", minerbaHandler.DeleteMinerba)
 	minerbaRouting.Put("/update/document/:id", minerbaHandler.UpdateDocumentMinerba)

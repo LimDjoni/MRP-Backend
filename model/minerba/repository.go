@@ -43,10 +43,11 @@ func(r *repository) GetListReportMinerbaAll(page int) (Pagination, error) {
 	return pagination, nil
 }
 
-func (r *repository) GetDataMinerba(id int)(Minerba, error) {
+func(r *repository) GetDataMinerba(id int)(Minerba, error) {
 	var minerba Minerba
 
 	errFind := r.db.Where("id = ?", id).First(&minerba).Error
 
 	return minerba, errFind
 }
+

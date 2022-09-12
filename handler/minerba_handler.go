@@ -154,7 +154,7 @@ func (h *minerbaHandler) CreateMinerba(c *fiber.Ctx) error {
 
 	splitPeriod := strings.Split(inputCreateMinerba.Period, " ")
 
-	baseIdNumber := fmt.Sprintf("LM-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
+	baseIdNumber := fmt.Sprintf("LM-%s-%s", splitPeriod[1], helper.MonthStringToNumberString(splitPeriod[0]))
 	createMinerba, createMinerbaErr := h.historyService.CreateMinerba(inputCreateMinerba.Period, baseIdNumber, inputCreateMinerba.ListDataDn, uint(claims["id"].(float64)))
 
 	if createMinerbaErr != nil {
@@ -281,6 +281,7 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 	if err := c.BodyParser(inputUpdateMinerba); err != nil {
 		return c.Status(400).JSON(fiber.Map{
 			"error": err.Error(),
+			"message": "failed to update minerba",
 		})
 	}
 
@@ -314,7 +315,7 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{
-			"message": "failed to delete minerba",
+			"message": "failed to update minerba",
 			"error": "record not found",
 		})
 	}
@@ -344,8 +345,94 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 		}
 		return c.Status(status).JSON(fiber.Map{
 			"error": updateMinerbaErr.Error(),
+			"message": "failed to update minerba",
 		})
 	}
 
 	return c.Status(200).JSON(updateMinerba)
+}
+
+func (h *minerbaHandler) ListMinerba(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	page := c.Query("page")
+
+	pageNumber, err := strconv.Atoi(page)
+
+	if err != nil && page != "" {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	if page == "" {
+		pageNumber = 1
+	}
+
+	listMinerba, listMinerbaErr := h.minerbaService.GetListReportMinerbaAll(pageNumber)
+
+	if listMinerbaErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": listMinerbaErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(listMinerba)
+}
+
+func (h *minerbaHandler) DetailMinerba(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	id := c.Params("id")
+
+	idInt, err := strconv.Atoi(id)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "record not found",
+		})
+	}
+
+	detailMinerba, detailMinerbaErr := h.transactionService.GetDetailMinerba(idInt)
+
+	if detailMinerbaErr != nil {
+		status := 400
+
+		if  detailMinerbaErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"error": detailMinerbaErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(detailMinerba)
 }

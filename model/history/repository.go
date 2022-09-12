@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
+	"strconv"
 	"time"
 )
 
@@ -58,8 +59,14 @@ func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTra
 		return createdTransaction, findErr
 	}
 
+	monthNumber := strconv.Itoa(int(month))
+
+	if len([]rune(monthNumber)) < 2 {
+		monthNumber = "0" + monthNumber
+	}
+
 	createdTransaction.DmoId = nil
-	createdTransaction.IdNumber += fmt.Sprintf("DN-%v-%v-%v", year, int(month), helper.CreateIdNumber(int(totalCount + 1)))
+	createdTransaction.IdNumber += fmt.Sprintf("DN-%v-%v-%v", year, monthNumber, helper.CreateIdNumber(int(totalCount + 1)))
 	createdTransaction.TransactionType = "DN"
 	createdTransaction.ShippingDate = inputTransactionDN.ShippingDate
 	createdTransaction.Quantity = inputTransactionDN.Quantity
@@ -473,7 +480,6 @@ func (r *repository) UpdateDocumentMinerba(id int, documentLink minerba.InputUpd
 	history.MinerbaId = &minerba.ID
 	history.UserId = userId
 	history.Status = fmt.Sprintf("Update upload document minerba with id = %v", minerba.ID)
-
 
 	createHistoryErr := tx.Create(&history).Error
 

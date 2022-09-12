@@ -1,6 +1,7 @@
 package transaction
 
 import (
+	"ajebackend/model/minerba"
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
@@ -11,6 +12,7 @@ type Repository interface {
 	DetailTransactionDN(id int) (Transaction, error)
 	ListDataDNWithoutMinerba() ([]Transaction, error)
 	CheckDataDNAndMinerba(listData []int)(bool, error)
+	GetDetailMinerba(id int)(DetailMinerba, error)
 }
 
 type repository struct {
@@ -81,7 +83,7 @@ func (r *repository) DetailTransactionDN(id int) (Transaction, error) {
 func (r *repository) ListDataDNWithoutMinerba() ([]Transaction, error) {
 	var listDataDnWithoutMinerba []Transaction
 
-	errFind := r.db.Where("minerba_id is NULL").Find(&listDataDnWithoutMinerba).Error
+	errFind := r.db.Where("minerba_id is NULL AND transaction_type = ?", "DN").Find(&listDataDnWithoutMinerba).Error
 
 	return listDataDnWithoutMinerba, errFind
 }
@@ -100,4 +102,29 @@ func (r *repository) CheckDataDNAndMinerba(listData []int)(bool, error) {
 	}
 
 	return true, nil
+}
+
+func(r *repository) GetDetailMinerba(id int)(DetailMinerba, error) {
+
+	var detailMinerba DetailMinerba
+
+	var minerba minerba.Minerba
+	var transactions []Transaction
+
+	minerbaFindErr := r.db.Where("id = ?", id).First(&minerba).Error
+
+	if minerbaFindErr != nil {
+		return detailMinerba, minerbaFindErr
+	}
+
+	detailMinerba.Detail = minerba
+
+	transactionFindErr := r.db.Where("minerba_id = ?", id).Find(&transactions).Error
+
+	if transactionFindErr != nil {
+		return detailMinerba, transactionFindErr
+	}
+
+	detailMinerba.List = transactions
+	return detailMinerba, nil
 }

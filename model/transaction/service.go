@@ -5,6 +5,7 @@ type Service interface {
 	DetailTransactionDN(id int) (Transaction, error)
 	ListDataDNWithoutMinerba() ([]Transaction, error)
 	CheckDataDNAndMinerba(listData []int)(bool, error)
+	GetDetailMinerba(id int)(DetailMinerba, error)
 }
 
 type service struct {
@@ -37,4 +38,10 @@ func (s *service) CheckDataDNAndMinerba(listData []int)(bool, error) {
 	checkData, checkDataErr := s.repository.CheckDataDNAndMinerba(listData)
 
 	return checkData, checkDataErr
+}
+
+func (s *service) GetDetailMinerba(id int)(DetailMinerba, error) {
+	detailMinerba, detailMinerbaErr := s.repository.GetDetailMinerba(id)
+
+	return detailMinerba, detailMinerbaErr
 }
