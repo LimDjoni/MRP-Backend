@@ -2,10 +2,13 @@ package history
 
 import (
 	"ajebackend/helper"
+	"ajebackend/model/minerba"
 	"ajebackend/model/transaction"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"gorm.io/gorm"
+	"strconv"
 	"time"
 )
 
@@ -13,7 +16,10 @@ type Repository interface {
 	CreateTransactionDN (inputTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
 	DeleteTransactionDN(id int, userId uint) (bool, error)
 	UpdateTransactionDN (idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
-	UploadDocument (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error)
+	UploadDocumentTransactionDN (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error)
+	CreateMinerba (period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error)
+	DeleteMinerba (idMinerba int, userId uint) (bool, error)
+	UpdateDocumentMinerba(id int, documentLink minerba.InputUpdateDocumentMinerba, userId uint) (minerba.Minerba, error)
 }
 
 type repository struct {
@@ -24,12 +30,26 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
+
+func getLastDateInThisMonth() int {
+	now := time.Now()
+	currentYear, currentMonth, _ := now.Date()
+	currentLocation := now.Location()
+
+	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, currentLocation)
+	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+
+	_, _, d := lastOfMonth.Date()
+
+	return d
+}
+
 func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error) {
 	var createdTransaction transaction.Transaction
 	var totalCount int64
 	year, month, _ := time.Now().Date()
 	startDate := fmt.Sprintf("%v-%v-01  00:00:00", year, int(month))
-	endDate := fmt.Sprintf("%v-%v-31  00:00:00", year, int(month))
+	endDate := fmt.Sprintf("%v-%v-%v  00:00:00", year, int(month), getLastDateInThisMonth())
 
 	tx := r.db.Begin()
 
@@ -39,8 +59,14 @@ func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTra
 		return createdTransaction, findErr
 	}
 
+	monthNumber := strconv.Itoa(int(month))
+
+	if len([]rune(monthNumber)) < 2 {
+		monthNumber = "0" + monthNumber
+	}
+
 	createdTransaction.DmoId = nil
-	createdTransaction.IdNumber += fmt.Sprintf("DN-%v-%v-%v", year, int(month), helper.CreateIdNumber(int(totalCount + 1)))
+	createdTransaction.IdNumber += fmt.Sprintf("DN-%v-%v-%v", year, monthNumber, helper.CreateIdNumber(int(totalCount + 1)))
 	createdTransaction.TransactionType = "DN"
 	createdTransaction.ShippingDate = inputTransactionDN.ShippingDate
 	createdTransaction.Quantity = inputTransactionDN.Quantity
@@ -234,7 +260,7 @@ func (r *repository) UpdateTransactionDN (idTransaction int, inputEditTransactio
 	return transaction, nil
 }
 
-func (r *repository) UploadDocument (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error) {
+func (r *repository) UploadDocumentTransactionDN (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error) {
 	var uploadedTransaction transaction.Transaction
 
 	tx := r.db.Begin()
@@ -322,4 +348,146 @@ func (r *repository) UploadDocument (idTransaction uint, urlS3 string, userId ui
 
 	tx.Commit()
 	return uploadedTransaction, nil
+}
+
+func (r *repository) CreateMinerba (period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error) {
+	var createdMinerba minerba.Minerba
+
+	var totalRows int64
+	r.db.Model(minerba.Minerba{}).Count(&totalRows)
+	idNumber := baseIdNumber + "-" + helper.CreateIdNumber(int(totalRows) + 1)
+
+	createdMinerba.IdNumber = idNumber
+	createdMinerba.Period = period
+	tx := r.db.Begin()
+
+	var transactions []transaction.Transaction
+	findTransactionsErr := tx.Where("id IN ?", updateTransaction).Find(&transactions).Error
+
+	if findTransactionsErr != nil {
+		tx.Rollback()
+		return createdMinerba, findTransactionsErr
+	}
+
+	if len(transactions) != len(updateTransaction) {
+		tx.Rollback()
+		return createdMinerba, errors.New("please check some of transactions not found")
+	}
+
+	errCreateMinerba := tx.Create(&createdMinerba).Error
+
+	if errCreateMinerba != nil {
+		tx.Rollback()
+		return createdMinerba, errCreateMinerba
+	}
+
+	updateTransactionErr := tx.Table("transactions").Where("id IN ?", updateTransaction).Update("minerba_id", createdMinerba.ID).Error
+
+	if updateTransactionErr != nil {
+		tx.Rollback()
+		return createdMinerba, updateTransactionErr
+	}
+
+	var history History
+
+	history.MinerbaId = &createdMinerba.ID
+	history.Status = "Created Minerba Report"
+	history.UserId = userId
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return createdMinerba, createHistoryErr
+	}
+
+	tx.Commit()
+	return createdMinerba, nil
+}
+
+func (r *repository) DeleteMinerba (idMinerba int, userId uint) (bool, error) {
+
+	tx := r.db.Begin()
+	var minerba minerba.Minerba
+
+	findErr := tx.Where("id = ?", idMinerba).First(&minerba).Error
+
+	if findErr != nil {
+		tx.Rollback()
+		return false, findErr
+	}
+
+	updateTransactionErr := tx.Table("transactions").Where("minerba_id = ?", idMinerba).Update("minerba_id", nil).Error
+
+	if updateTransactionErr != nil {
+		tx.Rollback()
+		return false, updateTransactionErr
+	}
+
+	errDelete := tx.Unscoped().Where("id = ?", idMinerba).Delete(&minerba).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+		return false, errDelete
+	}
+
+	var history History
+
+	history.Status = fmt.Sprintf("Deleted Minerba Report with id number %s and id %v", minerba.IdNumber, minerba.ID)
+	history.UserId = userId
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return false, createHistoryErr
+	}
+
+	tx.Commit()
+	return true, nil
+}
+
+func (r *repository) UpdateDocumentMinerba(id int, documentLink minerba.InputUpdateDocumentMinerba, userId uint) (minerba.Minerba, error) {
+	tx := r.db.Begin()
+	var minerba minerba.Minerba
+
+
+	errFind := tx.Where("id = ?", id).First(&minerba).Error
+
+
+	if errFind != nil {
+		tx.Rollback()
+		return minerba, errFind
+	}
+
+	editData := make(map[string]interface{})
+
+	editData["sp3_medn_document_link"] = documentLink.SP3MEDNDocumentLink
+	editData["recap_dmo_document_link"] = documentLink.RecapDmoDocumentLink
+	editData["detail_dmo_document_link"] = documentLink.DetailDmoDocumentLink
+	editData["sp3_meln_document_link"] = documentLink.SP3MELNDocumentLink
+	editData["insw_export_document_link"] = documentLink.INSWExportDocumentLink
+
+	errEdit := tx.Model(&minerba).Updates(editData).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return minerba, errEdit
+	}
+
+	var history History
+
+	history.MinerbaId = &minerba.ID
+	history.UserId = userId
+	history.Status = fmt.Sprintf("Update upload document minerba with id = %v", minerba.ID)
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return minerba, createHistoryErr
+	}
+
+	tx.Commit()
+	return  minerba, nil
 }

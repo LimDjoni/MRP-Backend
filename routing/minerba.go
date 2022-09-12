@@ -5,6 +5,7 @@ import (
 	"ajebackend/helper"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
+	"ajebackend/model/minerba"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 	"github.com/go-playground/validator/v10"
@@ -13,7 +14,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func TransactionRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
+func MinerbaRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	transactionRepository := transaction.NewRepository(db)
 	transactionService := transaction.NewService(transactionRepository)
 
@@ -26,11 +27,14 @@ func TransactionRouting(db *gorm.DB, app fiber.Router, validate *validator.Valid
 	logRepository := logs.NewRepository(db)
 	logService := logs.NewService(logRepository)
 
-	transactionHandler := handler.NewTransactionHandler(transactionService, userService, historyService, validate, logService)
+	minerbaRepository := minerba.NewRepository(db)
+	minerbaService := minerba.NewService(minerbaRepository)
 
-	transactionRouting := app.Group("/transaction")
+	minerbaHandler := handler.NewMinerbaHandler(transactionService, userService, historyService, logService, minerbaService, validate)
 
-	transactionRouting.Use(jwtware.New(jwtware.Config{
+	minerbaRouting := app.Group("/minerba")
+
+	minerbaRouting.Use(jwtware.New(jwtware.Config{
 		SigningKey:    []byte(helper.GetEnvWithKey("JWT_SECRET_KEY")),
 		SigningMethod: jwtware.HS256,
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
@@ -41,10 +45,10 @@ func TransactionRouting(db *gorm.DB, app fiber.Router, validate *validator.Valid
 		},
 	}))
 
-	transactionRouting.Post("/create/dn", transactionHandler.CreateTransactionDN)
-	transactionRouting.Get("/list/dn", transactionHandler.ListDataDN)
-	transactionRouting.Get("/detail/dn/:id", transactionHandler.DetailTransactionDN)
-	transactionRouting.Delete("/delete/dn/:id", transactionHandler.DeleteTransactionDN)
-	transactionRouting.Put("/update/dn/:id", transactionHandler.UpdateTransactionDN)
-	transactionRouting.Put("/update/document/dn/:id/:type", transactionHandler.UpdateDocumentTransactionDN)
+	minerbaRouting.Get("/list", minerbaHandler.ListMinerba)
+	minerbaRouting.Get("/list/transaction", minerbaHandler.ListDataDNWithoutMinerba)
+	minerbaRouting.Get("/detail/:id", minerbaHandler.DetailMinerba)
+	minerbaRouting.Post("/create", minerbaHandler.CreateMinerba)
+	minerbaRouting.Delete("/delete/:id", minerbaHandler.DeleteMinerba)
+	minerbaRouting.Put("/update/document/:id", minerbaHandler.UpdateDocumentMinerba)
 }

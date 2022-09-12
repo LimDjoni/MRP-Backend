@@ -20,16 +20,12 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
 	"os"
 )
 
 func main() {
-
-	LoadEnv()
 	var port string
 	if len(os.Getenv("PORT")) < 2 {
 		port = "8080"
@@ -65,29 +61,44 @@ func main() {
 			&history.History{},
 			&logs.Logs{},
 			&minerba.Minerba{},
-			&minerbatransaction.MinerbaTransaction{},
 			&trader.Trader{},
 			&traderdmo.TraderDmo{},
 			&transaction.Transaction{},
 			&user.User{},
 		)
 
+		errDropTable := db.Migrator().DropTable(
+			&minerbatransaction.MinerbaTransaction{},
+		)
+
+		if errDropTable != nil {
+			fmt.Println(errDropTable)
+		}
+
 		fmt.Println(errMigrate)
 	}
 
 	var validate = validator.New()
 
-	// Make Validation for Gender
+	// Make Validation for Date
 	errDate := validate.RegisterValidation("DateValidation", validatorfunc.CheckDateString)
 	if errDate != nil {
 		fmt.Println(errDate.Error())
 		fmt.Println("error validate date")
 	}
 
+	// Make Validation for Period
+	errPeriod := validate.RegisterValidation("PeriodValidation", validatorfunc.ValidationPeriod)
+
+	if errPeriod != nil {
+		fmt.Println(errPeriod.Error())
+		fmt.Println("error validate period")
+	}
+
 	app := fiber.New()
 
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "https://cdf2-103-121-18-7.ap.ngrok.io",
+		AllowOrigins:     "*",
 		AllowMethods:     "GET, POST, OPTIONS, PUT, DELETE",
 		AllowCredentials: true,
 		AllowHeaders: "Origin, Content-Type, Accept, Content-Length, Accept-Language, Accept-Encoding, Connection, Access-Control-Allow-Origin, Authorization",
@@ -127,16 +138,8 @@ func createDB(dsn string) {
 	}
 }
 
-func LoadEnv() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatalf("Error loading .env file")
-		os.Exit(1)
-	}
-}
-
 func Setup(db *gorm.DB, validate *validator.Validate, route fiber.Router) {
 	routing2.TransactionRouting(db, route, validate)
 	routing2.UserRouting(db, route, validate)
-
+	routing2.MinerbaRouting(db, route, validate)
 }

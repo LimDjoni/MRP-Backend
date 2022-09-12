@@ -1,12 +1,18 @@
 package history
 
-import "ajebackend/model/transaction"
+import (
+	"ajebackend/model/minerba"
+	"ajebackend/model/transaction"
+)
 
 type Service interface {
 	CreateTransactionDN (inputTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
 	DeleteTransactionDN(id int, userId uint) (bool, error)
 	UpdateTransactionDN (idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
-	UploadDocument (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error)
+	UploadDocumentTransactionDN (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error)
+	CreateMinerba (period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error)
+	DeleteMinerba (idMinerba int, userId uint) (bool, error)
+	UpdateDocumentMinerba(id int, documentLink minerba.InputUpdateDocumentMinerba, userId uint) (minerba.Minerba, error)
 }
 
 type service struct {
@@ -35,8 +41,26 @@ func (s *service) UpdateTransactionDN (idTransaction int, inputEditTransactionDN
 	return updateTransaction, updateTransactionErr
 }
 
-func (s *service) UploadDocument (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error) {
-	uploadedDocument, uploadedDocumentErr := s.repository.UploadDocument(idTransaction, urlS3, userId, documentType)
+func (s *service) UploadDocumentTransactionDN (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error) {
+	uploadedDocument, uploadedDocumentErr := s.repository.UploadDocumentTransactionDN(idTransaction, urlS3, userId, documentType)
 
 	return uploadedDocument, uploadedDocumentErr
+}
+
+func (s *service) CreateMinerba (period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error) {
+	createdMinerba, createdMinerbaErr := s.repository.CreateMinerba(period, baseIdNumber, updateTransaction, userId)
+
+	return createdMinerba, createdMinerbaErr
+}
+
+func (s *service) DeleteMinerba (idMinerba int, userId uint) (bool, error) {
+	isDeletedMinerba, isDeletedMinerbaErr := s.repository.DeleteMinerba(idMinerba, userId)
+
+	return isDeletedMinerba, isDeletedMinerbaErr
+}
+
+func (s *service) UpdateDocumentMinerba(id int, documentLink minerba.InputUpdateDocumentMinerba, userId uint) (minerba.Minerba, error) {
+	uploadMinerba, uploadMinerbaErr := s.repository.UpdateDocumentMinerba(id, documentLink, userId)
+
+	return uploadMinerba, uploadMinerbaErr
 }
