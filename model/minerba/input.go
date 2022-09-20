@@ -6,9 +6,5 @@ type InputCreateMinerba struct {
 }
 
 type InputUpdateDocumentMinerba struct {
-	SP3MEDNDocumentLink string `json:"sp3medn_document_link" validate:"required,url"`
-	RecapDmoDocumentLink string `json:"recap_dmo_document_link" validate:"required,url"`
-	DetailDmoDocumentLink string `json:"detail_dmo_document_link" validate:"required,url"`
-	SP3MELNDocumentLink *string `json:"sp3meln_document_link"`
-	INSWExportDocumentLink *string `json:"insw_export_document_link"`
+	Data []map[string]interface{} `json:"data"`
 }

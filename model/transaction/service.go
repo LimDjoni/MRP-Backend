@@ -1,11 +1,20 @@
 package transaction
 
+import (
+	"ajebackend/helper"
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"net/http"
+)
+
 type Service interface {
 	ListDataDN(page int, sortFilter SortAndFilter) (Pagination, error)
 	DetailTransactionDN(id int) (Transaction, error)
 	ListDataDNWithoutMinerba() ([]Transaction, error)
 	CheckDataDNAndMinerba(listData []int)(bool, error)
 	GetDetailMinerba(id int)(DetailMinerba, error)
+	RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (map[string]interface{}, error)
 }
 
 type service struct {
@@ -44,4 +53,36 @@ func (s *service) GetDetailMinerba(id int)(DetailMinerba, error) {
 	detailMinerba, detailMinerbaErr := s.repository.GetDetailMinerba(id)
 
 	return detailMinerba, detailMinerbaErr
+}
+
+func (s *service) RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (map[string]interface{}, error) {
+	var res map[string]interface{}
+	baseURL := helper.GetEnvWithKey("BASE_JOB_URL")
+
+	urlPost := baseURL + "/createexcel"
+	body, bodyErr := json.Marshal(reqInput)
+
+	if bodyErr != nil {
+		return res, bodyErr
+	}
+	var payload = bytes.NewBufferString(string(body))
+
+	req, doReqErr := http.NewRequest("POST", urlPost, payload)
+
+	if req != nil {
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+	}
+	client := &http.Client{}
+	resp, doReqErr := client.Do(req)
+
+	if doReqErr != nil {
+		return res, doReqErr
+	}
+
+	json.NewDecoder(resp.Body).Decode(&res)
+
+	fmt.Println(res)
+	fmt.Println(doReqErr)
+	return res, doReqErr
 }
