@@ -516,7 +516,9 @@ func (h *minerbaHandler) RequestCreateExcelMinerba(c *fiber.Ctx) error {
 	hitJob, hitJobErr := h.transactionService.RequestCreateExcel(inputRequestCreateExcel)
 
 	if hitJobErr != nil {
-		return c.Status(400).JSON(hitJob)
+		return c.Status(400).JSON(fiber.Map{
+			"error": hitJobErr.Error(),
+		})
 	}
 
 	return c.Status(200).JSON(hitJob)
