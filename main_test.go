@@ -1637,56 +1637,67 @@ func TestDetailMinerba(t *testing.T) {
 }
 
 func TestUpdateDocumentMinerba(t *testing.T) {
+
+	bodyString := make(map[string][]map[string]interface{})
+
+	bodyString["data"] = []map[string]interface{}{
+		{
+			"Key": "LM-2022-03-0008/sp3medn.xlsx",
+			"key": "LM-2022-03-0008/sp3medn.xlsx",
+			"ETag": "23acbb2e206c924f5b438162ffa0b425",
+			"Bucket": "deli-aje",
+			"Location": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/LM-2022-03-0008/sp3medn.xlsx",
+		},
+		{
+			"Key": "LM-2022-03-0008/recapdmo.xlsx",
+			"key": "LM-2022-03-0008/recapdmo.xlsx",
+			"ETag": "610288c6357a94aba8d5c4e04ee588e3",
+			"Bucket": "deli-aje",
+			"Location": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/LM-2022-03-0008/recapdmo.xlsx",
+		},
+		{
+			"Key": "LM-2022-03-0008/detaildmo.xlsx",
+			"key": "LM-2022-03-0008/detaildmo.xlsx",
+			"ETag": "fbb861e4a88950eb7d38845219f99f43",
+			"Bucket": "deli-aje",
+			"Location": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/LM-2022-03-0008/detaildmo.xlsx",
+		},
+	}
+
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
 		token string
 		id int
-		body map[string]interface{}
+		body map[string][]map[string]interface{}
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
 			id: 49,
 			token: "asdawfaeac",
-			body: fiber.Map{
-				"sp3medn_document_link": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-5/lhv.pdf",
-				"recap_dmo_document_link": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-5/lhv.pdf",
-				"detail_dmo_document_link": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-5/lhv.pdf",
-			},
+			body: bodyString,
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
 			id: idMinerba,
 			token: token,
-			body: fiber.Map{
-				"sp3medn_document_link": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-5/lhv.pdf",
-				"recap_dmo_document_link": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-5/lhv.pdf",
-				"detail_dmo_document_link": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-5/lhv.pdf",
-			},
+			body: bodyString,
 		},
 		{
 			expectedError: false,
 			expectedCode:  400,
 			id: idMinerba,
 			token: token,
-			body: fiber.Map{
-				"sp3medn_document_link": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-5/lhv.pdf",
-				"recap_dmo_document_link": "asfegaegcece",
-				"detail_dmo_document_link": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-5/lhv.pdf",
-			},
+			body: bodyString,
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
 			id: 904,
 			token: token,
-			body: fiber.Map{
-				"sp3medn_document_link": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-5/lhv.pdf",
-				"recap_dmo_document_link": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-5/lhv.pdf",
-				"detail_dmo_document_link": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DN-2022-8-5/lhv.pdf",
-			},
+			body: bodyString,
 		},
 	}
 

@@ -285,6 +285,7 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 		})
 	}
 
+
 	errors := h.v.Struct(*inputUpdateMinerba)
 
 	if errors != nil {
@@ -320,6 +321,25 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 		})
 	}
 
+	detailMinerba, detailMinerbaErr := h.transactionService.GetDetailMinerba(idInt)
+
+	if detailMinerbaErr != nil {
+		status := 400
+
+		if  detailMinerbaErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"error": detailMinerbaErr.Error(),
+		})
+	}
+
+	if detailMinerba.Detail.DetailDmoDocumentLink != nil || detailMinerba.Detail.RecapDmoDocumentLink != nil || detailMinerba.Detail.SP3MEDNDocumentLink != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "document already has been created",
+		})
+	}
+
 	updateMinerba, updateMinerbaErr := h.historyService.UpdateDocumentMinerba(idInt, *inputUpdateMinerba, uint(claims["id"].(float64)))
 
 	if updateMinerbaErr != nil {
@@ -343,6 +363,7 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 		if updateMinerbaErr.Error() == "record not found" {
 			status = 404
 		}
+
 		return c.Status(status).JSON(fiber.Map{
 			"error": updateMinerbaErr.Error(),
 			"message": "failed to update minerba",
