@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"gorm.io/gorm"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -462,11 +463,27 @@ func (r *repository) UpdateDocumentMinerba(id int, documentLink minerba.InputUpd
 
 	editData := make(map[string]interface{})
 
-	editData["sp3_medn_document_link"] = documentLink.SP3MEDNDocumentLink
-	editData["recap_dmo_document_link"] = documentLink.RecapDmoDocumentLink
-	editData["detail_dmo_document_link"] = documentLink.DetailDmoDocumentLink
-	editData["sp3_meln_document_link"] = documentLink.SP3MELNDocumentLink
-	editData["insw_export_document_link"] = documentLink.INSWExportDocumentLink
+
+
+	for _, value := range documentLink.Data {
+		if value["Location"] != nil {
+			if strings.Contains(value["Location"].(string), "sp3medn") {
+				editData["sp3_medn_document_link"] = value["Location"]
+			}
+			if strings.Contains(value["Location"].(string), "recapdmo") {
+				editData["recap_dmo_document_link"] = value["Location"]
+			}
+			if strings.Contains(value["Location"].(string), "detaildmo") {
+				editData["detail_dmo_document_link"] = value["Location"]
+			}
+			if strings.Contains(value["Location"].(string), "sp3meln") {
+				editData["sp3_meln_document_link"] = value["Location"]
+			}
+			if strings.Contains(value["Location"].(string), "inswexport") {
+				editData["insw_export_document_link"] = value["Location"]
+			}
+		}
+	}
 
 	errEdit := tx.Model(&minerba).Updates(editData).Error
 
@@ -480,6 +497,9 @@ func (r *repository) UpdateDocumentMinerba(id int, documentLink minerba.InputUpd
 	history.MinerbaId = &minerba.ID
 	history.UserId = userId
 	history.Status = fmt.Sprintf("Update upload document minerba with id = %v", minerba.ID)
+
+	dataInput, _ := json.Marshal(documentLink)
+	history.AfterData = dataInput
 
 	createHistoryErr := tx.Create(&history).Error
 

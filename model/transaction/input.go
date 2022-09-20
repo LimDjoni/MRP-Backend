@@ -71,3 +71,11 @@ type SortAndFilter struct {
 	ShippingFrom string
 	ShippingTo string
 }
+
+type InputRequestCreateExcelMinerba struct {
+	Authorization	string `json:"authorization"`
+	MinerbaNumber	string `json:"minerba_number"`
+	MinerbaPeriod	string `json:"minerba_period"`
+	MinerbaId		int	`json:"minerba_id"`
+	Transactions	[]Transaction `json:"transactions"`
+}
