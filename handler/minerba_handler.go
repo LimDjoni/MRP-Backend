@@ -436,3 +436,67 @@ func (h *minerbaHandler) DetailMinerba(c *fiber.Ctx) error {
 
 	return c.Status(200).JSON(detailMinerba)
 }
+
+func (h *minerbaHandler) RequestCreateExcelMinerba(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	id := c.Params("id")
+
+	idInt, err := strconv.Atoi(id)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "record not found",
+		})
+	}
+
+	header := c.GetReqHeaders()
+
+	detailMinerba, detailMinerbaErr := h.transactionService.GetDetailMinerba(idInt)
+
+	if detailMinerbaErr != nil {
+		status := 400
+
+		if  detailMinerbaErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"error": detailMinerbaErr.Error(),
+		})
+	}
+
+	if detailMinerba.Detail.DetailDmoDocumentLink != nil || detailMinerba.Detail.RecapDmoDocumentLink != nil || detailMinerba.Detail.SP3MEDNDocumentLink != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "document already has been created",
+		})
+	}
+
+	var inputRequestCreateExcel transaction.InputRequestCreateExcelMinerba
+	inputRequestCreateExcel.Authorization = header["Authorization"]
+	inputRequestCreateExcel.MinerbaId = idInt
+	inputRequestCreateExcel.MinerbaNumber = detailMinerba.Detail.IdNumber
+	inputRequestCreateExcel.MinerbaPeriod = detailMinerba.Detail.Period
+	inputRequestCreateExcel.Transactions = detailMinerba.List
+
+	hitJob, hitJobErr := h.transactionService.RequestCreateExcel(inputRequestCreateExcel)
+
+	if hitJobErr != nil {
+		return c.Status(400).JSON(hitJob)
+	}
+
+	return c.Status(200).JSON(hitJob)
+}
