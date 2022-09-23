@@ -39,7 +39,7 @@ type Transaction struct {
 	DpRoyaltyNtpn *string `json:"dp_royalty_ntpn" gorm:"UNIQUE"`
 	DpRoyaltyBillingCode *string `json:"dp_royalty_billing_code" gorm:"UNIQUE"`
 	DpRoyaltyTotal float64 `json:"dp_royalty_total"`
-	PaymentDpRoyaltyPrice float64 `json:"dp_royalty_price"`
+	PaymentDpRoyaltyPrice float64 `json:"payment_dp_royalty_price"`
 	PaymentDpRoyaltyCurrency string `json:"payment_dp_royalty_currency"`
 	PaymentDpRoyaltyDate *string `json:"payment_dp_royalty_date" gorm:"type:DATE"`
 	PaymentDpRoyaltyNtpn *string `json:"payment_dp_royalty_ntpn" gorm:"UNIQUE"`
