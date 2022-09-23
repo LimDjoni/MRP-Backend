@@ -16,13 +16,13 @@ type Dmo struct {
 	VesselAdjustment float64 `json:"vessel_adjustment"`
 	VesselGrandTotalQuantity float64 `json:"vessel_grand_total_quantity"`
 	EndUser string `json:"end_user"`
-	ReconciliationLetterDocumentLink string `json:"reconciliation_letter_document_link"`
+	ReconciliationLetterDocumentLink *string `json:"reconciliation_letter_document_link"`
 	IsReconciliationLetterDownloaded bool `json:"is_reconciliation_letter_downloaded"`
 	IsReconciliationLetterSigned bool `json:"is_reconciliation_letter_signed"`
-	BASTDocumentLink string `json:"bast_document_link"`
+	BASTDocumentLink *string `json:"bast_document_link"`
 	IsBastDocumentDownloaded bool `json:"is_bast_document_downloaded"`
 	IsBastDocumentSigned bool `json:"is_bast_document_signed"`
-	StatementLetterDocumentLink string `json:"statement_letter_document_link"`
+	StatementLetterDocumentLink *string `json:"statement_letter_document_link"`
 	IsStatementLetterDownloaded bool `json:"is_statement_letter_downloaded"`
 	isStatementLetterSigned bool `json:"is_statement_letter_signed"`
 }

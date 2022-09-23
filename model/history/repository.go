@@ -2,6 +2,7 @@ package history
 
 import (
 	"ajebackend/helper"
+	"ajebackend/model/dmo"
 	"ajebackend/model/minerba"
 	"ajebackend/model/transaction"
 	"encoding/json"
@@ -45,6 +46,8 @@ func getLastDateInThisMonth() int {
 	return d
 }
 
+// Transaction
+
 func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error) {
 	var createdTransaction transaction.Transaction
 	var totalCount int64
@@ -87,6 +90,7 @@ func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTra
 	createdTransaction.BillOfLadingDate = inputTransactionDN.BillOfLadingDate
 	createdTransaction.BillOfLadingNumber = inputTransactionDN.BillOfLadingNumber
 	createdTransaction.RoyaltyRate = inputTransactionDN.RoyaltyRate
+	createdTransaction.DpRoyaltyPrice = inputTransactionDN.DpRoyaltyPrice
 	createdTransaction.DpRoyaltyCurrency = inputTransactionDN.DpRoyaltyCurrency
 	if inputTransactionDN.DpRoyaltyCurrency == "" {
 		createdTransaction.DpRoyaltyCurrency = "IDR"
@@ -95,6 +99,7 @@ func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTra
 	createdTransaction.DpRoyaltyNtpn = inputTransactionDN.DpRoyaltyNtpn
 	createdTransaction.DpRoyaltyBillingCode = inputTransactionDN.DpRoyaltyBillingCode
 	createdTransaction.DpRoyaltyTotal = inputTransactionDN.DpRoyaltyTotal
+	createdTransaction.PaymentDpRoyaltyPrice = inputTransactionDN.PaymentDpRoyaltyPrice
 	createdTransaction.PaymentDpRoyaltyCurrency = inputTransactionDN.PaymentDpRoyaltyCurrency
 	if inputTransactionDN.PaymentDpRoyaltyCurrency == "" {
 		createdTransaction.PaymentDpRoyaltyCurrency = "IDR"
@@ -351,6 +356,8 @@ func (r *repository) UploadDocumentTransactionDN (idTransaction uint, urlS3 stri
 	return uploadedTransaction, nil
 }
 
+// Minerba
+
 func (r *repository) CreateMinerba (period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error) {
 	var createdMinerba minerba.Minerba
 
@@ -510,4 +517,73 @@ func (r *repository) UpdateDocumentMinerba(id int, documentLink minerba.InputUpd
 
 	tx.Commit()
 	return  minerba, nil
+}
+
+// Dmo
+
+func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput) (dmo.Dmo, error) {
+	var createDmo dmo.Dmo
+	var transactionBarge []transaction.Transaction
+	var transactionVessel []transaction.Transaction
+
+	barge := false
+	vessel := false
+	tx := r.db.Begin()
+
+	if len(dmoInput.TransactionBarge) > 0 {
+		var bargeQuantity float64
+		barge = true
+		findTransactionBargeErr := tx.Where("id IN ?", dmoInput.TransactionBarge).Find(&transactionBarge).Error
+
+		if findTransactionBargeErr != nil {
+			return createDmo, findTransactionBargeErr
+		}
+
+		for _, v := range transactionBarge {
+			bargeQuantity += bargeQuantity + v.Quantity
+		}
+
+		createDmo.BargeTotalQuantity = bargeQuantity
+		createDmo.BargeGrandTotalQuantity = bargeQuantity
+	}
+
+	if len(dmoInput.TransactionVessel) > 0 {
+		var vesselQuantity float64
+		var vesselAdjustment float64
+		vessel = true
+		findTransactionVesselErr := tx.Where("id IN ?", dmoInput.TransactionVessel).Find(&transactionVessel).Error
+		if findTransactionVesselErr != nil {
+			return createDmo, findTransactionVesselErr
+		}
+
+		for _, v := range transactionBarge {
+			vesselQuantity += vesselQuantity + v.Quantity
+		}
+
+		createDmo.VesselTotalQuantity = vesselQuantity
+
+		for _, v := range dmoInput.VesselAdjustment {
+			vesselAdjustment += vesselAdjustment + v.Adjustment
+		}
+
+		createDmo.VesselAdjustment = vesselAdjustment
+		createDmo.VesselTotalQuantity = vesselQuantity
+		createDmo.VesselGrandTotalQuantity = vesselQuantity + vesselAdjustment
+	}
+
+	if barge && vessel {
+		createDmo.Type = "Combination"
+	}
+
+	if barge && !vessel {
+		createDmo.Type = "Barge"
+	}
+
+	if !barge && vessel {
+		createDmo.Type = "Vessel"
+	}
+
+	createDmo.EndUser = dmoInput.EndUser
+
+
 }

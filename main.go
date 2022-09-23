@@ -51,6 +51,7 @@ func main() {
 
 	if db != nil {
 		seeding.UpdateTransactionsRoyalty(db)
+		seeding.SeedingTraderData(db)
 
 		// Auto Migrate All Table
 		errMigrate := db.AutoMigrate(

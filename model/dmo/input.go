@@ -14,4 +14,5 @@ type CreateDmoInput struct {
 	Trader []trader.Trader `json:"trader"`
 	EndUser	string `json:"end_user"`
 	VesselAdjustment []VesselAdjustmentInput `json:"vessel_adjustment"`
+	IsDocumentCustom bool `json:"is_document_custom"`
 }
