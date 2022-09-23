@@ -3,7 +3,6 @@ package main
 import (
 	"ajebackend/helper"
 	"ajebackend/model/dmo"
-	"ajebackend/model/dmobarge"
 	"ajebackend/model/dmovessel"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
@@ -56,7 +55,6 @@ func main() {
 		// Auto Migrate All Table
 		errMigrate := db.AutoMigrate(
 			&dmo.Dmo{},
-			&dmobarge.DmoBarge{},
 			&dmovessel.DmoVessel{},
 			&history.History{},
 			&logs.Logs{},

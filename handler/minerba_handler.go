@@ -2,6 +2,7 @@ package handler
 
 import (
 	"ajebackend/helper"
+	"ajebackend/model/awshelper"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
 	"ajebackend/model/minerba"
@@ -211,7 +212,7 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 		})
 	}
 
-	_, getDataMinerbaErr := h.minerbaService.GetDataMinerba(idInt)
+	dataMinerba, getDataMinerbaErr := h.minerbaService.GetDataMinerba(idInt)
 
 	if getDataMinerbaErr != nil {
 		return c.Status(404).JSON(fiber.Map{
@@ -252,6 +253,41 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 			"error": deleteMinerbaErr.Error(),
 		})
 	}
+
+	fileName := fmt.Sprintf("%s/", dataMinerba.IdNumber)
+	_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
+
+	if deleteAwsErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["minerba_id"] = idInt
+
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": deleteAwsErr.Error(),
+		})
+
+		minerbaId := uint(idInt)
+		createdErrLog := logs.Logs{
+			MinerbaId: &minerbaId,
+			Input: inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		status := 400
+
+		if  deleteMinerbaErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"message": "failed to delete minerba aws",
+			"error": deleteAwsErr.Error(),
+		})
+	}
+
 
 	return c.Status(200).JSON(fiber.Map{
 		"message": "success delete minerba",

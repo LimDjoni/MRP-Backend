@@ -1285,7 +1285,8 @@ func TestDeleteTransactionDN(t *testing.T) {
 
 
 		if test.expectedCode == 200 {
-			_, isDeletedErr := awshelper.DeleteDocument(idNumber)
+			fileName := fmt.Sprintf("%s/lhv.pdf", idNumber)
+			_, isDeletedErr := awshelper.DeleteDocument(fileName)
 
 			assert.Nilf(t, isDeletedErr, "delete data dn")
 

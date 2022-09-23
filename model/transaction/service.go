@@ -4,7 +4,6 @@ import (
 	"ajebackend/helper"
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
@@ -82,7 +81,5 @@ func (s *service) RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (m
 
 	json.NewDecoder(resp.Body).Decode(&res)
 
-	fmt.Println(res)
-	fmt.Println(doReqErr)
 	return res, doReqErr
 }
