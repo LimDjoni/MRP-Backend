@@ -162,7 +162,6 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		})
 	}
 
-
 	splitPeriod := strings.Split(inputCreateDmo.Period, " ")
 
 	baseIdNumber := fmt.Sprintf("DD-%s-%s",  helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])

@@ -533,6 +533,7 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string
 	vessel := false
 	tx := r.db.Begin()
 
+	createdDmo.Period = dmoInput.Period
 	if len(dmoInput.TransactionBarge) > 0 {
 		var bargeQuantity float64
 		barge = true
@@ -559,11 +560,9 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string
 			return createdDmo, findTransactionVesselErr
 		}
 
-		for _, v := range transactionBarge {
+		for _, v := range transactionVessel {
 			vesselQuantity += vesselQuantity + v.Quantity
 		}
-
-		createdDmo.VesselTotalQuantity = vesselQuantity
 
 		for _, v := range dmoInput.VesselAdjustment {
 			vesselAdjustment += vesselAdjustment + v.Adjustment
@@ -602,18 +601,36 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string
 		return  createdDmo, updateDmoErr
 	}
 
-	findTransactionsBargeErr := tx.Where("id IN ?", dmoInput.TransactionBarge).Find(&transactionBarge).Error
+	if len(dmoInput.TransactionBarge) > 0 {
+		findTransactionsBargeErr := tx.Where("id IN ?", dmoInput.TransactionBarge).Find(&transactionBarge).Error
 
-	if findTransactionsBargeErr != nil {
-		tx.Rollback()
-		return createdDmo, findTransactionsBargeErr
+		if findTransactionsBargeErr != nil {
+			tx.Rollback()
+			return createdDmo, findTransactionsBargeErr
+		}
+
+		updateTransactionBargeErr := tx.Table("transactions").Where("id IN ?", dmoInput.TransactionBarge).Update("dmo_id", createdDmo.ID).Error
+
+		if updateTransactionBargeErr != nil {
+			tx.Rollback()
+			return createdDmo, updateTransactionBargeErr
+		}
 	}
 
-	findTransactionsVesselErr := tx.Where("id IN ?", dmoInput.TransactionVessel).Find(&transactionVessel).Error
+	if len(dmoInput.TransactionVessel) > 0 {
+		findTransactionsVesselErr := tx.Where("id IN ?", dmoInput.TransactionVessel).Find(&transactionVessel).Error
 
-	if findTransactionsVesselErr != nil {
-		tx.Rollback()
-		return createdDmo, findTransactionsVesselErr
+		if findTransactionsVesselErr != nil {
+			tx.Rollback()
+			return createdDmo, findTransactionsVesselErr
+		}
+
+		updateTransactionVesselErr := tx.Table("transactions").Where("id IN ?", dmoInput.TransactionVessel).Update("dmo_id", createdDmo.ID).Error
+
+		if updateTransactionVesselErr != nil {
+			tx.Rollback()
+			return createdDmo, updateTransactionVesselErr
+		}
 	}
 
 	if len(transactionBarge) != len(dmoInput.TransactionBarge) && len(transactionVessel) != len(dmoInput.TransactionVessel){
@@ -621,39 +638,25 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string
 		return createdDmo, errors.New("please check some of transactions not found")
 	}
 
-	updateTransactionBargeErr := tx.Table("transactions").Where("id IN ?", dmoInput.TransactionBarge).Update("dmo_id", createdDmo.ID).Error
-
-	if updateTransactionBargeErr != nil {
-		tx.Rollback()
-		return createdDmo, updateTransactionBargeErr
-	}
-
-	updateTransactionVesselErr := tx.Table("transactions").Where("id IN ?", dmoInput.TransactionVessel).Update("dmo_id", createdDmo.ID).Error
-
-	if updateTransactionVesselErr != nil {
-		tx.Rollback()
-		return createdDmo, updateTransactionVesselErr
-	}
-
 	var dmoVessels []dmovessel.DmoVessel
 
-	for _, value := range dmoInput.VesselAdjustment {
-		var vesselDummy dmovessel.DmoVessel
-		vesselDummy.VesselName = value.VesselName
-		vesselDummy.Adjustment = value.Adjustment
-		vesselDummy.Quantity = value.Quantity
-		vesselDummy.DmoId = createdDmo.ID
-		vesselDummy.GrandTotalQuantity = value.Quantity + value.Adjustment
-		dmoVessels = append(dmoVessels, vesselDummy)
-	}
+	if len(dmoInput.VesselAdjustment) > 0 {
+		for _, value := range dmoInput.VesselAdjustment {
+			var vesselDummy dmovessel.DmoVessel
+			vesselDummy.VesselName = value.VesselName
+			vesselDummy.Adjustment = value.Adjustment
+			vesselDummy.Quantity = value.Quantity
+			vesselDummy.DmoId = createdDmo.ID
+			vesselDummy.GrandTotalQuantity = value.Quantity + value.Adjustment
+			dmoVessels = append(dmoVessels, vesselDummy)
+		}
 
+		createDmoVesselsErr := tx.Create(&dmoVessels).Error
 
-
-	createDmoVesselsErr := tx.Create(&dmoVessels).Error
-
-	if createDmoVesselsErr != nil {
-		tx.Rollback()
-		return createdDmo, createDmoVesselsErr
+		if createDmoVesselsErr != nil {
+			tx.Rollback()
+			return createdDmo, createDmoVesselsErr
+		}
 	}
 
 	var traderDmo []traderdmo.TraderDmo
@@ -676,7 +679,7 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string
 	traderEndUser.IsEndUser = true
 	traderDmo = append(traderDmo, traderEndUser)
 
-	createTraderDmoErr := tx.Create(&dmoVessels).Error
+	createTraderDmoErr := tx.Create(&traderDmo).Error
 
 	if createTraderDmoErr != nil {
 		tx.Rollback()
