@@ -142,4 +142,5 @@ func Setup(db *gorm.DB, validate *validator.Validate, route fiber.Router) {
 	routing2.UserRouting(db, route, validate)
 	routing2.MinerbaRouting(db, route, validate)
 	routing2.DmoRouting(db, route, validate)
+	routing2.MasterRouting(db, route)
 }
