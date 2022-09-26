@@ -14,22 +14,6 @@ import (
 	"gorm.io/gorm"
 )
 
-package routing
-
-import (
-"ajebackend/handler"
-"ajebackend/helper"
-"ajebackend/model/history"
-"ajebackend/model/logs"
-"ajebackend/model/minerba"
-"ajebackend/model/transaction"
-"ajebackend/model/user"
-"github.com/go-playground/validator/v10"
-"github.com/gofiber/fiber/v2"
-jwtware "github.com/gofiber/jwt/v3"
-"gorm.io/gorm"
-)
-
 func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	transactionRepository := transaction.NewRepository(db)
 	transactionService := transaction.NewService(transactionRepository)
@@ -61,5 +45,8 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 		},
 	}))
 
-	dmoRouting.Get("/create", dmoHandler.CreateDmo)
+	dmoRouting.Post("/create", dmoHandler.CreateDmo)
+	dmoRouting.Get("/list", dmoHandler.ListDmo)
+	dmoRouting.Get("/list/transaction", dmoHandler.ListDataDNWithoutDmo)
+	dmoRouting.Get("/detail/:id", dmoHandler.DetailDmo)
 }

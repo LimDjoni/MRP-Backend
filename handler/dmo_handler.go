@@ -14,6 +14,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -192,4 +193,119 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	}
 
 	return c.Status(201).JSON(createDmo)
+}
+
+func (h *dmoHandler) ListDmo(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	page := c.Query("page")
+
+	pageNumber, err := strconv.Atoi(page)
+
+	if err != nil && page != "" {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	if page == "" {
+		pageNumber = 1
+	}
+
+	listDmo, listDmoErr := h.dmoService.GetListReportDmoAll(pageNumber)
+
+	if listDmoErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": listDmoErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(listDmo)
+}
+
+func (h *dmoHandler) DetailDmo(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	id := c.Params("id")
+
+	idInt, err := strconv.Atoi(id)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "record not found",
+		})
+	}
+
+	detailDmo, detailDmoErr := h.transactionService.GetDetailDmo(idInt)
+
+	if detailDmoErr != nil {
+		status := 400
+
+		if  detailDmoErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"error": detailDmoErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(detailDmo)
+}
+
+func (h *dmoHandler) ListDataDNWithoutDmo(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	listDataDNWithoutDmo, listDataDNWithoutDmoErr := h.transactionService.ListDataDNWithoutDmo()
+
+	if listDataDNWithoutDmoErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": listDataDNWithoutDmoErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"list": listDataDNWithoutDmo,
+	})
 }
