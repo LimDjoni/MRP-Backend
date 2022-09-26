@@ -8,14 +8,13 @@ type Dmo struct {
 	gorm.Model
 	IdNumber *string `json:"id_number" gorm:"UNIQUE"`
 	Type string `json:"type"`
-	Date string `json:"date" gorm:"type:DATE"`
+	Period string `json:"period"`
 	BargeTotalQuantity float64 `json:"barge_total_quantity"`
 	BargeAdjustment float64 `json:"barge_adjustment"`
 	BargeGrandTotalQuantity float64 `json:"barge_grand_total_quantity"`
 	VesselTotalQuantity float64 `json:"vessel_total_quantity"`
 	VesselAdjustment float64 `json:"vessel_adjustment"`
 	VesselGrandTotalQuantity float64 `json:"vessel_grand_total_quantity"`
-	EndUser string `json:"end_user"`
 	ReconciliationLetterDocumentLink *string `json:"reconciliation_letter_document_link"`
 	IsReconciliationLetterDownloaded bool `json:"is_reconciliation_letter_downloaded"`
 	IsReconciliationLetterSigned bool `json:"is_reconciliation_letter_signed"`

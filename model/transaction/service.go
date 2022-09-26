@@ -12,8 +12,11 @@ type Service interface {
 	DetailTransactionDN(id int) (Transaction, error)
 	ListDataDNWithoutMinerba() ([]Transaction, error)
 	CheckDataDNAndMinerba(listData []int)(bool, error)
-	GetDetailMinerba(id int)(DetailMinerba, error)
+	GetDetailMinerba(id int) (DetailMinerba, error)
 	RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (map[string]interface{}, error)
+	ListDataDNWithoutDmo() ([]Transaction, error)
+	CheckDataDNAndDmo(listData []int) (bool, error)
+	GetDetailDmo(id int) (DetailDmo, error)
 }
 
 type service struct {
@@ -48,7 +51,7 @@ func (s *service) CheckDataDNAndMinerba(listData []int)(bool, error) {
 	return checkData, checkDataErr
 }
 
-func (s *service) GetDetailMinerba(id int)(DetailMinerba, error) {
+func (s *service) GetDetailMinerba(id int) (DetailMinerba, error) {
 	detailMinerba, detailMinerbaErr := s.repository.GetDetailMinerba(id)
 
 	return detailMinerba, detailMinerbaErr
@@ -82,4 +85,22 @@ func (s *service) RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (m
 	json.NewDecoder(resp.Body).Decode(&res)
 
 	return res, doReqErr
+}
+
+func (s *service) ListDataDNWithoutDmo() ([]Transaction, error) {
+	listDataDNWithoutDmo, listDataDNWithoutDmoErr := s.repository.ListDataDNWithoutDmo()
+
+	return listDataDNWithoutDmo, listDataDNWithoutDmoErr
+}
+
+func (s *service) CheckDataDNAndDmo(listData []int) (bool, error) {
+	checkData, checkDataErr := s.repository.CheckDataDNAndDmo(listData)
+
+	return checkData, checkDataErr
+}
+
+func (s *service) GetDetailDmo(id int) (DetailDmo, error) {
+	detailDmo, detailDmoErr := s.repository.GetDetailDmo(id)
+
+	return detailDmo, detailDmoErr
 }

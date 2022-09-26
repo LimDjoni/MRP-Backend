@@ -24,6 +24,7 @@ type Repository interface {
 	CreateMinerba (period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error)
 	DeleteMinerba (idMinerba int, userId uint) (bool, error)
 	UpdateDocumentMinerba(id int, documentLink minerba.InputUpdateDocumentMinerba, userId uint) (minerba.Minerba, error)
+	CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string, userId uint) (dmo.Dmo, error)
 }
 
 type repository struct {
@@ -523,7 +524,7 @@ func (r *repository) UpdateDocumentMinerba(id int, documentLink minerba.InputUpd
 
 // Dmo
 
-func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, userId uint) (dmo.Dmo, error) {
+func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string, userId uint) (dmo.Dmo, error) {
 	var createdDmo dmo.Dmo
 	var transactionBarge []transaction.Transaction
 	var transactionVessel []transaction.Transaction
@@ -585,8 +586,6 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, userId uint) (dmo.D
 		createdDmo.Type = "Vessel"
 	}
 
-	createdDmo.EndUser = dmoInput.EndUser
-
 	createdDmoErr := tx.Create(&createdDmo).Error
 
 	if createdDmoErr != nil {
@@ -594,7 +593,7 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, userId uint) (dmo.D
 		return  createdDmo, createdDmoErr
 	}
 
-	idNumber := createIdNumber("DD", createdDmo.ID)
+	idNumber := baseIdNumber + "-" + helper.CreateIdNumber(int(createdDmo.ID))
 
 	updateDmoErr := tx.Model(&createdDmo).Update("id_number", idNumber).Error
 
@@ -648,6 +647,8 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, userId uint) (dmo.D
 		dmoVessels = append(dmoVessels, vesselDummy)
 	}
 
+
+
 	createDmoVesselsErr := tx.Create(&dmoVessels).Error
 
 	if createDmoVesselsErr != nil {
@@ -657,15 +658,23 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, userId uint) (dmo.D
 
 	var traderDmo []traderdmo.TraderDmo
 
+	var lastCount = 0
 	for idx, value := range dmoInput.Trader {
 		var traderDummy traderdmo.TraderDmo
 
 		traderDummy.DmoId = createdDmo.ID
 		traderDummy.TraderId = value.ID
 		traderDummy.Order = idx + 1
-
+		lastCount = idx + 1
 		traderDmo = append(traderDmo, traderDummy)
 	}
+
+	var traderEndUser traderdmo.TraderDmo
+	traderEndUser.DmoId = createdDmo.ID
+	traderEndUser.TraderId = dmoInput.EndUser.ID
+	traderEndUser.Order = lastCount + 1
+	traderEndUser.IsEndUser = true
+	traderDmo = append(traderDmo, traderEndUser)
 
 	createTraderDmoErr := tx.Create(&dmoVessels).Error
 

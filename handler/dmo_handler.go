@@ -1,0 +1,195 @@
+package handler
+
+import (
+	"ajebackend/helper"
+	"ajebackend/model/dmo"
+	"ajebackend/model/history"
+	"ajebackend/model/logs"
+	"ajebackend/model/transaction"
+	"ajebackend/model/user"
+	"ajebackend/validatorfunc"
+	"encoding/json"
+	"fmt"
+	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v4"
+	"reflect"
+	"strings"
+)
+
+type dmoHandler struct {
+	transactionService transaction.Service
+	userService user.Service
+	historyService history.Service
+	logService logs.Service
+	dmoService dmo.Service
+	v *validator.Validate
+}
+
+func NewDmoHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, dmoService dmo.Service, v *validator.Validate) *dmoHandler {
+	return &dmoHandler{
+		transactionService,
+		userService,
+		historyService,
+		logService,
+		dmoService,
+		v,
+	}
+}
+
+func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	inputCreateDmo := new(dmo.CreateDmoInput)
+
+	// Binds the request body to the Person struct
+	if err := c.BodyParser(inputCreateDmo); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	errors := h.v.Struct(*inputCreateDmo)
+
+	if errors != nil {
+		dataErrors := validatorfunc.ValidateStruct(errors)
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_period"] = inputCreateDmo.Period
+		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
+		inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"errors": dataErrors,
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": dataErrors,
+		})
+	}
+
+	if len(inputCreateDmo.TransactionVessel) > 0 && len(inputCreateDmo.VesselAdjustment) == 0 {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "please check vessel adjustment",
+		})
+	}
+
+	if len(inputCreateDmo.TransactionVessel) == 0 && len(inputCreateDmo.TransactionBarge) == 0 {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "please check there is no transaction vessel and transaction barge",
+		})
+	}
+
+	_, findDmoErr := h.dmoService.GetReportDmoWithPeriod(inputCreateDmo.Period)
+
+	if findDmoErr == nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "report with same period already exist",
+		})
+	}
+
+	_, checkDmoBargeErr := h.transactionService.CheckDataDNAndDmo(inputCreateDmo.TransactionBarge)
+
+	if checkDmoBargeErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_period"] = inputCreateDmo.Period
+		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
+		inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": checkDmoBargeErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error": checkDmoBargeErr.Error(),
+		})
+	}
+
+	_, checkDmoVesselErr := h.transactionService.CheckDataDNAndDmo(inputCreateDmo.TransactionVessel)
+
+	if checkDmoVesselErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_period"] = inputCreateDmo.Period
+		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
+		inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": checkDmoVesselErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error": checkDmoVesselErr.Error(),
+		})
+	}
+
+
+	splitPeriod := strings.Split(inputCreateDmo.Period, " ")
+
+	baseIdNumber := fmt.Sprintf("DD-%s-%s",  helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
+	createDmo, createDmoErr := h.historyService.CreateDmo(*inputCreateDmo, baseIdNumber, uint(claims["id"].(float64)))
+
+	if createDmoErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_period"] = inputCreateDmo.Period
+		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
+		inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": createDmoErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error": createDmoErr.Error(),
+		})
+	}
+
+	return c.Status(201).JSON(createDmo)
+}
