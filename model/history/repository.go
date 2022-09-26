@@ -3,7 +3,9 @@ package history
 import (
 	"ajebackend/helper"
 	"ajebackend/model/dmo"
+	"ajebackend/model/dmovessel"
 	"ajebackend/model/minerba"
+	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
 	"encoding/json"
 	"errors"
@@ -358,7 +360,6 @@ func (r *repository) UploadDocumentTransactionDN (idTransaction uint, urlS3 stri
 func (r *repository) CreateMinerba (period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error) {
 	var createdMinerba minerba.Minerba
 
-
 	tx := r.db.Begin()
 	createdMinerba.Period = period
 	var transactions []transaction.Transaction
@@ -522,7 +523,7 @@ func (r *repository) UpdateDocumentMinerba(id int, documentLink minerba.InputUpd
 
 // Dmo
 
-func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput) (dmo.Dmo, error) {
+func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, userId uint) (dmo.Dmo, error) {
 	var createdDmo dmo.Dmo
 	var transactionBarge []transaction.Transaction
 	var transactionVessel []transaction.Transaction
@@ -602,5 +603,90 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput) (dmo.Dmo, error) {
 		return  createdDmo, updateDmoErr
 	}
 
+	findTransactionsBargeErr := tx.Where("id IN ?", dmoInput.TransactionBarge).Find(&transactionBarge).Error
+
+	if findTransactionsBargeErr != nil {
+		tx.Rollback()
+		return createdDmo, findTransactionsBargeErr
+	}
+
+	findTransactionsVesselErr := tx.Where("id IN ?", dmoInput.TransactionVessel).Find(&transactionVessel).Error
+
+	if findTransactionsVesselErr != nil {
+		tx.Rollback()
+		return createdDmo, findTransactionsVesselErr
+	}
+
+	if len(transactionBarge) != len(dmoInput.TransactionBarge) && len(transactionVessel) != len(dmoInput.TransactionVessel){
+		tx.Rollback()
+		return createdDmo, errors.New("please check some of transactions not found")
+	}
+
+	updateTransactionBargeErr := tx.Table("transactions").Where("id IN ?", dmoInput.TransactionBarge).Update("dmo_id", createdDmo.ID).Error
+
+	if updateTransactionBargeErr != nil {
+		tx.Rollback()
+		return createdDmo, updateTransactionBargeErr
+	}
+
+	updateTransactionVesselErr := tx.Table("transactions").Where("id IN ?", dmoInput.TransactionVessel).Update("dmo_id", createdDmo.ID).Error
+
+	if updateTransactionVesselErr != nil {
+		tx.Rollback()
+		return createdDmo, updateTransactionVesselErr
+	}
+
+	var dmoVessels []dmovessel.DmoVessel
+
+	for _, value := range dmoInput.VesselAdjustment {
+		var vesselDummy dmovessel.DmoVessel
+		vesselDummy.VesselName = value.VesselName
+		vesselDummy.Adjustment = value.Adjustment
+		vesselDummy.Quantity = value.Quantity
+		vesselDummy.DmoId = createdDmo.ID
+		vesselDummy.GrandTotalQuantity = value.Quantity + value.Adjustment
+		dmoVessels = append(dmoVessels, vesselDummy)
+	}
+
+	createDmoVesselsErr := tx.Create(&dmoVessels).Error
+
+	if createDmoVesselsErr != nil {
+		tx.Rollback()
+		return createdDmo, createDmoVesselsErr
+	}
+
+	var traderDmo []traderdmo.TraderDmo
+
+	for idx, value := range dmoInput.Trader {
+		var traderDummy traderdmo.TraderDmo
+
+		traderDummy.DmoId = createdDmo.ID
+		traderDummy.TraderId = value.ID
+		traderDummy.Order = idx + 1
+
+		traderDmo = append(traderDmo, traderDummy)
+	}
+
+	createTraderDmoErr := tx.Create(&dmoVessels).Error
+
+	if createTraderDmoErr != nil {
+		tx.Rollback()
+		return createdDmo, createTraderDmoErr
+	}
+
+	var history History
+
+	history.DmoId = &createdDmo.ID
+	history.Status = "Created Dmo"
+	history.UserId = userId
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return createdDmo, createHistoryErr
+	}
+
+	tx.Commit()
 	return createdDmo, nil
 }
