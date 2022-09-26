@@ -7,6 +7,7 @@ type DataTransactionInput struct {
 	BargeName string `json:"barge_name"`
 	VesselName string `json:"vessel_name"`
 	CustomerName string `json:"customer_name"`
+	Seller	string `json:"seller"`
 	LoadingPortName string `json:"loading_port_name"`
 	LoadingPortLocation string `json:"loading_port_location"`
 	UnloadingPortName string `json:"unloading_port_name"`

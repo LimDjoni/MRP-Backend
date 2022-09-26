@@ -32,36 +32,8 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
-
-func getLastDateInThisMonth() int {
-	now := time.Now()
-	currentYear, currentMonth, _ := now.Date()
-	currentLocation := now.Location()
-
-	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, currentLocation)
-	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
-
-	_, _, d := lastOfMonth.Date()
-
-	return d
-}
-
-// Transaction
-
-func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error) {
-	var createdTransaction transaction.Transaction
-	var totalCount int64
+func createIdNumber(model string, id uint) string{
 	year, month, _ := time.Now().Date()
-	startDate := fmt.Sprintf("%v-%v-01  00:00:00", year, int(month))
-	endDate := fmt.Sprintf("%v-%v-%v  00:00:00", year, int(month), getLastDateInThisMonth())
-
-	tx := r.db.Begin()
-
-	findErr := tx.Unscoped().Where("created_at BETWEEN ? AND ?", startDate, endDate).Model(transaction.Transaction{}).Count(&totalCount).Error
-
-	if findErr != nil {
-		return createdTransaction, findErr
-	}
 
 	monthNumber := strconv.Itoa(int(month))
 
@@ -69,9 +41,25 @@ func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTra
 		monthNumber = "0" + monthNumber
 	}
 
+	idNumber := fmt.Sprintf("%s-%v-%v-%v", model, monthNumber, year, helper.CreateIdNumber(int(id)))
+
+	return idNumber
+}
+
+// Transaction
+
+func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error) {
+	var createdTransaction transaction.Transaction
+
+	tx := r.db.Begin()
+
 	createdTransaction.DmoId = nil
-	createdTransaction.IdNumber += fmt.Sprintf("DN-%v-%v-%v", year, monthNumber, helper.CreateIdNumber(int(totalCount + 1)))
 	createdTransaction.TransactionType = "DN"
+	if inputTransactionDN.Seller == "" {
+		createdTransaction.Seller = "PT ANGSANA JAYA ENERGI"
+	} else {
+		createdTransaction.Seller = inputTransactionDN.Seller
+	}
 	createdTransaction.ShippingDate = inputTransactionDN.ShippingDate
 	createdTransaction.Quantity = inputTransactionDN.Quantity
 	createdTransaction.ShipName = inputTransactionDN.ShipName
@@ -143,6 +131,15 @@ func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTra
 	if createTransactionErr != nil {
 		tx.Rollback()
 		return createdTransaction, createTransactionErr
+	}
+
+	idNumber := createIdNumber("DN", createdTransaction.ID)
+
+	updateTransactionsErr := tx.Model(&createdTransaction).Update("id_number", idNumber).Error
+
+	if updateTransactionsErr != nil {
+		tx.Rollback()
+		return  createdTransaction, updateTransactionsErr
 	}
 
 	var history History
@@ -361,14 +358,9 @@ func (r *repository) UploadDocumentTransactionDN (idTransaction uint, urlS3 stri
 func (r *repository) CreateMinerba (period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error) {
 	var createdMinerba minerba.Minerba
 
-	var totalRows int64
-	r.db.Model(minerba.Minerba{}).Count(&totalRows)
-	idNumber := baseIdNumber + "-" + helper.CreateIdNumber(int(totalRows) + 1)
 
-	createdMinerba.IdNumber = idNumber
-	createdMinerba.Period = period
 	tx := r.db.Begin()
-
+	createdMinerba.Period = period
 	var transactions []transaction.Transaction
 	findTransactionsErr := tx.Where("id IN ?", updateTransaction).Find(&transactions).Error
 
@@ -387,6 +379,15 @@ func (r *repository) CreateMinerba (period string, baseIdNumber string, updateTr
 	if errCreateMinerba != nil {
 		tx.Rollback()
 		return createdMinerba, errCreateMinerba
+	}
+
+	idNumber := baseIdNumber + "-" + helper.CreateIdNumber(int(createdMinerba.ID))
+
+	updateMinerbaErr := tx.Model(&createdMinerba).Update("id_number", idNumber).Error
+
+	if updateMinerbaErr != nil {
+		tx.Rollback()
+		return  createdMinerba, updateMinerbaErr
 	}
 
 	updateTransactionErr := tx.Table("transactions").Where("id IN ?", updateTransaction).Update("minerba_id", createdMinerba.ID).Error
@@ -522,7 +523,7 @@ func (r *repository) UpdateDocumentMinerba(id int, documentLink minerba.InputUpd
 // Dmo
 
 func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput) (dmo.Dmo, error) {
-	var createDmo dmo.Dmo
+	var createdDmo dmo.Dmo
 	var transactionBarge []transaction.Transaction
 	var transactionVessel []transaction.Transaction
 
@@ -536,15 +537,15 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput) (dmo.Dmo, error) {
 		findTransactionBargeErr := tx.Where("id IN ?", dmoInput.TransactionBarge).Find(&transactionBarge).Error
 
 		if findTransactionBargeErr != nil {
-			return createDmo, findTransactionBargeErr
+			return createdDmo, findTransactionBargeErr
 		}
 
 		for _, v := range transactionBarge {
 			bargeQuantity += bargeQuantity + v.Quantity
 		}
 
-		createDmo.BargeTotalQuantity = bargeQuantity
-		createDmo.BargeGrandTotalQuantity = bargeQuantity
+		createdDmo.BargeTotalQuantity = bargeQuantity
+		createdDmo.BargeGrandTotalQuantity = bargeQuantity
 	}
 
 	if len(dmoInput.TransactionVessel) > 0 {
@@ -553,37 +554,53 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput) (dmo.Dmo, error) {
 		vessel = true
 		findTransactionVesselErr := tx.Where("id IN ?", dmoInput.TransactionVessel).Find(&transactionVessel).Error
 		if findTransactionVesselErr != nil {
-			return createDmo, findTransactionVesselErr
+			return createdDmo, findTransactionVesselErr
 		}
 
 		for _, v := range transactionBarge {
 			vesselQuantity += vesselQuantity + v.Quantity
 		}
 
-		createDmo.VesselTotalQuantity = vesselQuantity
+		createdDmo.VesselTotalQuantity = vesselQuantity
 
 		for _, v := range dmoInput.VesselAdjustment {
 			vesselAdjustment += vesselAdjustment + v.Adjustment
 		}
 
-		createDmo.VesselAdjustment = vesselAdjustment
-		createDmo.VesselTotalQuantity = vesselQuantity
-		createDmo.VesselGrandTotalQuantity = vesselQuantity + vesselAdjustment
+		createdDmo.VesselAdjustment = vesselAdjustment
+		createdDmo.VesselTotalQuantity = vesselQuantity
+		createdDmo.VesselGrandTotalQuantity = vesselQuantity + vesselAdjustment
 	}
 
 	if barge && vessel {
-		createDmo.Type = "Combination"
+		createdDmo.Type = "Combination"
 	}
 
 	if barge && !vessel {
-		createDmo.Type = "Barge"
+		createdDmo.Type = "Barge"
 	}
 
 	if !barge && vessel {
-		createDmo.Type = "Vessel"
+		createdDmo.Type = "Vessel"
 	}
 
-	createDmo.EndUser = dmoInput.EndUser
+	createdDmo.EndUser = dmoInput.EndUser
 
+	createdDmoErr := tx.Create(&createdDmo).Error
 
+	if createdDmoErr != nil {
+		tx.Rollback()
+		return  createdDmo, createdDmoErr
+	}
+
+	idNumber := createIdNumber("DD", createdDmo.ID)
+
+	updateDmoErr := tx.Model(&createdDmo).Update("id_number", idNumber).Error
+
+	if updateDmoErr != nil {
+		tx.Rollback()
+		return  createdDmo, updateDmoErr
+	}
+
+	return createdDmo, nil
 }

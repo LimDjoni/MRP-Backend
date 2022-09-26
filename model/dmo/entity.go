@@ -6,7 +6,7 @@ import (
 
 type Dmo struct {
 	gorm.Model
-	IdNumber string `json:"id_number"`
+	IdNumber *string `json:"id_number" gorm:"UNIQUE"`
 	Type string `json:"type"`
 	Date string `json:"date" gorm:"type:DATE"`
 	BargeTotalQuantity float64 `json:"barge_total_quantity"`

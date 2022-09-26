@@ -155,7 +155,7 @@ func (h *minerbaHandler) CreateMinerba(c *fiber.Ctx) error {
 
 	splitPeriod := strings.Split(inputCreateMinerba.Period, " ")
 
-	baseIdNumber := fmt.Sprintf("LM-%s-%s", splitPeriod[1], helper.MonthStringToNumberString(splitPeriod[0]))
+	baseIdNumber := fmt.Sprintf("LM-%s-%s",  helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
 	createMinerba, createMinerbaErr := h.historyService.CreateMinerba(inputCreateMinerba.Period, baseIdNumber, inputCreateMinerba.ListDataDn, uint(claims["id"].(float64)))
 
 	if createMinerbaErr != nil {
@@ -545,10 +545,11 @@ func (h *minerbaHandler) RequestCreateExcelMinerba(c *fiber.Ctx) error {
 	var inputRequestCreateExcel transaction.InputRequestCreateExcelMinerba
 	inputRequestCreateExcel.Authorization = header["Authorization"]
 	inputRequestCreateExcel.MinerbaId = idInt
-	inputRequestCreateExcel.MinerbaNumber = detailMinerba.Detail.IdNumber
+	inputRequestCreateExcel.MinerbaNumber = *detailMinerba.Detail.IdNumber
 	inputRequestCreateExcel.MinerbaPeriod = detailMinerba.Detail.Period
 	inputRequestCreateExcel.Transactions = detailMinerba.List
 
+	fmt.Println(inputRequestCreateExcel)
 	hitJob, hitJobErr := h.transactionService.RequestCreateExcel(inputRequestCreateExcel)
 
 	if hitJobErr != nil {
