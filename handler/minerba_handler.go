@@ -148,7 +148,13 @@ func (h *minerbaHandler) CreateMinerba(c *fiber.Ctx) error {
 
 		h.logService.CreateLogs(createdErrLog)
 
-		return c.Status(400).JSON(fiber.Map{
+		status := 400
+
+		if checkMinerbaTransactionErr.Error() == "please check there is transaction not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
 			"error": checkMinerbaTransactionErr.Error(),
 		})
 	}
