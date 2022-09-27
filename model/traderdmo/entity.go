@@ -13,4 +13,5 @@ type TraderDmo struct {
 	TraderId uint `json:"trader_id"`
 	Trader trader.Trader `json:"trader"`
 	Order int `json:"order"`
+	IsEndUser bool `json:"is_end_user"`
 }

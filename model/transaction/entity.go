@@ -12,7 +12,7 @@ type Transaction struct {
 	Dmo *dmo.Dmo `json:"dmo"`
 	MinerbaId *uint `json:"minerba_id"`
 	Minerba *minerba.Minerba `json:"minerba"`
-	IdNumber string `json:"id_number" gorm:"UNIQUE"`
+	IdNumber *string `json:"id_number" gorm:"UNIQUE"`
 	TransactionType string `json:"transaction_type"`
 	ShippingDate *string `json:"shipping_date" gorm:"type:DATE"`
 	Quantity float64 `json:"quantity"`
@@ -33,11 +33,13 @@ type Transaction struct {
 	BillOfLadingDate *string `json:"bill_of_lading_date" gorm:"type:DATE"`
 	BillOfLadingNumber string `json:"bill_of_lading_number"`
 	RoyaltyRate float64 `json:"royalty_rate"`
+	DpRoyaltyPrice float64 `json:"dp_royalty_price"`
 	DpRoyaltyCurrency string `json:"dp_royalty_currency"`
 	DpRoyaltyDate *string `json:"dp_royalty_date" gorm:"type:DATE"`
 	DpRoyaltyNtpn *string `json:"dp_royalty_ntpn" gorm:"UNIQUE"`
 	DpRoyaltyBillingCode *string `json:"dp_royalty_billing_code" gorm:"UNIQUE"`
 	DpRoyaltyTotal float64 `json:"dp_royalty_total"`
+	PaymentDpRoyaltyPrice float64 `json:"payment_dp_royalty_price"`
 	PaymentDpRoyaltyCurrency string `json:"payment_dp_royalty_currency"`
 	PaymentDpRoyaltyDate *string `json:"payment_dp_royalty_date" gorm:"type:DATE"`
 	PaymentDpRoyaltyNtpn *string `json:"payment_dp_royalty_ntpn" gorm:"UNIQUE"`

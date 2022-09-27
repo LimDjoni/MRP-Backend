@@ -2,6 +2,7 @@ package awshelper
 
 import (
 	"ajebackend/helper"
+	"context"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -62,7 +63,7 @@ func DeleteDocument(key string) (bool, error){
 	svc := s3.New(newSession)
 
 	bucket := helper.GetEnvWithKey("AWS_BUCKET_NAME")
-	keyFile := key + "/lhv.pdf"
+	keyFile := key
 	request := &s3.DeleteObjectInput{
 		Bucket: &bucket,
 		Key:    &keyFile,
@@ -71,9 +72,47 @@ func DeleteDocument(key string) (bool, error){
 	// Save file to root directory:
 	_, err := svc.DeleteObject(request)
 
-	fmt.Println(err)
 	if err != nil {
 		return false, err
 	}
 	return true, err
+}
+
+func DeleteDocumentBatch(key string) (bool, error){
+	ctx := context.Background()
+	AccessKeyID := helper.GetEnvWithKey("AWS_ID")
+	SecretAccessKey := helper.GetEnvWithKey("AWS_SECRET_KEY")
+
+	newSession, errNewSession := session.NewSession(&aws.Config{
+		Region: aws.String("ap-southeast-1"),
+		Credentials: credentials.NewStaticCredentials(
+			AccessKeyID,
+			SecretAccessKey,
+			"", // a token will be created when the session it's used.
+		),
+	})
+
+	if errNewSession != nil {
+		return false, errNewSession
+	}
+
+	svc := s3.New(newSession)
+
+	bucket := helper.GetEnvWithKey("AWS_BUCKET_NAME")
+	keyFile := key
+	request := &s3.ListObjectsInput{
+		Bucket: aws.String(bucket),
+		Prefix:   aws.String(keyFile),
+	}
+
+	iter := s3manager.NewDeleteListIterator(svc, request)
+	//_, err := svc.DeleteObject(request)
+
+	// use the iterator to delete the files.
+	if err := s3manager.NewBatchDeleteWithClient(svc).Delete(ctx, iter); err != nil {
+		return false, err
+	}
+
+
+	return true, nil
 }

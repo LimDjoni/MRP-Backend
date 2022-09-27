@@ -3,7 +3,6 @@ package main
 import (
 	"ajebackend/helper"
 	"ajebackend/model/dmo"
-	"ajebackend/model/dmobarge"
 	"ajebackend/model/dmovessel"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
@@ -52,11 +51,11 @@ func main() {
 
 	if db != nil {
 		seeding.UpdateTransactionsRoyalty(db)
+		seeding.SeedingTraderData(db)
 
 		// Auto Migrate All Table
 		errMigrate := db.AutoMigrate(
 			&dmo.Dmo{},
-			&dmobarge.DmoBarge{},
 			&dmovessel.DmoVessel{},
 			&history.History{},
 			&logs.Logs{},
@@ -142,4 +141,6 @@ func Setup(db *gorm.DB, validate *validator.Validate, route fiber.Router) {
 	routing2.TransactionRouting(db, route, validate)
 	routing2.UserRouting(db, route, validate)
 	routing2.MinerbaRouting(db, route, validate)
+	routing2.DmoRouting(db, route, validate)
+	routing2.MasterRouting(db, route)
 }

@@ -1,6 +1,7 @@
 package transaction
 
 import (
+	"ajebackend/model/dmo"
 	"ajebackend/model/minerba"
 	"errors"
 	"fmt"
@@ -13,6 +14,9 @@ type Repository interface {
 	ListDataDNWithoutMinerba() ([]Transaction, error)
 	CheckDataDNAndMinerba(listData []int)(bool, error)
 	GetDetailMinerba(id int)(DetailMinerba, error)
+	ListDataDNWithoutDmo() ([]Transaction, error)
+	CheckDataDNAndDmo(listData []int)(bool, error)
+	GetDetailDmo(id int)(DetailDmo, error)
 }
 
 type repository struct {
@@ -22,6 +26,8 @@ type repository struct {
 func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
 }
+
+// Transaction
 
 func (r *repository) ListDataDN(page int, sortFilter SortAndFilter) (Pagination, error) {
 	var transactions []Transaction
@@ -88,6 +94,8 @@ func (r *repository) ListDataDNWithoutMinerba() ([]Transaction, error) {
 	return listDataDnWithoutMinerba, errFind
 }
 
+// Minerba
+
 func (r *repository) CheckDataDNAndMinerba(listData []int)(bool, error) {
 	var listDn []Transaction
 
@@ -127,4 +135,55 @@ func(r *repository) GetDetailMinerba(id int)(DetailMinerba, error) {
 
 	detailMinerba.List = transactions
 	return detailMinerba, nil
+}
+
+// DMO
+
+func (r *repository) ListDataDNWithoutDmo() ([]Transaction, error) {
+	var listDataDnWithoutDmo []Transaction
+
+	errFind := r.db.Where("dmo_id is NULL AND transaction_type = ?", "DN").Find(&listDataDnWithoutDmo).Error
+
+	return listDataDnWithoutDmo, errFind
+}
+
+func (r *repository) CheckDataDNAndDmo(listData []int)(bool, error) {
+	var listDn []Transaction
+
+	errFind := r.db.Where("dmo_id = ? AND id IN ?", nil, listData).Find(&listDn).Error
+
+	if errFind != nil {
+		return false, errFind
+	}
+
+	if len(listDn) > 0 {
+		return false, errors.New("please check there is transaction already in report")
+	}
+
+	return true, nil
+}
+
+func(r *repository) GetDetailDmo(id int)(DetailDmo, error) {
+
+	var detailDmo DetailDmo
+
+	var dmoData dmo.Dmo
+	var transactions []Transaction
+
+	dmoFindErr := r.db.Where("id = ?", id).First(&dmoData).Error
+
+	if dmoFindErr != nil {
+		return detailDmo, dmoFindErr
+	}
+
+	detailDmo.Detail = dmoData
+
+	transactionFindErr := r.db.Where("dmo_id = ?", id).Find(&transactions).Error
+
+	if transactionFindErr != nil {
+		return detailDmo, transactionFindErr
+	}
+
+	detailDmo.List = transactions
+	return detailDmo, nil
 }

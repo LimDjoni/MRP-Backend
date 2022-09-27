@@ -1,6 +1,7 @@
 package history
 
 import (
+	"ajebackend/model/dmo"
 	"ajebackend/model/minerba"
 	"ajebackend/model/transaction"
 )
@@ -13,6 +14,7 @@ type Service interface {
 	CreateMinerba (period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error)
 	DeleteMinerba (idMinerba int, userId uint) (bool, error)
 	UpdateDocumentMinerba(id int, documentLink minerba.InputUpdateDocumentMinerba, userId uint) (minerba.Minerba, error)
+	CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string, userId uint) (dmo.Dmo, error)
 }
 
 type service struct {
@@ -63,4 +65,10 @@ func (s *service) UpdateDocumentMinerba(id int, documentLink minerba.InputUpdate
 	uploadMinerba, uploadMinerbaErr := s.repository.UpdateDocumentMinerba(id, documentLink, userId)
 
 	return uploadMinerba, uploadMinerbaErr
+}
+
+func (s *service) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string, userId uint) (dmo.Dmo, error) {
+	createDmo, createDmoErr := s.repository.CreateDmo(dmoInput, baseIdNumber, userId)
+
+	return createDmo, createDmoErr
 }
