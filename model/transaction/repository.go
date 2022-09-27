@@ -109,6 +109,18 @@ func (r *repository) CheckDataDNAndMinerba(listData []int)(bool, error) {
 		return false, errors.New("please check there is transaction already in report")
 	}
 
+	var listDnValid []Transaction
+
+	errFindValid := r.db.Where("id IN ?", listData).Find(&listDnValid).Error
+
+	if errFindValid != nil {
+		return false, errFindValid
+	}
+
+	if len(listData) != len(listDnValid) {
+		return false, errors.New("please check there is transaction not found")
+	}
+
 	return true, nil
 }
 
@@ -158,6 +170,18 @@ func (r *repository) CheckDataDNAndDmo(listData []int)(bool, error) {
 
 	if len(listDn) > 0 {
 		return false, errors.New("please check there is transaction already in report")
+	}
+
+	var listDnValid []Transaction
+
+	errFindValid := r.db.Where("id IN ?", listData).Find(&listDnValid).Error
+
+	if errFindValid != nil {
+		return false, errFindValid
+	}
+
+	if len(listData) != len(listDnValid) {
+		return false, errors.New("please check there is transaction not found")
 	}
 
 	return true, nil

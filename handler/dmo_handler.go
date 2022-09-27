@@ -124,16 +124,16 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	_, checkListTraderErr := h.traderService.CheckListTrader(listTrader)
 
 	if checkListTraderErr != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"error": checkListTraderErr.Error(),
+		return c.Status(404).JSON(fiber.Map{
+			"error":  "trader " + checkListTraderErr.Error(),
 		})
 	}
 
 	_, checkEndUserErr := h.traderService.CheckEndUser(inputCreateDmo.EndUser.ID)
 
 	if checkEndUserErr != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"error": checkEndUserErr.Error(),
+		return c.Status(404).JSON(fiber.Map{
+			"error": "trader end user " + checkEndUserErr.Error(),
 		})
 	}
 
@@ -166,7 +166,13 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 
 		h.logService.CreateLogs(createdErrLog)
 
-		return c.Status(400).JSON(fiber.Map{
+		status := 400
+
+		if checkDmoBargeErr.Error() == "please check there is transaction not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
 			"error": checkDmoBargeErr.Error(),
 		})
 	}
@@ -192,7 +198,13 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 
 		h.logService.CreateLogs(createdErrLog)
 
-		return c.Status(400).JSON(fiber.Map{
+		status := 400
+
+		if checkDmoBargeErr.Error() == "please check there is transaction not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
 			"error": checkDmoVesselErr.Error(),
 		})
 	}
