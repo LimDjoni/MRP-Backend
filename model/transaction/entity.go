@@ -12,7 +12,7 @@ type Transaction struct {
 	Dmo *dmo.Dmo `json:"dmo"`
 	MinerbaId *uint `json:"minerba_id"`
 	Minerba *minerba.Minerba `json:"minerba"`
-	IdNumber string `json:"id_number" gorm:"UNIQUE"`
+	IdNumber *string `json:"id_number" gorm:"UNIQUE"`
 	TransactionType string `json:"transaction_type"`
 	ShippingDate *string `json:"shipping_date" gorm:"type:DATE"`
 	Quantity float64 `json:"quantity"`
