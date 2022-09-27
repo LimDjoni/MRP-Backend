@@ -173,7 +173,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		}
 
 		return c.Status(status).JSON(fiber.Map{
-			"error": checkDmoBargeErr.Error(),
+			"error": "transaction barge " + checkDmoBargeErr.Error(),
 		})
 	}
 
@@ -205,7 +205,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		}
 
 		return c.Status(status).JSON(fiber.Map{
-			"error": checkDmoVesselErr.Error(),
+			"error": "transaction vessel " + checkDmoVesselErr.Error(),
 		})
 	}
 
