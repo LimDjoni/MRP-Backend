@@ -93,6 +93,16 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		})
 	}
 
+	for _, valueVessel := range inputCreateDmo.TransactionVessel {
+		for _, valueBarge := range inputCreateDmo.TransactionBarge {
+			if valueVessel == valueBarge {
+				return c.Status(400).JSON(fiber.Map{
+					"error": "please check transaction is in vessel & barge",
+				})
+			}
+		}
+	}
+
 	if len(inputCreateDmo.TransactionVessel) > 0 && len(inputCreateDmo.VesselAdjustment) == 0 {
 		return c.Status(400).JSON(fiber.Map{
 			"error": "please check vessel adjustment",
