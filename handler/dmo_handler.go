@@ -5,6 +5,7 @@ import (
 	"ajebackend/model/dmo"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
+	"ajebackend/model/trader"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 	"ajebackend/validatorfunc"
@@ -24,16 +25,18 @@ type dmoHandler struct {
 	historyService history.Service
 	logService logs.Service
 	dmoService dmo.Service
+	traderService trader.Service
 	v *validator.Validate
 }
 
-func NewDmoHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, dmoService dmo.Service, v *validator.Validate) *dmoHandler {
+func NewDmoHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, dmoService dmo.Service, traderService trader.Service, v *validator.Validate) *dmoHandler {
 	return &dmoHandler{
 		transactionService,
 		userService,
 		historyService,
 		logService,
 		dmoService,
+		traderService,
 		v,
 	}
 }
@@ -99,6 +102,28 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	if len(inputCreateDmo.TransactionVessel) == 0 && len(inputCreateDmo.TransactionBarge) == 0 {
 		return c.Status(400).JSON(fiber.Map{
 			"error": "please check there is no transaction vessel and transaction barge",
+		})
+	}
+
+	var listTrader []uint
+
+	for _, value := range inputCreateDmo.Trader {
+		listTrader = append(listTrader, value.ID)
+	}
+
+	_, checkListTraderErr := h.traderService.CheckListTrader(listTrader)
+
+	if checkListTraderErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": checkListTraderErr.Error(),
+		})
+	}
+
+	_, checkEndUserErr := h.traderService.CheckEndUser(inputCreateDmo.EndUser.ID)
+
+	if checkEndUserErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": checkEndUserErr.Error(),
 		})
 	}
 
