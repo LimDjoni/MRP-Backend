@@ -44,5 +44,7 @@ func (h *masterHandler) ListTrader(c *fiber.Ctx) error {
 			"error": listTraderErr.Error(),
 		})
 	}
-	return c.Status(200).JSON(listTrader)
+	return c.Status(200).JSON(fiber.Map{
+		"trader": listTrader,
+	})
 }
