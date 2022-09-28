@@ -61,51 +61,55 @@ func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTra
 	if inputTransactionDN.Seller == "" {
 		createdTransaction.Seller = "PT ANGSANA JAYA ENERGI"
 	} else {
-		createdTransaction.Seller = inputTransactionDN.Seller
+		createdTransaction.Seller = strings.ToUpper(inputTransactionDN.Seller)
 	}
 	createdTransaction.ShippingDate = inputTransactionDN.ShippingDate
 	createdTransaction.Quantity = inputTransactionDN.Quantity
-	createdTransaction.ShipName = inputTransactionDN.ShipName
-	createdTransaction.BargeName = inputTransactionDN.BargeName
-	createdTransaction.VesselName = inputTransactionDN.VesselName
-	createdTransaction.CustomerName = inputTransactionDN.CustomerName
-	createdTransaction.LoadingPortName = inputTransactionDN.LoadingPortName
-	createdTransaction.LoadingPortLocation = inputTransactionDN.LoadingPortLocation
-	createdTransaction.UnloadingPortName = inputTransactionDN.UnloadingPortName
-	createdTransaction.UnloadingPortLocation = inputTransactionDN.UnloadingPortLocation
-	createdTransaction.DmoDestinationPort = inputTransactionDN.DmoDestinationPort
+	createdTransaction.ShipName = strings.ToUpper(inputTransactionDN.ShipName)
+	createdTransaction.BargeName = strings.ToUpper(inputTransactionDN.BargeName)
+	createdTransaction.VesselName = strings.ToUpper(inputTransactionDN.VesselName)
+	createdTransaction.CustomerName = strings.ToUpper(inputTransactionDN.CustomerName)
+	createdTransaction.LoadingPortName = strings.ToUpper(inputTransactionDN.LoadingPortName)
+	createdTransaction.LoadingPortLocation = strings.ToUpper(inputTransactionDN.LoadingPortLocation)
+	createdTransaction.UnloadingPortName = strings.ToUpper(inputTransactionDN.UnloadingPortName)
+	createdTransaction.UnloadingPortLocation = strings.ToUpper(inputTransactionDN.UnloadingPortLocation)
+	createdTransaction.DmoDestinationPort = strings.ToUpper(inputTransactionDN.DmoDestinationPort)
 	createdTransaction.SkbDate = inputTransactionDN.SkbDate
-	createdTransaction.SkbNumber = inputTransactionDN.SkbNumber
+	createdTransaction.SkbNumber = strings.ToUpper(inputTransactionDN.SkbNumber)
 	createdTransaction.SkabDate = inputTransactionDN.SkabDate
-	createdTransaction.SkabNumber = inputTransactionDN.SkabNumber
+	createdTransaction.SkabNumber = strings.ToUpper(inputTransactionDN.SkabNumber)
 	createdTransaction.BillOfLadingDate = inputTransactionDN.BillOfLadingDate
-	createdTransaction.BillOfLadingNumber = inputTransactionDN.BillOfLadingNumber
+	createdTransaction.BillOfLadingNumber = strings.ToUpper(inputTransactionDN.BillOfLadingNumber)
 	createdTransaction.RoyaltyRate = inputTransactionDN.RoyaltyRate
 	createdTransaction.DpRoyaltyPrice = inputTransactionDN.DpRoyaltyPrice
-	createdTransaction.DpRoyaltyCurrency = inputTransactionDN.DpRoyaltyCurrency
+	createdTransaction.DpRoyaltyCurrency = strings.ToUpper(inputTransactionDN.DpRoyaltyCurrency)
 	if inputTransactionDN.DpRoyaltyCurrency == "" {
 		createdTransaction.DpRoyaltyCurrency = "IDR"
 	}
 	createdTransaction.DpRoyaltyDate = inputTransactionDN.DpRoyaltyDate
-	createdTransaction.DpRoyaltyNtpn = inputTransactionDN.DpRoyaltyNtpn
-	createdTransaction.DpRoyaltyBillingCode = inputTransactionDN.DpRoyaltyBillingCode
+	dpNtpn := strings.ToUpper(*inputTransactionDN.DpRoyaltyNtpn)
+	createdTransaction.DpRoyaltyNtpn = &dpNtpn
+	dpBillingCode := strings.ToUpper(*inputTransactionDN.DpRoyaltyBillingCode)
+	createdTransaction.DpRoyaltyBillingCode = &dpBillingCode
 	createdTransaction.DpRoyaltyTotal = inputTransactionDN.DpRoyaltyTotal
 	createdTransaction.PaymentDpRoyaltyPrice = inputTransactionDN.PaymentDpRoyaltyPrice
-	createdTransaction.PaymentDpRoyaltyCurrency = inputTransactionDN.PaymentDpRoyaltyCurrency
+	createdTransaction.PaymentDpRoyaltyCurrency = strings.ToUpper(inputTransactionDN.PaymentDpRoyaltyCurrency)
 	if inputTransactionDN.PaymentDpRoyaltyCurrency == "" {
 		createdTransaction.PaymentDpRoyaltyCurrency = "IDR"
 	}
 	createdTransaction.PaymentDpRoyaltyDate = inputTransactionDN.PaymentDpRoyaltyDate
-	createdTransaction.PaymentDpRoyaltyNtpn = inputTransactionDN.PaymentDpRoyaltyNtpn
-	createdTransaction.PaymentDpRoyaltyBillingCode = inputTransactionDN.PaymentDpRoyaltyBillingCode
+	paymentDpNtpn := strings.ToUpper(*inputTransactionDN.PaymentDpRoyaltyNtpn)
+	createdTransaction.PaymentDpRoyaltyNtpn = &paymentDpNtpn
+	paymentDpBillingCode := strings.ToUpper(*inputTransactionDN.PaymentDpRoyaltyBillingCode)
+	createdTransaction.PaymentDpRoyaltyBillingCode = &paymentDpBillingCode
 	createdTransaction.PaymentDpRoyaltyTotal = inputTransactionDN.PaymentDpRoyaltyTotal
 	createdTransaction.LhvDate = inputTransactionDN.LhvDate
-	createdTransaction.LhvNumber = inputTransactionDN.LhvNumber
-	createdTransaction.SurveyorName = inputTransactionDN.SurveyorName
+	createdTransaction.LhvNumber = strings.ToUpper(inputTransactionDN.LhvNumber)
+	createdTransaction.SurveyorName = strings.ToUpper(inputTransactionDN.SurveyorName)
 	createdTransaction.CowDate = inputTransactionDN.CowDate
-	createdTransaction.CowNumber = inputTransactionDN.CowNumber
+	createdTransaction.CowNumber = strings.ToUpper(inputTransactionDN.CowNumber)
 	createdTransaction.CoaDate = inputTransactionDN.CoaDate
-	createdTransaction.CoaNumber = inputTransactionDN.CoaNumber
+	createdTransaction.CoaNumber = strings.ToUpper(inputTransactionDN.CoaNumber)
 	createdTransaction.QualityTmAr = inputTransactionDN.QualityTmAr
 	createdTransaction.QualityImAdb = inputTransactionDN.QualityImAdb
 	createdTransaction.QualityAshAr = inputTransactionDN.QualityAshAr
@@ -117,17 +121,17 @@ func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTra
 	createdTransaction.QualityCaloriesAr = inputTransactionDN.QualityCaloriesAr
 	createdTransaction.QualityCaloriesAdb = inputTransactionDN.QualityCaloriesAdb
 	createdTransaction.BargingDistance = inputTransactionDN.BargingDistance
-	createdTransaction.SalesSystem = inputTransactionDN.SalesSystem
+	createdTransaction.SalesSystem = strings.ToUpper(inputTransactionDN.SalesSystem)
 	createdTransaction.InvoiceDate = inputTransactionDN.InvoiceDate
-	createdTransaction.InvoiceNumber = inputTransactionDN.InvoiceNumber
+	createdTransaction.InvoiceNumber = strings.ToUpper(inputTransactionDN.InvoiceNumber)
 	createdTransaction.InvoicePriceUnit = inputTransactionDN.InvoicePriceUnit
 	createdTransaction.InvoicePriceTotal = inputTransactionDN.InvoicePriceTotal
 	createdTransaction.DmoReconciliationLetter = inputTransactionDN.DmoReconciliationLetter
 	createdTransaction.ContractDate = inputTransactionDN.ContractDate
-	createdTransaction.ContractNumber = inputTransactionDN.ContractNumber
-	createdTransaction.DmoBuyerName = inputTransactionDN.DmoBuyerName
-	createdTransaction.DmoIndustryType = inputTransactionDN.DmoIndustryType
-	createdTransaction.DmoCategory = inputTransactionDN.DmoCategory
+	createdTransaction.ContractNumber = strings.ToUpper(inputTransactionDN.ContractNumber)
+	createdTransaction.DmoBuyerName = strings.ToUpper(inputTransactionDN.DmoBuyerName)
+	createdTransaction.DmoIndustryType = strings.ToUpper(inputTransactionDN.DmoIndustryType)
+	createdTransaction.DmoCategory = strings.ToUpper(inputTransactionDN.DmoCategory)
 
 	createTransactionErr := tx.Create(&createdTransaction).Error
 
@@ -216,6 +220,41 @@ func (r *repository) UpdateTransactionDN (idTransaction int, inputEditTransactio
 		tx.Rollback()
 		return transaction, errorBeforeDataJsonMarshal
 	}
+
+	inputEditTransactionDN.Seller = strings.ToUpper(inputEditTransactionDN.Seller)
+	inputEditTransactionDN.ShipName = strings.ToUpper(inputEditTransactionDN.ShipName)
+	inputEditTransactionDN.BargeName = strings.ToUpper(inputEditTransactionDN.BargeName)
+	inputEditTransactionDN.VesselName = strings.ToUpper(inputEditTransactionDN.VesselName)
+	inputEditTransactionDN.CustomerName = strings.ToUpper(inputEditTransactionDN.CustomerName)
+	inputEditTransactionDN.LoadingPortName = strings.ToUpper(inputEditTransactionDN.LoadingPortName)
+	inputEditTransactionDN.LoadingPortLocation = strings.ToUpper(inputEditTransactionDN.LoadingPortLocation)
+	inputEditTransactionDN.UnloadingPortName = strings.ToUpper(inputEditTransactionDN.UnloadingPortName)
+	inputEditTransactionDN.UnloadingPortLocation = strings.ToUpper(inputEditTransactionDN.UnloadingPortLocation)
+	inputEditTransactionDN.DmoDestinationPort = strings.ToUpper(inputEditTransactionDN.DmoDestinationPort)
+	inputEditTransactionDN.SkbNumber = strings.ToUpper(inputEditTransactionDN.SkbNumber)
+	inputEditTransactionDN.SkabNumber = strings.ToUpper(inputEditTransactionDN.SkabNumber)
+	inputEditTransactionDN.BillOfLadingNumber = strings.ToUpper(inputEditTransactionDN.BillOfLadingNumber)
+	inputEditTransactionDN.DpRoyaltyCurrency = strings.ToUpper(inputEditTransactionDN.DpRoyaltyCurrency)
+	dpNtpn := strings.ToUpper(*inputEditTransactionDN.DpRoyaltyNtpn)
+	inputEditTransactionDN.DpRoyaltyNtpn = &dpNtpn
+	dpBillingCode := strings.ToUpper(*inputEditTransactionDN.DpRoyaltyBillingCode)
+	inputEditTransactionDN.DpRoyaltyBillingCode = &dpBillingCode
+	inputEditTransactionDN.PaymentDpRoyaltyCurrency = strings.ToUpper(inputEditTransactionDN.PaymentDpRoyaltyCurrency)
+	inputEditTransactionDN.PaymentDpRoyaltyCurrency = strings.ToUpper(inputEditTransactionDN.PaymentDpRoyaltyCurrency)
+	paymentDpNtpn := strings.ToUpper(*inputEditTransactionDN.PaymentDpRoyaltyNtpn)
+	inputEditTransactionDN.PaymentDpRoyaltyNtpn = &paymentDpNtpn
+	paymentDpBillingCode := strings.ToUpper(*inputEditTransactionDN.PaymentDpRoyaltyBillingCode)
+	inputEditTransactionDN.PaymentDpRoyaltyBillingCode = &paymentDpBillingCode
+	inputEditTransactionDN.LhvNumber = strings.ToUpper(inputEditTransactionDN.LhvNumber)
+	inputEditTransactionDN.SurveyorName = strings.ToUpper(inputEditTransactionDN.SurveyorName)
+	inputEditTransactionDN.CowNumber = strings.ToUpper(inputEditTransactionDN.CowNumber)
+	inputEditTransactionDN.CoaNumber = strings.ToUpper(inputEditTransactionDN.CoaNumber)
+	inputEditTransactionDN.SalesSystem = strings.ToUpper(inputEditTransactionDN.SalesSystem)
+	inputEditTransactionDN.InvoiceNumber = strings.ToUpper(inputEditTransactionDN.InvoiceNumber)
+	inputEditTransactionDN.ContractNumber = strings.ToUpper(inputEditTransactionDN.ContractNumber)
+	inputEditTransactionDN.DmoBuyerName = strings.ToUpper(inputEditTransactionDN.DmoBuyerName)
+	inputEditTransactionDN.DmoIndustryType = strings.ToUpper(inputEditTransactionDN.DmoIndustryType)
+	inputEditTransactionDN.DmoCategory = strings.ToUpper(inputEditTransactionDN.DmoCategory)
 
 	dataInput, errorMarshal := json.Marshal(inputEditTransactionDN)
 
