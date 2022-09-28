@@ -97,18 +97,6 @@ func (r *repository) ListDataDNWithoutMinerba() ([]Transaction, error) {
 // Minerba
 
 func (r *repository) CheckDataDNAndMinerba(listData []int)(bool, error) {
-	var listDn []Transaction
-
-	errFind := r.db.Where("minerba_id = ? AND id IN ?", nil, listData).Find(&listDn).Error
-
-	if errFind != nil {
-		return false, errFind
-	}
-
-	if len(listDn) > 0 {
-		return false, errors.New("please check there is transaction already in report")
-	}
-
 	var listDnValid []Transaction
 
 	errFindValid := r.db.Where("id IN ?", listData).Find(&listDnValid).Error
@@ -119,6 +107,18 @@ func (r *repository) CheckDataDNAndMinerba(listData []int)(bool, error) {
 
 	if len(listData) != len(listDnValid) {
 		return false, errors.New("please check there is transaction not found")
+	}
+
+	var listDn []Transaction
+
+	errFind := r.db.Where("minerba_id = ? AND id IN ?", nil, listData).Find(&listDn).Error
+
+	if errFind != nil {
+		return false, errFind
+	}
+
+	if len(listDn) == 0 {
+		return false, errors.New("please check there is transaction already in report")
 	}
 
 	return true, nil
@@ -160,18 +160,6 @@ func (r *repository) ListDataDNWithoutDmo() ([]Transaction, error) {
 }
 
 func (r *repository) CheckDataDNAndDmo(listData []int)(bool, error) {
-	var listDn []Transaction
-
-	errFind := r.db.Where("dmo_id = ? AND id IN ?", nil, listData).Find(&listDn).Error
-
-	if errFind != nil {
-		return false, errFind
-	}
-
-	if len(listDn) > 0 {
-		return false, errors.New("please check there is transaction already in report")
-	}
-
 	var listDnValid []Transaction
 
 	errFindValid := r.db.Where("id IN ?", listData).Find(&listDnValid).Error
@@ -182,6 +170,18 @@ func (r *repository) CheckDataDNAndDmo(listData []int)(bool, error) {
 
 	if len(listData) != len(listDnValid) {
 		return false, errors.New("please check there is transaction not found")
+	}
+
+	var listDn []Transaction
+
+	errFind := r.db.Where("dmo_id = ? AND id IN ?", nil, listData).Find(&listDn).Error
+
+	if errFind != nil {
+		return false, errFind
+	}
+
+	if len(listDn) == 0 {
+		return false, errors.New("please check there is transaction already in report")
 	}
 
 	return true, nil

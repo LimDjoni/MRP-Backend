@@ -145,68 +145,74 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	_, checkDmoBargeErr := h.transactionService.CheckDataDNAndDmo(inputCreateDmo.TransactionBarge)
+	if len(inputCreateDmo.TransactionBarge) > 0 {
+		_, checkDmoBargeErr := h.transactionService.CheckDataDNAndDmo(inputCreateDmo.TransactionBarge)
 
-	if checkDmoBargeErr != nil {
-		inputMap := make(map[string]interface{})
-		inputMap["user_id"] = claims["id"]
-		inputMap["dmo_period"] = inputCreateDmo.Period
-		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-		inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+		if checkDmoBargeErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["user_id"] = claims["id"]
+			inputMap["dmo_period"] = inputCreateDmo.Period
+			inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
+			inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+			inputMap["input"] = inputCreateDmo
 
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
-			"error": checkDmoBargeErr.Error(),
-		})
+			inputJson ,_ := json.Marshal(inputMap)
+			messageJson ,_ := json.Marshal(map[string]interface{}{
+				"error": checkDmoBargeErr.Error(),
+			})
 
-		createdErrLog := logs.Logs{
-			Input: inputJson,
-			Message: messageJson,
+			createdErrLog := logs.Logs{
+				Input: inputJson,
+				Message: messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			status := 400
+
+			if checkDmoBargeErr.Error() == "please check there is transaction not found" {
+				status = 404
+			}
+
+			return c.Status(status).JSON(fiber.Map{
+				"error": "transaction barge " + checkDmoBargeErr.Error(),
+			})
 		}
-
-		h.logService.CreateLogs(createdErrLog)
-
-		status := 400
-
-		if checkDmoBargeErr.Error() == "please check there is transaction not found" {
-			status = 404
-		}
-
-		return c.Status(status).JSON(fiber.Map{
-			"error": "transaction barge " + checkDmoBargeErr.Error(),
-		})
 	}
 
-	_, checkDmoVesselErr := h.transactionService.CheckDataDNAndDmo(inputCreateDmo.TransactionVessel)
+	if len(inputCreateDmo.TransactionVessel) > 0 {
+		_, checkDmoVesselErr := h.transactionService.CheckDataDNAndDmo(inputCreateDmo.TransactionVessel)
 
-	if checkDmoVesselErr != nil {
-		inputMap := make(map[string]interface{})
-		inputMap["user_id"] = claims["id"]
-		inputMap["dmo_period"] = inputCreateDmo.Period
-		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-		inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+		if checkDmoVesselErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["user_id"] = claims["id"]
+			inputMap["dmo_period"] = inputCreateDmo.Period
+			inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
+			inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+			inputMap["input"] = inputCreateDmo
 
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
-			"error": checkDmoVesselErr.Error(),
-		})
+			inputJson ,_ := json.Marshal(inputMap)
+			messageJson ,_ := json.Marshal(map[string]interface{}{
+				"error": checkDmoVesselErr.Error(),
+			})
 
-		createdErrLog := logs.Logs{
-			Input: inputJson,
-			Message: messageJson,
+			createdErrLog := logs.Logs{
+				Input: inputJson,
+				Message: messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			status := 400
+
+			if checkDmoVesselErr.Error() == "please check there is transaction not found" {
+				status = 404
+			}
+
+			return c.Status(status).JSON(fiber.Map{
+				"error": "transaction vessel " + checkDmoVesselErr.Error(),
+			})
 		}
-
-		h.logService.CreateLogs(createdErrLog)
-
-		status := 400
-
-		if checkDmoBargeErr.Error() == "please check there is transaction not found" {
-			status = 404
-		}
-
-		return c.Status(status).JSON(fiber.Map{
-			"error": "transaction vessel " + checkDmoVesselErr.Error(),
-		})
 	}
 
 	splitPeriod := strings.Split(inputCreateDmo.Period, " ")
@@ -220,7 +226,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		inputMap["dmo_period"] = inputCreateDmo.Period
 		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
 		inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
-
+		inputMap["input"] = inputCreateDmo
 		inputJson ,_ := json.Marshal(inputMap)
 		messageJson ,_ := json.Marshal(map[string]interface{}{
 			"error": createDmoErr.Error(),
