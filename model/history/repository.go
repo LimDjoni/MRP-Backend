@@ -25,6 +25,7 @@ type Repository interface {
 	DeleteMinerba (idMinerba int, userId uint) (bool, error)
 	UpdateDocumentMinerba(id int, documentLink minerba.InputUpdateDocumentMinerba, userId uint) (minerba.Minerba, error)
 	CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string, userId uint) (dmo.Dmo, error)
+	DeleteDmo (idDmo int, userId uint) (bool, error)
 }
 
 type repository struct {
@@ -171,13 +172,13 @@ func (r *repository) DeleteTransactionDN(id int, userId uint) (bool, error) {
 
 	tx := r.db.Begin()
 
-	errFind := r.db.Where("id = ?", id).First(&transaction).Error
+	errFind := tx.Where("id = ?", id).First(&transaction).Error
 
 	if errFind != nil {
 		return false, errFind
 	}
 
-	errDelete := r.db.Where("id = ?", id).Delete(&transaction).Error
+	errDelete := tx.Unscoped().Where("id = ?", id).Delete(&transaction).Error
 
 	if errDelete != nil {
 		tx.Rollback()
@@ -186,10 +187,8 @@ func (r *repository) DeleteTransactionDN(id int, userId uint) (bool, error) {
 
 	var history History
 
-	uId := uint(id)
-	history.TransactionId = &uId
+	history.Status = fmt.Sprintf("Deleted Minerba Dmo with id number %s and id %v", *transaction.IdNumber, transaction.ID)
 	history.UserId = userId
-	history.Status = "Deleted"
 
 	createHistoryErr := tx.Create(&history).Error
 
@@ -460,18 +459,11 @@ func (r *repository) DeleteMinerba (idMinerba int, userId uint) (bool, error) {
 	tx := r.db.Begin()
 	var minerba minerba.Minerba
 
-	findErr := tx.Where("id = ?", idMinerba).First(&minerba).Error
+	findMinerbaErr := tx.Where("id = ?", idMinerba).First(&minerba).Error
 
-	if findErr != nil {
+	if findMinerbaErr != nil {
 		tx.Rollback()
-		return false, findErr
-	}
-
-	updateTransactionErr := tx.Table("transactions").Where("minerba_id = ?", idMinerba).Update("minerba_id", nil).Error
-
-	if updateTransactionErr != nil {
-		tx.Rollback()
-		return false, updateTransactionErr
+		return false, findMinerbaErr
 	}
 
 	errDelete := tx.Unscoped().Where("id = ?", idMinerba).Delete(&minerba).Error
@@ -483,7 +475,7 @@ func (r *repository) DeleteMinerba (idMinerba int, userId uint) (bool, error) {
 
 	var history History
 
-	history.Status = fmt.Sprintf("Deleted Minerba Report with id number %s and id %v", minerba.IdNumber, minerba.ID)
+	history.Status = fmt.Sprintf("Deleted Minerba Report with id number %s and id %v", *minerba.IdNumber, minerba.ID)
 	history.UserId = userId
 
 	createHistoryErr := tx.Create(&history).Error
@@ -740,4 +732,39 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string
 
 	tx.Commit()
 	return createdDmo, nil
+}
+
+func (r *repository) DeleteDmo (idDmo int, userId uint) (bool, error) {
+
+	tx := r.db.Begin()
+	var dmo dmo.Dmo
+
+	findDmoErr := tx.Where("id = ?", idDmo).First(&dmo).Error
+
+	if findDmoErr != nil {
+		tx.Rollback()
+		return false, findDmoErr
+	}
+
+	errDelete := tx.Unscoped().Where("id = ?", idDmo).Delete(&dmo).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+		return false, errDelete
+	}
+
+	var history History
+
+	history.Status = fmt.Sprintf("Deleted Dmo with id number %s and id %v", *dmo.IdNumber, dmo.ID)
+	history.UserId = userId
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return false, createHistoryErr
+	}
+
+	tx.Commit()
+	return true, nil
 }

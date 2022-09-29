@@ -69,6 +69,7 @@ type SortAndFilter struct {
 	Quantity float64
 	ShipName string
 	BargeName string
+	VesselName string
 	ShippingFrom string
 	ShippingTo string
 }

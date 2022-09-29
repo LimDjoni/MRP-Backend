@@ -8,9 +8,9 @@ import (
 
 type Transaction struct {
 	gorm.Model
-	DmoId *uint `json:"dmo_id"`
+	DmoId *uint `json:"dmo_id" gorm:"constraint:OnDelete:SET NULL;"`
 	Dmo *dmo.Dmo `json:"dmo"`
-	MinerbaId *uint `json:"minerba_id"`
+	MinerbaId *uint `json:"minerba_id" gorm:"constraint:OnDelete:SET NULL;"`
 	Minerba *minerba.Minerba `json:"minerba"`
 	IdNumber *string `json:"id_number" gorm:"UNIQUE"`
 	TransactionType string `json:"transaction_type"`

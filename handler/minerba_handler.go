@@ -128,7 +128,7 @@ func (h *minerbaHandler) CreateMinerba(c *fiber.Ctx) error {
 		})
 	}
 
-	_, checkMinerbaTransactionErr := h.transactionService.CheckDataDNAndMinerba(inputCreateMinerba.ListDataDn)
+	_, checkMinerbaTransactionErr := h.transactionService.CheckDataDnAndMinerba(inputCreateMinerba.ListDataDn)
 
 	if checkMinerbaTransactionErr != nil {
 		inputMap := make(map[string]interface{})
@@ -260,40 +260,42 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 		})
 	}
 
-	fileName := fmt.Sprintf("%s/", dataMinerba.IdNumber)
-	_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
+	if dataMinerba.RecapDmoDocumentLink != nil || dataMinerba.DetailDmoDocumentLink != nil || dataMinerba.SP3MEDNDocumentLink != nil || dataMinerba.SP3MELNDocumentLink != nil || dataMinerba.INSWExportDocumentLink != nil {
+		fileName := fmt.Sprintf("%s/", *dataMinerba.IdNumber)
+		_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
 
-	if deleteAwsErr != nil {
-		inputMap := make(map[string]interface{})
-		inputMap["user_id"] = claims["id"]
-		inputMap["minerba_id"] = idInt
+		if deleteAwsErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["user_id"] = claims["id"]
+			inputMap["minerba_id"] = idInt
 
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
-			"error": deleteAwsErr.Error(),
-		})
+			inputJson ,_ := json.Marshal(inputMap)
+			messageJson ,_ := json.Marshal(map[string]interface{}{
+				"error": deleteAwsErr.Error(),
+			})
 
-		minerbaId := uint(idInt)
-		createdErrLog := logs.Logs{
-			MinerbaId: &minerbaId,
-			Input: inputJson,
-			Message: messageJson,
+			minerbaId := uint(idInt)
+			createdErrLog := logs.Logs{
+				MinerbaId: &minerbaId,
+				Input: inputJson,
+				Message: messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			status := 400
+
+			if  deleteMinerbaErr.Error() == "record not found" {
+				status = 404
+			}
+
+			return c.Status(status).JSON(fiber.Map{
+				"message": "failed to delete minerba aws",
+				"error": deleteAwsErr.Error(),
+			})
 		}
 
-		h.logService.CreateLogs(createdErrLog)
-
-		status := 400
-
-		if  deleteMinerbaErr.Error() == "record not found" {
-			status = 404
-		}
-
-		return c.Status(status).JSON(fiber.Map{
-			"message": "failed to delete minerba aws",
-			"error": deleteAwsErr.Error(),
-		})
 	}
-
 
 	return c.Status(200).JSON(fiber.Map{
 		"message": "success delete minerba",

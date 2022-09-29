@@ -12,7 +12,7 @@ type Logs struct {
 	gorm.Model
 	Input datatypes.JSON `json:"input"`
 	Message	datatypes.JSON `json:"message"`
-	TransactionId *uint `json:"transaction_id"`
+	TransactionId *uint `json:"transaction_id" gorm:"constraint:OnDelete:CASCADE;"`
 	Transaction *transaction.Transaction `json:"transaction"`
 	MinerbaId *uint `json:"minerba_id" gorm:"constraint:OnDelete:CASCADE;"`
 	Minerba *minerba.Minerba `json:"minerba"`

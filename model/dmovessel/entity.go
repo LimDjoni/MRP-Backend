@@ -7,7 +7,7 @@ import (
 
 type DmoVessel struct {
 	gorm.Model
-	DmoId uint `json:"dmo_id"`
+	DmoId uint `json:"dmo_id" gorm:"constraint:OnDelete:CASCADE;"`
 	Dmo dmo.Dmo `json:"dmo"`
 	VesselName string `json:"vessel_name"`
 	Quantity float64 `json:"quantity"`

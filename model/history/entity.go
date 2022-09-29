@@ -13,7 +13,7 @@ type History struct {
 	gorm.Model
 	DmoId *uint `json:"dmo_id" gorm:"constraint:OnDelete:CASCADE;"`
 	Dmo *dmo.Dmo
-	TransactionId *uint `json:"transaction_id"`
+	TransactionId *uint `json:"transaction_id" gorm:"constraint:OnDelete:CASCADE;"`
 	Transaction *transaction.Transaction
 	UserId uint `json:"user_id"`
 	User user.User
