@@ -88,21 +88,34 @@ func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTra
 		createdTransaction.DpRoyaltyCurrency = "IDR"
 	}
 	createdTransaction.DpRoyaltyDate = inputTransactionDN.DpRoyaltyDate
-	dpNtpn := strings.ToUpper(*inputTransactionDN.DpRoyaltyNtpn)
-	createdTransaction.DpRoyaltyNtpn = &dpNtpn
-	dpBillingCode := strings.ToUpper(*inputTransactionDN.DpRoyaltyBillingCode)
-	createdTransaction.DpRoyaltyBillingCode = &dpBillingCode
+	if inputTransactionDN.DpRoyaltyNtpn != nil {
+		dpNtpn := strings.ToUpper(*inputTransactionDN.DpRoyaltyNtpn)
+		createdTransaction.DpRoyaltyNtpn = &dpNtpn
+	}
+
+	if inputTransactionDN.DpRoyaltyBillingCode != nil {
+		dpBillingCode := strings.ToUpper(*inputTransactionDN.DpRoyaltyBillingCode)
+		createdTransaction.DpRoyaltyBillingCode = &dpBillingCode
+	}
+
 	createdTransaction.DpRoyaltyTotal = inputTransactionDN.DpRoyaltyTotal
 	createdTransaction.PaymentDpRoyaltyPrice = inputTransactionDN.PaymentDpRoyaltyPrice
 	createdTransaction.PaymentDpRoyaltyCurrency = strings.ToUpper(inputTransactionDN.PaymentDpRoyaltyCurrency)
 	if inputTransactionDN.PaymentDpRoyaltyCurrency == "" {
 		createdTransaction.PaymentDpRoyaltyCurrency = "IDR"
 	}
+
 	createdTransaction.PaymentDpRoyaltyDate = inputTransactionDN.PaymentDpRoyaltyDate
-	paymentDpNtpn := strings.ToUpper(*inputTransactionDN.PaymentDpRoyaltyNtpn)
-	createdTransaction.PaymentDpRoyaltyNtpn = &paymentDpNtpn
-	paymentDpBillingCode := strings.ToUpper(*inputTransactionDN.PaymentDpRoyaltyBillingCode)
-	createdTransaction.PaymentDpRoyaltyBillingCode = &paymentDpBillingCode
+	if inputTransactionDN.PaymentDpRoyaltyNtpn != nil {
+		paymentDpNtpn := strings.ToUpper(*inputTransactionDN.PaymentDpRoyaltyNtpn)
+		createdTransaction.PaymentDpRoyaltyNtpn = &paymentDpNtpn
+	}
+
+	if inputTransactionDN.PaymentDpRoyaltyBillingCode != nil {
+		paymentDpBillingCode := strings.ToUpper(*inputTransactionDN.PaymentDpRoyaltyBillingCode)
+		createdTransaction.PaymentDpRoyaltyBillingCode = &paymentDpBillingCode
+	}
+
 	createdTransaction.PaymentDpRoyaltyTotal = inputTransactionDN.PaymentDpRoyaltyTotal
 	createdTransaction.LhvDate = inputTransactionDN.LhvDate
 	createdTransaction.LhvNumber = strings.ToUpper(inputTransactionDN.LhvNumber)
@@ -234,16 +247,29 @@ func (r *repository) UpdateTransactionDN (idTransaction int, inputEditTransactio
 	inputEditTransactionDN.SkabNumber = strings.ToUpper(inputEditTransactionDN.SkabNumber)
 	inputEditTransactionDN.BillOfLadingNumber = strings.ToUpper(inputEditTransactionDN.BillOfLadingNumber)
 	inputEditTransactionDN.DpRoyaltyCurrency = strings.ToUpper(inputEditTransactionDN.DpRoyaltyCurrency)
-	dpNtpn := strings.ToUpper(*inputEditTransactionDN.DpRoyaltyNtpn)
-	inputEditTransactionDN.DpRoyaltyNtpn = &dpNtpn
-	dpBillingCode := strings.ToUpper(*inputEditTransactionDN.DpRoyaltyBillingCode)
-	inputEditTransactionDN.DpRoyaltyBillingCode = &dpBillingCode
+	if inputEditTransactionDN.DpRoyaltyNtpn != nil {
+		dpNtpn := strings.ToUpper(*inputEditTransactionDN.DpRoyaltyNtpn)
+		inputEditTransactionDN.DpRoyaltyNtpn = &dpNtpn
+	}
+
+	if inputEditTransactionDN.DpRoyaltyBillingCode != nil {
+		dpBillingCode := strings.ToUpper(*inputEditTransactionDN.DpRoyaltyBillingCode)
+		inputEditTransactionDN.DpRoyaltyBillingCode = &dpBillingCode
+	}
+
 	inputEditTransactionDN.PaymentDpRoyaltyCurrency = strings.ToUpper(inputEditTransactionDN.PaymentDpRoyaltyCurrency)
 	inputEditTransactionDN.PaymentDpRoyaltyCurrency = strings.ToUpper(inputEditTransactionDN.PaymentDpRoyaltyCurrency)
-	paymentDpNtpn := strings.ToUpper(*inputEditTransactionDN.PaymentDpRoyaltyNtpn)
-	inputEditTransactionDN.PaymentDpRoyaltyNtpn = &paymentDpNtpn
-	paymentDpBillingCode := strings.ToUpper(*inputEditTransactionDN.PaymentDpRoyaltyBillingCode)
-	inputEditTransactionDN.PaymentDpRoyaltyBillingCode = &paymentDpBillingCode
+
+	if inputEditTransactionDN.PaymentDpRoyaltyNtpn != nil {
+		paymentDpNtpn := strings.ToUpper(*inputEditTransactionDN.PaymentDpRoyaltyNtpn)
+		inputEditTransactionDN.PaymentDpRoyaltyNtpn = &paymentDpNtpn
+	}
+
+	if inputEditTransactionDN.PaymentDpRoyaltyBillingCode != nil {
+		paymentDpBillingCode := strings.ToUpper(*inputEditTransactionDN.PaymentDpRoyaltyBillingCode)
+		inputEditTransactionDN.PaymentDpRoyaltyBillingCode = &paymentDpBillingCode
+	}
+
 	inputEditTransactionDN.LhvNumber = strings.ToUpper(inputEditTransactionDN.LhvNumber)
 	inputEditTransactionDN.SurveyorName = strings.ToUpper(inputEditTransactionDN.SurveyorName)
 	inputEditTransactionDN.CowNumber = strings.ToUpper(inputEditTransactionDN.CowNumber)
