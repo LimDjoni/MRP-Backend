@@ -66,7 +66,7 @@ func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTra
 	}
 	createdTransaction.ShippingDate = inputTransactionDN.ShippingDate
 	createdTransaction.Quantity = inputTransactionDN.Quantity
-	createdTransaction.ShipName = strings.ToUpper(inputTransactionDN.ShipName)
+	createdTransaction.TugboatName = strings.ToUpper(inputTransactionDN.TugboatName)
 	createdTransaction.BargeName = strings.ToUpper(inputTransactionDN.BargeName)
 	createdTransaction.VesselName = strings.ToUpper(inputTransactionDN.VesselName)
 	createdTransaction.CustomerName = strings.ToUpper(inputTransactionDN.CustomerName)
@@ -234,7 +234,7 @@ func (r *repository) UpdateTransactionDN (idTransaction int, inputEditTransactio
 	}
 
 	inputEditTransactionDN.Seller = strings.ToUpper(inputEditTransactionDN.Seller)
-	inputEditTransactionDN.ShipName = strings.ToUpper(inputEditTransactionDN.ShipName)
+	inputEditTransactionDN.TugboatName = strings.ToUpper(inputEditTransactionDN.TugboatName)
 	inputEditTransactionDN.BargeName = strings.ToUpper(inputEditTransactionDN.BargeName)
 	inputEditTransactionDN.VesselName = strings.ToUpper(inputEditTransactionDN.VesselName)
 	inputEditTransactionDN.CustomerName = strings.ToUpper(inputEditTransactionDN.CustomerName)

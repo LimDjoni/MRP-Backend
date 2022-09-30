@@ -122,7 +122,7 @@ func (h *transactionHandler) ListDataDN(c *fiber.Ctx) error {
 		sortAndFilter.Quantity = quantity
 	}
 
-	sortAndFilter.ShipName = c.Query("ship_name")
+	sortAndFilter.TugboatName = c.Query("tugboat_name")
 	sortAndFilter.BargeName = c.Query("barge_name")
 	sortAndFilter.VesselName = c.Query("vessel_name")
 	sortAndFilter.ShippingFrom = c.Query("shipping_from")

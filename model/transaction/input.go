@@ -3,7 +3,7 @@ package transaction
 type DataTransactionInput struct {
 	ShippingDate *string `json:"shipping_date" validate:"omitempty,DateValidation"`
 	Quantity float64 `json:"quantity"`
-	ShipName string `json:"ship_name"`
+	TugboatName string `json:"tugboat_name"`
 	BargeName string `json:"barge_name"`
 	VesselName string `json:"vessel_name"`
 	CustomerName string `json:"customer_name"`
@@ -67,7 +67,7 @@ type SortAndFilter struct {
 	Field string
 	Sort string
 	Quantity float64
-	ShipName string
+	TugboatName string
 	BargeName string
 	VesselName string
 	ShippingFrom string

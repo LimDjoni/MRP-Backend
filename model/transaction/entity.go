@@ -16,7 +16,7 @@ type Transaction struct {
 	TransactionType string `json:"transaction_type"`
 	ShippingDate *string `json:"shipping_date" gorm:"type:DATE"`
 	Quantity float64 `json:"quantity"`
-	ShipName string `json:"ship_name"`
+	TugboatName string `json:"tugboat_name"`
 	BargeName string `json:"barge_name"`
 	VesselName string `json:"vessel_name"`
 	Seller string `json:"seller"`

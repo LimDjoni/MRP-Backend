@@ -387,7 +387,7 @@ func TestDetailTransactionDN(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "transaction_type", "list detail dn")
 		assert.Contains(t, mapUnmarshal, "shipping_date", "list detail dn")
 		assert.Contains(t, mapUnmarshal, "quantity", "list detail dn")
-		assert.Contains(t, mapUnmarshal, "ship_name", "list detail dn")
+		assert.Contains(t, mapUnmarshal, "tugboat_name", "list detail dn")
 		assert.Contains(t, mapUnmarshal, "barge_name", "list detail dn")
 		assert.Contains(t, mapUnmarshal, "vessel_name", "list detail dn")
 		assert.Contains(t, mapUnmarshal, "seller", "list detail dn")
@@ -474,7 +474,7 @@ func TestCreateTransactionDN(t *testing.T) {
 			body: fiber.Map{
 				"coa_date": "2022-02-01",
 				"quantity": 1023.122,
-				"ship_name": "AJE",
+				"tugboat_name": "AJE",
 				"dp_royalty_ntpn": "A123SSSS",
 			},
 			token: token,
@@ -485,7 +485,7 @@ func TestCreateTransactionDN(t *testing.T) {
 			body: fiber.Map{
 				"coa_date": "2022-22-01",
 				"quantity": 1023.122,
-				"ship_name": "AJE",
+				"tugboat_name": "AJE",
 			},
 			token: token,
 		},
@@ -495,7 +495,7 @@ func TestCreateTransactionDN(t *testing.T) {
 			body: fiber.Map{
 				"coa_date": "2022-22-01",
 				"quantity": 1023.122,
-				"ship_name": "AJE",
+				"tugboat_name": "AJE",
 				"dp_royalty_ntpn": "A123SSSS",
 				"dp_royalty_billing_code": "A123SS",
 				"payment_dp_royalty_ntpn": "A123SS",
@@ -565,7 +565,7 @@ func TestCreateTransactionDN(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "transaction_type", "create data dn")
 		assert.Contains(t, mapUnmarshal, "shipping_date", "create data dn")
 		assert.Contains(t, mapUnmarshal, "quantity", "create data dn")
-		assert.Contains(t, mapUnmarshal, "ship_name", "create data dn")
+		assert.Contains(t, mapUnmarshal, "tugboat_name", "create data dn")
 		assert.Contains(t, mapUnmarshal, "barge_name", "create data dn")
 		assert.Contains(t, mapUnmarshal, "vessel_name", "create data dn")
 		assert.Contains(t, mapUnmarshal, "seller", "create data dn")
@@ -662,7 +662,7 @@ func TestUpdateTransactionDN(t *testing.T) {
 				"transaction_type": "DN",
 				"shipping_date": nil,
 				"quantity": 1023.122,
-				"ship_name": "AJE",
+				"tugboat_name": "AJE",
 				"barge_name": "SHIPIPP",
 				"vessel_name": "",
 				"seller": "",
@@ -744,7 +744,7 @@ func TestUpdateTransactionDN(t *testing.T) {
 				"transaction_type": "DN",
 				"shipping_date": nil,
 				"quantity": 1023.122,
-				"ship_name": "AJE",
+				"tugboat_name": "AJE",
 				"barge_name": "SHIPIPP",
 				"vessel_name": "",
 				"seller": "",
@@ -826,7 +826,7 @@ func TestUpdateTransactionDN(t *testing.T) {
 				"transaction_type": "DN",
 				"shipping_date": nil,
 				"quantity": 1023.122,
-				"ship_name": "AJE",
+				"tugboat_name": "AJE",
 				"barge_name": "SHIPIPP",
 				"vessel_name": "",
 				"seller": "",
@@ -953,7 +953,7 @@ func TestUpdateTransactionDN(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "transaction_type", "update data dn")
 		assert.Contains(t, mapUnmarshal, "shipping_date", "update data dn")
 		assert.Contains(t, mapUnmarshal, "quantity", "update data dn")
-		assert.Contains(t, mapUnmarshal, "ship_name", "update data dn")
+		assert.Contains(t, mapUnmarshal, "tugboat_name", "update data dn")
 		assert.Contains(t, mapUnmarshal, "barge_name", "update data dn")
 		assert.Contains(t, mapUnmarshal, "vessel_name", "update data dn")
 		assert.Contains(t, mapUnmarshal, "seller", "update data dn")
@@ -1141,7 +1141,7 @@ func TestUpdateDocumentTransactionDN(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "transaction_type", "update document data dn")
 		assert.Contains(t, mapUnmarshal, "shipping_date", "update document data dn")
 		assert.Contains(t, mapUnmarshal, "quantity", "update document data dn")
-		assert.Contains(t, mapUnmarshal, "ship_name", "update document data dn")
+		assert.Contains(t, mapUnmarshal, "tugboat_name", "update document data dn")
 		assert.Contains(t, mapUnmarshal, "barge_name", "update document data dn")
 		assert.Contains(t, mapUnmarshal, "vessel_name", "update document data dn")
 		assert.Contains(t, mapUnmarshal, "seller", "update document data dn")

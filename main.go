@@ -50,6 +50,8 @@ func main() {
 	}
 
 	if db != nil {
+		db.Migrator().RenameColumn(&transaction.Transaction{}, "ship_name", "tugboat_name")
+
 		seeding.UpdateTransactionsRoyalty(db)
 		seeding.SeedingTraderData(db)
 
