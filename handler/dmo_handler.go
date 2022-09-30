@@ -386,6 +386,7 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{
+			"message": "failed to delete dmo",
 			"error": "record not found",
 		})
 	}
@@ -400,12 +401,14 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 		}
 
 		return c.Status(status).JSON(fiber.Map{
+			"message": "failed to delete dmo",
 			"error": findDmoErr.Error(),
 		})
 	}
 
 	if findDmo.Detail.IsBastDocumentSigned != false || findDmo.Detail.IsReconciliationLetterSigned != false || findDmo.Detail.IsStatementLetterSigned != false {
 		return c.Status(400).JSON(fiber.Map{
+			"message": "failed to delete dmo",
 			"error": "document dmo is already signed",
 		})
 	}
@@ -437,7 +440,7 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 		}
 
 		return c.Status(status).JSON(fiber.Map{
-			"message": "failed to delete transaction",
+			"message": "failed to delete dmo",
 			"error": deleteDmoErr.Error(),
 		})
 	}
@@ -472,6 +475,6 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(fiber.Map{
-		"message": "success delete transaction",
+		"message": "success delete dmo",
 	})
 }

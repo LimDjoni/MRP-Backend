@@ -43,7 +43,7 @@ func (r *repository) ListDataDN(page int, sortFilter SortAndFilter) (Pagination,
 	queryFilter := fmt.Sprintf("transaction_type = '%s' ", "DN")
 
 	if sortFilter.TugboatName != "" {
-		queryFilter = queryFilter + " AND ship_name ILIKE '%" + sortFilter.TugboatName + "%'"
+		queryFilter = queryFilter + " AND tugboat_name ILIKE '%" + sortFilter.TugboatName + "%'"
 	}
 
 	if sortFilter.BargeName != "" {
