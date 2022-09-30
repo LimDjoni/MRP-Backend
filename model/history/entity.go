@@ -11,14 +11,14 @@ import (
 
 type History struct {
 	gorm.Model
-	DmoId *uint `json:"dmo_id" gorm:"constraint:OnDelete:CASCADE;"`
-	Dmo *dmo.Dmo
-	TransactionId *uint `json:"transaction_id" gorm:"constraint:OnDelete:CASCADE;"`
-	Transaction *transaction.Transaction
+	DmoId *uint `json:"dmo_id"`
+	Dmo *dmo.Dmo `json:"dmo" gorm:"constraint:OnDelete:CASCADE;"`
+	TransactionId *uint `json:"transaction_id"`
+	Transaction *transaction.Transaction `json:"transaction" gorm:"constraint:OnDelete:CASCADE;"`
 	UserId uint `json:"user_id"`
 	User user.User
-	MinerbaId *uint `json:"minerba_id" gorm:"constraint:OnDelete:CASCADE;"`
-	Minerba *minerba.Minerba
+	MinerbaId *uint `json:"minerba_id"`
+	Minerba *minerba.Minerba `json:"minerba" gorm:"constraint:OnDelete:CASCADE;"`
 	Status string `json:"status"`
 	BeforeData datatypes.JSON `json:"before_data"`
 	AfterData datatypes.JSON `json:"after_data"`

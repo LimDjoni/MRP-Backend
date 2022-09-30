@@ -50,11 +50,6 @@ func main() {
 	}
 
 	if db != nil {
-		db.Migrator().RenameColumn(&transaction.Transaction{}, "ship_name", "tugboat_name")
-
-		seeding.UpdateTransactionsRoyalty(db)
-		seeding.SeedingTraderData(db)
-
 		// Auto Migrate All Table
 		errMigrate := db.AutoMigrate(
 			&dmo.Dmo{},
@@ -67,6 +62,11 @@ func main() {
 			&transaction.Transaction{},
 			&user.User{},
 		)
+
+		db.Migrator().RenameColumn(&transaction.Transaction{}, "ship_name", "tugboat_name")
+
+		seeding.UpdateTransactionsRoyalty(db)
+		seeding.SeedingTraderData(db)
 
 		errDropTable := db.Migrator().DropTable(
 			&minerbatransaction.MinerbaTransaction{},
