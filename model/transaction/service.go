@@ -11,11 +11,11 @@ type Service interface {
 	ListDataDN(page int, sortFilter SortAndFilter) (Pagination, error)
 	DetailTransactionDN(id int) (Transaction, error)
 	ListDataDNWithoutMinerba() ([]Transaction, error)
-	CheckDataDNAndMinerba(listData []int)(bool, error)
+	CheckDataDnAndMinerba(listData []int)(bool, error)
 	GetDetailMinerba(id int) (DetailMinerba, error)
 	RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (map[string]interface{}, error)
 	ListDataDNWithoutDmo() ([]Transaction, error)
-	CheckDataDNAndDmo(listData []int) (bool, error)
+	CheckDataDnAndDmo(listData []int) (bool, error)
 	GetDetailDmo(id int) (DetailDmo, error)
 }
 
@@ -45,8 +45,8 @@ func (s *service) ListDataDNWithoutMinerba() ([]Transaction, error) {
 	return listDataDNWithoutMinerba, listDataDNWithoutMinerbaErr
 }
 
-func (s *service) CheckDataDNAndMinerba(listData []int)(bool, error) {
-	checkData, checkDataErr := s.repository.CheckDataDNAndMinerba(listData)
+func (s *service) CheckDataDnAndMinerba(listData []int)(bool, error) {
+	checkData, checkDataErr := s.repository.CheckDataDnAndMinerba(listData)
 
 	return checkData, checkDataErr
 }
@@ -93,8 +93,8 @@ func (s *service) ListDataDNWithoutDmo() ([]Transaction, error) {
 	return listDataDNWithoutDmo, listDataDNWithoutDmoErr
 }
 
-func (s *service) CheckDataDNAndDmo(listData []int) (bool, error) {
-	checkData, checkDataErr := s.repository.CheckDataDNAndDmo(listData)
+func (s *service) CheckDataDnAndDmo(listData []int) (bool, error) {
+	checkData, checkDataErr := s.repository.CheckDataDnAndDmo(listData)
 
 	return checkData, checkDataErr
 }

@@ -25,6 +25,7 @@ type Repository interface {
 	DeleteMinerba (idMinerba int, userId uint) (bool, error)
 	UpdateDocumentMinerba(id int, documentLink minerba.InputUpdateDocumentMinerba, userId uint) (minerba.Minerba, error)
 	CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string, userId uint) (dmo.Dmo, error)
+	DeleteDmo (idDmo int, userId uint) (bool, error)
 }
 
 type repository struct {
@@ -61,51 +62,68 @@ func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTra
 	if inputTransactionDN.Seller == "" {
 		createdTransaction.Seller = "PT ANGSANA JAYA ENERGI"
 	} else {
-		createdTransaction.Seller = inputTransactionDN.Seller
+		createdTransaction.Seller = strings.ToUpper(inputTransactionDN.Seller)
 	}
 	createdTransaction.ShippingDate = inputTransactionDN.ShippingDate
 	createdTransaction.Quantity = inputTransactionDN.Quantity
-	createdTransaction.ShipName = inputTransactionDN.ShipName
-	createdTransaction.BargeName = inputTransactionDN.BargeName
-	createdTransaction.VesselName = inputTransactionDN.VesselName
-	createdTransaction.CustomerName = inputTransactionDN.CustomerName
-	createdTransaction.LoadingPortName = inputTransactionDN.LoadingPortName
-	createdTransaction.LoadingPortLocation = inputTransactionDN.LoadingPortLocation
-	createdTransaction.UnloadingPortName = inputTransactionDN.UnloadingPortName
-	createdTransaction.UnloadingPortLocation = inputTransactionDN.UnloadingPortLocation
-	createdTransaction.DmoDestinationPort = inputTransactionDN.DmoDestinationPort
+	createdTransaction.TugboatName = strings.ToUpper(inputTransactionDN.TugboatName)
+	createdTransaction.BargeName = strings.ToUpper(inputTransactionDN.BargeName)
+	createdTransaction.VesselName = strings.ToUpper(inputTransactionDN.VesselName)
+	createdTransaction.CustomerName = strings.ToUpper(inputTransactionDN.CustomerName)
+	createdTransaction.LoadingPortName = strings.ToUpper(inputTransactionDN.LoadingPortName)
+	createdTransaction.LoadingPortLocation = strings.ToUpper(inputTransactionDN.LoadingPortLocation)
+	createdTransaction.UnloadingPortName = strings.ToUpper(inputTransactionDN.UnloadingPortName)
+	createdTransaction.UnloadingPortLocation = strings.ToUpper(inputTransactionDN.UnloadingPortLocation)
+	createdTransaction.DmoDestinationPort = strings.ToUpper(inputTransactionDN.DmoDestinationPort)
 	createdTransaction.SkbDate = inputTransactionDN.SkbDate
-	createdTransaction.SkbNumber = inputTransactionDN.SkbNumber
+	createdTransaction.SkbNumber = strings.ToUpper(inputTransactionDN.SkbNumber)
 	createdTransaction.SkabDate = inputTransactionDN.SkabDate
-	createdTransaction.SkabNumber = inputTransactionDN.SkabNumber
+	createdTransaction.SkabNumber = strings.ToUpper(inputTransactionDN.SkabNumber)
 	createdTransaction.BillOfLadingDate = inputTransactionDN.BillOfLadingDate
-	createdTransaction.BillOfLadingNumber = inputTransactionDN.BillOfLadingNumber
+	createdTransaction.BillOfLadingNumber = strings.ToUpper(inputTransactionDN.BillOfLadingNumber)
 	createdTransaction.RoyaltyRate = inputTransactionDN.RoyaltyRate
 	createdTransaction.DpRoyaltyPrice = inputTransactionDN.DpRoyaltyPrice
-	createdTransaction.DpRoyaltyCurrency = inputTransactionDN.DpRoyaltyCurrency
+	createdTransaction.DpRoyaltyCurrency = strings.ToUpper(inputTransactionDN.DpRoyaltyCurrency)
 	if inputTransactionDN.DpRoyaltyCurrency == "" {
 		createdTransaction.DpRoyaltyCurrency = "IDR"
 	}
 	createdTransaction.DpRoyaltyDate = inputTransactionDN.DpRoyaltyDate
-	createdTransaction.DpRoyaltyNtpn = inputTransactionDN.DpRoyaltyNtpn
-	createdTransaction.DpRoyaltyBillingCode = inputTransactionDN.DpRoyaltyBillingCode
+	if inputTransactionDN.DpRoyaltyNtpn != nil {
+		dpNtpn := strings.ToUpper(*inputTransactionDN.DpRoyaltyNtpn)
+		createdTransaction.DpRoyaltyNtpn = &dpNtpn
+	}
+
+	if inputTransactionDN.DpRoyaltyBillingCode != nil {
+		dpBillingCode := strings.ToUpper(*inputTransactionDN.DpRoyaltyBillingCode)
+		createdTransaction.DpRoyaltyBillingCode = &dpBillingCode
+	}
+
 	createdTransaction.DpRoyaltyTotal = inputTransactionDN.DpRoyaltyTotal
 	createdTransaction.PaymentDpRoyaltyPrice = inputTransactionDN.PaymentDpRoyaltyPrice
-	createdTransaction.PaymentDpRoyaltyCurrency = inputTransactionDN.PaymentDpRoyaltyCurrency
+	createdTransaction.PaymentDpRoyaltyCurrency = strings.ToUpper(inputTransactionDN.PaymentDpRoyaltyCurrency)
 	if inputTransactionDN.PaymentDpRoyaltyCurrency == "" {
 		createdTransaction.PaymentDpRoyaltyCurrency = "IDR"
 	}
+
 	createdTransaction.PaymentDpRoyaltyDate = inputTransactionDN.PaymentDpRoyaltyDate
-	createdTransaction.PaymentDpRoyaltyNtpn = inputTransactionDN.PaymentDpRoyaltyNtpn
-	createdTransaction.PaymentDpRoyaltyBillingCode = inputTransactionDN.PaymentDpRoyaltyBillingCode
+	if inputTransactionDN.PaymentDpRoyaltyNtpn != nil {
+		paymentDpNtpn := strings.ToUpper(*inputTransactionDN.PaymentDpRoyaltyNtpn)
+		createdTransaction.PaymentDpRoyaltyNtpn = &paymentDpNtpn
+	}
+
+	if inputTransactionDN.PaymentDpRoyaltyBillingCode != nil {
+		paymentDpBillingCode := strings.ToUpper(*inputTransactionDN.PaymentDpRoyaltyBillingCode)
+		createdTransaction.PaymentDpRoyaltyBillingCode = &paymentDpBillingCode
+	}
+
 	createdTransaction.PaymentDpRoyaltyTotal = inputTransactionDN.PaymentDpRoyaltyTotal
 	createdTransaction.LhvDate = inputTransactionDN.LhvDate
-	createdTransaction.LhvNumber = inputTransactionDN.LhvNumber
-	createdTransaction.SurveyorName = inputTransactionDN.SurveyorName
+	createdTransaction.LhvNumber = strings.ToUpper(inputTransactionDN.LhvNumber)
+	createdTransaction.SurveyorName = strings.ToUpper(inputTransactionDN.SurveyorName)
 	createdTransaction.CowDate = inputTransactionDN.CowDate
-	createdTransaction.CowNumber = inputTransactionDN.CowNumber
+	createdTransaction.CowNumber = strings.ToUpper(inputTransactionDN.CowNumber)
 	createdTransaction.CoaDate = inputTransactionDN.CoaDate
-	createdTransaction.CoaNumber = inputTransactionDN.CoaNumber
+	createdTransaction.CoaNumber = strings.ToUpper(inputTransactionDN.CoaNumber)
 	createdTransaction.QualityTmAr = inputTransactionDN.QualityTmAr
 	createdTransaction.QualityImAdb = inputTransactionDN.QualityImAdb
 	createdTransaction.QualityAshAr = inputTransactionDN.QualityAshAr
@@ -117,17 +135,17 @@ func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTra
 	createdTransaction.QualityCaloriesAr = inputTransactionDN.QualityCaloriesAr
 	createdTransaction.QualityCaloriesAdb = inputTransactionDN.QualityCaloriesAdb
 	createdTransaction.BargingDistance = inputTransactionDN.BargingDistance
-	createdTransaction.SalesSystem = inputTransactionDN.SalesSystem
+	createdTransaction.SalesSystem = strings.ToUpper(inputTransactionDN.SalesSystem)
 	createdTransaction.InvoiceDate = inputTransactionDN.InvoiceDate
-	createdTransaction.InvoiceNumber = inputTransactionDN.InvoiceNumber
+	createdTransaction.InvoiceNumber = strings.ToUpper(inputTransactionDN.InvoiceNumber)
 	createdTransaction.InvoicePriceUnit = inputTransactionDN.InvoicePriceUnit
 	createdTransaction.InvoicePriceTotal = inputTransactionDN.InvoicePriceTotal
 	createdTransaction.DmoReconciliationLetter = inputTransactionDN.DmoReconciliationLetter
 	createdTransaction.ContractDate = inputTransactionDN.ContractDate
-	createdTransaction.ContractNumber = inputTransactionDN.ContractNumber
-	createdTransaction.DmoBuyerName = inputTransactionDN.DmoBuyerName
-	createdTransaction.DmoIndustryType = inputTransactionDN.DmoIndustryType
-	createdTransaction.DmoCategory = inputTransactionDN.DmoCategory
+	createdTransaction.ContractNumber = strings.ToUpper(inputTransactionDN.ContractNumber)
+	createdTransaction.DmoBuyerName = strings.ToUpper(inputTransactionDN.DmoBuyerName)
+	createdTransaction.DmoIndustryType = strings.ToUpper(inputTransactionDN.DmoIndustryType)
+	createdTransaction.DmoCategory = strings.ToUpper(inputTransactionDN.DmoCategory)
 
 	createTransactionErr := tx.Create(&createdTransaction).Error
 
@@ -167,13 +185,13 @@ func (r *repository) DeleteTransactionDN(id int, userId uint) (bool, error) {
 
 	tx := r.db.Begin()
 
-	errFind := r.db.Where("id = ?", id).First(&transaction).Error
+	errFind := tx.Where("id = ?", id).First(&transaction).Error
 
 	if errFind != nil {
 		return false, errFind
 	}
 
-	errDelete := r.db.Where("id = ?", id).Delete(&transaction).Error
+	errDelete := tx.Unscoped().Where("id = ?", id).Delete(&transaction).Error
 
 	if errDelete != nil {
 		tx.Rollback()
@@ -182,10 +200,8 @@ func (r *repository) DeleteTransactionDN(id int, userId uint) (bool, error) {
 
 	var history History
 
-	uId := uint(id)
-	history.TransactionId = &uId
+	history.Status = fmt.Sprintf("Deleted Minerba Dmo with id number %s and id %v", *transaction.IdNumber, transaction.ID)
 	history.UserId = userId
-	history.Status = "Deleted"
 
 	createHistoryErr := tx.Create(&history).Error
 
@@ -216,6 +232,54 @@ func (r *repository) UpdateTransactionDN (idTransaction int, inputEditTransactio
 		tx.Rollback()
 		return transaction, errorBeforeDataJsonMarshal
 	}
+
+	inputEditTransactionDN.Seller = strings.ToUpper(inputEditTransactionDN.Seller)
+	inputEditTransactionDN.TugboatName = strings.ToUpper(inputEditTransactionDN.TugboatName)
+	inputEditTransactionDN.BargeName = strings.ToUpper(inputEditTransactionDN.BargeName)
+	inputEditTransactionDN.VesselName = strings.ToUpper(inputEditTransactionDN.VesselName)
+	inputEditTransactionDN.CustomerName = strings.ToUpper(inputEditTransactionDN.CustomerName)
+	inputEditTransactionDN.LoadingPortName = strings.ToUpper(inputEditTransactionDN.LoadingPortName)
+	inputEditTransactionDN.LoadingPortLocation = strings.ToUpper(inputEditTransactionDN.LoadingPortLocation)
+	inputEditTransactionDN.UnloadingPortName = strings.ToUpper(inputEditTransactionDN.UnloadingPortName)
+	inputEditTransactionDN.UnloadingPortLocation = strings.ToUpper(inputEditTransactionDN.UnloadingPortLocation)
+	inputEditTransactionDN.DmoDestinationPort = strings.ToUpper(inputEditTransactionDN.DmoDestinationPort)
+	inputEditTransactionDN.SkbNumber = strings.ToUpper(inputEditTransactionDN.SkbNumber)
+	inputEditTransactionDN.SkabNumber = strings.ToUpper(inputEditTransactionDN.SkabNumber)
+	inputEditTransactionDN.BillOfLadingNumber = strings.ToUpper(inputEditTransactionDN.BillOfLadingNumber)
+	inputEditTransactionDN.DpRoyaltyCurrency = strings.ToUpper(inputEditTransactionDN.DpRoyaltyCurrency)
+	if inputEditTransactionDN.DpRoyaltyNtpn != nil {
+		dpNtpn := strings.ToUpper(*inputEditTransactionDN.DpRoyaltyNtpn)
+		inputEditTransactionDN.DpRoyaltyNtpn = &dpNtpn
+	}
+
+	if inputEditTransactionDN.DpRoyaltyBillingCode != nil {
+		dpBillingCode := strings.ToUpper(*inputEditTransactionDN.DpRoyaltyBillingCode)
+		inputEditTransactionDN.DpRoyaltyBillingCode = &dpBillingCode
+	}
+
+	inputEditTransactionDN.PaymentDpRoyaltyCurrency = strings.ToUpper(inputEditTransactionDN.PaymentDpRoyaltyCurrency)
+	inputEditTransactionDN.PaymentDpRoyaltyCurrency = strings.ToUpper(inputEditTransactionDN.PaymentDpRoyaltyCurrency)
+
+	if inputEditTransactionDN.PaymentDpRoyaltyNtpn != nil {
+		paymentDpNtpn := strings.ToUpper(*inputEditTransactionDN.PaymentDpRoyaltyNtpn)
+		inputEditTransactionDN.PaymentDpRoyaltyNtpn = &paymentDpNtpn
+	}
+
+	if inputEditTransactionDN.PaymentDpRoyaltyBillingCode != nil {
+		paymentDpBillingCode := strings.ToUpper(*inputEditTransactionDN.PaymentDpRoyaltyBillingCode)
+		inputEditTransactionDN.PaymentDpRoyaltyBillingCode = &paymentDpBillingCode
+	}
+
+	inputEditTransactionDN.LhvNumber = strings.ToUpper(inputEditTransactionDN.LhvNumber)
+	inputEditTransactionDN.SurveyorName = strings.ToUpper(inputEditTransactionDN.SurveyorName)
+	inputEditTransactionDN.CowNumber = strings.ToUpper(inputEditTransactionDN.CowNumber)
+	inputEditTransactionDN.CoaNumber = strings.ToUpper(inputEditTransactionDN.CoaNumber)
+	inputEditTransactionDN.SalesSystem = strings.ToUpper(inputEditTransactionDN.SalesSystem)
+	inputEditTransactionDN.InvoiceNumber = strings.ToUpper(inputEditTransactionDN.InvoiceNumber)
+	inputEditTransactionDN.ContractNumber = strings.ToUpper(inputEditTransactionDN.ContractNumber)
+	inputEditTransactionDN.DmoBuyerName = strings.ToUpper(inputEditTransactionDN.DmoBuyerName)
+	inputEditTransactionDN.DmoIndustryType = strings.ToUpper(inputEditTransactionDN.DmoIndustryType)
+	inputEditTransactionDN.DmoCategory = strings.ToUpper(inputEditTransactionDN.DmoCategory)
 
 	dataInput, errorMarshal := json.Marshal(inputEditTransactionDN)
 
@@ -421,18 +485,11 @@ func (r *repository) DeleteMinerba (idMinerba int, userId uint) (bool, error) {
 	tx := r.db.Begin()
 	var minerba minerba.Minerba
 
-	findErr := tx.Where("id = ?", idMinerba).First(&minerba).Error
+	findMinerbaErr := tx.Where("id = ?", idMinerba).First(&minerba).Error
 
-	if findErr != nil {
+	if findMinerbaErr != nil {
 		tx.Rollback()
-		return false, findErr
-	}
-
-	updateTransactionErr := tx.Table("transactions").Where("minerba_id = ?", idMinerba).Update("minerba_id", nil).Error
-
-	if updateTransactionErr != nil {
-		tx.Rollback()
-		return false, updateTransactionErr
+		return false, findMinerbaErr
 	}
 
 	errDelete := tx.Unscoped().Where("id = ?", idMinerba).Delete(&minerba).Error
@@ -444,7 +501,7 @@ func (r *repository) DeleteMinerba (idMinerba int, userId uint) (bool, error) {
 
 	var history History
 
-	history.Status = fmt.Sprintf("Deleted Minerba Report with id number %s and id %v", minerba.IdNumber, minerba.ID)
+	history.Status = fmt.Sprintf("Deleted Minerba Report with id number %s and id %v", *minerba.IdNumber, minerba.ID)
 	history.UserId = userId
 
 	createHistoryErr := tx.Create(&history).Error
@@ -701,4 +758,39 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string
 
 	tx.Commit()
 	return createdDmo, nil
+}
+
+func (r *repository) DeleteDmo (idDmo int, userId uint) (bool, error) {
+
+	tx := r.db.Begin()
+	var dmo dmo.Dmo
+
+	findDmoErr := tx.Where("id = ?", idDmo).First(&dmo).Error
+
+	if findDmoErr != nil {
+		tx.Rollback()
+		return false, findDmoErr
+	}
+
+	errDelete := tx.Unscoped().Where("id = ?", idDmo).Delete(&dmo).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+		return false, errDelete
+	}
+
+	var history History
+
+	history.Status = fmt.Sprintf("Deleted Dmo with id number %s and id %v", *dmo.IdNumber, dmo.ID)
+	history.UserId = userId
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return false, createHistoryErr
+	}
+
+	tx.Commit()
+	return true, nil
 }

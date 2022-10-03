@@ -23,5 +23,5 @@ type Dmo struct {
 	IsBastDocumentSigned bool `json:"is_bast_document_signed"`
 	StatementLetterDocumentLink *string `json:"statement_letter_document_link"`
 	IsStatementLetterDownloaded bool `json:"is_statement_letter_downloaded"`
-	isStatementLetterSigned bool `json:"is_statement_letter_signed"`
+	IsStatementLetterSigned bool `json:"is_statement_letter_signed"`
 }

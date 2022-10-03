@@ -1,11 +1,8 @@
 package main
 
 import (
-	"ajebackend/model/awshelper"
 	"ajebackend/model/dmo"
-	"ajebackend/model/history"
 	"ajebackend/model/trader"
-	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 	"ajebackend/validatorfunc"
 	"bytes"
@@ -390,7 +387,7 @@ func TestDetailTransactionDN(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "transaction_type", "list detail dn")
 		assert.Contains(t, mapUnmarshal, "shipping_date", "list detail dn")
 		assert.Contains(t, mapUnmarshal, "quantity", "list detail dn")
-		assert.Contains(t, mapUnmarshal, "ship_name", "list detail dn")
+		assert.Contains(t, mapUnmarshal, "tugboat_name", "list detail dn")
 		assert.Contains(t, mapUnmarshal, "barge_name", "list detail dn")
 		assert.Contains(t, mapUnmarshal, "vessel_name", "list detail dn")
 		assert.Contains(t, mapUnmarshal, "seller", "list detail dn")
@@ -477,7 +474,7 @@ func TestCreateTransactionDN(t *testing.T) {
 			body: fiber.Map{
 				"coa_date": "2022-02-01",
 				"quantity": 1023.122,
-				"ship_name": "AJE",
+				"tugboat_name": "AJE",
 				"dp_royalty_ntpn": "A123SSSS",
 			},
 			token: token,
@@ -488,7 +485,7 @@ func TestCreateTransactionDN(t *testing.T) {
 			body: fiber.Map{
 				"coa_date": "2022-22-01",
 				"quantity": 1023.122,
-				"ship_name": "AJE",
+				"tugboat_name": "AJE",
 			},
 			token: token,
 		},
@@ -498,7 +495,7 @@ func TestCreateTransactionDN(t *testing.T) {
 			body: fiber.Map{
 				"coa_date": "2022-22-01",
 				"quantity": 1023.122,
-				"ship_name": "AJE",
+				"tugboat_name": "AJE",
 				"dp_royalty_ntpn": "A123SSSS",
 				"dp_royalty_billing_code": "A123SS",
 				"payment_dp_royalty_ntpn": "A123SS",
@@ -549,11 +546,9 @@ func TestCreateTransactionDN(t *testing.T) {
 		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
 
 		fmt.Println(errUnmarshal)
-		fmt.Println(string(body))
 		if res.StatusCode >= 400 {
 			continue
 		}
-
 
 		if res.StatusCode == 201 {
 			dataId = int(mapUnmarshal["ID"].(float64))
@@ -570,7 +565,7 @@ func TestCreateTransactionDN(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "transaction_type", "create data dn")
 		assert.Contains(t, mapUnmarshal, "shipping_date", "create data dn")
 		assert.Contains(t, mapUnmarshal, "quantity", "create data dn")
-		assert.Contains(t, mapUnmarshal, "ship_name", "create data dn")
+		assert.Contains(t, mapUnmarshal, "tugboat_name", "create data dn")
 		assert.Contains(t, mapUnmarshal, "barge_name", "create data dn")
 		assert.Contains(t, mapUnmarshal, "vessel_name", "create data dn")
 		assert.Contains(t, mapUnmarshal, "seller", "create data dn")
@@ -667,7 +662,7 @@ func TestUpdateTransactionDN(t *testing.T) {
 				"transaction_type": "DN",
 				"shipping_date": nil,
 				"quantity": 1023.122,
-				"ship_name": "AJE",
+				"tugboat_name": "AJE",
 				"barge_name": "SHIPIPP",
 				"vessel_name": "",
 				"seller": "",
@@ -749,7 +744,7 @@ func TestUpdateTransactionDN(t *testing.T) {
 				"transaction_type": "DN",
 				"shipping_date": nil,
 				"quantity": 1023.122,
-				"ship_name": "AJE",
+				"tugboat_name": "AJE",
 				"barge_name": "SHIPIPP",
 				"vessel_name": "",
 				"seller": "",
@@ -831,7 +826,7 @@ func TestUpdateTransactionDN(t *testing.T) {
 				"transaction_type": "DN",
 				"shipping_date": nil,
 				"quantity": 1023.122,
-				"ship_name": "AJE",
+				"tugboat_name": "AJE",
 				"barge_name": "SHIPIPP",
 				"vessel_name": "",
 				"seller": "",
@@ -958,7 +953,7 @@ func TestUpdateTransactionDN(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "transaction_type", "update data dn")
 		assert.Contains(t, mapUnmarshal, "shipping_date", "update data dn")
 		assert.Contains(t, mapUnmarshal, "quantity", "update data dn")
-		assert.Contains(t, mapUnmarshal, "ship_name", "update data dn")
+		assert.Contains(t, mapUnmarshal, "tugboat_name", "update data dn")
 		assert.Contains(t, mapUnmarshal, "barge_name", "update data dn")
 		assert.Contains(t, mapUnmarshal, "vessel_name", "update data dn")
 		assert.Contains(t, mapUnmarshal, "seller", "update data dn")
@@ -1146,7 +1141,7 @@ func TestUpdateDocumentTransactionDN(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "transaction_type", "update document data dn")
 		assert.Contains(t, mapUnmarshal, "shipping_date", "update document data dn")
 		assert.Contains(t, mapUnmarshal, "quantity", "update document data dn")
-		assert.Contains(t, mapUnmarshal, "ship_name", "update document data dn")
+		assert.Contains(t, mapUnmarshal, "tugboat_name", "update document data dn")
 		assert.Contains(t, mapUnmarshal, "barge_name", "update document data dn")
 		assert.Contains(t, mapUnmarshal, "vessel_name", "update document data dn")
 		assert.Contains(t, mapUnmarshal, "seller", "update document data dn")
@@ -1283,17 +1278,6 @@ func TestDeleteTransactionDN(t *testing.T) {
 		fmt.Println(errUnmarshal)
 		if res.StatusCode >= 400 {
 			continue
-		}
-
-
-		if test.expectedCode == 200 {
-			fileName := fmt.Sprintf("%s/lhv.pdf", idNumber)
-			_, isDeletedErr := awshelper.DeleteDocument(fileName)
-
-			assert.Nilf(t, isDeletedErr, "delete data dn")
-
-			db.Unscoped().Where("transaction_id = ?", dataId).Delete(&history.History{})
-			db.Unscoped().Where("id = ?", dataId).Delete(&transaction.Transaction{})
 		}
 
 		//// Verify, that the reponse body equals the expected body
@@ -1483,6 +1467,15 @@ func TestCreateMinerba(t *testing.T) {
 			expectedCode:  400,
 			body: fiber.Map{
 				"period":       "Jun 2022",
+				"list_data_dn": listDn,
+			},
+			token: token,
+		},
+		{
+			expectedError: false,
+			expectedCode:  400,
+			body: fiber.Map{
+				"period":       "Dec 2022",
 				"list_data_dn": listDn,
 			},
 			token: token,
@@ -2068,6 +2061,48 @@ func TestCreateDmo(t *testing.T) {
 			expectedError: false,
 			expectedCode:  400,
 			body: fiber.Map{
+				"period": "Sep 2022",
+				"trader": traderList,
+				"end_user":  endUser,
+				"vessel_adjustment": vesselAdjustment,
+				"transaction_barge": []int{150,151},
+				"transaction_vessel": []int{152},
+				"is_document_custom": false,
+			},
+			token: token,
+		},
+		{
+			expectedError: false,
+			expectedCode:  400,
+			body: fiber.Map{
+				"period": "Dec 2022",
+				"trader": traderList,
+				"end_user":  endUser,
+				"vessel_adjustment": vesselAdjustment,
+				"transaction_barge": []int{150,151},
+				"transaction_vessel": []int{152},
+				"is_document_custom": false,
+			},
+			token: token,
+		},
+		{
+			expectedError: false,
+			expectedCode:  400,
+			body: fiber.Map{
+				"period": "Dec 2022",
+				"trader": traderList,
+				"end_user":  endUser,
+				"vessel_adjustment": vesselAdjustment,
+				"transaction_barge": []int{152},
+				"transaction_vessel": []int{152},
+				"is_document_custom": false,
+			},
+			token: token,
+		},
+		{
+			expectedError: false,
+			expectedCode:  400,
+			body: fiber.Map{
 				"period": "Jun 2022",
 				"trader": traderList,
 				"end_user":  endUser,
@@ -2313,5 +2348,81 @@ func TestListTrader(t *testing.T) {
 
 		//// Verify, that the reponse body equals the expected body
 		assert.Contains(t, mapUnmarshal,"trader")
+	}
+}
+
+func TestDeleteDmo(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token string
+		id int
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			id: 1,
+			token: "asdawfaeac",
+		},
+		{
+			expectedError: false,
+			expectedCode:  404,
+			id: 1050,
+			token: token,
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			id: idDmo,
+			token: token,
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		url := fmt.Sprintf("/api/v1/dmo/delete/%v", test.id)
+		req, _ := http.NewRequest(
+			"DELETE",
+			url,
+			nil,
+		)
+
+		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, err := app.Test(req, -1)
+
+		assert.Equalf(t, test.expectedError, err != nil, "delete data dmo")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "delete data dmo")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "delete data dmo")
+
+		mapUnmarshal := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		//// Verify, that the reponse body equals the expected body
+		assert.Contains(t, mapUnmarshal, "message", "delete data dmo")
 	}
 }

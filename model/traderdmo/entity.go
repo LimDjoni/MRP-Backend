@@ -9,7 +9,7 @@ import (
 type TraderDmo struct {
 	gorm.Model
 	DmoId uint `json:"dmo_id"`
-	Dmo dmo.Dmo `json:"dmo"`
+	Dmo dmo.Dmo `json:"dmo" gorm:"constraint:OnDelete:CASCADE;"`
 	TraderId uint `json:"trader_id"`
 	Trader trader.Trader `json:"trader"`
 	Order int `json:"order"`
