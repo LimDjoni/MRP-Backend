@@ -122,8 +122,9 @@ func (h *transactionHandler) ListDataDN(c *fiber.Ctx) error {
 		sortAndFilter.Quantity = quantity
 	}
 
-	sortAndFilter.ShipName = c.Query("ship_name")
+	sortAndFilter.TugboatName = c.Query("tugboat_name")
 	sortAndFilter.BargeName = c.Query("barge_name")
+	sortAndFilter.VesselName = c.Query("vessel_name")
 	sortAndFilter.ShippingFrom = c.Query("shipping_from")
 	sortAndFilter.ShippingTo = c.Query("shipping_to")
 
@@ -214,7 +215,21 @@ func (h *transactionHandler) DeleteTransactionDN(c *fiber.Ctx) error {
 		})
 	}
 
-	deleteTransaction, deleteTransactionErr := h.historyService.DeleteTransactionDN(idInt, uint(claims["id"].(float64)))
+	findTransaction, findTransactionErr := h.transactionService.DetailTransactionDN(idInt)
+
+	if findTransactionErr != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": findTransactionErr.Error(),
+		})
+	}
+
+	if findTransaction.MinerbaId != nil || findTransaction.DmoId != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "can't delete transaction because it's bound to minerba or dmo",
+		})
+	}
+
+	_, deleteTransactionErr := h.historyService.DeleteTransactionDN(idInt, uint(claims["id"].(float64)))
 
 	if deleteTransactionErr != nil {
 		inputMap := make(map[string]interface{})
@@ -247,11 +262,33 @@ func (h *transactionHandler) DeleteTransactionDN(c *fiber.Ctx) error {
 		})
 	}
 
-	if deleteTransaction == false && deleteTransactionErr != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"message": "failed to delete transaction",
-			"error": deleteTransactionErr.Error(),
-		})
+	if findTransaction.SkbDocumentLink != "" || findTransaction.SkabDocumentLink != "" || findTransaction.BLDocumentLink != "" || findTransaction.RoyaltiProvisionDocumentLink != "" || findTransaction.RoyaltiFinalDocumentLink != "" || findTransaction.COWDocumentLink != "" || findTransaction.COADocumentLink != "" || findTransaction.InvoiceAndContractDocumentLink != "" || findTransaction.LHVDocumentLink != "" {
+		fileName := fmt.Sprintf("%s/", *findTransaction.IdNumber)
+		_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
+
+		if deleteAwsErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["user_id"] = claims["id"]
+			inputMap["transaction_id"] = idInt
+
+			inputJson ,_ := json.Marshal(inputMap)
+			messageJson ,_ := json.Marshal(map[string]interface{}{
+				"error": deleteAwsErr.Error(),
+				"id_number": findTransaction.IdNumber,
+			})
+
+			createdErrLog := logs.Logs{
+				Input: inputJson,
+				Message: messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			return c.Status(400).JSON(fiber.Map{
+				"message": "failed to delete transaction aws",
+				"error": deleteAwsErr.Error(),
+			})
+		}
 	}
 
 	return c.Status(200).JSON(fiber.Map{
@@ -403,7 +440,7 @@ func (h *transactionHandler) UpdateDocumentTransactionDN (c *fiber.Ctx) error {
 		})
 	}
 
-	fileName := fmt.Sprintf("%s/%s.pdf", detailTransaction.IdNumber, documentType)
+	fileName := fmt.Sprintf("%s/%s.pdf", *detailTransaction.IdNumber, documentType)
 
 	up, uploadErr := awshelper.UploadDocument(file, fileName)
 

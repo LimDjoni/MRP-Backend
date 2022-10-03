@@ -9,14 +9,14 @@ import (
 type Transaction struct {
 	gorm.Model
 	DmoId *uint `json:"dmo_id"`
-	Dmo *dmo.Dmo `json:"dmo"`
+	Dmo *dmo.Dmo `json:"dmo" gorm:"constraint:OnDelete:SET NULL;"`
 	MinerbaId *uint `json:"minerba_id"`
-	Minerba *minerba.Minerba `json:"minerba"`
+	Minerba *minerba.Minerba `json:"minerba" gorm:"constraint:OnDelete:SET NULL;"`
 	IdNumber *string `json:"id_number" gorm:"UNIQUE"`
 	TransactionType string `json:"transaction_type"`
 	ShippingDate *string `json:"shipping_date" gorm:"type:DATE"`
 	Quantity float64 `json:"quantity"`
-	ShipName string `json:"ship_name"`
+	TugboatName string `json:"tugboat_name"`
 	BargeName string `json:"barge_name"`
 	VesselName string `json:"vessel_name"`
 	Seller string `json:"seller"`
