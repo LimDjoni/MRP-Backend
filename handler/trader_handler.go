@@ -1,26 +1,35 @@
 package handler
 
 import (
+	"ajebackend/model/company"
+	"ajebackend/model/logs"
 	"ajebackend/model/trader"
 	"ajebackend/model/user"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
 	"reflect"
 )
 
-type masterHandler struct {
+type traderHandler struct {
 	userService user.Service
 	traderService trader.Service
+	companyService company.Service
+	logsService logs.Service
+	v *validator.Validate
 }
 
-func NewMasterHandler(userService user.Service, traderService trader.Service) *masterHandler {
-	return &masterHandler{
+func NewTraderHandler(userService user.Service, traderService trader.Service, companyService company.Service, logsService logs.Service, v *validator.Validate) *traderHandler {
+	return &traderHandler{
 		userService,
 		traderService,
+		companyService,
+		logsService,
+		v,
 	}
 }
 
-func (h *masterHandler) ListTrader(c *fiber.Ctx) error {
+func (h *traderHandler) ListTrader(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	responseUnauthorized := map[string]interface{}{
