@@ -1991,33 +1991,21 @@ func TestCreateDmo(t *testing.T) {
 	traderOne := trader.Trader{
 		TraderName: "",
 		Position: "",
-		Address: "",
-		Email: "",
-		PhoneNumber: "",
-		FaxNumber: "",
-		CompanyName: "PT. DELI NIAGA SEJAHTERA",
+		CompanyId: 1,
 	}
 	traderOne.ID = 14
 
 	traderTwo := trader.Trader{
 		TraderName: "",
 		Position: "",
-		Address: "",
-		Email: "",
-		PhoneNumber: "",
-		FaxNumber: "",
-		CompanyName: "PT. DELI NIAGA JAYA",
+		CompanyId: 1,
 	}
 	traderTwo.ID = 15
 
 	endUser := trader.Trader{
 		TraderName: "",
 		Position: "",
-		Address: "",
-		Email: "",
-		PhoneNumber: "",
-		FaxNumber: "",
-		CompanyName: "PT. GEO MINERAL TRADING",
+		CompanyId: 1,
 	}
 	endUser.ID = 16
 
@@ -2280,77 +2268,6 @@ func TestDetailDmo(t *testing.T) {
 	}
 }
 
-func TestListTrader(t *testing.T) {
-	tests := []struct {
-		expectedError bool
-		expectedCode  int
-		token string
-	}{
-		{
-			expectedError: false,
-			expectedCode:  401,
-			token: "",
-		},
-		{
-			expectedError: false,
-			expectedCode:  401,
-			token: "afwifiwgjwigjianveri",
-		},
-		{
-			expectedError: false,
-			expectedCode:  200,
-			token: token,
-		},
-	}
-
-	db, validate := startSetup()
-	app := fiber.New()
-	apiV1 := app.Group("/api/v1") // /api
-
-	Setup(db, validate, apiV1)
-
-	for _, test := range tests {
-		req, _ := http.NewRequest(
-			"GET",
-			"/api/v1/master/trader",
-			nil,
-		)
-
-		req.Header.Add("Authorization", "Bearer " + test.token)
-		req.Header.Add("Content-Type", "application/json")
-		req.Header.Add("Accept", "application/json")
-
-		// The -1 disables request latency.
-		res, err := app.Test(req, -1)
-
-		assert.Equalf(t, test.expectedError, err != nil, "list data dmo")
-		if test.expectedError {
-			continue
-		}
-
-		// Verify if the status code is as expected
-		assert.Equalf(t, test.expectedCode, res.StatusCode, "list data dmo")
-
-		// Read the response body
-		body, err := ioutil.ReadAll(res.Body)
-
-		// Ensure that the body was read correctly
-		assert.Nilf(t, err, "list data dmo")
-
-		mapUnmarshal  := make(map[string]interface{})
-
-		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
-
-		fmt.Println(errUnmarshal)
-		if res.StatusCode >= 400 {
-			continue
-		}
-
-		//// Verify, that the reponse body equals the expected body
-		assert.Contains(t, mapUnmarshal,"trader")
-	}
-}
-
 func TestDeleteDmo(t *testing.T) {
 	tests := []struct {
 		expectedError bool
@@ -2426,3 +2343,148 @@ func TestDeleteDmo(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "message", "delete data dmo")
 	}
 }
+
+// Company
+func TestListCompany(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token string
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			token: "",
+		},
+		{
+			expectedError: false,
+			expectedCode:  401,
+			token: "afwifiwgjwigjianveri",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			token: token,
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		req, _ := http.NewRequest(
+			"GET",
+			"/api/v1/company",
+			nil,
+		)
+
+		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, err := app.Test(req, -1)
+
+		assert.Equalf(t, test.expectedError, err != nil, "list data company")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "list data company")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "list data company")
+
+		mapUnmarshal  := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		//// Verify, that the reponse body equals the expected body
+		assert.Contains(t, mapUnmarshal,"companies")
+	}
+}
+
+// Trader
+func TestListTrader(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token string
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			token: "",
+		},
+		{
+			expectedError: false,
+			expectedCode:  401,
+			token: "afwifiwgjwigjianveri",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			token: token,
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		req, _ := http.NewRequest(
+			"GET",
+			"/api/v1/trader",
+			nil,
+		)
+
+		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, err := app.Test(req, -1)
+
+		assert.Equalf(t, test.expectedError, err != nil, "list data trader")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "list data trader")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "list data trader")
+
+		mapUnmarshal  := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		//// Verify, that the reponse body equals the expected body
+		assert.Contains(t, mapUnmarshal,"traders")
+	}
+}
+

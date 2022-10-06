@@ -13,10 +13,11 @@ type Repository interface {
 	ListTrader() ([]Trader, error)
 	CheckListTrader(list []uint) (bool, error)
 	CheckEndUser(id uint) (bool, error)
-	CreateTrader(inputTrader InputTrader) (Trader, error)
-	UpdateTrader(inputTrader InputTrader, id int) (Trader, error)
+	CreateTrader(inputTrader InputCreateUpdateTrader) (Trader, error)
+	UpdateTrader(inputTrader InputCreateUpdateTrader, id int) (Trader, error)
 	DeleteTrader(id int) (bool, error)
 	ListTraderWithCompanyId(id int) ([]Trader, error)
+	DetailTrader(id int) (Trader, error)
 }
 
 type repository struct {
@@ -63,7 +64,7 @@ func (r *repository) CheckEndUser(id uint) (bool, error) {
 	return true, nil
 }
 
-func (r *repository) CreateTrader(inputTrader InputTrader) (Trader, error) {
+func (r *repository) CreateTrader(inputTrader InputCreateUpdateTrader) (Trader, error) {
 	var createdTrader Trader
 
 	var findCompany company.Company
@@ -75,7 +76,14 @@ func (r *repository) CreateTrader(inputTrader InputTrader) (Trader, error) {
 
 	createdTrader.TraderName = strings.ToUpper(inputTrader.TraderName)
 	createdTrader.Position = strings.ToUpper(inputTrader.Position)
-	createdTrader.CompanyId = inputTrader.CompanyId
+	var email string
+	if inputTrader.Email != nil {
+		email = strings.ToLower(*inputTrader.Email)
+	}
+	if email != "" {
+		createdTrader.Email = &email
+	}
+	createdTrader.CompanyId = uint(inputTrader.CompanyId)
 
 	errCreate := r.db.Create(&createdTrader).Error
 
@@ -83,16 +91,29 @@ func (r *repository) CreateTrader(inputTrader InputTrader) (Trader, error) {
 		return createdTrader, errCreate
 	}
 
+	errFind := r.db.Preload(clause.Associations).Where("id = ?", createdTrader.ID).First(&createdTrader).Error
+
+	if errFind != nil {
+		return createdTrader, errFind
+	}
+
 	return createdTrader, nil
 }
 
-func (r *repository) UpdateTrader(inputTrader InputTrader, id int) (Trader, error) {
+func (r *repository) UpdateTrader(inputTrader InputCreateUpdateTrader, id int) (Trader, error) {
 	var updatedTrader Trader
 
 	inputTrader.TraderName = strings.ToUpper(inputTrader.TraderName)
 	inputTrader.Position = strings.ToUpper(inputTrader.Position)
+	var email string
+	if inputTrader.Email != nil {
+		email = strings.ToLower(*inputTrader.Email)
+	}
+	if email != "" {
+		inputTrader.Email = &email
+	}
 
-	errFind := r.db.Where("id = ?", id).First(&updatedTrader).Error
+	errFind := r.db.Preload(clause.Associations).Where("id = ?", id).First(&updatedTrader).Error
 
 	if errFind != nil {
 		return  updatedTrader, errFind
@@ -151,11 +172,24 @@ func (r *repository) ListTraderWithCompanyId(id int) ([]Trader, error) {
 
 	var listTraderWithCompanyId []Trader
 
-	errFind := r.db.Where("company_id = ?", id).Find(&listTraderWithCompanyId).Error
+	errFind := r.db.Preload(clause.Associations).Where("company_id = ?", id).Find(&listTraderWithCompanyId).Error
 
 	if errFind != nil {
 		return listTraderWithCompanyId, errFind
 	}
 
 	return listTraderWithCompanyId, nil
+}
+
+func (r *repository) DetailTrader(id int) (Trader, error) {
+
+	var detailTrader Trader
+
+	errFind := r.db.Preload(clause.Associations).Where("id = ?", id).First(&detailTrader).Error
+
+	if errFind != nil {
+		return detailTrader, errFind
+	}
+
+	return detailTrader, nil
 }

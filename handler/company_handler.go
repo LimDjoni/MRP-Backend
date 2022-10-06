@@ -255,6 +255,21 @@ func (h *companyHandler) DeleteCompany(c *fiber.Ctx) error {
 		})
 	}
 
+	listTrader, listTraderErr := h.traderService.ListTraderWithCompanyId(idInt)
+
+	if listTraderErr != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": listTraderErr.Error(),
+		})
+	}
+
+	if len(listTrader) > 0 {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "there is trader connected to company",
+			"message": "failed to delete company",
+		})
+	}
+
 	_, deleteCompanyErr := h.companyService.DeleteCompany(idInt)
 
 	if deleteCompanyErr != nil {
@@ -267,9 +282,7 @@ func (h *companyHandler) DeleteCompany(c *fiber.Ctx) error {
 			"error": deleteCompanyErr.Error(),
 		})
 
-		transactionId := uint(idInt)
 		createdErrLog := logs.Logs{
-			TransactionId: &transactionId,
 			Input: inputJson,
 			Message: messageJson,
 		}

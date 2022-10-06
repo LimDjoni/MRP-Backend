@@ -6,6 +6,7 @@ import (
 	"ajebackend/model/company"
 	"ajebackend/model/logs"
 	"ajebackend/model/trader"
+	"ajebackend/model/traderdmo"
 	"ajebackend/model/user"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -23,10 +24,13 @@ func TraderRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) 
 	companyRepository := company.NewRepository(db)
 	companyService := company.NewService(companyRepository)
 
+	traderDmoRepository := traderdmo.NewRepository(db)
+	traderDmoService := traderdmo.Service(traderDmoRepository)
+
 	logRepository := logs.NewRepository(db)
 	logService := logs.NewService(logRepository)
 
-	traderHandler := handler.NewTraderHandler(userService, traderService, companyService, logService, validate)
+	traderHandler := handler.NewTraderHandler(userService, traderService, companyService, traderDmoService, logService, validate)
 
 	traderRouting := app.Group("/trader")
 
@@ -41,5 +45,9 @@ func TraderRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) 
 		},
 	}))
 
-	traderRouting.Get("/trader", traderHandler.ListTrader)
+	traderRouting.Get("/", traderHandler.ListTrader)
+	traderRouting.Post("/create", traderHandler.CreateTrader)
+	traderRouting.Put("/update/:id", traderHandler.UpdateTrader)
+	traderRouting.Delete("/delete/:id", traderHandler.DeleteTrader)
+	traderRouting.Get("/detail/:id", traderHandler.DetailTrader)
 }

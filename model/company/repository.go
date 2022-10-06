@@ -36,7 +36,6 @@ func (r *repository) CreateCompany(inputCompany InputCreateUpdateCompany) (Compa
 
 	createdCompany.CompanyName = strings.ToUpper(inputCompany.CompanyName)
 	createdCompany.Address = inputCompany.Address
-	createdCompany.Email = strings.ToUpper(inputCompany.Email)
 	createdCompany.Province = strings.ToUpper(inputCompany.Province)
 	createdCompany.PhoneNumber = inputCompany.PhoneNumber
 	createdCompany.FaxNumber = inputCompany.FaxNumber
@@ -53,7 +52,6 @@ func (r *repository) UpdateCompany(inputCompany InputCreateUpdateCompany, id int
 	var updatedCompany Company
 
 	inputCompany.CompanyName = strings.ToUpper(inputCompany.CompanyName)
-	inputCompany.Email = strings.ToUpper(inputCompany.Email)
 	inputCompany.Province = strings.ToUpper(inputCompany.Province)
 
 	errFind := r.db.Where("id = ?", id).First(&updatedCompany).Error

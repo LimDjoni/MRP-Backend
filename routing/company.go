@@ -43,7 +43,7 @@ func CompanyRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate)
 
 	companyRouting.Get("/", companyHandler.ListCompany)
 	companyRouting.Post("/create", companyHandler.CreateCompany)
-	companyRouting.Put("/update", companyHandler.UpdateCompany)
+	companyRouting.Put("/update/:id", companyHandler.UpdateCompany)
 	companyRouting.Delete("/delete/:id", companyHandler.DeleteCompany)
 	companyRouting.Get("/detail/:id", companyHandler.DetailCompany)
 }

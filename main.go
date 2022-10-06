@@ -2,6 +2,7 @@ package main
 
 import (
 	"ajebackend/helper"
+	"ajebackend/model/company"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
 	"ajebackend/model/history"
@@ -61,6 +62,7 @@ func main() {
 			&traderdmo.TraderDmo{},
 			&transaction.Transaction{},
 			&user.User{},
+			&company.Company{},
 		)
 
 		db.Migrator().RenameColumn(&transaction.Transaction{}, "ship_name", "tugboat_name")

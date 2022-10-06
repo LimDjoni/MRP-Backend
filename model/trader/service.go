@@ -4,10 +4,11 @@ type Service interface {
 	ListTrader() ([]Trader, error)
 	CheckListTrader(list []uint) (bool, error)
 	CheckEndUser(id uint) (bool, error)
-	CreateTrader(inputTrader InputTrader) (Trader, error)
-	UpdateTrader(inputTrader InputTrader, id int) (Trader, error)
+	CreateTrader(inputTrader InputCreateUpdateTrader) (Trader, error)
+	UpdateTrader(inputTrader InputCreateUpdateTrader, id int) (Trader, error)
 	DeleteTrader(id int) (bool, error)
 	ListTraderWithCompanyId(id int) ([]Trader, error)
+	DetailTrader(id int) (Trader, error)
 }
 
 type service struct {
@@ -36,13 +37,13 @@ func (s *service) CheckEndUser(id uint) (bool, error) {
 	return isEndUserValid, isEndUserValidErr
 }
 
-func (s *service) CreateTrader(inputTrader InputTrader) (Trader, error) {
+func (s *service) CreateTrader(inputTrader InputCreateUpdateTrader) (Trader, error) {
 	createTrader, createTraderErr := s.repository.CreateTrader(inputTrader)
 
 	return createTrader, createTraderErr
 }
 
-func (s *service) UpdateTrader(inputTrader InputTrader, id int) (Trader, error) {
+func (s *service) UpdateTrader(inputTrader InputCreateUpdateTrader, id int) (Trader, error) {
 	updateTrader, updateTraderErr := s.repository.UpdateTrader(inputTrader, id)
 
 	return updateTrader, updateTraderErr
@@ -58,4 +59,10 @@ func (s *service) ListTraderWithCompanyId(id int) ([]Trader, error) {
 	listTrader, listTraderErr := s.repository.ListTraderWithCompanyId(id)
 
 	return listTrader, listTraderErr
+}
+
+func (s *service) DetailTrader(id int) (Trader, error) {
+	detailTrader, detailTraderErr := s.repository.DetailTrader(id)
+
+	return detailTrader, detailTraderErr
 }
