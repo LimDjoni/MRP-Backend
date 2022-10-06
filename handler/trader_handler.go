@@ -290,7 +290,7 @@ func (h *traderHandler) DeleteTrader(c *fiber.Ctx) error {
 	}
 
 	if len(listDmoWithTraderId) > 0 {
-		return c.Status(404).JSON(fiber.Map{
+		return c.Status(400).JSON(fiber.Map{
 			"error": "trader is already used in dmo",
 			"message": "failed to delete trader",
 		})
