@@ -63,7 +63,8 @@ func (r *repository) ListDataDN(page int, sortFilter SortAndFilter) (Pagination,
 	}
 
 	if sortFilter.Quantity != 0 {
-		queryFilter = fmt.Sprintf("%s AND quantity = %v", queryFilter, sortFilter.Quantity)
+		quantity := fmt.Sprintf("%v", sortFilter.Quantity)
+		queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" +  quantity + "%'"
 	}
 
 	errFind := r.db.Where(queryFilter).Order(sortString).Scopes(paginateDataDN(transactions, &pagination, r.db, queryFilter)).Find(&transactions).Error
