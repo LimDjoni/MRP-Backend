@@ -15,7 +15,7 @@ type Repository interface {
 	CheckDataDnAndMinerba(listData []int)(bool, error)
 	GetDetailMinerba(id int)(DetailMinerba, error)
 	ListDataDNWithoutDmo() ([]Transaction, error)
-	CheckDataDnAndDmo(listData []int)(bool, error)
+	CheckDataDnAndDmo(listData []int)([]Transaction, error)
 	GetDetailDmo(id int)(DetailDmo, error)
 }
 
@@ -121,7 +121,7 @@ func (r *repository) CheckDataDnAndMinerba(listData []int)(bool, error) {
 		return false, errFind
 	}
 
-	if len(listDn) == 0 {
+	if len(listDn) != len(listData) {
 		return false, errors.New("please check there is transaction already in report")
 	}
 
@@ -163,17 +163,17 @@ func (r *repository) ListDataDNWithoutDmo() ([]Transaction, error) {
 	return listDataDnWithoutDmo, errFind
 }
 
-func (r *repository) CheckDataDnAndDmo(listData []int)(bool, error) {
+func (r *repository) CheckDataDnAndDmo(listData []int)([]Transaction, error) {
 	var listDnValid []Transaction
 
 	errFindValid := r.db.Where("id IN ?", listData).Find(&listDnValid).Error
 
 	if errFindValid != nil {
-		return false, errFindValid
+		return listDnValid, errFindValid
 	}
 
 	if len(listData) != len(listDnValid) {
-		return false, errors.New("please check there is transaction not found")
+		return listDnValid, errors.New("please check there is transaction not found")
 	}
 
 	var listDn []Transaction
@@ -181,14 +181,14 @@ func (r *repository) CheckDataDnAndDmo(listData []int)(bool, error) {
 	errFind := r.db.Where("dmo_id is NULL AND id IN ?", listData).Find(&listDn).Error
 
 	if errFind != nil {
-		return false, errFind
+		return listDn, errFind
 	}
 
-	if len(listDn) == 0 {
-		return false, errors.New("please check there is transaction already in report")
+	if len(listDn) != len(listData) {
+		return listDn, errors.New("please check there is transaction already in report")
 	}
 
-	return true, nil
+	return listDn, nil
 }
 
 func(r *repository) GetDetailDmo(id int)(DetailDmo, error) {

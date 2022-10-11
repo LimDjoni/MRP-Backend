@@ -2,6 +2,7 @@ package main
 
 import (
 	"ajebackend/helper"
+	"ajebackend/model/company"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
 	"ajebackend/model/history"
@@ -61,6 +62,7 @@ func main() {
 			&traderdmo.TraderDmo{},
 			&transaction.Transaction{},
 			&user.User{},
+			&company.Company{},
 		)
 
 		db.Migrator().RenameColumn(&transaction.Transaction{}, "ship_name", "tugboat_name")
@@ -144,5 +146,6 @@ func Setup(db *gorm.DB, validate *validator.Validate, route fiber.Router) {
 	routing2.UserRouting(db, route, validate)
 	routing2.MinerbaRouting(db, route, validate)
 	routing2.DmoRouting(db, route, validate)
-	routing2.MasterRouting(db, route)
+	routing2.TraderRouting(db, route, validate)
+	routing2.CompanyRouting(db, route, validate)
 }

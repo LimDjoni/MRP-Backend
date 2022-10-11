@@ -1,5 +1,10 @@
 package transaction
 
+import (
+	"ajebackend/model/dmo"
+	"ajebackend/model/trader"
+)
+
 type DataTransactionInput struct {
 	ShippingDate *string `json:"shipping_date" validate:"omitempty,DateValidation"`
 	Quantity float64 `json:"quantity"`
@@ -80,4 +85,13 @@ type InputRequestCreateExcelMinerba struct {
 	MinerbaPeriod	string `json:"minerba_period"`
 	MinerbaId		int	`json:"minerba_id"`
 	Transactions	[]Transaction `json:"transactions"`
+}
+
+type InputRequestCreateUploadDmo struct {
+	Authorization	string `json:"authorization"`
+	BastNumber	string `json:"bast_number"`
+	DataDmo	dmo.Dmo `json:"data_dmo"`
+	DataTransactions []Transaction `json:"data_transactions"`
+	Trader	[]trader.Trader `json:"trader"`
+	TraderEndUser	trader.Trader `json:"trader_end_user"`
 }

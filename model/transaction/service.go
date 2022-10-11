@@ -15,8 +15,9 @@ type Service interface {
 	GetDetailMinerba(id int) (DetailMinerba, error)
 	RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (map[string]interface{}, error)
 	ListDataDNWithoutDmo() ([]Transaction, error)
-	CheckDataDnAndDmo(listData []int) (bool, error)
+	CheckDataDnAndDmo(listData []int) ([]Transaction, error)
 	GetDetailDmo(id int) (DetailDmo, error)
+	RequestCreateDmo(reqInput InputRequestCreateUploadDmo) (map[string]interface{}, error)
 }
 
 type service struct {
@@ -61,7 +62,7 @@ func (s *service) RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (m
 	var res map[string]interface{}
 	baseURL := helper.GetEnvWithKey("BASE_JOB_URL")
 
-	urlPost := baseURL + "/createexcel"
+	urlPost := baseURL + "/create/minerba"
 	body, bodyErr := json.Marshal(reqInput)
 
 	if bodyErr != nil {
@@ -93,7 +94,7 @@ func (s *service) ListDataDNWithoutDmo() ([]Transaction, error) {
 	return listDataDNWithoutDmo, listDataDNWithoutDmoErr
 }
 
-func (s *service) CheckDataDnAndDmo(listData []int) (bool, error) {
+func (s *service) CheckDataDnAndDmo(listData []int) ([]Transaction, error) {
 	checkData, checkDataErr := s.repository.CheckDataDnAndDmo(listData)
 
 	return checkData, checkDataErr
@@ -103,4 +104,34 @@ func (s *service) GetDetailDmo(id int) (DetailDmo, error) {
 	detailDmo, detailDmoErr := s.repository.GetDetailDmo(id)
 
 	return detailDmo, detailDmoErr
+}
+
+func (s *service) RequestCreateDmo(reqInput InputRequestCreateUploadDmo) (map[string]interface{}, error) {
+	var res map[string]interface{}
+	baseURL := helper.GetEnvWithKey("BASE_JOB_URL")
+
+	urlPost := baseURL + "/create/dmo"
+	body, bodyErr := json.Marshal(reqInput)
+
+	if bodyErr != nil {
+		return res, bodyErr
+	}
+	var payload = bytes.NewBufferString(string(body))
+
+	req, doReqErr := http.NewRequest("POST", urlPost, payload)
+
+	if req != nil {
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+	}
+	client := &http.Client{}
+	resp, doReqErr := client.Do(req)
+
+	if doReqErr != nil {
+		return res, doReqErr
+	}
+
+	json.NewDecoder(resp.Body).Decode(&res)
+
+	return res, doReqErr
 }
