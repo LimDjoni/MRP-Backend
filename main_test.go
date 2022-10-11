@@ -2,7 +2,6 @@ package main
 
 import (
 	"ajebackend/model/dmo"
-	"ajebackend/model/trader"
 	"ajebackend/model/user"
 	"ajebackend/validatorfunc"
 	"bytes"
@@ -1986,20 +1985,13 @@ func TestListDataDNWithoutDmo(t *testing.T) {
 }
 
 func TestCreateDmo(t *testing.T) {
-	var traderList []trader.Trader
-	traderOne := trader.Trader{
-	}
-	traderOne.ID = 35
+	var traderList []int
 
-	traderTwo := trader.Trader{
-	}
-	traderTwo.ID = 36
+	var endUser int
 
-	endUser := trader.Trader{
-	}
-	endUser.ID = 37
+	endUser = 37
 
-	traderList = append(traderList, traderOne, traderTwo)
+	traderList = append(traderList, 35, 36)
 
 	var vesselAdjustment []dmo.VesselAdjustmentInput
 	
@@ -2025,34 +2017,6 @@ func TestCreateDmo(t *testing.T) {
 			expectedError: false,
 			expectedCode:  201,
 			body: fiber.Map{
-				"period": "Sep 2022",
-				"trader": traderList,
-				"end_user":  endUser,
-				"vessel_adjustment": vesselAdjustment,
-				"transaction_barge": []int{150,151},
-				"transaction_vessel": []int{152},
-				"is_document_custom": false,
-			},
-			token: token,
-		},
-		{
-			expectedError: false,
-			expectedCode:  400,
-			body: fiber.Map{
-				"period": "Sep 2022",
-				"trader": traderList,
-				"end_user":  endUser,
-				"vessel_adjustment": vesselAdjustment,
-				"transaction_barge": []int{150,151},
-				"transaction_vessel": []int{152},
-				"is_document_custom": false,
-			},
-			token: token,
-		},
-		{
-			expectedError: false,
-			expectedCode:  400,
-			body: fiber.Map{
 				"period": "Dec 2022",
 				"trader": traderList,
 				"end_user":  endUser,
@@ -2068,6 +2032,34 @@ func TestCreateDmo(t *testing.T) {
 			expectedCode:  400,
 			body: fiber.Map{
 				"period": "Dec 2022",
+				"trader": traderList,
+				"end_user":  endUser,
+				"vessel_adjustment": vesselAdjustment,
+				"transaction_barge": []int{150,151},
+				"transaction_vessel": []int{152},
+				"is_document_custom": false,
+			},
+			token: token,
+		},
+		{
+			expectedError: false,
+			expectedCode:  400,
+			body: fiber.Map{
+				"period": "Dec 2023",
+				"trader": traderList,
+				"end_user":  endUser,
+				"vessel_adjustment": vesselAdjustment,
+				"transaction_barge": []int{150,151},
+				"transaction_vessel": []int{152},
+				"is_document_custom": false,
+			},
+			token: token,
+		},
+		{
+			expectedError: false,
+			expectedCode:  400,
+			body: fiber.Map{
+				"period": "Dec 2023",
 				"trader": traderList,
 				"end_user":  endUser,
 				"vessel_adjustment": vesselAdjustment,
@@ -2258,6 +2250,144 @@ func TestDetailDmo(t *testing.T) {
 	}
 }
 
+func TestUpdateDocumentDmo(t *testing.T) {
+
+	bodyString := make(map[string][]map[string]interface{})
+
+	bodyString["data"] = []map[string]interface{}{
+		{
+			"Key": "DD-2022-03-0008/bast.pdf",
+			"key": "DD-2022-03-0008/bast.pdf",
+			"ETag": "23acbb2e206c924f5b438162ffa0b425",
+			"Bucket": "deli-aje",
+			"Location": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DD-2022-03-0008/bast.pdf",
+		},
+		{
+			"Key": "DD-2022-03-0008/berita_acara.pdf",
+			"key": "DD-2022-03-0008/berita_acara.pdf",
+			"ETag": "610288c6357a94aba8d5c4e04ee588e3",
+			"Bucket": "deli-aje",
+			"Location": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DD-2022-03-0008/berita_acara.pdf",
+		},
+		{
+			"Key": "DD-2022-03-0008/surat_pernyataan.pdf",
+			"key": "DD-2022-03-0008/surat_pernyataan.pdf",
+			"ETag": "fbb861e4a88950eb7d38845219f99f43",
+			"Bucket": "deli-aje",
+			"Location": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DD-2022-03-0008/surat_pernyataan.pdf",
+		},
+	}
+
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token string
+		id int
+		body map[string][]map[string]interface{}
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			id: 49,
+			token: "asdawfaeac",
+			body: bodyString,
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			id: idDmo,
+			token: token,
+			body: bodyString,
+		},
+		{
+			expectedError: false,
+			expectedCode:  400,
+			id: idDmo,
+			token: token,
+			body: bodyString,
+		},
+		{
+			expectedError: false,
+			expectedCode:  404,
+			id: 904,
+			token: token,
+			body: bodyString,
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		bodyJson, err := json.Marshal(test.body)
+		var payload = bytes.NewBufferString(string(bodyJson))
+		urlApi := fmt.Sprintf("/api/v1/dmo/update/document/%v", test.id)
+
+		req, _ := http.NewRequest(
+			"PUT",
+			urlApi,
+			payload,
+		)
+
+		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, errTest := app.Test(req, -1)
+
+
+		assert.Equalf(t, test.expectedError, errTest != nil, "update document data dmo")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "update document data dmo")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "update document data dmo")
+
+		mapUnmarshal := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		//// Verify, that the reponse body equals the expected body
+		assert.Contains(t, mapUnmarshal, "ID", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "CreatedAt", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "UpdatedAt", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "DeletedAt", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "period", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "id_number", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "type", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "barge_total_quantity", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "barge_adjustment", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "barge_grand_total_quantity", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "vessel_total_quantity", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "vessel_adjustment", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "vessel_grand_total_quantity", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "reconciliation_letter_document_link", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "is_reconciliation_letter_downloaded", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "is_reconciliation_letter_signed", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "bast_document_link", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "is_bast_document_downloaded", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "is_bast_document_signed", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "statement_letter_document_link", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "is_statement_letter_downloaded", "update document data dmo")
+	}
+}
+
 func TestDeleteDmo(t *testing.T) {
 	tests := []struct {
 		expectedError bool
@@ -2369,7 +2499,7 @@ func TestListCompany(t *testing.T) {
 	for _, test := range tests {
 		req, _ := http.NewRequest(
 			"GET",
-			"/api/v1/company",
+			"/api/v1/company/list",
 			nil,
 		)
 
@@ -2507,9 +2637,6 @@ func TestCreateCompany(t *testing.T) {
 
 		if res.StatusCode == 201 {
 			idCompany = int(mapUnmarshal["ID"].(float64))
-			fmt.Println("--Company--")
-			fmt.Println(mapUnmarshal)
-			fmt.Println("-------------")
 		}
 
 		assert.Contains(t, mapUnmarshal, "ID", "create company")
@@ -2762,7 +2889,7 @@ func TestListTrader(t *testing.T) {
 	for _, test := range tests {
 		req, _ := http.NewRequest(
 			"GET",
-			"/api/v1/trader",
+			"/api/v1/trader/list",
 			nil,
 		)
 
@@ -2908,9 +3035,6 @@ func TestCreateTrader(t *testing.T) {
 
 		if res.StatusCode == 201 {
 			idTrader = int(mapUnmarshal["ID"].(float64))
-			fmt.Println("--Trader--")
-			fmt.Println(mapUnmarshal)
-			fmt.Println("-------------")
 		}
 
 		assert.Contains(t, mapUnmarshal, "ID", "create trader")

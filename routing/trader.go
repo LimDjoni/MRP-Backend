@@ -25,7 +25,7 @@ func TraderRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) 
 	companyService := company.NewService(companyRepository)
 
 	traderDmoRepository := traderdmo.NewRepository(db)
-	traderDmoService := traderdmo.Service(traderDmoRepository)
+	traderDmoService := traderdmo.NewService(traderDmoRepository)
 
 	logRepository := logs.NewRepository(db)
 	logService := logs.NewService(logRepository)
@@ -45,7 +45,7 @@ func TraderRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) 
 		},
 	}))
 
-	traderRouting.Get("/", traderHandler.ListTrader)
+	traderRouting.Get("/list", traderHandler.ListTrader)
 	traderRouting.Post("/create", traderHandler.CreateTrader)
 	traderRouting.Put("/update/:id", traderHandler.UpdateTrader)
 	traderRouting.Delete("/delete/:id", traderHandler.DeleteTrader)

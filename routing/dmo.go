@@ -7,6 +7,7 @@ import (
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
 	"ajebackend/model/trader"
+	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 	"github.com/go-playground/validator/v10"
@@ -34,7 +35,10 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	traderRepository := trader.NewRepository(db)
 	traderService := trader.NewService(traderRepository)
 
-	dmoHandler := handler.NewDmoHandler(transactionService, userService, historyService, logService, dmoService, traderService, validate)
+	traderDmoRepository := traderdmo.NewRepository(db)
+	traderDmoService := traderdmo.NewService(traderDmoRepository)
+
+	dmoHandler := handler.NewDmoHandler(transactionService, userService, historyService, logService, dmoService, traderService, traderDmoService, validate)
 
 	dmoRouting := app.Group("/dmo")
 
@@ -54,4 +58,5 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	dmoRouting.Get("/list/transaction", dmoHandler.ListDataDNWithoutDmo)
 	dmoRouting.Get("/detail/:id", dmoHandler.DetailDmo)
 	dmoRouting.Delete("/delete/:id", dmoHandler.DeleteDmo)
+	dmoRouting.Put("/update/document/:id", dmoHandler.UpdateDocumentDmo)
 }

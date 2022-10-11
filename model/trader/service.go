@@ -2,8 +2,8 @@ package trader
 
 type Service interface {
 	ListTrader() ([]Trader, error)
-	CheckListTrader(list []uint) (bool, error)
-	CheckEndUser(id uint) (bool, error)
+	CheckListTrader(list []int) ([]Trader, error)
+	CheckEndUser(id int) (Trader, error)
 	CreateTrader(inputTrader InputCreateUpdateTrader) (Trader, error)
 	UpdateTrader(inputTrader InputCreateUpdateTrader, id int) (Trader, error)
 	DeleteTrader(id int) (bool, error)
@@ -25,13 +25,13 @@ func (s *service) ListTrader() ([]Trader, error) {
 	return listTrader, listTraderErr
 }
 
-func (s *service) CheckListTrader(list []uint) (bool, error) {
+func (s *service) CheckListTrader(list []int) ([]Trader, error) {
 	isListValid, isListValidErr := s.repository.CheckListTrader(list)
 
 	return isListValid, isListValidErr
 }
 
-func (s *service) CheckEndUser(id uint) (bool, error) {
+func (s *service) CheckEndUser(id int) (Trader, error) {
 	isEndUserValid, isEndUserValidErr := s.repository.CheckEndUser(id)
 
 	return isEndUserValid, isEndUserValidErr

@@ -11,8 +11,8 @@ import (
 
 type Repository interface {
 	ListTrader() ([]Trader, error)
-	CheckListTrader(list []uint) (bool, error)
-	CheckEndUser(id uint) (bool, error)
+	CheckListTrader(list []int) ([]Trader, error)
+	CheckEndUser(id int) (Trader, error)
 	CreateTrader(inputTrader InputCreateUpdateTrader) (Trader, error)
 	UpdateTrader(inputTrader InputCreateUpdateTrader, id int) (Trader, error)
 	DeleteTrader(id int) (bool, error)
@@ -36,32 +36,32 @@ func (r *repository) ListTrader() ([]Trader, error) {
 	return listTrader, getListTraderErr
 }
 
-func (r *repository) CheckListTrader(list []uint) (bool, error) {
+func (r *repository) CheckListTrader(list []int) ([]Trader, error) {
 	var listTrader []Trader
 
-	getListTraderErr := r.db.Where("id IN ?", list).Find(&listTrader).Error
+	getListTraderErr := r.db.Preload(clause.Associations).Where("id IN ?", list).Find(&listTrader).Error
 
 	if getListTraderErr != nil {
-		return false, getListTraderErr
+		return listTrader, getListTraderErr
 	}
 
 	if len(listTrader) != len(list) {
-		return false, errors.New("record not found")
+		return listTrader, errors.New("record not found")
 	}
 
-	return true, nil
+	return listTrader, nil
 }
 
-func (r *repository) CheckEndUser(id uint) (bool, error) {
+func (r *repository) CheckEndUser(id int) (Trader, error) {
 	var endUser Trader
 
-	getEndUserErr := r.db.Where("id = ?", id).First(&endUser).Error
+	getEndUserErr := r.db.Preload(clause.Associations).Where("id = ?", id).First(&endUser).Error
 
 	if getEndUserErr != nil {
-		return false, getEndUserErr
+		return endUser, getEndUserErr
 	}
 
-	return true, nil
+	return endUser, nil
 }
 
 func (r *repository) CreateTrader(inputTrader InputCreateUpdateTrader) (Trader, error) {

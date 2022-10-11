@@ -26,6 +26,7 @@ type Repository interface {
 	UpdateDocumentMinerba(id int, documentLink minerba.InputUpdateDocumentMinerba, userId uint) (minerba.Minerba, error)
 	CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string, userId uint) (dmo.Dmo, error)
 	DeleteDmo (idDmo int, userId uint) (bool, error)
+	UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocumentDmo, userId uint) (dmo.Dmo, error)
 }
 
 type repository struct {
@@ -601,7 +602,7 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string
 		}
 
 		for _, v := range transactionBarge {
-			bargeQuantity += bargeQuantity + v.Quantity
+			bargeQuantity += v.Quantity
 		}
 
 		createdDmo.BargeTotalQuantity = bargeQuantity
@@ -618,11 +619,11 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string
 		}
 
 		for _, v := range transactionVessel {
-			vesselQuantity += vesselQuantity + v.Quantity
+			vesselQuantity += v.Quantity
 		}
 
 		for _, v := range dmoInput.VesselAdjustment {
-			vesselAdjustment += vesselAdjustment + v.Adjustment
+			vesselAdjustment += v.Adjustment
 		}
 
 		createdDmo.VesselAdjustment = vesselAdjustment
@@ -723,7 +724,7 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string
 		var traderDummy traderdmo.TraderDmo
 
 		traderDummy.DmoId = createdDmo.ID
-		traderDummy.TraderId = value.ID
+		traderDummy.TraderId = uint(value)
 		traderDummy.Order = idx + 1
 		lastCount = idx + 1
 		traderDmo = append(traderDmo, traderDummy)
@@ -731,7 +732,7 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string
 
 	var traderEndUser traderdmo.TraderDmo
 	traderEndUser.DmoId = createdDmo.ID
-	traderEndUser.TraderId = dmoInput.EndUser.ID
+	traderEndUser.TraderId = uint(dmoInput.EndUser)
 	traderEndUser.Order = lastCount + 1
 	traderEndUser.IsEndUser = true
 	traderDmo = append(traderDmo, traderEndUser)
@@ -793,4 +794,58 @@ func (r *repository) DeleteDmo (idDmo int, userId uint) (bool, error) {
 
 	tx.Commit()
 	return true, nil
+}
+
+func (r *repository) UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocumentDmo, userId uint) (dmo.Dmo, error) {
+	tx := r.db.Begin()
+	var dmoUpdate dmo.Dmo
+
+	errFind := tx.Where("id = ?", id).First(&dmoUpdate).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return dmoUpdate, errFind
+	}
+
+	editData := make(map[string]interface{})
+
+	for _, value := range documentLink.Data {
+		if value["Location"] != nil {
+			if strings.Contains(value["Location"].(string), "bast") {
+				editData["bast_document_link"] = value["Location"]
+			}
+			if strings.Contains(value["Location"].(string), "berita_acara") {
+				editData["reconciliation_letter_document_link"] = value["Location"]
+			}
+			if strings.Contains(value["Location"].(string), "surat_pernyataan") {
+				editData["statement_letter_document_link"] = value["Location"]
+			}
+		}
+	}
+
+	errEdit := tx.Model(&dmoUpdate).Updates(editData).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return dmoUpdate, errEdit
+	}
+
+	var history History
+
+	history.DmoId = &dmoUpdate.ID
+	history.UserId = userId
+	history.Status = fmt.Sprintf("Update upload document dmo with id = %v", dmoUpdate.ID)
+
+	dataInput, _ := json.Marshal(documentLink)
+	history.AfterData = dataInput
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return dmoUpdate, createHistoryErr
+	}
+
+	tx.Commit()
+	return  dmoUpdate, nil
 }

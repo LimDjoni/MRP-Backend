@@ -329,30 +329,7 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 		})
 	}
 
-
 	errors := h.v.Struct(*inputUpdateMinerba)
-
-	if errors != nil {
-		dataErrors := validatorfunc.ValidateStruct(errors)
-		inputMap := make(map[string]interface{})
-		inputMap["user_id"] = claims["id"]
-		inputMap["input"] = inputUpdateMinerba
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
-			"errors": dataErrors,
-		})
-
-		createdErrLog := logs.Logs{
-			Input: inputJson,
-			Message: messageJson,
-		}
-
-		h.logService.CreateLogs(createdErrLog)
-
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"errors": dataErrors,
-		})
-	}
 
 	id := c.Params("id")
 
@@ -362,6 +339,32 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 		return c.Status(404).JSON(fiber.Map{
 			"message": "failed to update minerba",
 			"error": "record not found",
+		})
+	}
+
+	if errors != nil {
+		dataErrors := validatorfunc.ValidateStruct(errors)
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["input"] = inputUpdateMinerba
+		inputMap["minerba_id"] = idInt
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"errors": dataErrors,
+		})
+
+		minerbaId := uint(idInt)
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+			MinerbaId: &minerbaId,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": dataErrors,
 		})
 	}
 

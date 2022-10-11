@@ -269,6 +269,7 @@ func (h *traderHandler) DeleteTrader(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"error": "record not found",
+			"message": "failed to delete trader",
 		})
 	}
 
@@ -277,6 +278,7 @@ func (h *traderHandler) DeleteTrader(c *fiber.Ctx) error {
 	if findTraderErr != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"error": findTraderErr.Error(),
+			"message": "failed to delete trader",
 		})
 	}
 

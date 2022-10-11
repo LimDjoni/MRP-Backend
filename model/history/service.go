@@ -16,6 +16,7 @@ type Service interface {
 	UpdateDocumentMinerba(id int, documentLink minerba.InputUpdateDocumentMinerba, userId uint) (minerba.Minerba, error)
 	CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string, userId uint) (dmo.Dmo, error)
 	DeleteDmo (idDmo int, userId uint) (bool, error)
+	UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocumentDmo, userId uint) (dmo.Dmo, error)
 }
 
 type service struct {
@@ -78,4 +79,10 @@ func (s *service) DeleteDmo (idDmo int, userId uint) (bool, error) {
 	isDeletedDmo, isDeletedDmoErr := s.repository.DeleteDmo(idDmo, userId)
 
 	return isDeletedDmo, isDeletedDmoErr
+}
+
+func (s *service) UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocumentDmo, userId uint) (dmo.Dmo, error) {
+	updateDocumentDmo, updateDocumentDmoErr := s.repository.UpdateDocumentDmo(id, documentLink, userId)
+
+	return updateDocumentDmo, updateDocumentDmoErr
 }
