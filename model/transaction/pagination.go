@@ -2,6 +2,7 @@ package transaction
 
 import (
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"math"
 )
 
@@ -33,7 +34,7 @@ func (p *Pagination) GetPage() int {
 
 func paginateDataDN(value interface{}, pagination *Pagination, db *gorm.DB, queryFilter string) func(db *gorm.DB) *gorm.DB {
 	var totalRows int64
-	db.Where(queryFilter).Model(value).Count(&totalRows)
+	db.Preload(clause.Associations).Where(queryFilter).Model(value).Count(&totalRows)
 
 	pagination.TotalRows = totalRows
 	totalPages := int(math.Ceil(float64(totalRows) / float64(pagination.Limit)))

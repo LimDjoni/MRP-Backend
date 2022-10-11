@@ -7,6 +7,7 @@ import (
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
 	"ajebackend/model/trader"
+	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 	"ajebackend/validatorfunc"
@@ -27,10 +28,11 @@ type dmoHandler struct {
 	logService logs.Service
 	dmoService dmo.Service
 	traderService trader.Service
+	traderDmoService traderdmo.Service
 	v *validator.Validate
 }
 
-func NewDmoHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, dmoService dmo.Service, traderService trader.Service, v *validator.Validate) *dmoHandler {
+func NewDmoHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, dmoService dmo.Service, traderService trader.Service, traderDmoService traderdmo.Service, v *validator.Validate) *dmoHandler {
 	return &dmoHandler{
 		transactionService,
 		userService,
@@ -38,6 +40,7 @@ func NewDmoHandler(transactionService transaction.Service, userService user.Serv
 		logService,
 		dmoService,
 		traderService,
+		traderDmoService,
 		v,
 	}
 }
@@ -94,6 +97,8 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		})
 	}
 
+	header := c.GetReqHeaders()
+
 	for _, valueVessel := range inputCreateDmo.TransactionVessel {
 		for _, valueBarge := range inputCreateDmo.TransactionBarge {
 			if valueVessel == valueBarge {
@@ -116,13 +121,8 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	var listTrader []uint
 
-	for _, value := range inputCreateDmo.Trader {
-		listTrader = append(listTrader, value.ID)
-	}
-
-	_, checkListTraderErr := h.traderService.CheckListTrader(listTrader)
+	_, checkListTraderErr := h.traderService.CheckListTrader(inputCreateDmo.Trader)
 
 	if checkListTraderErr != nil {
 		return c.Status(404).JSON(fiber.Map{
@@ -130,7 +130,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	_, checkEndUserErr := h.traderService.CheckEndUser(inputCreateDmo.EndUser.ID)
+	_, checkEndUserErr := h.traderService.CheckEndUser(inputCreateDmo.EndUser)
 
 	if checkEndUserErr != nil {
 		return c.Status(404).JSON(fiber.Map{
@@ -146,8 +146,10 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		})
 	}
 
+	var dataTransactions []transaction.Transaction
+
 	if len(inputCreateDmo.TransactionBarge) > 0 {
-		_, checkDmoBargeErr := h.transactionService.CheckDataDnAndDmo(inputCreateDmo.TransactionBarge)
+		checkDmoBarge, checkDmoBargeErr := h.transactionService.CheckDataDnAndDmo(inputCreateDmo.TransactionBarge)
 
 		if checkDmoBargeErr != nil {
 			inputMap := make(map[string]interface{})
@@ -179,10 +181,14 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 				"error": "transaction barge " + checkDmoBargeErr.Error(),
 			})
 		}
+
+		for _, v := range checkDmoBarge {
+			dataTransactions = append(dataTransactions, v)
+		}
 	}
 
 	if len(inputCreateDmo.TransactionVessel) > 0 {
-		_, checkDmoVesselErr := h.transactionService.CheckDataDnAndDmo(inputCreateDmo.TransactionVessel)
+		checkDmoVessel, checkDmoVesselErr := h.transactionService.CheckDataDnAndDmo(inputCreateDmo.TransactionVessel)
 
 		if checkDmoVesselErr != nil {
 			inputMap := make(map[string]interface{})
@@ -214,6 +220,10 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 				"error": "transaction vessel " + checkDmoVesselErr.Error(),
 			})
 		}
+
+		for _, v := range checkDmoVessel {
+			dataTransactions = append(dataTransactions, v)
+		}
 	}
 
 	splitPeriod := strings.Split(inputCreateDmo.Period, " ")
@@ -242,6 +252,71 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 
 		return c.Status(400).JSON(fiber.Map{
 			"error": createDmoErr.Error(),
+		})
+	}
+
+	list, endUser, listTraderDmoErr := h.traderDmoService.TraderListWithDmoId(int(createDmo.ID))
+
+	if listTraderDmoErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_period"] = inputCreateDmo.Period
+		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
+		inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+		inputMap["input"] = inputCreateDmo
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": listTraderDmoErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Dmo already has been created, but get list trader failed",
+			"error": listTraderDmoErr.Error(),
+		})
+	}
+
+	var reqInputCreateUploadDmo transaction.InputRequestCreateUploadDmo
+
+	reqInputCreateUploadDmo.Authorization = header["Authorization"]
+	reqInputCreateUploadDmo.BastNumber = fmt.Sprintf("%s/BAST/%s", splitPeriod[1], helper.CreateIdNumber(int(createDmo.ID)))
+	reqInputCreateUploadDmo.DataDmo = createDmo
+	reqInputCreateUploadDmo.DataTransactions = dataTransactions
+	reqInputCreateUploadDmo.Trader = list
+	reqInputCreateUploadDmo.TraderEndUser = endUser
+
+	_, requestJobDmoErr := h.transactionService.RequestCreateDmo(reqInputCreateUploadDmo)
+
+	if requestJobDmoErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_period"] = inputCreateDmo.Period
+		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
+		inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+		inputMap["input"] = inputCreateDmo
+		inputMap["input_job"] = reqInputCreateUploadDmo
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": requestJobDmoErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Dmo already has been created, but job failed",
+			"error": requestJobDmoErr.Error(),
+			"dmo": createDmo,
 		})
 	}
 
@@ -413,6 +488,34 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 		})
 	}
 
+	fileName := fmt.Sprintf("%s/", *findDmo.Detail.IdNumber)
+	_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
+
+	if deleteAwsErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_id"] = idInt
+
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": deleteAwsErr.Error(),
+			"id_number": findDmo.Detail.IdNumber,
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"message": "failed to delete dmo aws",
+			"error": deleteAwsErr.Error(),
+		})
+	}
+
+
 	_, deleteDmoErr := h.historyService.DeleteDmo(idInt, uint(claims["id"].(float64)))
 
 	if deleteDmoErr != nil {
@@ -445,36 +548,128 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	if findDmo.Detail.ReconciliationLetterDocumentLink != nil || findDmo.Detail.BASTDocumentLink != nil || findDmo.Detail.StatementLetterDocumentLink != nil {
-		fileName := fmt.Sprintf("%s/", *findDmo.Detail.IdNumber)
-		_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
 
-		if deleteAwsErr != nil {
-			inputMap := make(map[string]interface{})
-			inputMap["user_id"] = claims["id"]
-			inputMap["dmo_id"] = idInt
-
-			inputJson ,_ := json.Marshal(inputMap)
-			messageJson ,_ := json.Marshal(map[string]interface{}{
-				"error": deleteAwsErr.Error(),
-				"id_number": findDmo.Detail.IdNumber,
-			})
-
-			createdErrLog := logs.Logs{
-				Input: inputJson,
-				Message: messageJson,
-			}
-
-			h.logService.CreateLogs(createdErrLog)
-
-			return c.Status(400).JSON(fiber.Map{
-				"message": "failed to delete dmo aws",
-				"error": deleteAwsErr.Error(),
-			})
-		}
-	}
 
 	return c.Status(200).JSON(fiber.Map{
 		"message": "success delete dmo",
 	})
+}
+
+func (h *dmoHandler) UpdateDocumentDmo(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	inputUpdateDmo := new(dmo.InputUpdateDocumentDmo)
+
+	// Binds the request body to the Person struct
+	if err := c.BodyParser(inputUpdateDmo); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+			"message": "failed to update minerba",
+		})
+	}
+
+	id := c.Params("id")
+
+	idInt, err := strconv.Atoi(id)
+
+	dmoId := uint(idInt)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"message": "failed to update minerba",
+			"error": "record not found",
+		})
+	}
+
+	errors := h.v.Struct(*inputUpdateDmo)
+
+	if errors != nil {
+		dataErrors := validatorfunc.ValidateStruct(errors)
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["input"] = inputUpdateDmo
+		inputMap["dmo_id"] = idInt
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"errors": dataErrors,
+		})
+		
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+			DmoId: &dmoId,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": dataErrors,
+		})
+	}
+
+	detailDmo, detailDmoErr := h.transactionService.GetDetailDmo(idInt)
+
+	if detailDmoErr != nil {
+		status := 400
+
+		if  detailDmoErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"error": detailDmoErr.Error(),
+		})
+	}
+
+	if detailDmo.Detail.BASTDocumentLink != nil || detailDmo.Detail.ReconciliationLetterDocumentLink != nil || detailDmo.Detail.StatementLetterDocumentLink != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "document already has been created",
+		})
+	}
+
+	updateDocumentDmo, updateDocumentDmoErr := h.historyService.UpdateDocumentDmo(idInt, *inputUpdateDmo, uint(claims["id"].(float64)))
+
+	if updateDocumentDmoErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["input"] = inputUpdateDmo
+		inputMap["dmo_id"] = idInt
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": updateDocumentDmoErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+			DmoId: &dmoId,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		status := 400
+		if updateDocumentDmoErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"error": updateDocumentDmoErr.Error(),
+			"message": "failed to update document dmo",
+		})
+	}
+
+	return c.Status(200).JSON(updateDocumentDmo)
 }
