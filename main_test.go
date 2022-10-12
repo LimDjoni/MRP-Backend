@@ -2170,6 +2170,7 @@ func TestCreateDmo(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "is_bast_document_signed", "create data dmo")
 		assert.Contains(t, mapUnmarshal, "statement_letter_document_link", "create data dmo")
 		assert.Contains(t, mapUnmarshal, "is_statement_letter_downloaded", "create data dmo")
+		assert.Contains(t, mapUnmarshal, "is_statement_letter_signed", "create data dmo")
 	}
 }
 
@@ -2385,6 +2386,297 @@ func TestUpdateDocumentDmo(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "is_bast_document_signed", "update document data dmo")
 		assert.Contains(t, mapUnmarshal, "statement_letter_document_link", "update document data dmo")
 		assert.Contains(t, mapUnmarshal, "is_statement_letter_downloaded", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "is_statement_letter_signed", "update document data dmo")
+	}
+}
+
+func TestUpdateIsDownloadedDocumentDmo(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token string
+		id int
+		typeDocument string
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			id: idDmo,
+			token: "asdawfaeac",
+			typeDocument: "bast_document_link",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			id: idDmo,
+			token: token,
+			typeDocument: "statement_letter_document_link",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			id: idDmo,
+			token: token,
+			typeDocument: "reconciliation_letter_document_link",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			id: idDmo,
+			token: token,
+			typeDocument: "bast_document_link",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			id: idDmo,
+			token: token,
+			typeDocument: "statement_letter_document_link",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			id: idDmo,
+			token: token,
+			typeDocument: "reconciliation_letter_document_link",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			id: idDmo,
+			token: token,
+			typeDocument: "bast_document_link",
+		},
+		{
+			expectedError: false,
+			expectedCode:  400,
+			id: idDmo,
+			token: token,
+			typeDocument: "link_onl",
+		},
+		{
+			expectedError: false,
+			expectedCode:  404,
+			id: 1000,
+			token: token,
+			typeDocument: "bast_document_link",
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		urlApi := fmt.Sprintf("/api/v1/dmo/update/document/downloaded/%v/%v", test.id, test.typeDocument)
+
+		req, _ := http.NewRequest(
+			"PUT",
+			urlApi,
+			nil,
+		)
+
+		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, errTest := app.Test(req, -1)
+
+
+		assert.Equalf(t, test.expectedError, errTest != nil, "update document data downloaded dmo")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "update document data downloaded dmo")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "update document data downloaded dmo")
+
+		mapUnmarshal := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		//// Verify, that the reponse body equals the expected body
+		assert.Contains(t, mapUnmarshal, "ID", "update document data downloaded dmo")
+		assert.Contains(t, mapUnmarshal, "CreatedAt", "update document data downloaded dmo")
+		assert.Contains(t, mapUnmarshal, "UpdatedAt", "update document data downloaded dmo")
+		assert.Contains(t, mapUnmarshal, "DeletedAt", "update document data downloaded dmo")
+		assert.Contains(t, mapUnmarshal, "period", "update document data downloaded dmo")
+		assert.Contains(t, mapUnmarshal, "id_number", "update document data downloaded dmo")
+		assert.Contains(t, mapUnmarshal, "type", "update document data downloaded dmo")
+		assert.Contains(t, mapUnmarshal, "barge_total_quantity", "update document data downloaded dmo")
+		assert.Contains(t, mapUnmarshal, "barge_adjustment", "update document data downloaded dmo")
+		assert.Contains(t, mapUnmarshal, "barge_grand_total_quantity", "update document data downloaded dmo")
+		assert.Contains(t, mapUnmarshal, "vessel_total_quantity", "update document data downloaded dmo")
+		assert.Contains(t, mapUnmarshal, "vessel_adjustment", "update document data downloaded dmo")
+		assert.Contains(t, mapUnmarshal, "vessel_grand_total_quantity", "update document data downloaded dmo")
+		assert.Contains(t, mapUnmarshal, "reconciliation_letter_document_link", "update document data downloaded dmo")
+		assert.Contains(t, mapUnmarshal, "is_reconciliation_letter_downloaded", "update document data downloaded dmo")
+		assert.Contains(t, mapUnmarshal, "is_reconciliation_letter_signed", "update document data downloaded dmo")
+		assert.Contains(t, mapUnmarshal, "bast_document_link", "update document data downloaded dmo")
+		assert.Contains(t, mapUnmarshal, "is_bast_document_downloaded", "update document data downloaded dmo")
+		assert.Contains(t, mapUnmarshal, "is_bast_document_signed", "update document data downloaded dmo")
+		assert.Contains(t, mapUnmarshal, "statement_letter_document_link", "update document data downloaded dmo")
+		assert.Contains(t, mapUnmarshal, "is_statement_letter_downloaded", "update document data downloaded dmo")
+		assert.Contains(t, mapUnmarshal, "is_statement_letter_signed", "update document data downloaded dmo")
+	}
+}
+
+func TestUpdateIsSignedDocumentDmo(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token string
+		id int
+		typeDocument string
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			id: idDmo,
+			token: "asdawfaeac",
+			typeDocument: "bast_document_link",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			id: idDmo,
+			token: token,
+			typeDocument: "statement_letter_document_link",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			id: idDmo,
+			token: token,
+			typeDocument: "reconciliation_letter_document_link",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			id: idDmo,
+			token: token,
+			typeDocument: "bast_document_link",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			id: idDmo,
+			token: token,
+			typeDocument: "statement_letter_document_link",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			id: idDmo,
+			token: token,
+			typeDocument: "reconciliation_letter_document_link",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			id: idDmo,
+			token: token,
+			typeDocument: "bast_document_link",
+		},
+		{
+			expectedError: false,
+			expectedCode:  400,
+			id: idDmo,
+			token: token,
+			typeDocument: "link_onl",
+		},
+		{
+			expectedError: false,
+			expectedCode:  404,
+			id: 1000,
+			token: token,
+			typeDocument: "bast_document_link",
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		urlApi := fmt.Sprintf("/api/v1/dmo/update/document/signed/%v/%v", test.id, test.typeDocument)
+
+		req, _ := http.NewRequest(
+			"PUT",
+			urlApi,
+			nil,
+		)
+
+		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, errTest := app.Test(req, -1)
+
+
+		assert.Equalf(t, test.expectedError, errTest != nil, "update document data signed dmo")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "update document data signed dmo")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "update document data signed dmo")
+
+		mapUnmarshal := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		//// Verify, that the reponse body equals the expected body
+		assert.Contains(t, mapUnmarshal, "ID", "update document data signed dmo")
+		assert.Contains(t, mapUnmarshal, "CreatedAt", "update document data signed dmo")
+		assert.Contains(t, mapUnmarshal, "UpdatedAt", "update document data signed dmo")
+		assert.Contains(t, mapUnmarshal, "DeletedAt", "update document data signed dmo")
+		assert.Contains(t, mapUnmarshal, "period", "update document data signed dmo")
+		assert.Contains(t, mapUnmarshal, "id_number", "update document data signed dmo")
+		assert.Contains(t, mapUnmarshal, "type", "update document data signed dmo")
+		assert.Contains(t, mapUnmarshal, "barge_total_quantity", "update document data signed dmo")
+		assert.Contains(t, mapUnmarshal, "barge_adjustment", "update document data signed dmo")
+		assert.Contains(t, mapUnmarshal, "barge_grand_total_quantity", "update document data signed dmo")
+		assert.Contains(t, mapUnmarshal, "vessel_total_quantity", "update document data signed dmo")
+		assert.Contains(t, mapUnmarshal, "vessel_adjustment", "update document data signed dmo")
+		assert.Contains(t, mapUnmarshal, "vessel_grand_total_quantity", "update document data signed dmo")
+		assert.Contains(t, mapUnmarshal, "reconciliation_letter_document_link", "update document data signed dmo")
+		assert.Contains(t, mapUnmarshal, "is_reconciliation_letter_downloaded", "update document data signed dmo")
+		assert.Contains(t, mapUnmarshal, "is_reconciliation_letter_signed", "update document data signed dmo")
+		assert.Contains(t, mapUnmarshal, "bast_document_link", "update document data signed dmo")
+		assert.Contains(t, mapUnmarshal, "is_bast_document_downloaded", "update document data signed dmo")
+		assert.Contains(t, mapUnmarshal, "is_bast_document_signed", "update document data signed dmo")
+		assert.Contains(t, mapUnmarshal, "statement_letter_document_link", "update document data signed dmo")
+		assert.Contains(t, mapUnmarshal, "is_statement_letter_downloaded", "update document data signed dmo")
+		assert.Contains(t, mapUnmarshal, "is_statement_letter_signed", "update document data signed dmo")
 	}
 }
 

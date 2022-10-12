@@ -710,7 +710,7 @@ func (h *dmoHandler) UpdateIsDownloadedDocumentDmo(c *fiber.Ctx) error {
 
 	typeDocument := c.Params("type")
 
-	if typeDocument != "bast_document_link" || typeDocument != "statement_letter_document_link" || typeDocument != "reconciliation_letter_document_link" {
+	if typeDocument != "bast_document_link" && typeDocument != "statement_letter_document_link" && typeDocument != "reconciliation_letter_document_link" {
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
 		inputMap["type"] = typeDocument
@@ -767,7 +767,12 @@ func (h *dmoHandler) UpdateIsDownloadedDocumentDmo(c *fiber.Ctx) error {
 
 		h.logService.CreateLogs(createdErrLog)
 
-		return c.Status(400).JSON(fiber.Map{
+		status := 400
+
+		if updateDownloadedDocumentDmoErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
 			"message": "failed to update downloaded dmo",
 			"error": updateDownloadedDocumentDmoErr.Error(),
 		})
@@ -812,7 +817,7 @@ func (h *dmoHandler) UpdateIsSignedDocumentDmo(c *fiber.Ctx) error {
 
 	typeDocument := c.Params("type")
 
-	if typeDocument != "bast_document_link" || typeDocument != "statement_letter_document_link" || typeDocument != "reconciliation_letter_document_link" {
+	if typeDocument != "bast_document_link" && typeDocument != "statement_letter_document_link" && typeDocument != "reconciliation_letter_document_link" {
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
 		inputMap["type"] = typeDocument
@@ -869,7 +874,12 @@ func (h *dmoHandler) UpdateIsSignedDocumentDmo(c *fiber.Ctx) error {
 
 		h.logService.CreateLogs(createdErrLog)
 
-		return c.Status(400).JSON(fiber.Map{
+		status := 400
+
+		if updateSignedDocumentDmoErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
 			"message": "failed to update signed dmo",
 			"error": updateSignedDocumentDmoErr.Error(),
 		})
