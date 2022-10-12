@@ -59,4 +59,6 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	dmoRouting.Get("/detail/:id", dmoHandler.DetailDmo)
 	dmoRouting.Delete("/delete/:id", dmoHandler.DeleteDmo)
 	dmoRouting.Put("/update/document/:id", dmoHandler.UpdateDocumentDmo)
+	dmoRouting.Put("/update/document/downloaded/:id/:type", dmoHandler.UpdateIsDownloadedDocumentDmo)
+	dmoRouting.Put("/update/document/signed/:id/:type", dmoHandler.UpdateIsSignedDocumentDmo)
 }

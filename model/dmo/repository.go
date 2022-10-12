@@ -50,4 +50,3 @@ func(r *repository) GetDataDmo(id int) (Dmo, error) {
 
 	return dmo, errFind
 }
-

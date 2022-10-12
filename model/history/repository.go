@@ -27,6 +27,8 @@ type Repository interface {
 	CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string, userId uint) (dmo.Dmo, error)
 	DeleteDmo (idDmo int, userId uint) (bool, error)
 	UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocumentDmo, userId uint) (dmo.Dmo, error)
+	UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error)
+	UpdateIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error)
 }
 
 type repository struct {
@@ -848,4 +850,134 @@ func (r *repository) UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocum
 
 	tx.Commit()
 	return  dmoUpdate, nil
+}
+
+func(r *repository) UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error) {
+	var dmoUpdate dmo.Dmo
+
+	tx := r.db.Begin()
+
+	findErr := tx.Where("id = ?", id).First(&dmoUpdate).Error
+
+	if findErr != nil {
+		tx.Rollback()
+		return dmoUpdate, findErr
+	}
+
+	beforeData , errorBeforeDataJsonMarshal := json.Marshal(dmoUpdate)
+
+	if errorBeforeDataJsonMarshal != nil {
+		tx.Rollback()
+		return dmoUpdate, errorBeforeDataJsonMarshal
+	}
+
+	var field string
+	var value bool
+
+	if isBast {
+		field = "is_bast_document_downloaded"
+		value = !dmoUpdate.IsBastDocumentDownloaded
+	}
+
+	if isStatementLetter {
+		field = "is_statement_letter_downloaded"
+		value = !dmoUpdate.IsStatementLetterDownloaded
+	}
+
+	if isReconciliationLetter {
+		field = "is_reconciliation_letter_downloaded"
+		value = !dmoUpdate.IsReconciliationLetterDownloaded
+	}
+
+	updateErr := tx.Model(&dmoUpdate).Where("id = ?", id).Update(field, value).Error
+
+	if findErr != nil {
+		tx.Rollback()
+		return dmoUpdate, updateErr
+	}
+
+	var history History
+
+	history.DmoId = &dmoUpdate.ID
+	history.UserId = userId
+	history.Status = fmt.Sprintf("Update %v dmo", field)
+
+	afterData, _ := json.Marshal(dmoUpdate)
+	history.BeforeData = beforeData
+	history.AfterData = afterData
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return dmoUpdate, createHistoryErr
+	}
+
+	tx.Commit()
+	return dmoUpdate, nil
+}
+
+func(r *repository) UpdateIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error) {
+	var dmoUpdate dmo.Dmo
+
+	tx := r.db.Begin()
+
+	findErr := tx.Where("id = ?", id).First(&dmoUpdate).Error
+
+	if findErr != nil {
+		tx.Rollback()
+		return dmoUpdate, findErr
+	}
+
+	beforeData , errorBeforeDataJsonMarshal := json.Marshal(dmoUpdate)
+
+	if errorBeforeDataJsonMarshal != nil {
+		tx.Rollback()
+		return dmoUpdate, errorBeforeDataJsonMarshal
+	}
+
+	var field string
+	var value bool
+
+	if isBast {
+		field = "is_bast_document_signed"
+		value = !dmoUpdate.IsBastDocumentSigned
+	}
+
+	if isStatementLetter {
+		field = "is_statement_letter_signed"
+		value = !dmoUpdate.IsStatementLetterSigned
+	}
+
+	if isReconciliationLetter {
+		field = "is_reconciliation_letter_signed"
+		value = !dmoUpdate.IsReconciliationLetterSigned
+	}
+
+	updateErr := tx.Model(&dmoUpdate).Where("id = ?", id).Update(field, value).Error
+
+	if findErr != nil {
+		tx.Rollback()
+		return dmoUpdate, updateErr
+	}
+
+	var history History
+
+	history.DmoId = &dmoUpdate.ID
+	history.UserId = userId
+	history.Status = fmt.Sprintf("Update %v dmo", field)
+
+	afterData, _ := json.Marshal(dmoUpdate)
+	history.BeforeData = beforeData
+	history.AfterData = afterData
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return dmoUpdate, createHistoryErr
+	}
+
+	tx.Commit()
+	return dmoUpdate, nil
 }

@@ -17,6 +17,8 @@ type Service interface {
 	CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string, userId uint) (dmo.Dmo, error)
 	DeleteDmo (idDmo int, userId uint) (bool, error)
 	UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocumentDmo, userId uint) (dmo.Dmo, error)
+	UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error)
+	UpdateIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error)
 }
 
 type service struct {
@@ -85,4 +87,16 @@ func (s *service) UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocument
 	updateDocumentDmo, updateDocumentDmoErr := s.repository.UpdateDocumentDmo(id, documentLink, userId)
 
 	return updateDocumentDmo, updateDocumentDmoErr
+}
+
+func (s *service) UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error) {
+	updateIsDownloadedDmoDocument, updateIsDownloadedDmoDocumentErr := s.repository.UpdateIsDownloadedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, id, userId)
+
+	return updateIsDownloadedDmoDocument, updateIsDownloadedDmoDocumentErr
+}
+
+func (s *service) UpdateIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error) {
+	updateIsSignedDmoDocument, updateIsSignedDmoDocumentErr := s.repository.UpdateIsSignedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, id, userId)
+
+	return updateIsSignedDmoDocument, updateIsSignedDmoDocumentErr
 }
