@@ -6,6 +6,7 @@ import (
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
 	"ajebackend/model/minerba"
+	"ajebackend/model/notification"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 	"github.com/go-playground/validator/v10"
@@ -30,7 +31,10 @@ func MinerbaRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate)
 	minerbaRepository := minerba.NewRepository(db)
 	minerbaService := minerba.NewService(minerbaRepository)
 
-	minerbaHandler := handler.NewMinerbaHandler(transactionService, userService, historyService, logService, minerbaService, validate)
+	notificationRepository := notification.NewRepository(db)
+	notificationService := notification.NewService(notificationRepository)
+
+	minerbaHandler := handler.NewMinerbaHandler(transactionService, userService, historyService, logService, minerbaService, notificationService, validate)
 
 	minerbaRouting := app.Group("/minerba")
 

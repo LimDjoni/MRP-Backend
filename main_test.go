@@ -2428,27 +2428,6 @@ func TestUpdateIsDownloadedDocumentDmo(t *testing.T) {
 		},
 		{
 			expectedError: false,
-			expectedCode:  200,
-			id: idDmo,
-			token: token,
-			typeDocument: "statement_letter_document_link",
-		},
-		{
-			expectedError: false,
-			expectedCode:  200,
-			id: idDmo,
-			token: token,
-			typeDocument: "reconciliation_letter_document_link",
-		},
-		{
-			expectedError: false,
-			expectedCode:  200,
-			id: idDmo,
-			token: token,
-			typeDocument: "bast_document_link",
-		},
-		{
-			expectedError: false,
 			expectedCode:  400,
 			id: idDmo,
 			token: token,
@@ -3698,5 +3677,303 @@ func TestDeleteCompany(t *testing.T) {
 
 		//// Verify, that the reponse body equals the expected body
 		assert.Contains(t, mapUnmarshal, "message", "delete company")
+	}
+}
+
+// Notification
+
+func TestCreateNotification(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token         string
+		body          map[string]interface{}
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			body:          fiber.Map{},
+			token:         "asdawfaeac",
+		},
+		{
+			expectedError: false,
+			expectedCode:  201,
+			body: fiber.Map{
+				"status" : "success created",
+				"type" : "dmo",
+				"period" : "Jan 2022",
+			},
+			token: token,
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		bodyJson, err := json.Marshal(test.body)
+		var payload = bytes.NewBufferString(string(bodyJson))
+		req, _ := http.NewRequest(
+			"POST",
+			"/api/v1/notification/create",
+			payload,
+		)
+
+		req.Header.Add("Authorization", "Bearer "+test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, err := app.Test(req, -1)
+
+		assert.Equalf(t, test.expectedError, err != nil, "create notification")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "create notification")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "create notification")
+
+		mapUnmarshal := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		assert.Contains(t, mapUnmarshal, "ID", "create notification")
+		assert.Contains(t, mapUnmarshal, "CreatedAt", "create notification")
+		assert.Contains(t, mapUnmarshal, "UpdatedAt", "create notification")
+		assert.Contains(t, mapUnmarshal, "DeletedAt", "create notification")
+		assert.Contains(t, mapUnmarshal, "status", "create notification")
+		assert.Contains(t, mapUnmarshal, "type", "create notification")
+		assert.Contains(t, mapUnmarshal, "period", "create notification")
+		assert.Contains(t, mapUnmarshal, "is_read", "create notification")
+		assert.Contains(t, mapUnmarshal, "user_id", "create notification")
+	}
+}
+
+func TestGetNotification(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token string
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			token: "",
+		},
+		{
+			expectedError: false,
+			expectedCode:  401,
+			token: "afwifiwgjwigjianveri",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			token: token,
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		req, _ := http.NewRequest(
+			"GET",
+			"/api/v1/notification/list",
+			nil,
+		)
+
+		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, err := app.Test(req, -1)
+
+		assert.Equalf(t, test.expectedError, err != nil, "list data notification")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "list data notification")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "list data notification")
+
+		mapUnmarshal  := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		//// Verify, that the reponse body equals the expected body
+		assert.Contains(t, mapUnmarshal,"list", "list data notification")
+	}
+}
+
+func TestUpdateNotification(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token string
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			token: "",
+		},
+		{
+			expectedError: false,
+			expectedCode:  401,
+			token: "afwifiwgjwigjianveri",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			token: token,
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		req, _ := http.NewRequest(
+			"PUT",
+			"/api/v1/notification/update/read",
+			nil,
+		)
+
+		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, err := app.Test(req, -1)
+
+		assert.Equalf(t, test.expectedError, err != nil, "list update data notification")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "list update data notification")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "list update data notification")
+
+		mapUnmarshal  := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		//// Verify, that the reponse body equals the expected body
+		assert.Contains(t, mapUnmarshal,"list", "list update data notification")
+	}
+}
+
+func TestDeleteNotification(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token string
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			token: "",
+		},
+		{
+			expectedError: false,
+			expectedCode:  401,
+			token: "afwifiwgjwigjianveri",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			token: token,
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		req, _ := http.NewRequest(
+			"DELETE",
+			"/api/v1/notification/delete",
+			nil,
+		)
+
+		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, err := app.Test(req, -1)
+
+		assert.Equalf(t, test.expectedError, err != nil, "delete data notification")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "delete data notification")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "delete data notification")
+
+		mapUnmarshal  := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		//// Verify, that the reponse body equals the expected body
+		assert.Contains(t, mapUnmarshal,"message", "delete data notification")
 	}
 }

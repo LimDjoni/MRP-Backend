@@ -18,10 +18,13 @@ type Dmo struct {
 	ReconciliationLetterDocumentLink *string `json:"reconciliation_letter_document_link"`
 	IsReconciliationLetterDownloaded bool `json:"is_reconciliation_letter_downloaded"`
 	IsReconciliationLetterSigned bool `json:"is_reconciliation_letter_signed"`
+	SignedReconciliationLetterDocumentLink *string `json:"signed_reconciliation_letter_document_link"`
 	BASTDocumentLink *string `json:"bast_document_link"`
 	IsBastDocumentDownloaded bool `json:"is_bast_document_downloaded"`
 	IsBastDocumentSigned bool `json:"is_bast_document_signed"`
+	SignedBASTLetterDocumentLink *string `json:"signed_bast_letter_document_link"`
 	StatementLetterDocumentLink *string `json:"statement_letter_document_link"`
 	IsStatementLetterDownloaded bool `json:"is_statement_letter_downloaded"`
 	IsStatementLetterSigned bool `json:"is_statement_letter_signed"`
+	SignedStatementLetterDocumentLink *string `json:"signed_statement_letter_document_link"`
 }

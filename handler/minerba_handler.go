@@ -6,6 +6,7 @@ import (
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
 	"ajebackend/model/minerba"
+	"ajebackend/model/notification"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 	"ajebackend/validatorfunc"
@@ -25,16 +26,18 @@ type minerbaHandler struct {
 	historyService history.Service
 	logService logs.Service
 	minerbaService minerba.Service
+	notificationService notification.Service
 	v *validator.Validate
 }
 
-func NewMinerbaHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, minerbaService minerba.Service, v *validator.Validate) *minerbaHandler {
+func NewMinerbaHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, minerbaService minerba.Service, notificationService notification.Service, v *validator.Validate) *minerbaHandler {
 	return &minerbaHandler{
 		transactionService,
 		userService,
 		historyService,
 		logService,
 		minerbaService,
+		notificationService,
 		v,
 	}
 }
@@ -414,6 +417,35 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 		return c.Status(status).JSON(fiber.Map{
 			"error": updateMinerbaErr.Error(),
 			"message": "failed to update minerba",
+		})
+	}
+
+	var inputNotification notification.InputNotification
+	inputNotification.Type = "minerba"
+	inputNotification.Status = "success create document"
+	inputNotification.Period = detailMinerba.Detail.Period
+	_, createdNotificationErr := h.notificationService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
+
+	if createdNotificationErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["input"] = inputUpdateMinerba
+
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": createdNotificationErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error": createdNotificationErr.Error(),
+			"message": "failed to create notification update minerba",
 		})
 	}
 

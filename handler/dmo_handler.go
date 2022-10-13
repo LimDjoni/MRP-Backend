@@ -6,6 +6,7 @@ import (
 	"ajebackend/model/dmo"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
+	"ajebackend/model/notification"
 	"ajebackend/model/trader"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
@@ -29,10 +30,11 @@ type dmoHandler struct {
 	dmoService dmo.Service
 	traderService trader.Service
 	traderDmoService traderdmo.Service
+	notificationService notification.Service
 	v *validator.Validate
 }
 
-func NewDmoHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, dmoService dmo.Service, traderService trader.Service, traderDmoService traderdmo.Service, v *validator.Validate) *dmoHandler {
+func NewDmoHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, dmoService dmo.Service, traderService trader.Service, traderDmoService traderdmo.Service, notificationService notification.Service, v *validator.Validate) *dmoHandler {
 	return &dmoHandler{
 		transactionService,
 		userService,
@@ -41,6 +43,7 @@ func NewDmoHandler(transactionService transaction.Service, userService user.Serv
 		dmoService,
 		traderService,
 		traderDmoService,
+		notificationService,
 		v,
 	}
 }
@@ -668,6 +671,35 @@ func (h *dmoHandler) UpdateDocumentDmo(c *fiber.Ctx) error {
 		return c.Status(status).JSON(fiber.Map{
 			"error": updateDocumentDmoErr.Error(),
 			"message": "failed to update document dmo",
+		})
+	}
+
+	var inputNotification notification.InputNotification
+	inputNotification.Type = "dmo"
+	inputNotification.Status = "success create document"
+	inputNotification.Period = detailDmo.Detail.Period
+	_, createdNotificationErr := h.notificationService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
+
+	if createdNotificationErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["input"] = inputUpdateDmo
+
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": createdNotificationErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error": createdNotificationErr.Error(),
+			"message": "failed to create notification update dmo",
 		})
 	}
 

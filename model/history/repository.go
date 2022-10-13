@@ -872,24 +872,20 @@ func(r *repository) UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter
 	}
 
 	var field string
-	var value bool
 
 	if isBast {
 		field = "is_bast_document_downloaded"
-		value = !dmoUpdate.IsBastDocumentDownloaded
 	}
 
 	if isStatementLetter {
 		field = "is_statement_letter_downloaded"
-		value = !dmoUpdate.IsStatementLetterDownloaded
 	}
 
 	if isReconciliationLetter {
 		field = "is_reconciliation_letter_downloaded"
-		value = !dmoUpdate.IsReconciliationLetterDownloaded
 	}
 
-	updateErr := tx.Model(&dmoUpdate).Where("id = ?", id).Update(field, value).Error
+	updateErr := tx.Model(&dmoUpdate).Where("id = ?", id).Update(field, true).Error
 
 	if findErr != nil {
 		tx.Rollback()
