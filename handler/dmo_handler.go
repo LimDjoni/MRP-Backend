@@ -68,10 +68,37 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	inputCreateDmo := new(dmo.CreateDmoInput)
 
 	// Binds the request body to the Person struct
-	if err := c.BodyParser(inputCreateDmo); err != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+	err := c.BodyParser(inputCreateDmo)
+	if err != nil {
+		formPart, _ := c.MultipartForm()
+		for _, trader := range formPart.Value["trader"] {
+			var traderArrayInt []int
+			errUnmarshal := json.Unmarshal([]byte(trader), &traderArrayInt)
+			fmt.Println(errUnmarshal)
+			inputCreateDmo.Trader = traderArrayInt
+		}
+
+		for _, barge := range formPart.Value["transaction_barge"] {
+			var bargeArrayInt []int
+			errUnmarshal := json.Unmarshal([]byte(barge), &bargeArrayInt)
+			fmt.Println(errUnmarshal)
+			inputCreateDmo.TransactionBarge = bargeArrayInt
+		}
+
+		for _, vessel := range formPart.Value["transaction_vessel"] {
+			var bargeVesselInt []int
+			errUnmarshal := json.Unmarshal([]byte(vessel), &bargeVesselInt)
+			fmt.Println(errUnmarshal)
+			inputCreateDmo.TransactionVessel = bargeVesselInt
+		}
+
+		for _, vesselAdjustment := range formPart.Value["vessel_adjustment"] {
+			var newVesselAdjustmentArray []dmo.VesselAdjustmentInput
+			errUnmarshal := json.Unmarshal([]byte(vesselAdjustment), &newVesselAdjustmentArray)
+			fmt.Println(errUnmarshal)
+
+			inputCreateDmo.VesselAdjustment = newVesselAdjustmentArray
+		}
 	}
 
 	errors := h.v.Struct(*inputCreateDmo)
@@ -99,7 +126,6 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 			"errors": dataErrors,
 		})
 	}
-
 	header := c.GetReqHeaders()
 
 	for _, valueVessel := range inputCreateDmo.TransactionVessel {
@@ -285,42 +311,56 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	var reqInputCreateUploadDmo transaction.InputRequestCreateUploadDmo
+	if !inputCreateDmo.IsDocumentCustom {
+		var reqInputCreateUploadDmo transaction.InputRequestCreateUploadDmo
 
-	reqInputCreateUploadDmo.Authorization = header["Authorization"]
-	reqInputCreateUploadDmo.BastNumber = fmt.Sprintf("%s/BAST/%s", splitPeriod[1], helper.CreateIdNumber(int(createDmo.ID)))
-	reqInputCreateUploadDmo.DataDmo = createDmo
-	reqInputCreateUploadDmo.DataTransactions = dataTransactions
-	reqInputCreateUploadDmo.Trader = list
-	reqInputCreateUploadDmo.TraderEndUser = endUser
+		reqInputCreateUploadDmo.Authorization = header["Authorization"]
+		reqInputCreateUploadDmo.BastNumber = fmt.Sprintf("%s/BAST/%s", splitPeriod[1], helper.CreateIdNumber(int(createDmo.ID)))
+		reqInputCreateUploadDmo.DataDmo = createDmo
+		reqInputCreateUploadDmo.DataTransactions = dataTransactions
+		reqInputCreateUploadDmo.Trader = list
+		reqInputCreateUploadDmo.TraderEndUser = endUser
 
-	_, requestJobDmoErr := h.transactionService.RequestCreateDmo(reqInputCreateUploadDmo)
+		_, requestJobDmoErr := h.transactionService.RequestCreateDmo(reqInputCreateUploadDmo)
 
-	if requestJobDmoErr != nil {
-		inputMap := make(map[string]interface{})
-		inputMap["user_id"] = claims["id"]
-		inputMap["dmo_period"] = inputCreateDmo.Period
-		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-		inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
-		inputMap["input"] = inputCreateDmo
-		inputMap["input_job"] = reqInputCreateUploadDmo
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
-			"error": requestJobDmoErr.Error(),
-		})
+		if requestJobDmoErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["user_id"] = claims["id"]
+			inputMap["dmo_period"] = inputCreateDmo.Period
+			inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
+			inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+			inputMap["input"] = inputCreateDmo
+			inputMap["input_job"] = reqInputCreateUploadDmo
+			inputJson ,_ := json.Marshal(inputMap)
+			messageJson ,_ := json.Marshal(map[string]interface{}{
+				"error": requestJobDmoErr.Error(),
+			})
 
-		createdErrLog := logs.Logs{
-			Input: inputJson,
-			Message: messageJson,
+			createdErrLog := logs.Logs{
+				Input: inputJson,
+				Message: messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			return c.Status(400).JSON(fiber.Map{
+				"message": "Dmo already has been created, but job failed",
+				"error": requestJobDmoErr.Error(),
+				"dmo": createDmo,
+			})
 		}
+	}
 
-		h.logService.CreateLogs(createdErrLog)
+	if inputCreateDmo.IsDocumentCustom {
+		formPart, _ := c.MultipartForm()
 
-		return c.Status(400).JSON(fiber.Map{
-			"message": "Dmo already has been created, but job failed",
-			"error": requestJobDmoErr.Error(),
-			"dmo": createDmo,
-		})
+		bastFile := formPart.File["bast"][0]
+		reconciliationLetterFile := formPart.File["reconciliation_letter"][0]
+		statementLetterFile := formPart.File["statement_letter"][0]
+		reqJobDocumentCustom, reqJobDocumentCustomErr := h.transactionService.RequestCreateCustomDmo(createDmo, bastFile, reconciliationLetterFile, statementLetterFile, header["Authorization"])
+
+		fmt.Println(reqJobDocumentCustom)
+		fmt.Println(reqJobDocumentCustomErr)
 	}
 
 	return c.Status(201).JSON(createDmo)

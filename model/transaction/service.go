@@ -2,8 +2,12 @@ package transaction
 
 import (
 	"ajebackend/helper"
+	"ajebackend/model/dmo"
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 )
 
@@ -18,6 +22,7 @@ type Service interface {
 	CheckDataDnAndDmo(listData []int) ([]Transaction, error)
 	GetDetailDmo(id int) (DetailDmo, error)
 	RequestCreateDmo(reqInput InputRequestCreateUploadDmo) (map[string]interface{}, error)
+	RequestCreateCustomDmo(dataDmo dmo.Dmo, bast *multipart.FileHeader, reconciliationLetter *multipart.FileHeader, statementLetter *multipart.FileHeader, authorization string ) (map[string]interface{}, error)
 }
 
 type service struct {
@@ -133,5 +138,61 @@ func (s *service) RequestCreateDmo(reqInput InputRequestCreateUploadDmo) (map[st
 
 	json.NewDecoder(resp.Body).Decode(&res)
 
+	return res, doReqErr
+}
+
+func (s *service) RequestCreateCustomDmo(dataDmo dmo.Dmo, bast *multipart.FileHeader, reconciliationLetter *multipart.FileHeader, statementLetter *multipart.FileHeader, authorization string ) (map[string]interface{}, error) {
+	var res map[string]interface{}
+	baseURL := helper.GetEnvWithKey("BASE_JOB_URL")
+	var (
+		buf = new(bytes.Buffer)
+		w   = multipart.NewWriter(buf)
+	)
+
+	dataDmoMarshal, _ := json.Marshal(dataDmo)
+
+	partDmo, _ := w.CreateFormField("data_dmo")
+	partDmo.Write(dataDmoMarshal)
+
+	authorizationMarshal, _ := json.Marshal(authorization)
+	partAuthorization, _ := w.CreateFormField("authorization")
+	partAuthorization.Write(authorizationMarshal)
+
+	bastContent, _ := bast.Open()
+	partBast, _ := w.CreateFormFile("bast", bast.Filename)
+	bastByteContainer, _ := ioutil.ReadAll(bastContent)
+	partBast.Write(bastByteContainer)
+
+	reconciliationLetterContent, _ := reconciliationLetter.Open()
+	partReconciliationLetter, _ := w.CreateFormFile("reconciliation_letter", reconciliationLetter.Filename)
+	reconciliationLetterByteContainer, _ := ioutil.ReadAll(reconciliationLetterContent)
+	partReconciliationLetter.Write(reconciliationLetterByteContainer)
+
+	statementLetterContent, _ := bast.Open()
+	partStatementLetter, _ := w.CreateFormFile("statement_letter", statementLetter.Filename)
+	statementLetterByteContainer, _ := ioutil.ReadAll(statementLetterContent)
+	partStatementLetter.Write(statementLetterByteContainer)
+
+	w.Close()
+	urlPost := baseURL + "/upload/dmo/custom"
+
+	req, doReqErr := http.NewRequest("POST", urlPost, buf)
+
+	fmt.Println(w.FormDataContentType())
+	if req != nil {
+		req.Header.Add("Content-Type", w.FormDataContentType())
+		//req.Header.Add("Accept", "multipart/form-data")
+	}
+	client := &http.Client{}
+	resp, doReqErr := client.Do(req)
+
+	if doReqErr != nil {
+		return res, doReqErr
+	}
+
+	json.NewDecoder(resp.Body).Decode(&res)
+
+	fmt.Println(res)
+	fmt.Println(doReqErr)
 	return res, doReqErr
 }

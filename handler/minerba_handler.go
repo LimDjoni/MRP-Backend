@@ -384,12 +384,6 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 		})
 	}
 
-	if detailMinerba.Detail.DetailDmoDocumentLink != nil || detailMinerba.Detail.RecapDmoDocumentLink != nil || detailMinerba.Detail.SP3MEDNDocumentLink != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"error": "document already has been created",
-		})
-	}
-
 	updateMinerba, updateMinerbaErr := h.historyService.UpdateDocumentMinerba(idInt, *inputUpdateMinerba, uint(claims["id"].(float64)))
 
 	if updateMinerbaErr != nil {
@@ -576,12 +570,6 @@ func (h *minerbaHandler) RequestCreateExcelMinerba(c *fiber.Ctx) error {
 		}
 		return c.Status(status).JSON(fiber.Map{
 			"error": detailMinerbaErr.Error(),
-		})
-	}
-
-	if detailMinerba.Detail.DetailDmoDocumentLink != nil || detailMinerba.Detail.RecapDmoDocumentLink != nil || detailMinerba.Detail.SP3MEDNDocumentLink != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"error": "document already has been created",
 		})
 	}
 
