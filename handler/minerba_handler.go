@@ -193,6 +193,142 @@ func (h *minerbaHandler) CreateMinerba(c *fiber.Ctx) error {
 	return c.Status(201).JSON(createMinerba)
 }
 
+func (h *minerbaHandler) UpdateMinerba(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	id := c.Params("id")
+
+	inputUpdateMinerba := new(minerba.InputUpdateMinerba)
+
+	// Binds the request body to the Person struct
+	if err := c.BodyParser(inputUpdateMinerba); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	idInt, err := strconv.Atoi(id)
+
+	minerbaId := uint(idInt)
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"message": "failed to update minerba",
+			"error": "record not found",
+		})
+	}
+
+	errors := h.v.Struct(*inputUpdateMinerba)
+
+	if errors != nil {
+		dataErrors := validatorfunc.ValidateStruct(errors)
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["minerba_id"] = idInt
+		inputMap["list_dn"] = inputUpdateMinerba.ListDataDn
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"errors": dataErrors,
+		})
+
+		createdErrLog := logs.Logs{
+			MinerbaId: &minerbaId,
+			Input: inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": dataErrors,
+		})
+	}
+
+	_, findDetailMinerbaErr := h.transactionService.GetDetailMinerba(idInt)
+
+	if findDetailMinerbaErr != nil {
+		status := 400
+
+		if  findDetailMinerbaErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"error": findDetailMinerbaErr.Error(),
+		})
+	}
+
+	_, checkMinerbaUpdateTransactionErr := h.transactionService.CheckDataDnAndMinerbaUpdate(inputUpdateMinerba.ListDataDn, idInt)
+
+	if checkMinerbaUpdateTransactionErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["minerba_id"] = idInt
+		inputMap["list_dn"] = inputUpdateMinerba.ListDataDn
+
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": checkMinerbaUpdateTransactionErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		status := 400
+
+		if checkMinerbaUpdateTransactionErr.Error() == "please check there is transaction not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"error": checkMinerbaUpdateTransactionErr.Error(),
+		})
+	}
+
+	updateMinerba, updateMinerbaErr := h.historyService.UpdateMinerba(idInt, inputUpdateMinerba.ListDataDn, uint(claims["id"].(float64)))
+
+	if updateMinerbaErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["minerba_id"] = idInt
+		inputMap["list_dn"] = inputUpdateMinerba.ListDataDn
+
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": updateMinerbaErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error": updateMinerbaErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(updateMinerba)
+}
+
 func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)

@@ -54,6 +54,7 @@ func MinerbaRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate)
 	minerbaRouting.Get("/detail/:id", minerbaHandler.DetailMinerba)
 	minerbaRouting.Post("/create", minerbaHandler.CreateMinerba)
 	minerbaRouting.Delete("/delete/:id", minerbaHandler.DeleteMinerba)
+	minerbaRouting.Put("update/:id", minerbaHandler.UpdateMinerba)
 	minerbaRouting.Put("/update/document/:id", minerbaHandler.UpdateDocumentMinerba)
 	minerbaRouting.Post("/create/excel/:id", minerbaHandler.RequestCreateExcelMinerba)
 }

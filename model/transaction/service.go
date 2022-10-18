@@ -16,6 +16,7 @@ type Service interface {
 	DetailTransactionDN(id int) (Transaction, error)
 	ListDataDNWithoutMinerba() ([]Transaction, error)
 	CheckDataDnAndMinerba(listData []int)(bool, error)
+	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int)([]Transaction, error)
 	GetDetailMinerba(id int) (DetailMinerba, error)
 	RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (map[string]interface{}, error)
 	ListDataDNWithoutDmo() ([]Transaction, error)
@@ -53,6 +54,12 @@ func (s *service) ListDataDNWithoutMinerba() ([]Transaction, error) {
 
 func (s *service) CheckDataDnAndMinerba(listData []int)(bool, error) {
 	checkData, checkDataErr := s.repository.CheckDataDnAndMinerba(listData)
+
+	return checkData, checkDataErr
+}
+
+func (s *service) CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int)([]Transaction, error) {
+	checkData, checkDataErr := s.repository.CheckDataDnAndMinerbaUpdate(listData, idMinerba)
 
 	return checkData, checkDataErr
 }
