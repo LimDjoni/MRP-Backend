@@ -6,6 +6,7 @@ import (
 	"ajebackend/model/dmo"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
+	"ajebackend/model/notification"
 	"ajebackend/model/trader"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
@@ -29,10 +30,11 @@ type dmoHandler struct {
 	dmoService dmo.Service
 	traderService trader.Service
 	traderDmoService traderdmo.Service
+	notificationService notification.Service
 	v *validator.Validate
 }
 
-func NewDmoHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, dmoService dmo.Service, traderService trader.Service, traderDmoService traderdmo.Service, v *validator.Validate) *dmoHandler {
+func NewDmoHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, dmoService dmo.Service, traderService trader.Service, traderDmoService traderdmo.Service, notificationService notification.Service, v *validator.Validate) *dmoHandler {
 	return &dmoHandler{
 		transactionService,
 		userService,
@@ -41,6 +43,7 @@ func NewDmoHandler(transactionService transaction.Service, userService user.Serv
 		dmoService,
 		traderService,
 		traderDmoService,
+		notificationService,
 		v,
 	}
 }
@@ -65,15 +68,52 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	inputCreateDmo := new(dmo.CreateDmoInput)
 
 	// Binds the request body to the Person struct
-	if err := c.BodyParser(inputCreateDmo); err != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+	err := c.BodyParser(inputCreateDmo)
+
+	if err != nil {
+		inputCreateDmo.Period = strings.Replace(inputCreateDmo.Period, "\"", "", -1)
+
+		formPart, errFormPart := c.MultipartForm()
+		if 	errFormPart != nil {
+			return c.Status(400).JSON(fiber.Map{
+				"error": "please check there is no data",
+			})
+		}
+
+		for _, trader := range formPart.Value["trader"] {
+			var traderArrayInt []int
+			errUnmarshal := json.Unmarshal([]byte(trader), &traderArrayInt)
+			fmt.Println(errUnmarshal)
+			inputCreateDmo.Trader = traderArrayInt
+		}
+
+		for _, barge := range formPart.Value["transaction_barge"] {
+			var bargeArrayInt []int
+			errUnmarshal := json.Unmarshal([]byte(barge), &bargeArrayInt)
+			fmt.Println(errUnmarshal)
+			inputCreateDmo.TransactionBarge = bargeArrayInt
+		}
+
+		for _, vessel := range formPart.Value["transaction_vessel"] {
+			var bargeVesselInt []int
+			errUnmarshal := json.Unmarshal([]byte(vessel), &bargeVesselInt)
+			fmt.Println(errUnmarshal)
+			inputCreateDmo.TransactionVessel = bargeVesselInt
+		}
+
+		for _, vesselAdjustment := range formPart.Value["vessel_adjustment"] {
+			var newVesselAdjustmentArray []dmo.VesselAdjustmentInput
+			errUnmarshal := json.Unmarshal([]byte(vesselAdjustment), &newVesselAdjustmentArray)
+			fmt.Println(errUnmarshal)
+
+			inputCreateDmo.VesselAdjustment = newVesselAdjustmentArray
+		}
 	}
 
 	errors := h.v.Struct(*inputCreateDmo)
 
 	if errors != nil {
+		fmt.Println(errors)
 		dataErrors := validatorfunc.ValidateStruct(errors)
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
@@ -96,7 +136,6 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 			"errors": dataErrors,
 		})
 	}
-
 	header := c.GetReqHeaders()
 
 	for _, valueVessel := range inputCreateDmo.TransactionVessel {
@@ -282,41 +321,63 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	var reqInputCreateUploadDmo transaction.InputRequestCreateUploadDmo
+	if !inputCreateDmo.IsDocumentCustom {
+		var reqInputCreateUploadDmo transaction.InputRequestCreateUploadDmo
 
-	reqInputCreateUploadDmo.Authorization = header["Authorization"]
-	reqInputCreateUploadDmo.BastNumber = fmt.Sprintf("%s/BAST/%s", splitPeriod[1], helper.CreateIdNumber(int(createDmo.ID)))
-	reqInputCreateUploadDmo.DataDmo = createDmo
-	reqInputCreateUploadDmo.DataTransactions = dataTransactions
-	reqInputCreateUploadDmo.Trader = list
-	reqInputCreateUploadDmo.TraderEndUser = endUser
+		reqInputCreateUploadDmo.Authorization = header["Authorization"]
+		reqInputCreateUploadDmo.BastNumber = fmt.Sprintf("%s/BAST/%s", splitPeriod[1], helper.CreateIdNumber(int(createDmo.ID)))
+		reqInputCreateUploadDmo.DataDmo = createDmo
+		reqInputCreateUploadDmo.DataTransactions = dataTransactions
+		reqInputCreateUploadDmo.Trader = list
+		reqInputCreateUploadDmo.TraderEndUser = endUser
 
-	_, requestJobDmoErr := h.transactionService.RequestCreateDmo(reqInputCreateUploadDmo)
+		_, requestJobDmoErr := h.transactionService.RequestCreateDmo(reqInputCreateUploadDmo)
 
-	if requestJobDmoErr != nil {
-		inputMap := make(map[string]interface{})
-		inputMap["user_id"] = claims["id"]
-		inputMap["dmo_period"] = inputCreateDmo.Period
-		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-		inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
-		inputMap["input"] = inputCreateDmo
-		inputMap["input_job"] = reqInputCreateUploadDmo
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
-			"error": requestJobDmoErr.Error(),
-		})
+		if requestJobDmoErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["user_id"] = claims["id"]
+			inputMap["dmo_period"] = inputCreateDmo.Period
+			inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
+			inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+			inputMap["input"] = inputCreateDmo
+			inputMap["input_job"] = reqInputCreateUploadDmo
+			inputJson ,_ := json.Marshal(inputMap)
+			messageJson ,_ := json.Marshal(map[string]interface{}{
+				"error": requestJobDmoErr.Error(),
+			})
 
-		createdErrLog := logs.Logs{
-			Input: inputJson,
-			Message: messageJson,
+			createdErrLog := logs.Logs{
+				Input: inputJson,
+				Message: messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			return c.Status(400).JSON(fiber.Map{
+				"message": "Dmo already has been created, but job failed",
+				"error": requestJobDmoErr.Error(),
+				"dmo": createDmo,
+			})
 		}
+	}
 
-		h.logService.CreateLogs(createdErrLog)
+	if inputCreateDmo.IsDocumentCustom {
+		fmt.Println("here")
+		formPart, _ := c.MultipartForm()
 
+		if len(formPart.File) < 3 {
+			return c.Status(400).JSON(fiber.Map{
+				"message": "dmo created but job failed", "error": "bast, reconciliation_letter, statement_letter document is required",
+			})
+		}
+		bastFile := formPart.File["bast"][0]
+		reconciliationLetterFile := formPart.File["reconciliation_letter"][0]
+		statementLetterFile := formPart.File["statement_letter"][0]
+		_, reqJobDocumentCustomErr := h.transactionService.RequestCreateCustomDmo(createDmo, bastFile, reconciliationLetterFile, statementLetterFile, header["Authorization"])
+
+		fmt.Println(reqJobDocumentCustomErr)
 		return c.Status(400).JSON(fiber.Map{
-			"message": "Dmo already has been created, but job failed",
-			"error": requestJobDmoErr.Error(),
-			"dmo": createDmo,
+			"message": "dmo created but job failed", "error": reqJobDocumentCustomErr.Error(),
 		})
 	}
 
@@ -590,7 +651,7 @@ func (h *dmoHandler) UpdateDocumentDmo(c *fiber.Ctx) error {
 
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{
-			"message": "failed to update minerba",
+			"message": "failed to update dmo",
 			"error": "record not found",
 		})
 	}
@@ -671,5 +732,463 @@ func (h *dmoHandler) UpdateDocumentDmo(c *fiber.Ctx) error {
 		})
 	}
 
+	var inputNotification notification.InputNotification
+	inputNotification.Type = "dmo"
+	inputNotification.Status = "success create document"
+	inputNotification.Period = detailDmo.Detail.Period
+	_, createdNotificationErr := h.notificationService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
+
+	if createdNotificationErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["input"] = inputUpdateDmo
+
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": createdNotificationErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error": createdNotificationErr.Error(),
+			"message": "failed to create notification update dmo",
+		})
+	}
+
 	return c.Status(200).JSON(updateDocumentDmo)
+}
+
+func (h *dmoHandler) UpdateIsDownloadedDocumentDmo(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	id := c.Params("id")
+
+	idInt, err := strconv.Atoi(id)
+
+	dmoId := uint(idInt)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"message": "failed to update downloaded dmo",
+			"error": "record not found",
+		})
+	}
+
+	var isBast bool
+	var isStatementLetter bool
+	var isReconciliationLetter bool
+
+	typeDocument := c.Params("type")
+
+	if typeDocument != "bast" && typeDocument != "statement_letter" && typeDocument != "reconciliation_letter" {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["type"] = typeDocument
+		inputMap["dmo_id"] = idInt
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"message": "failed to update downloaded dmo",
+			"error": "type not found",
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+			DmoId: &dmoId,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"message": "failed to update downloaded dmo",
+			"error": "type not found",
+		})
+	}
+
+	if typeDocument == "bast" {
+		isBast = true
+	}
+
+	if typeDocument == "statement_letter" {
+		isStatementLetter = true
+	}
+
+	if typeDocument == "reconciliation_letter" {
+		isReconciliationLetter = true
+	}
+
+	updateDownloadedDocumentDmo, updateDownloadedDocumentDmoErr := h.historyService.UpdateIsDownloadedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, idInt, uint(claims["id"].(float64)))
+
+	if updateDownloadedDocumentDmoErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["type"] = typeDocument
+		inputMap["dmo_id"] = idInt
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": updateDownloadedDocumentDmoErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+			DmoId: &dmoId,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		status := 400
+
+		if updateDownloadedDocumentDmoErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"message": "failed to update downloaded dmo",
+			"error": updateDownloadedDocumentDmoErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(updateDownloadedDocumentDmo)
+}
+
+func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	id := c.Params("id")
+
+	idInt, err := strconv.Atoi(id)
+
+	dmoId := uint(idInt)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"message": "failed to update signed dmo",
+			"error": "record not found",
+		})
+	}
+
+	var isBast bool
+	var isStatementLetter bool
+	var isReconciliationLetter bool
+
+	dataDmo, dataDmoErr := h.dmoService.GetDataDmo(idInt)
+
+	if dataDmoErr != nil {
+		status := 400
+
+		if dataDmoErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"message": "failed to update signed dmo",
+			"error": dataDmoErr.Error(),
+		})
+	}
+
+	var fileName string
+
+	fileName = *dataDmo.IdNumber
+
+
+
+	file, errFormFile := c.FormFile("document")
+
+	if errFormFile != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "failed to update signed dmo",
+			"error": errFormFile.Error(),
+		})
+	}
+
+	typeDocument := c.Params("type")
+
+	if typeDocument != "bast" && typeDocument != "statement_letter" && typeDocument != "reconciliation_letter" {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["type"] = typeDocument
+		inputMap["dmo_id"] = idInt
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"message": "failed to update signed dmo",
+			"error": "type not found",
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+			DmoId: &dmoId,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"message": "failed to update signed dmo",
+			"error": "type not found",
+		})
+	}
+
+	if typeDocument == "bast" {
+		isBast = true
+		fileName += "/signed_bast.pdf"
+	}
+
+	if typeDocument == "statement_letter" {
+		isStatementLetter = true
+		fileName += "/signed_surat_pernyataan.pdf"
+	}
+
+	if typeDocument == "reconciliation_letter" {
+		isReconciliationLetter = true
+		fileName += "/signed_berita_acara.pdf"
+	}
+
+	up, uploadErr := awshelper.UploadDocument(file, fileName)
+
+	if uploadErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["file"] = file
+		inputMap["document_type"] = typeDocument
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_id"] = idInt
+
+		inputJson , _ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": uploadErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			DmoId: &dmoId,
+			Input: inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"message": "failed to update signed dmo",
+			"error": uploadErr.Error(),
+		})
+	}
+
+	updateSignedDocumentDmo, updateSignedDocumentDmoErr := h.historyService.UpdateTrueIsSignedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, idInt, uint(claims["id"].(float64)), up.Location)
+
+	if updateSignedDocumentDmoErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["type"] = typeDocument
+		inputMap["dmo_id"] = idInt
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": updateSignedDocumentDmoErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+			DmoId: &dmoId,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		status := 400
+
+		if updateSignedDocumentDmoErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"message": "failed to update signed dmo",
+			"error": updateSignedDocumentDmoErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(updateSignedDocumentDmo)
+}
+
+func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	id := c.Params("id")
+
+	idInt, err := strconv.Atoi(id)
+
+	dmoId := uint(idInt)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"message": "failed to update signed dmo",
+			"error": "record not found",
+		})
+	}
+
+	var isBast bool
+	var isStatementLetter bool
+	var isReconciliationLetter bool
+
+	dataDmo, dataDmoErr := h.dmoService.GetDataDmo(idInt)
+
+	if dataDmoErr != nil {
+		status := 400
+
+		if dataDmoErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"message": "failed to update signed dmo",
+			"error": dataDmoErr.Error(),
+		})
+	}
+
+	var fileName string
+
+	fileName = *dataDmo.IdNumber
+
+	typeDocument := c.Params("type")
+
+	if typeDocument != "bast" && typeDocument != "statement_letter" && typeDocument != "reconciliation_letter" {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["type"] = typeDocument
+		inputMap["dmo_id"] = idInt
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"message": "failed to update signed dmo",
+			"error": "type not found",
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+			DmoId: &dmoId,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"message": "failed to update signed dmo",
+			"error": "type not found",
+		})
+	}
+
+	if typeDocument == "bast" {
+		isBast = true
+		fileName += "/signed_bast.pdf"
+	}
+
+	if typeDocument == "statement_letter" {
+		isStatementLetter = true
+		fileName += "/signed_surat_pernyataan.pdf"
+	}
+
+	if typeDocument == "reconciliation_letter" {
+		isReconciliationLetter = true
+		fileName += "/signed_berita_acara.pdf"
+	}
+
+	deleteUpload, deleteUploadErr := awshelper.DeleteDocument(fileName)
+
+	if deleteUploadErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["document_type"] = typeDocument
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_id"] = idInt
+		inputMap["response"] = deleteUpload
+		inputJson , _ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": deleteUploadErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			DmoId: &dmoId,
+			Input: inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"message": "failed to update signed dmo",
+			"error": deleteUploadErr.Error(),
+		})
+	}
+
+	updateSignedDocumentDmo, updateSignedDocumentDmoErr := h.historyService.UpdateFalseIsSignedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, idInt, uint(claims["id"].(float64)))
+
+	if updateSignedDocumentDmoErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["type"] = typeDocument
+		inputMap["dmo_id"] = idInt
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": updateSignedDocumentDmoErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+			DmoId: &dmoId,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		status := 400
+
+		if updateSignedDocumentDmoErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"message": "failed to update signed dmo",
+			"error": updateSignedDocumentDmoErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(updateSignedDocumentDmo)
 }

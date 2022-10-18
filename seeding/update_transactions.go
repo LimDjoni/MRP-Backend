@@ -13,5 +13,7 @@ func UpdateTransactionsRoyalty(db *gorm.DB) {
 		"payment_dp_royalty_billing_code" : nil,
 	})
 
+	db.Unscoped().Model(&transaction.Transaction{}).Where("is_not_claim is NULL").Update("is_not_claim", false)
+
 	return
 }

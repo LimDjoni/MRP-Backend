@@ -7,13 +7,13 @@ type VesselAdjustmentInput struct {
 }
 
 type CreateDmoInput struct {
-	Period	string `json:"period" validate:"PeriodValidation,required"`
-	TransactionBarge []int `json:"transaction_barge"`
-	TransactionVessel []int `json:"transaction_vessel"`
-	Trader []int `json:"trader" validate:"required,min=1"`
-	EndUser	int `json:"end_user" validate:"required"`
-	VesselAdjustment []VesselAdjustmentInput `json:"vessel_adjustment"`
-	IsDocumentCustom bool `json:"is_document_custom"`
+	Period	string `form:"period" json:"period" validate:"PeriodValidation,required"`
+	TransactionBarge []int `form:"transaction_barge" json:"transaction_barge"`
+	TransactionVessel []int `form:"transaction_vessel" json:"transaction_vessel"`
+	Trader []int `form:"trader" json:"trader" validate:"required,min=1"`
+	EndUser	int `form:"end_user" json:"end_user" validate:"required"`
+	VesselAdjustment []VesselAdjustmentInput `form:"vessel_adjustment" json:"vessel_adjustment"`
+	IsDocumentCustom bool `form:"is_document_custom" json:"is_document_custom"`
 }
 
 type InputUpdateDocumentDmo struct {

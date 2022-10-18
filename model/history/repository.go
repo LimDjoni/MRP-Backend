@@ -22,11 +22,15 @@ type Repository interface {
 	UpdateTransactionDN (idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
 	UploadDocumentTransactionDN (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error)
 	CreateMinerba (period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error)
+	UpdateMinerba (id int, updateTransaction []int, userId uint) (minerba.Minerba, error)
 	DeleteMinerba (idMinerba int, userId uint) (bool, error)
 	UpdateDocumentMinerba(id int, documentLink minerba.InputUpdateDocumentMinerba, userId uint) (minerba.Minerba, error)
 	CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string, userId uint) (dmo.Dmo, error)
 	DeleteDmo (idDmo int, userId uint) (bool, error)
 	UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocumentDmo, userId uint) (dmo.Dmo, error)
+	UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error)
+	UpdateTrueIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint, location string) (dmo.Dmo, error)
+	UpdateFalseIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error)
 }
 
 type repository struct {
@@ -441,6 +445,10 @@ func (r *repository) CreateMinerba (period string, baseIdNumber string, updateTr
 		return createdMinerba, errors.New("please check some of transactions not found")
 	}
 
+	for _, v := range transactions {
+		createdMinerba.Quantity += v.Quantity
+	}
+
 	errCreateMinerba := tx.Create(&createdMinerba).Error
 
 	if errCreateMinerba != nil {
@@ -479,6 +487,108 @@ func (r *repository) CreateMinerba (period string, baseIdNumber string, updateTr
 
 	tx.Commit()
 	return createdMinerba, nil
+}
+
+func (r *repository) UpdateMinerba (id int, updateTransaction []int, userId uint) (minerba.Minerba, error) {
+	var updatedMinerba minerba.Minerba
+	var quantityMinerba float64
+
+	historyBefore := make(map[string]interface{})
+	historyAfter := make(map[string]interface{})
+	tx := r.db.Begin()
+
+	findMinerbaErr := tx.Where("id = ?", id).First(&updatedMinerba).Error
+
+	if findMinerbaErr != nil {
+		return updatedMinerba, findMinerbaErr
+	}
+
+	historyBefore["minerba"] = updatedMinerba
+
+	var beforeTransaction []transaction.Transaction
+	findTransactionBeforeErr := tx.Where("minerba_id = ?", id).Find(&beforeTransaction).Error
+
+	if findTransactionBeforeErr != nil {
+		return updatedMinerba, findTransactionBeforeErr
+	}
+
+	var transactionBefore []uint
+
+	for _, v := range beforeTransaction {
+		transactionBefore = append(transactionBefore, v.ID)
+	}
+
+	historyBefore["transactions"] = transactionBefore
+
+	errUpdMinerbaNil := tx.Model(&beforeTransaction).Where("minerba_id = ?", id).Update("minerba_id", nil).Error
+
+	if errUpdMinerbaNil != nil {
+		tx.Rollback()
+		return updatedMinerba, errUpdMinerbaNil
+	}
+
+	var transactions []transaction.Transaction
+	findTransactionsErr := tx.Where("id IN ?", updateTransaction).Find(&transactions).Error
+
+	if findTransactionsErr != nil {
+		tx.Rollback()
+		return updatedMinerba, findTransactionsErr
+	}
+
+	if len(transactions) != len(updateTransaction) {
+		tx.Rollback()
+		return updatedMinerba, errors.New("please check some of transactions not found")
+	}
+
+	for _, v := range transactions {
+		quantityMinerba += v.Quantity
+	}
+
+	errUpdateMinerba := tx.Model(&updatedMinerba).Update("quantity", quantityMinerba).Error
+
+	if errUpdateMinerba != nil {
+		tx.Rollback()
+		return updatedMinerba, errUpdateMinerba
+	}
+
+	historyAfter["minerba"] = updatedMinerba
+	historyAfter["transactions"] = updateTransaction
+
+	updateTransactionErr := tx.Table("transactions").Where("id IN ?", updateTransaction).Update("minerba_id", id).Error
+
+	if updateTransactionErr != nil {
+		tx.Rollback()
+		return updatedMinerba, updateTransactionErr
+	}
+
+	var history History
+	beforeData , errorBeforeDataJsonMarshal := json.Marshal(historyBefore)
+	afterData , errorAfterDataJsonMarshal := json.Marshal(historyAfter)
+
+	if errorBeforeDataJsonMarshal != nil {
+		tx.Rollback()
+		return updatedMinerba, errorBeforeDataJsonMarshal
+	}
+
+	if errorAfterDataJsonMarshal != nil {
+		tx.Rollback()
+		return updatedMinerba, errorAfterDataJsonMarshal
+	}
+
+	history.MinerbaId = &updatedMinerba.ID
+	history.Status = "Updated Minerba Report"
+	history.UserId = userId
+	history.AfterData = afterData
+	history.BeforeData = beforeData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return updatedMinerba, createHistoryErr
+	}
+
+	tx.Commit()
+	return updatedMinerba, nil
 }
 
 func (r *repository) DeleteMinerba (idMinerba int, userId uint) (bool, error) {
@@ -848,4 +958,201 @@ func (r *repository) UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocum
 
 	tx.Commit()
 	return  dmoUpdate, nil
+}
+
+func(r *repository) UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error) {
+	var dmoUpdate dmo.Dmo
+
+	tx := r.db.Begin()
+
+	findErr := tx.Where("id = ?", id).First(&dmoUpdate).Error
+
+	if findErr != nil {
+		tx.Rollback()
+		return dmoUpdate, findErr
+	}
+
+	beforeData , errorBeforeDataJsonMarshal := json.Marshal(dmoUpdate)
+
+	if errorBeforeDataJsonMarshal != nil {
+		tx.Rollback()
+		return dmoUpdate, errorBeforeDataJsonMarshal
+	}
+
+	var field string
+
+	if isBast {
+		field = "is_bast_document_downloaded"
+	}
+
+	if isStatementLetter {
+		field = "is_statement_letter_downloaded"
+	}
+
+	if isReconciliationLetter {
+		field = "is_reconciliation_letter_downloaded"
+	}
+
+	updateErr := tx.Model(&dmoUpdate).Where("id = ?", id).Update(field, true).Error
+
+	if findErr != nil {
+		tx.Rollback()
+		return dmoUpdate, updateErr
+	}
+
+	var history History
+
+	history.DmoId = &dmoUpdate.ID
+	history.UserId = userId
+	history.Status = fmt.Sprintf("Update %v dmo", field)
+
+	afterData, _ := json.Marshal(dmoUpdate)
+	history.BeforeData = beforeData
+	history.AfterData = afterData
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return dmoUpdate, createHistoryErr
+	}
+
+	tx.Commit()
+	return dmoUpdate, nil
+}
+
+func(r *repository) UpdateTrueIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint, location string) (dmo.Dmo, error) {
+	var dmoUpdate dmo.Dmo
+
+	tx := r.db.Begin()
+
+	findErr := tx.Where("id = ?", id).First(&dmoUpdate).Error
+
+	if findErr != nil {
+		tx.Rollback()
+		return dmoUpdate, findErr
+	}
+
+	beforeData , errorBeforeDataJsonMarshal := json.Marshal(dmoUpdate)
+
+	if errorBeforeDataJsonMarshal != nil {
+		tx.Rollback()
+		return dmoUpdate, errorBeforeDataJsonMarshal
+	}
+
+	var field string
+	updatesDmo := make(map[string]interface{})
+
+	if isBast {
+		field = "bast"
+		updatesDmo["is_bast_document_signed"] = true
+		updatesDmo["signed_bast_letter_document_link"] = location
+	}
+
+	if isStatementLetter {
+		field = "statement_letter"
+		updatesDmo["is_statement_letter_signed"] = true
+		updatesDmo["signed_statement_letter_document_link"] = location
+	}
+
+	if isReconciliationLetter {
+		field = "reconciliation_letter"
+		updatesDmo["is_reconciliation_letter_signed"] = true
+		updatesDmo["signed_reconciliation_letter_document_link"] = location
+	}
+
+	updateErr := tx.Model(&dmoUpdate).Where("id = ?", id).Updates(updatesDmo).Error
+
+	if findErr != nil {
+		tx.Rollback()
+		return dmoUpdate, updateErr
+	}
+
+	var history History
+
+	history.DmoId = &dmoUpdate.ID
+	history.UserId = userId
+	history.Status = fmt.Sprintf("Update %v dmo", field)
+
+	afterData, _ := json.Marshal(dmoUpdate)
+	history.BeforeData = beforeData
+	history.AfterData = afterData
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return dmoUpdate, createHistoryErr
+	}
+
+	tx.Commit()
+	return dmoUpdate, nil
+}
+
+func(r *repository) UpdateFalseIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error) {
+	var dmoUpdate dmo.Dmo
+
+	tx := r.db.Begin()
+
+	findErr := tx.Where("id = ?", id).First(&dmoUpdate).Error
+
+	if findErr != nil {
+		tx.Rollback()
+		return dmoUpdate, findErr
+	}
+
+	beforeData , errorBeforeDataJsonMarshal := json.Marshal(dmoUpdate)
+
+	if errorBeforeDataJsonMarshal != nil {
+		tx.Rollback()
+		return dmoUpdate, errorBeforeDataJsonMarshal
+	}
+
+	var field string
+	updatesDmo := make(map[string]interface{})
+
+	if isBast {
+		field = "signed_bast false"
+		updatesDmo["is_bast_document_signed"] = false
+		updatesDmo["signed_bast_letter_document_link"] = nil
+	}
+
+	if isStatementLetter {
+		field = "signed_statement_letter false"
+		updatesDmo["is_statement_letter_signed"] = false
+		updatesDmo["signed_statement_letter_document_link"] = nil
+	}
+
+	if isReconciliationLetter {
+		field = "signed_reconciliation_letter false"
+		updatesDmo["is_reconciliation_letter_signed"] = false
+		updatesDmo["signed_reconciliation_letter_document_link"] = nil
+	}
+
+	updateErr := tx.Model(&dmoUpdate).Where("id = ?", id).Updates(updatesDmo).Error
+
+	if findErr != nil {
+		tx.Rollback()
+		return dmoUpdate, updateErr
+	}
+
+	var history History
+
+	history.DmoId = &dmoUpdate.ID
+	history.UserId = userId
+	history.Status = fmt.Sprintf("Update %v dmo", field)
+
+	afterData, _ := json.Marshal(dmoUpdate)
+	history.BeforeData = beforeData
+	history.AfterData = afterData
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return dmoUpdate, createHistoryErr
+	}
+
+	tx.Commit()
+	return dmoUpdate, nil
 }

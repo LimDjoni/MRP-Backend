@@ -66,6 +66,7 @@ type DataTransactionInput struct {
 	DmoBuyerName string `json:"dmo_buyer_name"`
 	DmoIndustryType string `json:"dmo_industry_type"`
 	DmoCategory string `json:"dmo_category"`
+	IsNotClaim	bool `json:"is_not_claim"`
 }
 
 type SortAndFilter struct {

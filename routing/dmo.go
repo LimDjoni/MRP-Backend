@@ -6,6 +6,7 @@ import (
 	"ajebackend/model/dmo"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
+	"ajebackend/model/notification"
 	"ajebackend/model/trader"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
@@ -38,7 +39,10 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	traderDmoRepository := traderdmo.NewRepository(db)
 	traderDmoService := traderdmo.NewService(traderDmoRepository)
 
-	dmoHandler := handler.NewDmoHandler(transactionService, userService, historyService, logService, dmoService, traderService, traderDmoService, validate)
+	notificationRepository := notification.NewRepository(db)
+	notificationService := notification.NewService(notificationRepository)
+
+	dmoHandler := handler.NewDmoHandler(transactionService, userService, historyService, logService, dmoService, traderService, traderDmoService, notificationService, validate)
 
 	dmoRouting := app.Group("/dmo")
 
@@ -59,4 +63,7 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	dmoRouting.Get("/detail/:id", dmoHandler.DetailDmo)
 	dmoRouting.Delete("/delete/:id", dmoHandler.DeleteDmo)
 	dmoRouting.Put("/update/document/:id", dmoHandler.UpdateDocumentDmo)
+	dmoRouting.Put("/update/document/downloaded/:id/:type", dmoHandler.UpdateIsDownloadedDocumentDmo)
+	dmoRouting.Put("/update/document/signed/:id/:type", dmoHandler.UpdateTrueIsSignedDmoDocument)
+	dmoRouting.Put("/update/document/not_signed/:id/:type", dmoHandler.UpdateFalseIsSignedDmoDocument)
 }
