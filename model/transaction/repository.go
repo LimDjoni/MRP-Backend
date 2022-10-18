@@ -13,6 +13,7 @@ type Repository interface {
 	DetailTransactionDN(id int) (Transaction, error)
 	ListDataDNWithoutMinerba() ([]Transaction, error)
 	CheckDataDnAndMinerba(listData []int)(bool, error)
+	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int)([]Transaction, error)
 	GetDetailMinerba(id int)(DetailMinerba, error)
 	ListDataDNWithoutDmo() ([]Transaction, error)
 	CheckDataDnAndDmo(listData []int)([]Transaction, error)
@@ -94,7 +95,7 @@ func (r *repository) DetailTransactionDN(id int) (Transaction, error) {
 func (r *repository) ListDataDNWithoutMinerba() ([]Transaction, error) {
 	var listDataDnWithoutMinerba []Transaction
 
-	errFind := r.db.Where("minerba_id is NULL AND transaction_type = ?", "DN").Find(&listDataDnWithoutMinerba).Error
+	errFind := r.db.Where("minerba_id is NULL AND transaction_type = ? AND is_not_claim = ?", "DN", false).Find(&listDataDnWithoutMinerba).Error
 
 	return listDataDnWithoutMinerba, errFind
 }
@@ -129,6 +130,38 @@ func (r *repository) CheckDataDnAndMinerba(listData []int)(bool, error) {
 	return true, nil
 }
 
+func (r *repository) CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int)([]Transaction, error) {
+	var listDnValid []Transaction
+
+	errFindValid := r.db.Where("id IN ?", listData).Find(&listDnValid).Error
+
+	if errFindValid != nil {
+		return listDnValid, errFindValid
+	}
+
+	if len(listData) != len(listDnValid) {
+		return listDnValid, errors.New("please check there is transaction not found")
+	}
+
+	var listDn []Transaction
+
+	errFind := r.db.Where("id IN ?", listData).Find(&listDn).Error
+
+	if errFind != nil {
+		return listDn, errFind
+	}
+
+	uintIdMinerba := uint(idMinerba)
+
+	for _, v := range listDn {
+		if v.MinerbaId != nil && *v.MinerbaId != uintIdMinerba {
+			return listDn, errors.New("please check there is transaction already in report")
+		}
+	}
+
+	return listDn, nil
+}
+
 func(r *repository) GetDetailMinerba(id int)(DetailMinerba, error) {
 
 	var detailMinerba DetailMinerba
@@ -159,7 +192,7 @@ func(r *repository) GetDetailMinerba(id int)(DetailMinerba, error) {
 func (r *repository) ListDataDNWithoutDmo() ([]Transaction, error) {
 	var listDataDnWithoutDmo []Transaction
 
-	errFind := r.db.Where("dmo_id is NULL AND transaction_type = ?", "DN").Find(&listDataDnWithoutDmo).Error
+	errFind := r.db.Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ?", "DN", false).Find(&listDataDnWithoutDmo).Error
 
 	return listDataDnWithoutDmo, errFind
 }

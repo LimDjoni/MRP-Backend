@@ -12,11 +12,15 @@ type Service interface {
 	UpdateTransactionDN (idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
 	UploadDocumentTransactionDN (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error)
 	CreateMinerba (period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error)
+	UpdateMinerba (id int, updateTransaction []int, userId uint) (minerba.Minerba, error)
 	DeleteMinerba (idMinerba int, userId uint) (bool, error)
 	UpdateDocumentMinerba(id int, documentLink minerba.InputUpdateDocumentMinerba, userId uint) (minerba.Minerba, error)
 	CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string, userId uint) (dmo.Dmo, error)
 	DeleteDmo (idDmo int, userId uint) (bool, error)
 	UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocumentDmo, userId uint) (dmo.Dmo, error)
+	UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error)
+	UpdateTrueIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint, location string) (dmo.Dmo, error)
+	UpdateFalseIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error)
 }
 
 type service struct {
@@ -57,6 +61,12 @@ func (s *service) CreateMinerba (period string, baseIdNumber string, updateTrans
 	return createdMinerba, createdMinerbaErr
 }
 
+func (s *service) UpdateMinerba (id int, updateTransaction []int, userId uint) (minerba.Minerba, error) {
+	updatedMinerba, updatedMinerbaErr := s.repository.UpdateMinerba(id, updateTransaction, userId)
+
+	return updatedMinerba, updatedMinerbaErr
+}
+
 func (s *service) DeleteMinerba (idMinerba int, userId uint) (bool, error) {
 	isDeletedMinerba, isDeletedMinerbaErr := s.repository.DeleteMinerba(idMinerba, userId)
 
@@ -85,4 +95,22 @@ func (s *service) UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocument
 	updateDocumentDmo, updateDocumentDmoErr := s.repository.UpdateDocumentDmo(id, documentLink, userId)
 
 	return updateDocumentDmo, updateDocumentDmoErr
+}
+
+func (s *service) UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error) {
+	updateIsDownloadedDmoDocument, updateIsDownloadedDmoDocumentErr := s.repository.UpdateIsDownloadedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, id, userId)
+
+	return updateIsDownloadedDmoDocument, updateIsDownloadedDmoDocumentErr
+}
+
+func (s *service) UpdateTrueIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint, location string) (dmo.Dmo, error) {
+	updateIsSignedDmoDocument, updateIsSignedDmoDocumentErr := s.repository.UpdateTrueIsSignedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, id, userId, location)
+
+	return updateIsSignedDmoDocument, updateIsSignedDmoDocumentErr
+}
+
+func (s *service) UpdateFalseIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error) {
+	updateIsSignedDmoDocument, updateIsSignedDmoDocumentErr := s.repository.UpdateFalseIsSignedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, id, userId)
+
+	return updateIsSignedDmoDocument, updateIsSignedDmoDocumentErr
 }

@@ -83,6 +83,7 @@ type Transaction struct {
 	COADocumentLink string `json:"coa_document_link"`
 	InvoiceAndContractDocumentLink string `json:"invoice_and_contract_document_link"`
 	LHVDocumentLink string `json:"lhv_document_link"`
+	IsNotClaim	bool `json:"is_not_claim"`
 }
 
 type InATrade struct {
