@@ -6,7 +6,7 @@ import (
 	"ajebackend/model/dmo"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
-	"ajebackend/model/notification"
+	"ajebackend/model/notificationuser"
 	"ajebackend/model/trader"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
@@ -39,10 +39,10 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	traderDmoRepository := traderdmo.NewRepository(db)
 	traderDmoService := traderdmo.NewService(traderDmoRepository)
 
-	notificationRepository := notification.NewRepository(db)
-	notificationService := notification.NewService(notificationRepository)
+	notificationUserRepository := notificationuser.NewRepository(db)
+	notificationUserService := notificationuser.NewService(notificationUserRepository)
 
-	dmoHandler := handler.NewDmoHandler(transactionService, userService, historyService, logService, dmoService, traderService, traderDmoService, notificationService, validate)
+	dmoHandler := handler.NewDmoHandler(transactionService, userService, historyService, logService, dmoService, traderService, traderDmoService, notificationUserService, validate)
 
 	dmoRouting := app.Group("/dmo")
 

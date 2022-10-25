@@ -10,6 +10,7 @@ import (
 	"ajebackend/model/minerba"
 	"ajebackend/model/minerbatransaction"
 	"ajebackend/model/notification"
+	"ajebackend/model/notificationuser"
 	"ajebackend/model/trader"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
@@ -65,6 +66,7 @@ func main() {
 			&user.User{},
 			&company.Company{},
 			&notification.Notification{},
+			&notificationuser.NotificationUser{},
 		)
 
 		db.Migrator().RenameColumn(&transaction.Transaction{}, "ship_name", "tugboat_name")
@@ -89,7 +91,6 @@ func main() {
 	errDate := validate.RegisterValidation("DateValidation", validatorfunc.CheckDateString)
 	if errDate != nil {
 		fmt.Println(errDate.Error())
-		fmt.Println("error validate date")
 	}
 
 	// Make Validation for Period
@@ -97,7 +98,6 @@ func main() {
 
 	if errPeriod != nil {
 		fmt.Println(errPeriod.Error())
-		fmt.Println("error validate period")
 	}
 
 	app := fiber.New()

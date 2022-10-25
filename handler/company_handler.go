@@ -43,9 +43,9 @@ func (h *companyHandler) ListCompany(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -73,11 +73,12 @@ func (h *companyHandler) CreateCompany(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
+
 
 	inputCreateCompany := new(company.InputCreateUpdateCompany)
 
@@ -151,9 +152,9 @@ func (h *companyHandler) UpdateCompany(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -231,11 +232,12 @@ func (h *companyHandler) DeleteCompany(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
+
 
 	id := c.Params("id")
 
@@ -317,9 +319,9 @@ func (h *companyHandler) DetailCompany(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
