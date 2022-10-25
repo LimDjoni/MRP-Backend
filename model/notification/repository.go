@@ -5,7 +5,6 @@ import (
 )
 
 type Repository interface {
-	UpdateReadNotification(userId uint) ([]Notification, error)
 	DeleteNotification(userId uint) (bool, error)
 }
 
@@ -15,24 +14,6 @@ type repository struct {
 
 func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
-}
-
-func (r *repository) UpdateReadNotification(userId uint) ([]Notification, error) {
-	var listNotification []Notification
-
-	errFind := r.db.Where("user_id = ?", userId).Find(&listNotification).Error
-
-	if errFind != nil {
-		return listNotification, errFind
-	}
-
-	updErr := r.db.Model(&listNotification).Update("is_read", true).Error
-
-	if updErr != nil {
-		return listNotification, updErr
-	}
-
-	return listNotification, nil
 }
 
 func (r *repository) DeleteNotification(userId uint) (bool, error) {
