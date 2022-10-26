@@ -5,6 +5,7 @@ import (
 	"ajebackend/helper"
 	"ajebackend/model/logs"
 	"ajebackend/model/notification"
+	"ajebackend/model/notificationuser"
 	"ajebackend/model/user"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -19,10 +20,13 @@ func NotificationRouting(db *gorm.DB, app fiber.Router, validate *validator.Vali
 	notificationRepository := notification.NewRepository(db)
 	notificationService := notification.NewService(notificationRepository)
 
+	notificationUserRepository := notificationuser.NewRepository(db)
+	notificationUserService := notificationuser.NewService(notificationUserRepository)
+
 	logsRepository := logs.NewRepository(db)
 	logsService := logs.NewService(logsRepository)
 
-	notificationHandler := handler.NewNotificationHandler(userService, notificationService, logsService, validate)
+	notificationHandler := handler.NewNotificationHandler(userService, notificationService, notificationUserService, logsService, validate)
 
 	notificationRouting := app.Group("/notification")
 

@@ -5,7 +5,6 @@ import (
 	"ajebackend/model/dmo"
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
@@ -14,6 +13,7 @@ import (
 type Service interface {
 	ListDataDN(page int, sortFilter SortAndFilter) (Pagination, error)
 	DetailTransactionDN(id int) (Transaction, error)
+	CheckDataUnique(inputTrans DataTransactionInput) (bool,bool,bool,bool)
 	ListDataDNWithoutMinerba() ([]Transaction, error)
 	CheckDataDnAndMinerba(listData []int)(bool, error)
 	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int)([]Transaction, error)
@@ -24,6 +24,8 @@ type Service interface {
 	GetDetailDmo(id int) (DetailDmo, error)
 	RequestCreateDmo(reqInput InputRequestCreateUploadDmo) (map[string]interface{}, error)
 	RequestCreateCustomDmo(dataDmo dmo.Dmo, bast *multipart.FileHeader, reconciliationLetter *multipart.FileHeader, statementLetter *multipart.FileHeader, authorization string ) (map[string]interface{}, error)
+	GetReportDetail(year int) (ReportDetailOutput, error)
+	GetReportRecap(year int) (ReportRecapOutput, error)
 }
 
 type service struct {
@@ -44,6 +46,12 @@ func (s *service) DetailTransactionDN(id int) (Transaction, error) {
 	detailTransactionDN, detailTransactionDNErr := s.repository.DetailTransactionDN(id)
 
 	return detailTransactionDN, detailTransactionDNErr
+}
+
+func (s *service) CheckDataUnique(inputTrans DataTransactionInput) (bool,bool,bool,bool) {
+	isDpRoyaltyNtpnUnique, isDpRoyaltyBillingCodeUnique, isPaymentDpRoyaltyNtpnUnique, isPaymentDpRoyaltyBillingCodeUnique := s.repository.CheckDataUnique(inputTrans)
+
+	return isDpRoyaltyNtpnUnique, isDpRoyaltyBillingCodeUnique, isPaymentDpRoyaltyNtpnUnique, isPaymentDpRoyaltyBillingCodeUnique
 }
 
 func (s *service) ListDataDNWithoutMinerba() ([]Transaction, error) {
@@ -185,7 +193,6 @@ func (s *service) RequestCreateCustomDmo(dataDmo dmo.Dmo, bast *multipart.FileHe
 
 	req, doReqErr := http.NewRequest("POST", urlPost, buf)
 
-	fmt.Println(w.FormDataContentType())
 	if req != nil {
 		req.Header.Add("Content-Type", w.FormDataContentType())
 		//req.Header.Add("Accept", "multipart/form-data")
@@ -199,7 +206,17 @@ func (s *service) RequestCreateCustomDmo(dataDmo dmo.Dmo, bast *multipart.FileHe
 
 	json.NewDecoder(resp.Body).Decode(&res)
 
-	fmt.Println(res)
-	fmt.Println(doReqErr)
 	return res, doReqErr
+}
+
+func (s *service) GetReportDetail(year int) (ReportDetailOutput, error) {
+	report, reportErr := s.repository.GetReportDetail(year)
+
+	return report, reportErr
+}
+
+func (s *service) GetReportRecap(year int) (ReportRecapOutput, error) {
+	report, reportErr := s.repository.GetReportRecap(year)
+
+	return report, reportErr
 }

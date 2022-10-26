@@ -46,9 +46,9 @@ func (h *transactionHandler) CreateTransactionDN(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -67,6 +67,48 @@ func (h *transactionHandler) CreateTransactionDN(c *fiber.Ctx) error {
 		dataErrors := validatorfunc.ValidateStruct(errors)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"errors": dataErrors,
+		})
+	}
+
+	var uniqueErrors []transaction.ErrorResponseUnique
+
+	isDpRoyaltyNtpnUnique, isDpRoyaltyBillingCodeUnique, isPaymentDpRoyaltyNtpnUnique, isPaymentDpRoyaltyBillingCodeUnique := h.transactionService.CheckDataUnique(*transactionInput)
+
+	if isDpRoyaltyNtpnUnique == true {
+		var uniqueErr transaction.ErrorResponseUnique
+		uniqueErr.FailedField = "dp_royalty_ntpn"
+		uniqueErr.Tag = "unique"
+		uniqueErr.Value = *transactionInput.DpRoyaltyNtpn
+		uniqueErrors = append(uniqueErrors, uniqueErr)
+	}
+
+	if isDpRoyaltyBillingCodeUnique == true {
+		var uniqueErr transaction.ErrorResponseUnique
+		uniqueErr.FailedField = "dp_royalty_billing_code"
+		uniqueErr.Tag = "unique"
+		uniqueErr.Value = *transactionInput.DpRoyaltyBillingCode
+		uniqueErrors = append(uniqueErrors, uniqueErr)
+	}
+
+	if isPaymentDpRoyaltyNtpnUnique == true {
+		var uniqueErr transaction.ErrorResponseUnique
+		uniqueErr.FailedField = "payment_dp_royalty_ntpn"
+		uniqueErr.Tag = "unique"
+		uniqueErr.Value = *transactionInput.PaymentDpRoyaltyNtpn
+		uniqueErrors = append(uniqueErrors, uniqueErr)
+	}
+
+	if isPaymentDpRoyaltyBillingCodeUnique == true {
+		var uniqueErr transaction.ErrorResponseUnique
+		uniqueErr.FailedField = "payment_dp_royalty_billing_code"
+		uniqueErr.Tag = "unique"
+		uniqueErr.Value = *transactionInput.PaymentDpRoyaltyBillingCode
+		uniqueErrors = append(uniqueErrors, uniqueErr)
+	}
+
+	if len(uniqueErrors) > 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": uniqueErrors,
 		})
 	}
 
@@ -104,9 +146,9 @@ func (h *transactionHandler) ListDataDN(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -161,9 +203,9 @@ func (h *transactionHandler) DetailTransactionDN(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -199,9 +241,9 @@ func (h *transactionHandler) DeleteTransactionDN(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -307,9 +349,9 @@ func (h *transactionHandler) UpdateTransactionDN(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -389,9 +431,9 @@ func (h *transactionHandler) UpdateDocumentTransactionDN (c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -504,4 +546,91 @@ func (h *transactionHandler) UpdateDocumentTransactionDN (c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(editDocument)
+}
+
+func (h *transactionHandler) GetReportDetail (c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := fiber.Map{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+
+	report, reportErr := h.transactionService.GetReportDetail(2022)
+
+	if reportErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "failed to get report",
+			"error": reportErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(report)
+}
+
+func (h *transactionHandler) GetReportRecap (c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := fiber.Map{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	reportInput := new(transaction.InputRequestGetReportRecap)
+
+	// Binds the request body to the Person struct
+	if err := c.BodyParser(reportInput); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	errors := h.v.Struct(*reportInput)
+
+	if errors != nil {
+		dataErrors := validatorfunc.ValidateStruct(errors)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": dataErrors,
+		})
+	}
+
+	report, reportErr := h.transactionService.GetReportRecap(2022)
+
+	report.ProductionPlan = reportInput.ProductionPlan
+	report.PercentageProductionObligation = reportInput.PercentageProductionObligation
+	report.ProductionObligation = reportInput.ProductionPlan * reportInput.PercentageProductionObligation / 100
+
+	percentage := report.Total / report.ProductionObligation * 100
+	report.Percentage = fmt.Sprintf("%.2f%%", percentage)
+	report.ProrateProductionPlan = fmt.Sprintf("%.2f%%", report.Total / report.ProductionPlan * 100)
+	report.FulfillmentOfProductionRealization = fmt.Sprintf("%.2f%%", report.Total / report.ProductionPlan * 100)
+	// production plan change to total production per year
+	report.FulfillmentOfProductionPlan = fmt.Sprintf("%.2f%%", report.Total / report.ProductionPlan * 100)
+	if reportErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "failed to get report",
+			"error": reportErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(report)
 }

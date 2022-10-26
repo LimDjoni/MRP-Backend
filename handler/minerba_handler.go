@@ -7,6 +7,7 @@ import (
 	"ajebackend/model/logs"
 	"ajebackend/model/minerba"
 	"ajebackend/model/notification"
+	"ajebackend/model/notificationuser"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 	"ajebackend/validatorfunc"
@@ -26,18 +27,18 @@ type minerbaHandler struct {
 	historyService history.Service
 	logService logs.Service
 	minerbaService minerba.Service
-	notificationService notification.Service
+	notificationUserService notificationuser.Service
 	v *validator.Validate
 }
 
-func NewMinerbaHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, minerbaService minerba.Service, notificationService notification.Service, v *validator.Validate) *minerbaHandler {
+func NewMinerbaHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, minerbaService minerba.Service, notificationUserService notificationuser.Service, v *validator.Validate) *minerbaHandler {
 	return &minerbaHandler{
 		transactionService,
 		userService,
 		historyService,
 		logService,
 		minerbaService,
-		notificationService,
+		notificationUserService,
 		v,
 	}
 }
@@ -53,9 +54,9 @@ func (h *minerbaHandler) ListDataDNWithoutMinerba(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -83,9 +84,9 @@ func (h *minerbaHandler) CreateMinerba(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -204,9 +205,9 @@ func (h *minerbaHandler) UpdateMinerba(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -326,6 +327,37 @@ func (h *minerbaHandler) UpdateMinerba(c *fiber.Ctx) error {
 		})
 	}
 
+	var createNotif notification.InputNotification
+
+	createNotif.Type = "minerba"
+	createNotif.Status = "success update minerba"
+	createNotif.Period = updateMinerba.Period
+
+	_, createNotificationUpdateMinerbaErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)))
+
+	if createNotificationUpdateMinerbaErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["minerba_id"] = idInt
+		inputMap["list_dn"] = inputUpdateMinerba.ListDataDn
+
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": createNotificationUpdateMinerbaErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error": createNotificationUpdateMinerbaErr.Error(),
+		})
+	}
+
 	return c.Status(200).JSON(updateMinerba)
 }
 
@@ -340,9 +372,9 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -436,6 +468,36 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 
 	}
 
+	var createNotif notification.InputNotification
+
+	createNotif.Type = "minerba"
+	createNotif.Status = "success delete minerba"
+	createNotif.Period = dataMinerba.Period
+
+	_, createNotificationDeleteMinerbaErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)))
+
+	if createNotificationDeleteMinerbaErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["minerba_id"] = idInt
+		inputMap["minerba_period"] = dataMinerba.Period
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": createNotificationDeleteMinerbaErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error": createNotificationDeleteMinerbaErr.Error(),
+		})
+	}
+
 	return c.Status(200).JSON(fiber.Map{
 		"message": "success delete minerba",
 	})
@@ -452,9 +514,9 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -554,7 +616,7 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 	inputNotification.Type = "minerba"
 	inputNotification.Status = "success create document"
 	inputNotification.Period = detailMinerba.Detail.Period
-	_, createdNotificationErr := h.notificationService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
 
 	if createdNotificationErr != nil {
 		inputMap := make(map[string]interface{})
@@ -593,9 +655,9 @@ func (h *minerbaHandler) ListMinerba(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -635,9 +697,9 @@ func (h *minerbaHandler) DetailMinerba(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -678,9 +740,9 @@ func (h *minerbaHandler) RequestCreateExcelMinerba(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 

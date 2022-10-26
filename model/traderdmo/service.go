@@ -7,6 +7,7 @@ import (
 type Service interface {
 	DmoIdListWithTraderId(idTrader int) ([]TraderDmo, error)
 	TraderListWithDmoId(idDmo int) ([]trader.Trader, trader.Trader, error)
+	GetTraderEndUserDmo(idDmo int) (trader.Trader, error)
 }
 
 type service struct {
@@ -27,4 +28,10 @@ func (s *service) TraderListWithDmoId(idDmo int) ([]trader.Trader, trader.Trader
 	listTrader, endUser, dmoListWithDmoIdErr := s.repository.TraderListWithDmoId(idDmo)
 
 	return listTrader, endUser, dmoListWithDmoIdErr
+}
+
+func (s *service) GetTraderEndUserDmo(idDmo int) (trader.Trader, error) {
+	traderEndUserDmo, traderEndUserDmoErr := s.repository.GetTraderEndUserDmo(idDmo)
+
+	return traderEndUserDmo, traderEndUserDmoErr
 }

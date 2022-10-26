@@ -3,6 +3,7 @@ package handler
 import (
 	"ajebackend/model/logs"
 	"ajebackend/model/notification"
+	"ajebackend/model/notificationuser"
 	"ajebackend/model/user"
 	"ajebackend/validatorfunc"
 	"encoding/json"
@@ -15,14 +16,16 @@ import (
 type notificationHandler struct {
 	userService user.Service
 	notificationService notification.Service
+	notificationUserService notificationuser.Service
 	logsService logs.Service
 	v *validator.Validate
 }
 
-func NewNotificationHandler(userService user.Service, notificationService notification.Service, logsService logs.Service, v *validator.Validate) *notificationHandler {
+func NewNotificationHandler(userService user.Service, notificationService notification.Service, notificationUserService notificationuser.Service, logsService logs.Service, v *validator.Validate) *notificationHandler {
 	return &notificationHandler{
 		userService,
 		notificationService,
+		notificationUserService,
 		logsService,
 		v,
 	}
@@ -39,9 +42,9 @@ func (h *notificationHandler) CreateNotification(c *fiber.Ctx) error  {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -79,7 +82,7 @@ func (h *notificationHandler) CreateNotification(c *fiber.Ctx) error  {
 		})
 	}
 
-	createdNotification, createdNotificationErr := h.notificationService.CreateNotification(*inputCreateNotification, uint(claims["id"].(float64)))
+	createdNotification, createdNotificationErr := h.notificationUserService.CreateNotification(*inputCreateNotification, uint(claims["id"].(float64)))
 
 	if createdNotificationErr != nil {
 		inputMap := make(map[string]interface{})
@@ -117,13 +120,13 @@ func (h *notificationHandler) GetNotification(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	listNotification, listNotificationErr := h.notificationService.GetNotification(uint(claims["id"].(float64)))
+	listNotification, listNotificationErr := h.notificationUserService.GetNotification(uint(claims["id"].(float64)))
 
 	if listNotificationErr != nil && listNotificationErr.Error() != "record not found" {
 		return c.Status(400).JSON(fiber.Map{
@@ -147,13 +150,13 @@ func (h *notificationHandler) UpdateNotification(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	updatedNotification, updatedNotificationErr := h.notificationService.UpdateReadNotification(uint(claims["id"].(float64)))
+	updatedNotification, updatedNotificationErr := h.notificationUserService.UpdateReadNotification(uint(claims["id"].(float64)))
 
 	if updatedNotificationErr != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -178,9 +181,9 @@ func (h *notificationHandler) DeleteNotification(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 

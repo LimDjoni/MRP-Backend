@@ -7,6 +7,7 @@ import (
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
 	"ajebackend/model/notification"
+	"ajebackend/model/notificationuser"
 	"ajebackend/model/trader"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
@@ -30,11 +31,11 @@ type dmoHandler struct {
 	dmoService dmo.Service
 	traderService trader.Service
 	traderDmoService traderdmo.Service
-	notificationService notification.Service
+	notificationUserService notificationuser.Service
 	v *validator.Validate
 }
 
-func NewDmoHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, dmoService dmo.Service, traderService trader.Service, traderDmoService traderdmo.Service, notificationService notification.Service, v *validator.Validate) *dmoHandler {
+func NewDmoHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, dmoService dmo.Service, traderService trader.Service, traderDmoService traderdmo.Service, notificationUserService notificationuser.Service, v *validator.Validate) *dmoHandler {
 	return &dmoHandler{
 		transactionService,
 		userService,
@@ -43,7 +44,7 @@ func NewDmoHandler(transactionService transaction.Service, userService user.Serv
 		dmoService,
 		traderService,
 		traderDmoService,
-		notificationService,
+		notificationUserService,
 		v,
 	}
 }
@@ -59,9 +60,9 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -113,7 +114,6 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	errors := h.v.Struct(*inputCreateDmo)
 
 	if errors != nil {
-		fmt.Println(errors)
 		dataErrors := validatorfunc.ValidateStruct(errors)
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
@@ -174,14 +174,6 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	if checkEndUserErr != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"error": "trader end user " + checkEndUserErr.Error(),
-		})
-	}
-
-	_, findDmoErr := h.dmoService.GetReportDmoWithPeriod(inputCreateDmo.Period)
-
-	if findDmoErr == nil {
-		return c.Status(400).JSON(fiber.Map{
-			"error": "report with same period already exist",
 		})
 	}
 
@@ -362,7 +354,6 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	}
 
 	if inputCreateDmo.IsDocumentCustom {
-		fmt.Println("here")
 		formPart, _ := c.MultipartForm()
 
 		if len(formPart.File) < 3 {
@@ -375,10 +366,11 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		statementLetterFile := formPart.File["statement_letter"][0]
 		_, reqJobDocumentCustomErr := h.transactionService.RequestCreateCustomDmo(createDmo, bastFile, reconciliationLetterFile, statementLetterFile, header["Authorization"])
 
-		fmt.Println(reqJobDocumentCustomErr)
-		return c.Status(400).JSON(fiber.Map{
-			"message": "dmo created but job failed", "error": reqJobDocumentCustomErr.Error(),
-		})
+		if reqJobDocumentCustomErr != nil {
+			return c.Status(400).JSON(fiber.Map{
+				"message": "dmo created but job failed", "error": reqJobDocumentCustomErr.Error(),
+			})
+		}
 	}
 
 	return c.Status(201).JSON(createDmo)
@@ -395,9 +387,9 @@ func (h *dmoHandler) ListDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -437,9 +429,9 @@ func (h *dmoHandler) DetailDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -480,9 +472,9 @@ func (h *dmoHandler) ListDataDNWithoutDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -510,9 +502,9 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -576,6 +568,7 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 		})
 	}
 
+	endUserDmo, _ := h.traderDmoService.GetTraderEndUserDmo(idInt)
 
 	_, deleteDmoErr := h.historyService.DeleteDmo(idInt, uint(claims["id"].(float64)))
 
@@ -609,7 +602,36 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 		})
 	}
 
+	var createNotif notification.InputNotification
 
+	createNotif.Type = "dmo"
+	createNotif.Status = "success delete dmo"
+	createNotif.Period = findDmo.Detail.Period
+	createNotif.EndUser = endUserDmo.Company.CompanyName
+
+	_, createNotificationDeleteDmoErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)))
+
+	if createNotificationDeleteDmoErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_id"] = idInt
+		inputMap["dmo_period"] = findDmo.Detail.Period
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": createNotificationDeleteDmoErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error": createNotificationDeleteDmoErr.Error(),
+		})
+	}
 
 	return c.Status(200).JSON(fiber.Map{
 		"message": "success delete dmo",
@@ -627,9 +649,9 @@ func (h *dmoHandler) UpdateDocumentDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -639,7 +661,7 @@ func (h *dmoHandler) UpdateDocumentDmo(c *fiber.Ctx) error {
 	if err := c.BodyParser(inputUpdateDmo); err != nil {
 		return c.Status(400).JSON(fiber.Map{
 			"error": err.Error(),
-			"message": "failed to update minerba",
+			"message": "failed to update dmo",
 		})
 	}
 
@@ -734,9 +756,15 @@ func (h *dmoHandler) UpdateDocumentDmo(c *fiber.Ctx) error {
 
 	var inputNotification notification.InputNotification
 	inputNotification.Type = "dmo"
-	inputNotification.Status = "success create document"
+
+	if detailDmo.Detail.IsDocumentCustom {
+		inputNotification.Status = "success upload document custom"
+	} else {
+		inputNotification.Status = "success create document"
+	}
+
 	inputNotification.Period = detailDmo.Detail.Period
-	_, createdNotificationErr := h.notificationService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
 
 	if createdNotificationErr != nil {
 		inputMap := make(map[string]interface{})
@@ -775,9 +803,9 @@ func (h *dmoHandler) UpdateIsDownloadedDocumentDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -882,9 +910,9 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -922,8 +950,6 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 	var fileName string
 
 	fileName = *dataDmo.IdNumber
-
-
 
 	file, errFormFile := c.FormFile("document")
 
@@ -1035,6 +1061,41 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 		})
 	}
 
+	endUserDmo, _ := h.traderDmoService.GetTraderEndUserDmo(idInt)
+
+	var inputNotification notification.InputNotification
+	inputNotification.Type = "dmo"
+	inputNotification.Status = "success signed document"
+	inputNotification.Period = dataDmo.Period
+	inputNotification.Document = typeDocument
+	inputNotification.EndUser = endUserDmo.Company.CompanyName
+
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
+
+	if createdNotificationErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["type"] = typeDocument
+		inputMap["dmo_id"] = idInt
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": createdNotificationErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+			DmoId: &dmoId,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"message": "failed to create notification update signed dmo",
+			"error": createdNotificationErr.Error(),
+		})
+	}
+
 	return c.Status(200).JSON(updateSignedDocumentDmo)
 }
 
@@ -1049,9 +1110,9 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -1187,6 +1248,41 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 		return c.Status(status).JSON(fiber.Map{
 			"message": "failed to update signed dmo",
 			"error": updateSignedDocumentDmoErr.Error(),
+		})
+	}
+
+	endUserDmo, _ := h.traderDmoService.GetTraderEndUserDmo(idInt)
+
+	var inputNotification notification.InputNotification
+	inputNotification.Type = "dmo"
+	inputNotification.Status = "success delete signed document"
+	inputNotification.Period = dataDmo.Period
+	inputNotification.Document = typeDocument
+	inputNotification.EndUser = endUserDmo.Company.CompanyName
+
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
+
+	if createdNotificationErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["type"] = typeDocument
+		inputMap["dmo_id"] = idInt
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": createdNotificationErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+			DmoId: &dmoId,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"message": "failed to create notification delete signed dmo",
+			"error": createdNotificationErr.Error(),
 		})
 	}
 
