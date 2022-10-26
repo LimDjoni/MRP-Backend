@@ -116,9 +116,9 @@ func main() {
 		AllowHeaders: "Origin, Content-Type, Accept, Content-Length, Accept-Language, Accept-Encoding, Connection, Access-Control-Allow-Origin, Authorization",
 		MaxAge:           2592000,
 	}), logger.New(logger.Config{
-		Format:       "[${time}] ${status} - ${latency} ${method} ${path} \n query params : ${queryParams} \n body: ${body} \n response body: ${resBody}\n\n",
-		TimeFormat: "15:04:05",
-		TimeZone:   "Asia/Shanghai",
+		Format:       "[${time}] ${status} - ${latency} ${method} ${path}\n query params : ${queryParams}\n body: ${body}\n response body: ${resBody}\n\n",
+		TimeFormat: "02-Jan-2006 03:04:05 PM",
+		TimeZone:   "Asia/Jakarta",
 		Output: file,
 	}))
 
