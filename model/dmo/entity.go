@@ -15,6 +15,7 @@ type Dmo struct {
 	VesselTotalQuantity float64 `json:"vessel_total_quantity"`
 	VesselAdjustment float64 `json:"vessel_adjustment"`
 	VesselGrandTotalQuantity float64 `json:"vessel_grand_total_quantity"`
+	IsDocumentCustom bool `json:"is_document_custom"`
 	ReconciliationLetterDocumentLink *string `json:"reconciliation_letter_document_link"`
 	IsReconciliationLetterDownloaded bool `json:"is_reconciliation_letter_downloaded"`
 	IsReconciliationLetterSigned bool `json:"is_reconciliation_letter_signed"`

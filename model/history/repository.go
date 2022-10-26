@@ -702,6 +702,8 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string
 	tx := r.db.Begin()
 
 	createdDmo.Period = dmoInput.Period
+	createdDmo.IsDocumentCustom = dmoInput.IsDocumentCustom
+
 	if len(dmoInput.TransactionBarge) > 0 {
 		var bargeQuantity float64
 		barge = true

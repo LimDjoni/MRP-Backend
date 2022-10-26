@@ -10,7 +10,8 @@ type Notification struct {
 	Status string `json:"status"`
 	Type string `json:"type"`
 	Period string `json:"period"`
-	IsRead bool `json:"is_read"`
+	Document string `json:"document"`
+	EndUser string `json:"end_user"`
 	UserId uint `json:"user_id"`
-	User user.User
+	User user.User `json:"user"`
 }

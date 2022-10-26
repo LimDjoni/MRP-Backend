@@ -24,9 +24,10 @@ func NewRepository(db *gorm.DB) *repository {
 func (r *repository) RegisterUser(user RegisterUserInput) (User, error) {
 	var newUser User
 
-	newUser.Username = user.Username
+	newUser.Username = strings.ToLower(user.Username)
 	newUser.Password = user.Password
 	newUser.Email = strings.ToLower(user.Email)
+	newUser.IsActive = true
 
 	err := r.db.Create(&newUser).Error
 
@@ -68,6 +69,11 @@ func (r *repository) LoginUser(input LoginUserInput) (TokenUser, error) {
 		dataUser["email"] = username.Email
 		dataUser["id"] = username.ID
 		isValidPassword = helper.CheckPassword(input.Password, username.Password)
+	}
+
+	if username.IsActive == false && email.IsActive == false {
+
+		return tokenUser, errors.New("invalid Email / Username / Password")
 	}
 
 	if !isValidPassword {

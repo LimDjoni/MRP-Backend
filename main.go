@@ -10,6 +10,7 @@ import (
 	"ajebackend/model/minerba"
 	"ajebackend/model/minerbatransaction"
 	"ajebackend/model/notification"
+	"ajebackend/model/notificationuser"
 	"ajebackend/model/trader"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
@@ -21,8 +22,10 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"log"
 	"os"
 )
 
@@ -65,6 +68,7 @@ func main() {
 			&user.User{},
 			&company.Company{},
 			&notification.Notification{},
+			&notificationuser.NotificationUser{},
 		)
 
 		db.Migrator().RenameColumn(&transaction.Transaction{}, "ship_name", "tugboat_name")
@@ -79,7 +83,6 @@ func main() {
 		if errDropTable != nil {
 			fmt.Println(errDropTable)
 		}
-
 		fmt.Println(errMigrate)
 	}
 
@@ -89,7 +92,6 @@ func main() {
 	errDate := validate.RegisterValidation("DateValidation", validatorfunc.CheckDateString)
 	if errDate != nil {
 		fmt.Println(errDate.Error())
-		fmt.Println("error validate date")
 	}
 
 	// Make Validation for Period
@@ -97,10 +99,15 @@ func main() {
 
 	if errPeriod != nil {
 		fmt.Println(errPeriod.Error())
-		fmt.Println("error validate period")
 	}
 
 	app := fiber.New()
+
+	file, err := os.OpenFile("./logging.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+	defer file.Close()
 
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     "*",
@@ -108,6 +115,11 @@ func main() {
 		AllowCredentials: true,
 		AllowHeaders: "Origin, Content-Type, Accept, Content-Length, Accept-Language, Accept-Encoding, Connection, Access-Control-Allow-Origin, Authorization",
 		MaxAge:           2592000,
+	}), logger.New(logger.Config{
+		Format:       "[${time}] ${status} - ${latency} ${method} ${path}\n query params : ${queryParams}\n body: ${body}\n response body: ${resBody}\n\n",
+		TimeFormat: "02-Jan-2006 03:04:05 PM",
+		TimeZone:   "Asia/Jakarta",
+		Output: file,
 	}))
 
 	apiV1 := app.Group("/api/v1") // /api

@@ -9,6 +9,7 @@ import (
 type Repository interface {
 	DmoIdListWithTraderId(idTrader int) ([]TraderDmo, error)
 	TraderListWithDmoId(idDmo int) ([]trader.Trader, trader.Trader, error)
+	GetTraderEndUserDmo(idDmo int) (trader.Trader, error)
 }
 
 type repository struct {
@@ -60,4 +61,16 @@ func (r *repository) TraderListWithDmoId(idDmo int) ([]trader.Trader, trader.Tra
 	}
 
 	return traderList, traderEndUser, nil
+}
+
+func (r *repository) GetTraderEndUserDmo(idDmo int) (trader.Trader, error) {
+	var endUserDmo TraderDmo
+
+	errFind := r.db.Preload("Trader.Company").Preload(clause.Associations).Where("dmo_id = ? AND is_end_user = ?", idDmo, true).First(&endUserDmo).Error
+
+	if errFind != nil {
+		return endUserDmo.Trader, errFind
+	}
+
+	return endUserDmo.Trader, nil
 }

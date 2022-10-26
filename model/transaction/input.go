@@ -96,3 +96,8 @@ type InputRequestCreateUploadDmo struct {
 	Trader	[]trader.Trader `json:"trader"`
 	TraderEndUser	trader.Trader `json:"trader_end_user"`
 }
+
+type InputRequestGetReportRecap struct {
+	ProductionPlan float64 `json:"production_plan" validate:"required"`
+	PercentageProductionObligation float64 `json:"percentage_production_obligation" validate:"required"`
+}

@@ -46,9 +46,9 @@ func (h *traderHandler) ListTrader(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -75,9 +75,9 @@ func (h *traderHandler) CreateTrader(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -160,9 +160,9 @@ func (h *traderHandler) UpdateTrader(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -256,9 +256,9 @@ func (h *traderHandler) DeleteTrader(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -345,9 +345,9 @@ func (h *traderHandler) DetailTrader(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
 
-	if checkUserErr != nil {
+	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 

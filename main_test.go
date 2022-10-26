@@ -133,9 +133,16 @@ func TestRegisterUser(t *testing.T) {
 		}
 
 		//// Verify, that the reponse body equals the expected body
-		assert.Equalf(t, test.body["username"], mapUnmarshal["username"], "register success user")
-		assert.Equalf(t, test.body["email"], mapUnmarshal["email"], "register success user")
-
+		assert.Contains(t, mapUnmarshal, "username", "register user")
+		assert.Contains(t, mapUnmarshal, "email", "register user")
+		assert.Contains(t, mapUnmarshal, "ID", "register user")
+		assert.Contains(t, mapUnmarshal, "CreatedAt", "register user")
+		assert.Contains(t, mapUnmarshal, "UpdatedAt", "register user")
+		assert.Contains(t, mapUnmarshal, "DeletedAt", "register user")
+		assert.Contains(t, mapUnmarshal, "username", "register user")
+		assert.Contains(t, mapUnmarshal, "password", "register user")
+		assert.Contains(t, mapUnmarshal, "email", "register user")
+		assert.Contains(t, mapUnmarshal, "is_active", "register user")
 	}
 }
 
@@ -3927,7 +3934,7 @@ func TestCreateNotification(t *testing.T) {
 			expectedError: false,
 			expectedCode:  201,
 			body: fiber.Map{
-				"status" : "success created",
+				"status" : "success create",
 				"type" : "dmo",
 				"period" : "Jan 2022",
 			},
@@ -3988,7 +3995,6 @@ func TestCreateNotification(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "status", "create notification")
 		assert.Contains(t, mapUnmarshal, "type", "create notification")
 		assert.Contains(t, mapUnmarshal, "period", "create notification")
-		assert.Contains(t, mapUnmarshal, "is_read", "create notification")
 		assert.Contains(t, mapUnmarshal, "user_id", "create notification")
 	}
 }
@@ -4135,77 +4141,6 @@ func TestUpdateNotification(t *testing.T) {
 	}
 }
 
-func TestDeleteNotification(t *testing.T) {
-	tests := []struct {
-		expectedError bool
-		expectedCode  int
-		token string
-	}{
-		{
-			expectedError: false,
-			expectedCode:  401,
-			token: "",
-		},
-		{
-			expectedError: false,
-			expectedCode:  401,
-			token: "afwifiwgjwigjianveri",
-		},
-		{
-			expectedError: false,
-			expectedCode:  200,
-			token: token,
-		},
-	}
-
-	db, validate := startSetup()
-	app := fiber.New()
-	apiV1 := app.Group("/api/v1") // /api
-
-	Setup(db, validate, apiV1)
-
-	for _, test := range tests {
-		req, _ := http.NewRequest(
-			"DELETE",
-			"/api/v1/notification/delete",
-			nil,
-		)
-
-		req.Header.Add("Authorization", "Bearer " + test.token)
-		req.Header.Add("Content-Type", "application/json")
-		req.Header.Add("Accept", "application/json")
-
-		// The -1 disables request latency.
-		res, err := app.Test(req, -1)
-
-		assert.Equalf(t, test.expectedError, err != nil, "delete data notification")
-		if test.expectedError {
-			continue
-		}
-
-		// Verify if the status code is as expected
-		assert.Equalf(t, test.expectedCode, res.StatusCode, "delete data notification")
-
-		// Read the response body
-		body, err := ioutil.ReadAll(res.Body)
-
-		// Ensure that the body was read correctly
-		assert.Nilf(t, err, "delete data notification")
-
-		mapUnmarshal  := make(map[string]interface{})
-
-		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
-
-		fmt.Println(errUnmarshal)
-		if res.StatusCode >= 400 {
-			continue
-		}
-
-		//// Verify, that the reponse body equals the expected body
-		assert.Contains(t, mapUnmarshal,"message", "delete data notification")
-	}
-}
-
 // Delete Dmo
 
 func TestDeleteDmo(t *testing.T) {
@@ -4281,5 +4216,169 @@ func TestDeleteDmo(t *testing.T) {
 
 		//// Verify, that the reponse body equals the expected body
 		assert.Contains(t, mapUnmarshal, "message", "delete data dmo")
+	}
+}
+
+// Report
+func TestGetReportDetail(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token string
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			token: "",
+		},
+		{
+			expectedError: false,
+			expectedCode:  401,
+			token: "afwifiwgjwigjianveri",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			token: token,
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		req, _ := http.NewRequest(
+			"GET",
+			"/api/v1/transaction/report/detail",
+			nil,
+		)
+
+		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, err := app.Test(req, -1)
+
+		assert.Equalf(t, test.expectedError, err != nil, "report transaction detail")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "report transaction detail")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "report transaction detail")
+
+		mapUnmarshal  := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		//// Verify, that the reponse body equals the expected body
+		assert.Contains(t, mapUnmarshal,"electricity", "report transaction detail")
+		assert.Contains(t, mapUnmarshal,"non_electricity", "report transaction detail")
+		assert.Contains(t, mapUnmarshal,"not_claimable", "report transaction detail")
+	}
+}
+
+func TestGetReportRecap(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token         string
+		body          map[string]interface{}
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			token:         "",
+			body:          fiber.Map{},
+		},
+		{
+			expectedError: false,
+			expectedCode:  401,
+			token:         "afwifiwgjwigjianveri",
+			body:          fiber.Map{},
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			token:         token,
+			body: fiber.Map{
+				"production_plan":                  4000000,
+				"percentage_production_obligation": 25,
+			},
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		bodyJson, err := json.Marshal(test.body)
+		var payload = bytes.NewBufferString(string(bodyJson))
+		req, _ := http.NewRequest(
+			"POST",
+			"/api/v1/transaction/report/recap",
+			payload,
+		)
+
+		req.Header.Add("Authorization", "Bearer "+test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, err := app.Test(req, -1)
+
+		assert.Equalf(t, test.expectedError, err != nil, "report transaction recap")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "report transaction recap")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "report transaction recap")
+
+		mapUnmarshal := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		//// Verify, that the reponse body equals the expected body
+		assert.Contains(t, mapUnmarshal, "electricity_total", "report transaction recap")
+		assert.Contains(t, mapUnmarshal, "non_electricity_total", "report transaction recap")
+		assert.Contains(t, mapUnmarshal, "total", "report transaction recap")
+		assert.Contains(t, mapUnmarshal, "percentage", "report transaction recap")
+		assert.Contains(t, mapUnmarshal, "rate_calories", "report transaction recap")
+		assert.Contains(t, mapUnmarshal, "production_plan", "report transaction recap")
+		assert.Contains(t, mapUnmarshal, "production_obligation", "report transaction recap")
+		assert.Contains(t, mapUnmarshal, "percentage_production_obligation", "report transaction recap")
+		assert.Contains(t, mapUnmarshal, "prorate_production_plan", "report transaction recap")
+		assert.Contains(t, mapUnmarshal, "fulfillment_of_production_plan", "report transaction recap")
+		assert.Contains(t, mapUnmarshal, "fulfillment_of_production_realization", "report transaction recap")
 	}
 }
