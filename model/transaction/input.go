@@ -100,4 +100,5 @@ type InputRequestCreateUploadDmo struct {
 type InputRequestGetReportRecap struct {
 	ProductionPlan float64 `json:"production_plan" validate:"required"`
 	PercentageProductionObligation float64 `json:"percentage_production_obligation" validate:"required"`
+	Year int `json:"year"`
 }
