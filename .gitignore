@@ -17,6 +17,8 @@
 .env
 .idea/
 
+.DS_Store
+
 bin
 go.sum
 logging.log
