@@ -4380,5 +4380,6 @@ func TestGetReportRecap(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "prorate_production_plan", "report transaction recap")
 		assert.Contains(t, mapUnmarshal, "fulfillment_of_production_plan", "report transaction recap")
 		assert.Contains(t, mapUnmarshal, "fulfillment_of_production_realization", "report transaction recap")
+		assert.Contains(t, mapUnmarshal, "year", "report transaction recap")
 	}
 }
