@@ -566,7 +566,6 @@ func (h *transactionHandler) GetReportDetail (c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-
 	report, reportErr := h.transactionService.GetReportDetail(2022)
 
 	if reportErr != nil {
