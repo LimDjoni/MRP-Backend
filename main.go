@@ -8,7 +8,6 @@ import (
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
 	"ajebackend/model/minerba"
-	"ajebackend/model/minerbatransaction"
 	"ajebackend/model/notification"
 	"ajebackend/model/notificationuser"
 	"ajebackend/model/trader"
@@ -76,13 +75,6 @@ func main() {
 		seeding.UpdateTransactionsRoyalty(db)
 		seeding.SeedingTraderData(db)
 
-		errDropTable := db.Migrator().DropTable(
-			&minerbatransaction.MinerbaTransaction{},
-		)
-
-		if errDropTable != nil {
-			fmt.Println(errDropTable)
-		}
 		fmt.Println(errMigrate)
 	}
 
