@@ -15,6 +15,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type transactionHandler struct {
@@ -613,8 +614,14 @@ func (h *transactionHandler) GetReportRecap (c *fiber.Ctx) error {
 		})
 	}
 
-	report, reportErr := h.transactionService.GetReportRecap(2022)
+	if reportInput.Year == 0 {
+		year, _, _ := time.Now().Date()
+		reportInput.Year = year
+	}
 
+	report, reportErr := h.transactionService.GetReportRecap(reportInput.Year)
+
+	report.Year = reportInput.Year
 	report.ProductionPlan = reportInput.ProductionPlan
 	report.PercentageProductionObligation = reportInput.PercentageProductionObligation
 	report.ProductionObligation = reportInput.ProductionPlan * reportInput.PercentageProductionObligation / 100

@@ -87,4 +87,5 @@ type ReportRecapOutput struct {
 	ProrateProductionPlan string `json:"prorate_production_plan"`
 	FulfillmentOfProductionPlan string `json:"fulfillment_of_production_plan"`
 	FulfillmentOfProductionRealization string `json:"fulfillment_of_production_realization"`
+	Year int `json:"year"`
 }
