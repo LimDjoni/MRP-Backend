@@ -18,14 +18,15 @@ import (
 	"ajebackend/seeding"
 	"ajebackend/validatorfunc"
 	"fmt"
+	"log"
+	"os"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
-	"os"
 )
 
 func main() {
@@ -105,13 +106,13 @@ func main() {
 		AllowOrigins:     "*",
 		AllowMethods:     "GET, POST, OPTIONS, PUT, DELETE",
 		AllowCredentials: true,
-		AllowHeaders: "Origin, Content-Type, Accept, Content-Length, Accept-Language, Accept-Encoding, Connection, Access-Control-Allow-Origin, Authorization",
+		AllowHeaders:     "Origin, Content-Type, Accept, Content-Length, Accept-Language, Accept-Encoding, Connection, Access-Control-Allow-Origin, Authorization",
 		MaxAge:           2592000,
 	}), logger.New(logger.Config{
-		Format:       "[${time}] ${status} - ${latency} ${method} ${path}\n query params : ${queryParams}\n body: ${body}\n response body: ${resBody}\n\n",
+		Format:     "[${time}] ${status} - ${latency} ${method} ${path}\n query params : ${queryParams}\n body: ${body}\n response body: ${resBody}\n\n",
 		TimeFormat: "02-Jan-2006 03:04:05 PM",
 		TimeZone:   "Asia/Jakarta",
-		Output: file,
+		Output:     file,
 	}))
 
 	apiV1 := app.Group("/api/v1") // /api
