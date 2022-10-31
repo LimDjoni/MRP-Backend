@@ -1052,7 +1052,7 @@ func(r *repository) UpdateTrueIsSignedDmoDocument(isBast bool, isStatementLetter
 	if isBast {
 		field = "bast"
 		updatesDmo["is_bast_document_signed"] = true
-		updatesDmo["signed_bast_letter_document_link"] = location
+		updatesDmo["signed_bast_document_link"] = location
 	}
 
 	if isStatementLetter {
@@ -1120,7 +1120,7 @@ func(r *repository) UpdateFalseIsSignedDmoDocument(isBast bool, isStatementLette
 	if isBast {
 		field = "signed_bast false"
 		updatesDmo["is_bast_document_signed"] = false
-		updatesDmo["signed_bast_letter_document_link"] = nil
+		updatesDmo["signed_bast_document_link"] = nil
 	}
 
 	if isStatementLetter {

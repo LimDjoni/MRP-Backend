@@ -1301,7 +1301,7 @@ func TestDeleteTransactionDN(t *testing.T) {
 
 // Minerba Handler Test
 var idMinerba = 0
-
+var periodMinerba = ""
 func TestListMinerba(t *testing.T) {
 	tests := []struct {
 		expectedError bool
@@ -1553,6 +1553,7 @@ func TestCreateMinerba(t *testing.T) {
 
 		if res.StatusCode == 201 {
 			idMinerba = int(mapUnmarshal["ID"].(float64))
+			periodMinerba = mapUnmarshal["id_number"].(string)
 		}
 
 		assert.Contains(t, mapUnmarshal, "ID", "create data minerba")
@@ -1747,6 +1748,95 @@ func TestDetailMinerba(t *testing.T) {
 		//// Verify, that the reponse body equals the expected body
 		assert.Contains(t, mapUnmarshal, "detail", "list detail minerba")
 		assert.Contains(t, mapUnmarshal, "list", "list detail minerba")
+	}
+}
+
+func TestCheckValidPeriodMinerba(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token         string
+		body          map[string]interface{}
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			body:          fiber.Map{},
+			token:         "asdawfaeac",
+		},
+		{
+			expectedError: false,
+			expectedCode:  400,
+			body: fiber.Map{
+				"period": periodMinerba,
+			},
+			token: token,
+		},
+		{
+			expectedError: false,
+			expectedCode:  400,
+			body: fiber.Map{
+				"period": "Mar 20",
+			},
+			token: token,
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			body: fiber.Map{
+				"period": "Dec 2050",
+			},
+			token: token,
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		bodyJson, err := json.Marshal(test.body)
+		var payload = bytes.NewBufferString(string(bodyJson))
+		req, _ := http.NewRequest(
+			"POST",
+			"/api/v1/minerba/check",
+			payload,
+		)
+
+		req.Header.Add("Authorization", "Bearer "+test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, err := app.Test(req, -1)
+
+		assert.Equalf(t, test.expectedError, err != nil, "check data minerba")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "check data minerba")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "check data minerba")
+
+		mapUnmarshal := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		assert.Contains(t, mapUnmarshal, "message", "check data minerba")
 	}
 }
 
@@ -4361,7 +4451,6 @@ func TestGetReportRecap(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "electricity_total", "report transaction recap")
 		assert.Contains(t, mapUnmarshal, "non_electricity_total", "report transaction recap")
 		assert.Contains(t, mapUnmarshal, "total", "report transaction recap")
-		assert.Contains(t, mapUnmarshal, "percentage", "report transaction recap")
 		assert.Contains(t, mapUnmarshal, "rate_calories", "report transaction recap")
 		assert.Contains(t, mapUnmarshal, "production_plan", "report transaction recap")
 		assert.Contains(t, mapUnmarshal, "production_obligation", "report transaction recap")
@@ -4369,6 +4458,7 @@ func TestGetReportRecap(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "prorate_production_plan", "report transaction recap")
 		assert.Contains(t, mapUnmarshal, "fulfillment_of_production_plan", "report transaction recap")
 		assert.Contains(t, mapUnmarshal, "fulfillment_of_production_realization", "report transaction recap")
+		assert.Contains(t, mapUnmarshal, "fulfillment_percentage_production_obligation", "report transaction recap")
 		assert.Contains(t, mapUnmarshal, "year", "report transaction recap")
 	}
 }

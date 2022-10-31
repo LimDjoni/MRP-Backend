@@ -935,6 +935,7 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 	dmoId := uint(idInt)
 
 	if err != nil {
+		fmt.Println("ihr")
 		return c.Status(404).JSON(fiber.Map{
 			"message": "failed to update signed dmo",
 			"error": "record not found",
@@ -966,6 +967,7 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 	file, errFormFile := c.FormFile("document")
 
 	if errFormFile != nil {
+		fmt.Println("hiri updet form ifle")
 		return c.Status(400).JSON(fiber.Map{
 			"message": "failed to update signed dmo",
 			"error": errFormFile.Error(),
@@ -1017,6 +1019,7 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 	up, uploadErr := awshelper.UploadDocument(file, fileName)
 
 	if uploadErr != nil {
+		fmt.Println("ipload err")
 		inputMap := make(map[string]interface{})
 		inputMap["file"] = file
 		inputMap["document_type"] = typeDocument
@@ -1045,6 +1048,7 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 	updateSignedDocumentDmo, updateSignedDocumentDmoErr := h.historyService.UpdateTrueIsSignedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, idInt, uint(claims["id"].(float64)), up.Location)
 
 	if updateSignedDocumentDmoErr != nil {
+		fmt.Println(updateSignedDocumentDmoErr)
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
 		inputMap["type"] = typeDocument
