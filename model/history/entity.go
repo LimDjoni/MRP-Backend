@@ -3,6 +3,7 @@ package history
 import (
 	"ajebackend/model/dmo"
 	"ajebackend/model/minerba"
+	"ajebackend/model/production"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 	"gorm.io/datatypes"
@@ -19,6 +20,8 @@ type History struct {
 	User user.User
 	MinerbaId *uint `json:"minerba_id"`
 	Minerba *minerba.Minerba `json:"minerba" gorm:"constraint:OnDelete:CASCADE;"`
+	ProductionId *uint `json:"production_id"`
+	Production production.Production `json:"production" gorm:"constraint:OnDelete:CASCADE;"`
 	Status string `json:"status"`
 	BeforeData datatypes.JSON `json:"before_data"`
 	AfterData datatypes.JSON `json:"after_data"`

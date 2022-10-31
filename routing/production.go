@@ -1,0 +1,50 @@
+package routing
+
+import (
+	"ajebackend/handler"
+	"ajebackend/helper"
+	"ajebackend/model/history"
+	"ajebackend/model/logs"
+	"ajebackend/model/production"
+	"ajebackend/model/user"
+	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
+	jwtware "github.com/gofiber/jwt/v3"
+	"gorm.io/gorm"
+)
+
+func ProductionRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
+	userRepository := user.NewRepository(db)
+	userService := user.NewService(userRepository)
+
+	historyRepository := history.NewRepository(db)
+	historyService := history.NewService(historyRepository)
+
+	productionRepository := production.NewRepository(db)
+	productionService := production.NewService(productionRepository)
+
+	logsRepository := logs.NewRepository(db)
+	logsService := logs.NewService(logsRepository)
+
+
+	productionHandler := handler.NewProductionHandler(userService, historyService, productionService, logsService, validate)
+
+	productionRouting := app.Group("/production")
+
+	productionRouting.Use(jwtware.New(jwtware.Config{
+		SigningKey:    []byte(helper.GetEnvWithKey("JWT_SECRET_KEY")),
+		SigningMethod: jwtware.HS256,
+		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
+			return ctx.Status(401).JSON(fiber.Map{
+				"error": "unauthorized",
+				"err": err.Error(),
+			})
+		},
+	}))
+
+	productionRouting.Post("/create", productionHandler.CreateProduction)
+	productionRouting.Put("/update/:id", productionHandler.UpdateProduction)
+	productionRouting.Delete("/delete/:id", productionHandler.DeleteProduction)
+	productionRouting.Get("/list", productionHandler.ListProduction)
+	productionRouting.Get("/detail/:id", productionHandler.DetailProduction)
+}

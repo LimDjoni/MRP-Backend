@@ -32,7 +32,8 @@ func(r *repository) GetListReportMinerbaAll(page int) (Pagination, error) {
 	var pagination Pagination
 	pagination.Limit = 10
 	pagination.Page = page
-	errFind := r.db.Scopes(paginateMinerba(listReportMinerba, &pagination, r.db)).Find(&listReportMinerba).Error
+	queryFilter := ""
+	errFind := r.db.Scopes(paginateMinerba(listReportMinerba, &pagination, r.db, queryFilter)).Find(&listReportMinerba).Error
 
 	if errFind != nil {
 		return pagination, errFind

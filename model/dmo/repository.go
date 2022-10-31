@@ -32,7 +32,8 @@ func(r *repository) GetListReportDmoAll(page int) (Pagination, error) {
 	var pagination Pagination
 	pagination.Limit = 10
 	pagination.Page = page
-	errFind := r.db.Scopes(paginateDmo(listReportDmo, &pagination, r.db)).Find(&listReportDmo).Error
+	queryFilter := ""
+	errFind := r.db.Scopes(paginateDmo(listReportDmo, &pagination, r.db, queryFilter)).Find(&listReportDmo).Error
 
 	if errFind != nil {
 		return pagination, errFind

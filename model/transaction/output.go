@@ -69,17 +69,34 @@ type NotClaimable struct {
 	Total float64 `json:"total"`
 }
 
+type QuantityProduction struct {
+	January float64 `json:"january"`
+	February float64 `json:"february"`
+	March float64 `json:"march"`
+	April float64 `json:"april"`
+	May float64 `json:"may"`
+	June float64 `json:"june"`
+	July float64 `json:"july"`
+	August float64 `json:"august"`
+	September float64 `json:"september"`
+	October float64 `json:"october"`
+	November float64 `json:"november"`
+	December float64 `json:"december"`
+	Total float64 `json:"total"`
+}
+
 type ReportDetailOutput struct {
 	Electricity Electricity `json:"electricity"`
 	NonElectricity NonElectricity `json:"non_electricity"`
 	NotClaimable NotClaimable `json:"not_claimable"`
+	Production QuantityProduction `json:"production"`
 }
 
 type ReportRecapOutput struct {
 	ElectricityTotal float64 `json:"electricity_total"`
 	NonElectricityTotal float64 `json:"non_electricity_total"`
 	Total      float64 `json:"total"`
-	Percentage string `json:"percentage"`
+	TotalProduction float64 `json:"total_production"`
 	RateCalories string `json:"rate_calories"`
 	ProductionPlan float64 `json:"production_plan"`
 	ProductionObligation float64 `json:"production_obligation"`
@@ -87,5 +104,6 @@ type ReportRecapOutput struct {
 	ProrateProductionPlan string `json:"prorate_production_plan"`
 	FulfillmentOfProductionPlan string `json:"fulfillment_of_production_plan"`
 	FulfillmentOfProductionRealization string `json:"fulfillment_of_production_realization"`
+	FulfillmentPercentageProductionObligation string `json:"fulfillment_percentage_production_obligation"`
 	Year int `json:"year"`
 }
