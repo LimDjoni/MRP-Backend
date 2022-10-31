@@ -4392,7 +4392,7 @@ func TestCreateProduction(t *testing.T) {
 			expectedError: false,
 			expectedCode:  201,
 			body: fiber.Map{
-				"shipping_date": "2022-10-30",
+				"production_date": "2022-10-30",
 				"quantity": 2524.242,
 			},
 			token: token,
@@ -4401,7 +4401,7 @@ func TestCreateProduction(t *testing.T) {
 			expectedError: false,
 			expectedCode:  400,
 			body: fiber.Map{
-				"shipping_date": "2022-10-30",
+				"production_date": "2022-10-30",
 				"quantity": 0,
 			},
 			token: token,
@@ -4410,7 +4410,7 @@ func TestCreateProduction(t *testing.T) {
 			expectedError: false,
 			expectedCode:  400,
 			body: fiber.Map{
-				"shipping_date": "2022-15-10",
+				"production_date": "2022-15-10",
 				"quantity": 125123,
 			},
 			token: token,
@@ -4471,7 +4471,7 @@ func TestCreateProduction(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "CreatedAt", "create production")
 		assert.Contains(t, mapUnmarshal, "UpdatedAt", "create production")
 		assert.Contains(t, mapUnmarshal, "DeletedAt", "create production")
-		assert.Contains(t, mapUnmarshal, "shipping_date", "create production")
+		assert.Contains(t, mapUnmarshal, "production_date", "create production")
 		assert.Contains(t, mapUnmarshal, "quantity", "create production")
 	}
 }
@@ -4495,7 +4495,7 @@ func TestUpdateProduction(t *testing.T) {
 			expectedError: false,
 			expectedCode:  200,
 			body: fiber.Map{
-				"shipping_date": "2022-10-30",
+				"production_date": "2022-10-30",
 				"quantity": 2562,
 			},
 			id: idProduction,
@@ -4505,7 +4505,7 @@ func TestUpdateProduction(t *testing.T) {
 			expectedError: false,
 			expectedCode:  404,
 			body: fiber.Map{
-				"shipping_date": "2022-10-30",
+				"production_date": "2022-10-30",
 				"quantity": 3535,
 			},
 			id: 1000,
@@ -4515,7 +4515,7 @@ func TestUpdateProduction(t *testing.T) {
 			expectedError: false,
 			expectedCode:  400,
 			body: fiber.Map{
-				"shipping_date": "2022-15-10",
+				"production_date": "2022-15-10",
 				"quantity": 125123,
 			},
 			token: token,
@@ -4573,7 +4573,7 @@ func TestUpdateProduction(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "CreatedAt", "update production")
 		assert.Contains(t, mapUnmarshal, "UpdatedAt", "update production")
 		assert.Contains(t, mapUnmarshal, "DeletedAt", "update production")
-		assert.Contains(t, mapUnmarshal, "shipping_date", "update production")
+		assert.Contains(t, mapUnmarshal, "production_date", "update production")
 		assert.Contains(t, mapUnmarshal, "quantity", "update production")
 	}
 }
@@ -4729,7 +4729,7 @@ func TestDetailProduction(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "CreatedAt", "detail production")
 		assert.Contains(t, mapUnmarshal, "UpdatedAt", "detail production")
 		assert.Contains(t, mapUnmarshal, "DeletedAt", "detail production")
-		assert.Contains(t, mapUnmarshal, "shipping_date", "detail production")
+		assert.Contains(t, mapUnmarshal, "production_date", "detail production")
 		assert.Contains(t, mapUnmarshal, "quantity", "detail production")
 	}
 }
