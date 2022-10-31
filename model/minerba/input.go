@@ -18,3 +18,7 @@ type FilterMinerba struct {
 	CreatedStart string `json:"created_start"`
 	CreatedEnd string `json:"created_end"`
 }
+
+type CheckMinerbaPeriod struct {
+	Period string `json:"period" validate:"PeriodValidation,required"`
+}

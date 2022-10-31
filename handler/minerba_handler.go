@@ -800,3 +800,52 @@ func (h *minerbaHandler) RequestCreateExcelMinerba(c *fiber.Ctx) error {
 
 	return c.Status(200).JSON(hitJob)
 }
+
+func (h *minerbaHandler) CheckValidPeriodMinerba(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	inputCheckMinerba := new(minerba.CheckMinerbaPeriod)
+
+	if err := c.BodyParser(inputCheckMinerba); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	errors := h.v.Struct(*inputCheckMinerba)
+
+	if errors != nil {
+		dataErrors := validatorfunc.ValidateStruct(errors)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "invalid period",
+			"errors": dataErrors,
+		})
+	}
+
+	_, detailMinerbaErr := h.minerbaService.GetReportMinerbaWithPeriod(inputCheckMinerba.Period)
+
+	if  detailMinerbaErr != nil && detailMinerbaErr.Error() == "record not found" {
+		return c.Status(200).JSON(fiber.Map{
+			"message": "valid period",
+		})
+	}
+
+	return c.Status(400).JSON(fiber.Map{
+		"message": "invalid period",
+	})
+
+}
