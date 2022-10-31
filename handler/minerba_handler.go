@@ -798,9 +798,6 @@ func (h *minerbaHandler) RequestCreateExcelMinerba(c *fiber.Ctx) error {
 		})
 	}
 
-	fmt.Println(hitJob)
-	fmt.Println("0000")
-	fmt.Println(hitJobErr)
 	return c.Status(200).JSON(hitJob)
 }
 
