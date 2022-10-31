@@ -2,7 +2,7 @@ package dmo
 
 type Service interface {
 	GetReportDmoWithPeriod(period string) (Dmo, error)
-	GetListReportDmoAll(page int) (Pagination, error)
+	GetListReportDmoAll(page int, filterDmo FilterDmo) (Pagination, error)
 	GetDataDmo(id int) (Dmo, error)
 }
 
@@ -20,8 +20,8 @@ func (s *service) GetReportDmoWithPeriod(period string) (Dmo, error) {
 	return reportDmo, reportDmoErr
 }
 
-func (s *service) GetListReportDmoAll(page int) (Pagination, error) {
-	listReportDmo, listReportDmoErr := s.repository.GetListReportDmoAll(page)
+func (s *service) GetListReportDmoAll(page int, filterDmo FilterDmo) (Pagination, error) {
+	listReportDmo, listReportDmoErr := s.repository.GetListReportDmoAll(page, filterDmo)
 
 	return listReportDmo, listReportDmoErr
 }

@@ -1,12 +1,13 @@
 package minerba
 
 import (
+	"fmt"
 	"gorm.io/gorm"
 )
 
 type Repository interface {
 	GetReportMinerbaWithPeriod(period string) (Minerba, error)
-	GetListReportMinerbaAll(page int) (Pagination, error)
+	GetListReportMinerbaAll(page int, filterMinerba FilterMinerba) (Pagination, error)
 	GetDataMinerba(id int) (Minerba, error)
 }
 
@@ -26,13 +27,36 @@ func(r *repository) GetReportMinerbaWithPeriod(period string) (Minerba, error) {
 	return reportMinerba, errFind
 }
 
-func(r *repository) GetListReportMinerbaAll(page int) (Pagination, error) {
+func(r *repository) GetListReportMinerbaAll(page int, filterMinerba FilterMinerba) (Pagination, error) {
 	var listReportMinerba []Minerba
 
 	var pagination Pagination
 	pagination.Limit = 10
 	pagination.Page = page
-	errFind := r.db.Scopes(paginateMinerba(listReportMinerba, &pagination, r.db)).Find(&listReportMinerba).Error
+	queryFilter := ""
+
+	if filterMinerba.CreatedStart != "" {
+		queryFilter = queryFilter + "created_at >= '" + filterMinerba.CreatedStart + "'"
+	}
+
+	if filterMinerba.CreatedEnd != "" {
+		if queryFilter != "" {
+			queryFilter = queryFilter + " AND created_at <= '" + filterMinerba.CreatedEnd + "T23:59:59'"
+		} else {
+			queryFilter = "created_at <= '" + filterMinerba.CreatedEnd + "T23:59:59'"
+		}
+	}
+
+	if filterMinerba.Quantity != 0 {
+		quantity := fmt.Sprintf("%v", filterMinerba.Quantity)
+		if queryFilter != "" {
+			queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" +  quantity + "%'"
+		} else {
+			queryFilter = "cast(quantity AS TEXT) LIKE '%" +  quantity + "%'"
+		}
+	}
+
+	errFind := r.db.Where(queryFilter).Scopes(paginateMinerba(listReportMinerba, &pagination, r.db, queryFilter)).Find(&listReportMinerba).Error
 
 	if errFind != nil {
 		return pagination, errFind

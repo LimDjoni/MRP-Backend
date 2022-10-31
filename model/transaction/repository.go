@@ -3,9 +3,11 @@ package transaction
 import (
 	"ajebackend/model/dmo"
 	"ajebackend/model/minerba"
+	"ajebackend/model/production"
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"time"
 )
 
@@ -64,7 +66,7 @@ func (r *repository) ListDataDN(page int, sortFilter SortAndFilter) (Pagination,
 	}
 
 	if sortFilter.ShippingTo != "" {
-		queryFilter = queryFilter + " AND shipping_date <= '" + sortFilter.ShippingTo + "'"
+		queryFilter = queryFilter + " AND shipping_date <= '" + sortFilter.ShippingTo + "T23:59:59'"
 	}
 
 	if sortFilter.Quantity != 0 {
@@ -72,10 +74,10 @@ func (r *repository) ListDataDN(page int, sortFilter SortAndFilter) (Pagination,
 		queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" +  quantity + "%'"
 	}
 
-	errFind := r.db.Where(queryFilter).Order(sortString).Scopes(paginateDataDN(transactions, &pagination, r.db, queryFilter)).Find(&transactions).Error
+	errFind := r.db.Preload(clause.Associations).Where(queryFilter).Order(sortString).Scopes(paginateDataDN(transactions, &pagination, r.db, queryFilter)).Find(&transactions).Error
 
 	if errFind != nil {
-		errWithoutOrder := r.db.Where(queryFilter).Order(defaultSort).Scopes(paginateDataDN(transactions, &pagination, r.db, queryFilter)).Find(&transactions).Error
+		errWithoutOrder := r.db.Preload(clause.Associations).Where(queryFilter).Order(defaultSort).Scopes(paginateDataDN(transactions, &pagination, r.db, queryFilter)).Find(&transactions).Error
 
 		if errWithoutOrder != nil {
 			pagination.Data = transactions
@@ -304,21 +306,28 @@ func (r *repository) GetDetailDmo(id int)(DetailDmo, error) {
 }
 
 // Report
+
 func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 	var report ReportDetailOutput
 
 	var listTransactions []Transaction
-
+	var listProduction []production.Production
 	startFilter := fmt.Sprintf("%v-01-01", year)
 	endFilter := fmt.Sprintf("%v-12-31", year)
 
 	queryFilter := "minerba_id IS NOT NULL OR is_not_claim = true AND shipping_date >= '" + startFilter + "' AND shipping_date <= '" + endFilter + "'"
-
+	queryFilterProduction := "production_date >= '" + startFilter + "' AND production_date <= '" + endFilter + "'"
 	errFind := r.db.Where(queryFilter).Order("id ASC").Find(&listTransactions).Error
+	errFindProduction := r.db.Where(queryFilterProduction).Order("id ASC").Find(&listProduction).Error
 
 	if errFind != nil {
 		return  report, errFind
 	}
+
+	if errFindProduction != nil {
+		return  report, errFindProduction
+	}
+
 	report.Electricity.January = make(map[string]float64)
 	report.NonElectricity.January = make(map[string]float64)
 	report.Electricity.February = make(map[string]float64)
@@ -351,7 +360,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 		if v.IsNotClaim == false {
 			switch int(month) {
 				case 1:
-					if v.DmoCategory == "electricity" {
+					if v.DmoCategory == "ELECTRICITY" {
 						if _, ok := report.Electricity.January[v.DmoBuyerName]; ok {
 							report.Electricity.January[v.DmoBuyerName] += v.Quantity
 							report.Electricity.Total += v.Quantity
@@ -359,7 +368,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 							report.Electricity.January[v.DmoBuyerName] = v.Quantity
 							report.Electricity.Total += v.Quantity
 						}
-					} else if v.DmoCategory == "non electricity" {
+					} else if v.DmoCategory == "NON ELECTRICITY" {
 						if _, ok := report.Electricity.January[v.DmoBuyerName]; ok {
 							report.NonElectricity.January[v.DmoBuyerName] += v.Quantity
 							report.NonElectricity.Total += v.Quantity
@@ -369,7 +378,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 						}
 					}
 				case 2:
-					if v.DmoCategory == "electricity" {
+					if v.DmoCategory == "ELECTRICITY" {
 						if _, ok := report.Electricity.February[v.DmoBuyerName]; ok {
 							report.Electricity.February[v.DmoBuyerName] += v.Quantity
 							report.Electricity.Total += v.Quantity
@@ -377,7 +386,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 							report.Electricity.February[v.DmoBuyerName] = v.Quantity
 							report.Electricity.Total += v.Quantity
 						}
-					} else if v.DmoCategory == "non electricity" {
+					} else if v.DmoCategory == "NON ELECTRICITY" {
 						if _, ok := report.NonElectricity.February[v.DmoBuyerName]; ok {
 							report.NonElectricity.February[v.DmoBuyerName] += v.Quantity
 							report.NonElectricity.Total += v.Quantity
@@ -387,7 +396,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 						}
 					}
 				case 3:
-					if v.DmoCategory == "electricity" {
+					if v.DmoCategory == "ELECTRICITY" {
 						if _, ok := report.Electricity.March[v.DmoBuyerName]; ok {
 							report.Electricity.March[v.DmoBuyerName] += v.Quantity
 							report.Electricity.Total += v.Quantity
@@ -395,7 +404,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 							report.Electricity.March[v.DmoBuyerName] = v.Quantity
 							report.Electricity.Total += v.Quantity
 						}
-					} else if v.DmoCategory == "non electricity" {
+					} else if v.DmoCategory == "NON ELECTRICITY" {
 						if _, ok := report.NonElectricity.March[v.DmoBuyerName]; ok {
 							report.NonElectricity.March[v.DmoBuyerName] += v.Quantity
 							report.NonElectricity.Total += v.Quantity
@@ -405,7 +414,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 						}
 					}
 				case 4:
-					if v.DmoCategory == "electricity" {
+					if v.DmoCategory == "ELECTRICITY" {
 						if _, ok := report.Electricity.April[v.DmoBuyerName]; ok {
 							 report.Electricity.April[v.DmoBuyerName] += v.Quantity
 							report.Electricity.Total += v.Quantity
@@ -413,7 +422,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 							report.Electricity.April[v.DmoBuyerName] = v.Quantity
 							report.Electricity.Total += v.Quantity
 						}
-					} else if v.DmoCategory == "non electricity" {
+					} else if v.DmoCategory == "NON ELECTRICITY" {
 						if _, ok := report.NonElectricity.April[v.DmoBuyerName]; ok {
 							report.NonElectricity.April[v.DmoBuyerName] += v.Quantity
 							report.NonElectricity.Total += v.Quantity
@@ -423,7 +432,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 						}
 					}
 				case 5:
-					if v.DmoCategory == "electricity" {
+					if v.DmoCategory == "ELECTRICITY" {
 						if _, ok := report.Electricity.May[v.DmoBuyerName]; ok {
 							report.Electricity.May[v.DmoBuyerName] += v.Quantity
 							report.Electricity.Total += v.Quantity
@@ -431,7 +440,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 							report.Electricity.May[v.DmoBuyerName] = v.Quantity
 							report.Electricity.Total += v.Quantity
 						}
-					} else if v.DmoCategory == "non electricity" {
+					} else if v.DmoCategory == "NON ELECTRICITY" {
 						if _, ok := report.NonElectricity.May[v.DmoBuyerName]; ok {
 							report.NonElectricity.May[v.DmoBuyerName] += v.Quantity
 							report.NonElectricity.Total += v.Quantity
@@ -441,7 +450,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 						}
 					}
 				case 6:
-					if v.DmoCategory == "electricity" {
+					if v.DmoCategory == "ELECTRICITY" {
 						if _, ok := report.Electricity.June[v.DmoBuyerName]; ok {
 							report.Electricity.June[v.DmoBuyerName] += v.Quantity
 							report.Electricity.Total += v.Quantity
@@ -449,7 +458,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 							report.Electricity.June[v.DmoBuyerName] = v.Quantity
 							report.Electricity.Total += v.Quantity
 						}
-					} else if v.DmoCategory == "non electricity" {
+					} else if v.DmoCategory == "NON ELECTRICITY" {
 						if _, ok := report.NonElectricity.June[v.DmoBuyerName]; ok {
 							report.NonElectricity.June[v.DmoBuyerName] += v.Quantity
 							report.NonElectricity.Total += v.Quantity
@@ -459,7 +468,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 						}
 					}
 				case 7:
-					if v.DmoCategory == "electricity" {
+					if v.DmoCategory == "ELECTRICITY" {
 						if _, ok := report.Electricity.July[v.DmoBuyerName]; ok {
 							report.Electricity.July[v.DmoBuyerName] += v.Quantity
 							report.Electricity.Total += v.Quantity
@@ -467,7 +476,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 							report.Electricity.July[v.DmoBuyerName] = v.Quantity
 							report.Electricity.Total += v.Quantity
 						}
-					} else if v.DmoCategory == "non electricity" {
+					} else if v.DmoCategory == "NON ELECTRICITY" {
 						if _, ok := report.NonElectricity.July[v.DmoBuyerName]; ok {
 							report.NonElectricity.July[v.DmoBuyerName] += v.Quantity
 							report.NonElectricity.Total += v.Quantity
@@ -477,7 +486,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 						}
 					}
 				case 8:
-					if v.DmoCategory == "electricity" {
+					if v.DmoCategory == "ELECTRICITY" {
 						if _, ok := report.Electricity.August[v.DmoBuyerName]; ok {
 							report.Electricity.August[v.DmoBuyerName] += v.Quantity
 							report.Electricity.Total += v.Quantity
@@ -485,7 +494,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 							report.Electricity.August[v.DmoBuyerName] = v.Quantity
 							report.Electricity.Total += v.Quantity
 						}
-					} else if v.DmoCategory == "non electricity" {
+					} else if v.DmoCategory == "NON ELECTRICITY" {
 						if _, ok := report.NonElectricity.August[v.DmoBuyerName]; ok {
 							report.NonElectricity.August[v.DmoBuyerName] += v.Quantity
 							report.NonElectricity.Total += v.Quantity
@@ -495,7 +504,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 						}
 					}
 				case 9:
-					if v.DmoCategory == "electricity" {
+					if v.DmoCategory == "ELECTRICITY" {
 						if _, ok := report.Electricity.September[v.DmoBuyerName]; ok {
 							report.Electricity.September[v.DmoBuyerName] += v.Quantity
 							report.Electricity.Total += v.Quantity
@@ -503,7 +512,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 							report.Electricity.September[v.DmoBuyerName] = v.Quantity
 							report.Electricity.Total += v.Quantity
 						}
-					} else if v.DmoCategory == "non electricity" {
+					} else if v.DmoCategory == "NON ELECTRICITY" {
 						if _, ok := report.NonElectricity.September[v.DmoBuyerName]; ok {
 							report.NonElectricity.September[v.DmoBuyerName] += v.Quantity
 							report.NonElectricity.Total += v.Quantity
@@ -513,7 +522,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 						}
 					}
 				case 10:
-					if v.DmoCategory == "electricity" {
+					if v.DmoCategory == "ELECTRICITY" {
 						if _, ok := report.Electricity.October[v.DmoBuyerName]; ok {
 							report.Electricity.October[v.DmoBuyerName] += v.Quantity
 							report.Electricity.Total += v.Quantity
@@ -521,7 +530,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 							report.Electricity.October[v.DmoBuyerName] = v.Quantity
 							report.Electricity.Total += v.Quantity
 						}
-					} else if v.DmoCategory == "non electricity" {
+					} else if v.DmoCategory == "NON ELECTRICITY" {
 						if _, ok := report.NonElectricity.October[v.DmoBuyerName]; ok {
 							report.NonElectricity.October[v.DmoBuyerName] += v.Quantity
 							report.NonElectricity.Total += v.Quantity
@@ -531,7 +540,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 						}
 					}
 				case 11:
-					if v.DmoCategory == "electricity" {
+					if v.DmoCategory == "ELECTRICITY" {
 						if _, ok := report.Electricity.November[v.DmoBuyerName]; ok {
 							report.Electricity.November[v.DmoBuyerName] += v.Quantity
 							report.Electricity.Total += v.Quantity
@@ -539,7 +548,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 							report.Electricity.November[v.DmoBuyerName] = v.Quantity
 							report.Electricity.Total += v.Quantity
 						}
-					} else if v.DmoCategory == "non electricity" {
+					} else if v.DmoCategory == "NON ELECTRICITY" {
 						if _, ok := report.NonElectricity.November[v.DmoBuyerName]; ok {
 							report.NonElectricity.November[v.DmoBuyerName] += v.Quantity
 							report.NonElectricity.Total += v.Quantity
@@ -549,7 +558,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 						}
 					}
 				case 12:
-					if v.DmoCategory == "electricity" {
+					if v.DmoCategory == "ELECTRICITY" {
 						if _, ok := report.Electricity.December[v.DmoBuyerName]; ok {
 							report.Electricity.December[v.DmoBuyerName] += v.Quantity
 							report.Electricity.Total += v.Quantity
@@ -557,7 +566,7 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 							report.Electricity.December[v.DmoBuyerName] = v.Quantity
 							report.Electricity.Total += v.Quantity
 						}
-					} else if v.DmoCategory == "non electricity" {
+					} else if v.DmoCategory == "NON ELECTRICITY" {
 						if _, ok := report.NonElectricity.December[v.DmoBuyerName]; ok {
 							report.NonElectricity.December[v.DmoBuyerName] += v.Quantity
 							report.NonElectricity.Total += v.Quantity
@@ -609,6 +618,48 @@ func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
 		}
 	}
 
+	for _, v := range listProduction {
+		date, _ := time.Parse("2006-01-02T00:00:00Z", v.ProductionDate)
+		_, month, _ := date.Date()
+		switch int(month) {
+		case 1:
+			report.Production.January += v.Quantity
+			report.Production.Total += v.Quantity
+		case 2:
+			report.Production.February += v.Quantity
+			report.Production.Total += v.Quantity
+		case 3:
+			report.Production.March += v.Quantity
+			report.Production.Total += v.Quantity
+		case 4:
+			report.Production.April += v.Quantity
+			report.Production.Total += v.Quantity
+		case 5:
+			report.Production.May += v.Quantity
+			report.Production.Total += v.Quantity
+		case 6:
+			report.Production.June += v.Quantity
+			report.Production.Total += v.Quantity
+		case 7:
+			report.Production.July += v.Quantity
+			report.Production.Total += v.Quantity
+		case 8:
+			report.Production.August += v.Quantity
+			report.Production.Total += v.Quantity
+		case 9:
+			report.Production.September += v.Quantity
+			report.Production.Total += v.Quantity
+		case 10:
+			report.Production.October += v.Quantity
+			report.Production.Total += v.Quantity
+		case 11:
+			report.Production.November += v.Quantity
+			report.Production.Total += v.Quantity
+		case 12:
+			report.Production.December += v.Quantity
+			report.Production.Total += v.Quantity
+		}
+	}
 	return report, nil
 }
 
@@ -623,7 +674,7 @@ func (r *repository) GetReportRecap(year int) (ReportRecapOutput, error) {
 	endFilter := fmt.Sprintf("%v-12-31", year)
 
 	queryFilter := "minerba_id IS NOT NULL AND shipping_date >= '" + startFilter + "' AND shipping_date <= '" + endFilter + "'"
-
+	queryFilterProduction := "production_date >= '" + startFilter + "' AND production_date <= '" + endFilter + "'"
 	errFind := r.db.Where(queryFilter).Order("id ASC").Find(&listTransactions).Error
 
 	if errFind != nil {
@@ -644,16 +695,22 @@ func (r *repository) GetReportRecap(year int) (ReportRecapOutput, error) {
 			}
 		}
 
-		if v.DmoCategory == "electricity" {
+		if v.DmoCategory == "ELECTRICITY" {
 			report.ElectricityTotal += v.Quantity
 			report.Total += v.Quantity
-		} else if v.DmoCategory == "non electricity" {
+		} else if v.DmoCategory == "NON ELECTRICITY" {
 			report.NonElectricityTotal += v.Quantity
 			report.Total += v.Quantity
 		}
 
 	}
 
+	var productionReality float64
+
+	r.db.Model(production.Production{}).Where(queryFilterProduction).Select("sum(quantity)").Row().Scan(&productionReality)
+
+	report.TotalProduction = productionReality
+	report.FulfillmentOfProductionRealization = fmt.Sprintf("%.2f%%", report.Total / productionReality * 100)
 	report.RateCalories = fmt.Sprintf("%v - %v GAR",caloriesMinimum, caloriesMaximum )
 	return report, nil
 }

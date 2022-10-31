@@ -1,4 +1,4 @@
-package dmo
+package production
 
 import (
 	"gorm.io/gorm"
@@ -31,7 +31,7 @@ func (p *Pagination) GetPage() int {
 	return p.Page
 }
 
-func paginateDmo(value interface{}, pagination *Pagination, db *gorm.DB, queryFilter string) func(db *gorm.DB) *gorm.DB {
+func paginateProduction(value interface{}, pagination *Pagination, db *gorm.DB, queryFilter string) func(db *gorm.DB) *gorm.DB {
 	var totalRows int64
 	db.Where(queryFilter).Model(value).Count(&totalRows)
 

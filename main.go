@@ -10,6 +10,7 @@ import (
 	"ajebackend/model/minerba"
 	"ajebackend/model/notification"
 	"ajebackend/model/notificationuser"
+	"ajebackend/model/production"
 	"ajebackend/model/trader"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
@@ -69,6 +70,7 @@ func main() {
 			&company.Company{},
 			&notification.Notification{},
 			&notificationuser.NotificationUser{},
+			&production.Production{},
 		)
 
 		db.Migrator().RenameColumn(&transaction.Transaction{}, "ship_name", "tugboat_name")
@@ -156,4 +158,5 @@ func Setup(db *gorm.DB, validate *validator.Validate, route fiber.Router) {
 	routing2.TraderRouting(db, route, validate)
 	routing2.CompanyRouting(db, route, validate)
 	routing2.NotificationRouting(db, route, validate)
+	routing2.ProductionRouting(db, route, validate)
 }

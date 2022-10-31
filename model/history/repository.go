@@ -5,6 +5,7 @@ import (
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
 	"ajebackend/model/minerba"
+	"ajebackend/model/production"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
 	"encoding/json"
@@ -31,6 +32,9 @@ type Repository interface {
 	UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error)
 	UpdateTrueIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint, location string) (dmo.Dmo, error)
 	UpdateFalseIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error)
+	CreateProduction(input production.InputCreateProduction, userId uint) (production.Production, error)
+	UpdateProduction(input production.InputCreateProduction, productionId int, userId uint) (production.Production, error)
+	DeleteProduction(productionId int, userId uint) (bool, error)
 }
 
 type repository struct {
@@ -1157,4 +1161,118 @@ func(r *repository) UpdateFalseIsSignedDmoDocument(isBast bool, isStatementLette
 
 	tx.Commit()
 	return dmoUpdate, nil
+}
+
+
+// Production
+func(r *repository) CreateProduction(input production.InputCreateProduction, userId uint) (production.Production, error) {
+	var createdProduction production.Production
+
+	createdProduction.ProductionDate = input.ProductionDate
+	createdProduction.Quantity = input.Quantity
+
+	tx := r.db.Begin()
+
+	errCreateProduction := tx.Create(&createdProduction).Error
+
+	if errCreateProduction != nil {
+		tx.Rollback()
+		return createdProduction, errCreateProduction
+	}
+
+	var history History
+
+	history.ProductionId = &createdProduction.ID
+	history.Status = "Created Production"
+	history.UserId = userId
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return createdProduction, createHistoryErr
+	}
+
+	tx.Commit()
+	return createdProduction, nil
+}
+
+func(r *repository) UpdateProduction(input production.InputCreateProduction, productionId int, userId uint) (production.Production, error) {
+	var updatedProduction production.Production
+
+	tx := r.db.Begin()
+
+	errFindProduction := tx.Where("id = ?", productionId).First(&updatedProduction).Error
+
+	if errFindProduction != nil {
+		tx.Rollback()
+		return updatedProduction, errFindProduction
+	}
+
+	beforeData, _ := json.Marshal(updatedProduction)
+
+	editData := make(map[string]interface{})
+	editData["production_date"] = input.ProductionDate
+	editData["quantity"] = input.Quantity
+
+	errUpdateProduction := tx.Model(&updatedProduction).Updates(editData).Error
+
+	if errUpdateProduction != nil {
+		tx.Rollback()
+		return updatedProduction, errUpdateProduction
+	}
+
+	afterData, _ := json.Marshal(updatedProduction)
+
+	var history History
+
+	history.ProductionId = &updatedProduction.ID
+	history.Status = "Update Production"
+	history.UserId = userId
+	history.BeforeData = beforeData
+	history.AfterData =	afterData
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return updatedProduction, createHistoryErr
+	}
+
+	tx.Commit()
+	return updatedProduction, nil
+}
+
+func(r *repository) DeleteProduction(productionId int, userId uint) (bool, error) {
+	tx := r.db.Begin()
+	var deletedProduction production.Production
+
+	findDeletedProductionErr := tx.Where("id = ?", productionId).First(&deletedProduction).Error
+
+	if findDeletedProductionErr != nil {
+		tx.Rollback()
+		return false, findDeletedProductionErr
+	}
+
+	errDelete := tx.Unscoped().Where("id = ?", productionId).Delete(&deletedProduction).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+		return false, errDelete
+	}
+
+	var history History
+
+	history.Status = fmt.Sprintf("Deleted Production with id %v", deletedProduction.ID)
+	history.UserId = userId
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return false, createHistoryErr
+	}
+
+	tx.Commit()
+	return true, nil
 }

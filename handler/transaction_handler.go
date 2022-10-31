@@ -626,10 +626,8 @@ func (h *transactionHandler) GetReportRecap (c *fiber.Ctx) error {
 	report.ProductionObligation = reportInput.ProductionPlan * reportInput.PercentageProductionObligation / 100
 
 	percentage := report.Total / report.ProductionObligation * 100
-	report.Percentage = fmt.Sprintf("%.2f%%", percentage)
+	report.FulfillmentPercentageProductionObligation = fmt.Sprintf("%.2f%%", percentage)
 	report.ProrateProductionPlan = fmt.Sprintf("%.2f%%", report.Total / report.ProductionPlan * 100)
-	report.FulfillmentOfProductionRealization = fmt.Sprintf("%.2f%%", report.Total / report.ProductionPlan * 100)
-	// production plan change to total production per year
 	report.FulfillmentOfProductionPlan = fmt.Sprintf("%.2f%%", report.Total / report.ProductionPlan * 100)
 	if reportErr != nil {
 		return c.Status(400).JSON(fiber.Map{

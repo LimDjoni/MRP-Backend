@@ -479,6 +479,7 @@ func TestCreateTransactionDN(t *testing.T) {
 			expectedError: false,
 			expectedCode:  201,
 			body: fiber.Map{
+				"shipping_date": "2022-02-01",
 				"coa_date": "2022-02-01",
 				"quantity": 1023.122,
 				"tugboat_name": "AJE",
@@ -668,7 +669,7 @@ func TestUpdateTransactionDN(t *testing.T) {
 				"dmo": nil,
 				"id_number": "DN-2022-8-0035",
 				"transaction_type": "DN",
-				"shipping_date": nil,
+				"shipping_date": "2022-01-01",
 				"quantity": 1023.122,
 				"tugboat_name": "AJE",
 				"barge_name": "SHIPIPP",
@@ -834,7 +835,7 @@ func TestUpdateTransactionDN(t *testing.T) {
 				"dmo": nil,
 				"id_number": "DN-2022-8-0035",
 				"transaction_type": "DN",
-				"shipping_date": nil,
+				"shipping_date": "2022-01-01",
 				"quantity": 1023.122,
 				"tugboat_name": "AJE",
 				"barge_name": "SHIPIPP",
@@ -2101,9 +2102,9 @@ func TestCreateDmo(t *testing.T) {
 
 	var endUser int
 
-	endUser = 37
+	endUser = 77
 
-	traderList = append(traderList, 40, 36)
+	traderList = append(traderList, 78, 79)
 
 	var vesselAdjustment []dmo.VesselAdjustmentInput
 	
@@ -3765,12 +3766,6 @@ func TestDeleteTrader(t *testing.T) {
 		},
 		{
 			expectedError: false,
-			expectedCode:  400,
-			id: 40,
-			token: token,
-		},
-		{
-			expectedError: false,
 			expectedCode:  200,
 			id: idTrader,
 			token: token,
@@ -3850,12 +3845,6 @@ func TestDeleteCompany(t *testing.T) {
 			expectedError: false,
 			expectedCode:  200,
 			id: idCompany,
-			token: token,
-		},
-		{
-			expectedError: false,
-			expectedCode:  400,
-			id: 1,
 			token: token,
 		},
 		{
@@ -4381,5 +4370,442 @@ func TestGetReportRecap(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "fulfillment_of_production_plan", "report transaction recap")
 		assert.Contains(t, mapUnmarshal, "fulfillment_of_production_realization", "report transaction recap")
 		assert.Contains(t, mapUnmarshal, "year", "report transaction recap")
+	}
+}
+
+var idProduction = 0
+// Production
+func TestCreateProduction(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token         string
+		body          map[string]interface{}
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			body:          fiber.Map{},
+			token:         "asdawfaeac",
+		},
+		{
+			expectedError: false,
+			expectedCode:  201,
+			body: fiber.Map{
+				"production_date": "2022-10-30",
+				"quantity": 2524.242,
+			},
+			token: token,
+		},
+		{
+			expectedError: false,
+			expectedCode:  400,
+			body: fiber.Map{
+				"production_date": "2022-10-30",
+				"quantity": 0,
+			},
+			token: token,
+		},
+		{
+			expectedError: false,
+			expectedCode:  400,
+			body: fiber.Map{
+				"production_date": "2022-15-10",
+				"quantity": 125123,
+			},
+			token: token,
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		bodyJson, err := json.Marshal(test.body)
+		var payload = bytes.NewBufferString(string(bodyJson))
+		req, _ := http.NewRequest(
+			"POST",
+			"/api/v1/production/create",
+			payload,
+		)
+
+		req.Header.Add("Authorization", "Bearer "+test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, err := app.Test(req, -1)
+
+		assert.Equalf(t, test.expectedError, err != nil, "create production")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "create production")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "create production")
+
+		mapUnmarshal := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		if res.StatusCode == 201 {
+			idProduction = int(mapUnmarshal["ID"].(float64))
+		}
+
+		assert.Contains(t, mapUnmarshal, "ID", "create production")
+		assert.Contains(t, mapUnmarshal, "CreatedAt", "create production")
+		assert.Contains(t, mapUnmarshal, "UpdatedAt", "create production")
+		assert.Contains(t, mapUnmarshal, "DeletedAt", "create production")
+		assert.Contains(t, mapUnmarshal, "production_date", "create production")
+		assert.Contains(t, mapUnmarshal, "quantity", "create production")
+	}
+}
+
+func TestUpdateProduction(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token         string
+		id	int
+		body          map[string]interface{}
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			body:          fiber.Map{},
+			id: idProduction,
+			token:         "asdawfaeac",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			body: fiber.Map{
+				"production_date": "2022-10-30",
+				"quantity": 2562,
+			},
+			id: idProduction,
+			token: token,
+		},
+		{
+			expectedError: false,
+			expectedCode:  404,
+			body: fiber.Map{
+				"production_date": "2022-10-30",
+				"quantity": 3535,
+			},
+			id: 1000,
+			token: token,
+		},
+		{
+			expectedError: false,
+			expectedCode:  400,
+			body: fiber.Map{
+				"production_date": "2022-15-10",
+				"quantity": 125123,
+			},
+			token: token,
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		bodyJson, err := json.Marshal(test.body)
+		var payload = bytes.NewBufferString(string(bodyJson))
+		urlLink := fmt.Sprintf("/api/v1/production/update/%v", test.id)
+		req, _ := http.NewRequest(
+			"PUT",
+			urlLink,
+			payload,
+		)
+
+		req.Header.Add("Authorization", "Bearer "+test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, err := app.Test(req, -1)
+
+		assert.Equalf(t, test.expectedError, err != nil, "update production")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "update production")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "update production")
+
+		mapUnmarshal := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		assert.Contains(t, mapUnmarshal, "ID", "update production")
+		assert.Contains(t, mapUnmarshal, "CreatedAt", "update production")
+		assert.Contains(t, mapUnmarshal, "UpdatedAt", "update production")
+		assert.Contains(t, mapUnmarshal, "DeletedAt", "update production")
+		assert.Contains(t, mapUnmarshal, "production_date", "update production")
+		assert.Contains(t, mapUnmarshal, "quantity", "update production")
+	}
+}
+
+func TestListProduction(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token string
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			token: "",
+		},
+		{
+			expectedError: false,
+			expectedCode:  401,
+			token: "afwifiwgjwigjianveri",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			token: token,
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		req, _ := http.NewRequest(
+			"GET",
+			"/api/v1/production/list",
+			nil,
+		)
+
+		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, err := app.Test(req, -1)
+
+		assert.Equalf(t, test.expectedError, err != nil, "list data production")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "list data production")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "list data production")
+
+		mapUnmarshal  := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		//// Verify, that the reponse body equals the expected body
+		assert.Contains(t, mapUnmarshal, "limit", "list data production")
+		assert.Contains(t, mapUnmarshal, "page", "list data production")
+		assert.Contains(t, mapUnmarshal, "total_rows", "list data production")
+		assert.Contains(t, mapUnmarshal, "total_pages", "list data production")
+		assert.Contains(t, mapUnmarshal, "data", "list data production")
+	}
+}
+
+func TestDetailProduction(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token string
+		id int
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			id: 1,
+			token: "asdawfaeac",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			id: idProduction,
+			token: token,
+		},
+		{
+			expectedError: false,
+			expectedCode:  404,
+			id: 1050,
+			token: token,
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		url := fmt.Sprintf("/api/v1/production/detail/%v", test.id)
+		req, _ := http.NewRequest(
+			"GET",
+			url,
+			nil,
+		)
+
+		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, err := app.Test(req, -1)
+
+		assert.Equalf(t, test.expectedError, err != nil, "detail production")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "detail production")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "detail production")
+
+		mapUnmarshal := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		//// Verify, that the reponse body equals the expected body
+		assert.Contains(t, mapUnmarshal, "ID", "detail production")
+		assert.Contains(t, mapUnmarshal, "CreatedAt", "detail production")
+		assert.Contains(t, mapUnmarshal, "UpdatedAt", "detail production")
+		assert.Contains(t, mapUnmarshal, "DeletedAt", "detail production")
+		assert.Contains(t, mapUnmarshal, "production_date", "detail production")
+		assert.Contains(t, mapUnmarshal, "quantity", "detail production")
+	}
+}
+
+func TestDeleteProduction(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token string
+		id int
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			id: 1,
+			token: "asdawfaeac",
+		},
+		{
+			expectedError: false,
+			expectedCode:  404,
+			id: 1050,
+			token: token,
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			id: idProduction,
+			token: token,
+		},
+	}
+
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		url := fmt.Sprintf("/api/v1/production/delete/%v", test.id)
+		req, _ := http.NewRequest(
+			"DELETE",
+			url,
+			nil,
+		)
+
+		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, err := app.Test(req, -1)
+
+		assert.Equalf(t, test.expectedError, err != nil, "delete data production")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "delete data production")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "delete data production")
+
+		mapUnmarshal := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		//// Verify, that the reponse body equals the expected body
+		assert.Contains(t, mapUnmarshal, "message", "delete data production")
 	}
 }
