@@ -675,7 +675,19 @@ func (h *minerbaHandler) ListMinerba(c *fiber.Ctx) error {
 		pageNumber = 1
 	}
 
-	listMinerba, listMinerbaErr := h.minerbaService.GetListReportMinerbaAll(pageNumber)
+	var filterMinerba minerba.FilterMinerba
+
+	quantity, errParsing := strconv.ParseFloat(c.Query("quantity"), 64)
+	if errParsing != nil {
+		filterMinerba.Quantity = 0
+	} else {
+		filterMinerba.Quantity = quantity
+	}
+
+	filterMinerba.CreatedStart = c.Query("created_start")
+	filterMinerba.CreatedEnd = c.Query("created_end")
+
+	listMinerba, listMinerbaErr := h.minerbaService.GetListReportMinerbaAll(pageNumber, filterMinerba)
 
 	if listMinerbaErr != nil {
 		return c.Status(400).JSON(fiber.Map{

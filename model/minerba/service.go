@@ -2,7 +2,7 @@ package minerba
 
 type Service interface {
 	GetReportMinerbaWithPeriod(period string) (Minerba, error)
-	GetListReportMinerbaAll(page int) (Pagination, error)
+	GetListReportMinerbaAll(page int, filterMinerba FilterMinerba) (Pagination, error)
 	GetDataMinerba(id int)(Minerba, error)
 }
 
@@ -20,8 +20,8 @@ func (s *service) GetReportMinerbaWithPeriod(period string) (Minerba, error) {
 	return reportMinerba, reportMinerbaErr
 }
 
-func (s *service) GetListReportMinerbaAll(page int) (Pagination, error) {
-	listReportMinerba, listReportMinerbaErr := s.repository.GetListReportMinerbaAll(page)
+func (s *service) GetListReportMinerbaAll(page int, filterMinerba FilterMinerba) (Pagination, error) {
+	listReportMinerba, listReportMinerbaErr := s.repository.GetListReportMinerbaAll(page, filterMinerba)
 
 	return listReportMinerba, listReportMinerbaErr
 }

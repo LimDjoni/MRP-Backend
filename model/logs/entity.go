@@ -3,6 +3,7 @@ package logs
 import (
 	"ajebackend/model/dmo"
 	"ajebackend/model/minerba"
+	"ajebackend/model/production"
 	"ajebackend/model/transaction"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
@@ -18,4 +19,6 @@ type Logs struct {
 	Minerba *minerba.Minerba `json:"minerba" gorm:"constraint:OnDelete:CASCADE;"`
 	DmoId *uint `json:"dmo_id"`
 	Dmo *dmo.Dmo `json:"dmo" gorm:"constraint:OnDelete:CASCADE;"`
+	ProductionId *uint `json:"production_id"`
+	Production production.Production `json:"production" gorm:"constraint:OnDelete:CASCADE;"`
 }

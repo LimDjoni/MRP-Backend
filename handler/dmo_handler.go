@@ -407,7 +407,19 @@ func (h *dmoHandler) ListDmo(c *fiber.Ctx) error {
 		pageNumber = 1
 	}
 
-	listDmo, listDmoErr := h.dmoService.GetListReportDmoAll(pageNumber)
+	var filterDmo dmo.FilterDmo
+
+	quantity, errParsing := strconv.ParseFloat(c.Query("quantity"), 64)
+	if errParsing != nil {
+		filterDmo.Quantity = 0
+	} else {
+		filterDmo.Quantity = quantity
+	}
+
+	filterDmo.CreatedStart = c.Query("created_start")
+	filterDmo.CreatedEnd = c.Query("created_end")
+
+	listDmo, listDmoErr := h.dmoService.GetListReportDmoAll(pageNumber, filterDmo)
 
 	if listDmoErr != nil {
 		return c.Status(400).JSON(fiber.Map{

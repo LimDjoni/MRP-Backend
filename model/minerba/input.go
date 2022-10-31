@@ -12,3 +12,9 @@ type InputUpdateMinerba struct {
 type InputUpdateDocumentMinerba struct {
 	Data []map[string]interface{} `json:"data"`
 }
+
+type FilterMinerba struct {
+	Quantity float64 `json:"quantity"`
+	CreatedStart string `json:"created_start"`
+	CreatedEnd string `json:"created_end"`
+}
