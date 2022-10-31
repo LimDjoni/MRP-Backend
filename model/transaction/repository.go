@@ -66,7 +66,7 @@ func (r *repository) ListDataDN(page int, sortFilter SortAndFilter) (Pagination,
 	}
 
 	if sortFilter.ShippingTo != "" {
-		queryFilter = queryFilter + " AND shipping_date <= '" + sortFilter.ShippingTo + "'"
+		queryFilter = queryFilter + " AND shipping_date <= '" + sortFilter.ShippingTo + "T23:59:59'"
 	}
 
 	if sortFilter.Quantity != 0 {

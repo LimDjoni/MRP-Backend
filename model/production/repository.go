@@ -32,9 +32,9 @@ func(r *repository) GetListProduction(page int, filter FilterListProduction) (Pa
 
 	if filter.ProductionDateEnd != "" {
 		if queryFilter != "" {
-			queryFilter = queryFilter + " AND production_date <= '" + filter.ProductionDateEnd + "'"
+			queryFilter = queryFilter + " AND production_date <= '" + filter.ProductionDateEnd + "T23:59:59'"
 		} else {
-			queryFilter = "production_date <= '" + filter.ProductionDateEnd + "'"
+			queryFilter = "production_date <= '" + filter.ProductionDateEnd + "T23:59:59'"
 		}
 	}
 
