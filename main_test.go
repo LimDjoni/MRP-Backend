@@ -2630,31 +2630,8 @@ func TestUpdateDocumentDmo(t *testing.T) {
 		}
 
 		//// Verify, that the reponse body equals the expected body
-		assert.Contains(t, mapUnmarshal, "ID", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "CreatedAt", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "UpdatedAt", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "DeletedAt", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "period", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "id_number", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "type", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "barge_total_quantity", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "barge_adjustment", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "barge_grand_total_quantity", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "vessel_total_quantity", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "vessel_adjustment", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "vessel_grand_total_quantity", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "reconciliation_letter_document_link", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "signed_reconciliation_letter_document_link", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "is_reconciliation_letter_downloaded", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "is_reconciliation_letter_signed", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "bast_document_link", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "signed_bast_document_link", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "is_bast_document_downloaded", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "is_bast_document_signed", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "statement_letter_document_link", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "signed_statement_letter_document_link", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "is_statement_letter_downloaded", "update document data dmo")
-		assert.Contains(t, mapUnmarshal, "is_statement_letter_signed", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "dmo", "update document data dmo")
+		assert.Contains(t, mapUnmarshal, "end_user", "update document data dmo")
 	}
 }
 

@@ -912,7 +912,7 @@ func (r *repository) DeleteDmo (idDmo int, userId uint) (bool, error) {
 	return true, nil
 }
 
-func (r *repository) UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocumentDmo, userId uint) (dmo.Dmo, error) {
+func(r *repository) UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocumentDmo, userId uint) (dmo.Dmo, error) {
 	tx := r.db.Begin()
 	var dmoUpdate dmo.Dmo
 
