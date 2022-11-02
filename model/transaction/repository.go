@@ -101,7 +101,7 @@ func (r *repository) DetailTransactionDN(id int) (Transaction, error) {
 func (r *repository) ListDataDNWithoutMinerba() ([]Transaction, error) {
 	var listDataDnWithoutMinerba []Transaction
 
-	errFind := r.db.Where("minerba_id is NULL AND transaction_type = ? AND is_not_claim = ?", "DN", false).Find(&listDataDnWithoutMinerba).Error
+	errFind := r.db.Where("minerba_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ?", "DN", false, false).Find(&listDataDnWithoutMinerba).Error
 
 	return listDataDnWithoutMinerba, errFind
 }
@@ -247,7 +247,7 @@ func(r *repository) GetDetailMinerba(id int)(DetailMinerba, error) {
 func (r *repository) ListDataDNWithoutDmo() ([]Transaction, error) {
 	var listDataDnWithoutDmo []Transaction
 
-	errFind := r.db.Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ?", "DN", false).Find(&listDataDnWithoutDmo).Error
+	errFind := r.db.Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ?", "DN", false, false).Find(&listDataDnWithoutDmo).Error
 
 	return listDataDnWithoutDmo, errFind
 }
