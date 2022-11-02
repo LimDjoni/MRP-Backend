@@ -84,6 +84,7 @@ type Transaction struct {
 	InvoiceAndContractDocumentLink string `json:"invoice_and_contract_document_link"`
 	LHVDocumentLink string `json:"lhv_document_link"`
 	IsNotClaim	bool `json:"is_not_claim"`
+	IsMigration bool `json:"is_migration"`
 }
 
 type InATrade struct {

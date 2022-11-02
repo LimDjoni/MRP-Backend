@@ -639,6 +639,7 @@ func TestCreateTransactionDN(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "invoice_and_contract_document_link", "create data dn")
 		assert.Contains(t, mapUnmarshal, "lhv_document_link", "create data dn")
 		assert.Contains(t, mapUnmarshal, "is_not_claim", "create data dn")
+		assert.Contains(t, mapUnmarshal, "is_migration", "create data dn")
 	}
 }
 
@@ -1031,6 +1032,7 @@ func TestUpdateTransactionDN(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "invoice_and_contract_document_link", "update data dn")
 		assert.Contains(t, mapUnmarshal, "lhv_document_link", "update data dn")
 		assert.Contains(t, mapUnmarshal, "is_not_claim", "update data dn")
+		assert.Contains(t, mapUnmarshal, "is_migration", "update data dn")
 	}
 }
 
@@ -1220,6 +1222,7 @@ func TestUpdateDocumentTransactionDN(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "invoice_and_contract_document_link", "update document data dn")
 		assert.Contains(t, mapUnmarshal, "lhv_document_link", "update document data dn")
 		assert.Contains(t, mapUnmarshal, "is_not_claim", "update document data dn")
+		assert.Contains(t, mapUnmarshal, "is_migration", "update document data dn")
 	}
 }
 
