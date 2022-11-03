@@ -3,6 +3,7 @@ package routing
 import (
 	"ajebackend/handler"
 	"ajebackend/helper"
+	"ajebackend/model/company"
 	"ajebackend/model/dmo"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
@@ -39,10 +40,13 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	traderDmoRepository := traderdmo.NewRepository(db)
 	traderDmoService := traderdmo.NewService(traderDmoRepository)
 
+	companyRepository := company.NewRepository(db)
+	companyService := company.NewService(companyRepository)
+
 	notificationUserRepository := notificationuser.NewRepository(db)
 	notificationUserService := notificationuser.NewService(notificationUserRepository)
 
-	dmoHandler := handler.NewDmoHandler(transactionService, userService, historyService, logService, dmoService, traderService, traderDmoService, notificationUserService, validate)
+	dmoHandler := handler.NewDmoHandler(transactionService, userService, historyService, logService, dmoService, traderService, traderDmoService, notificationUserService, companyService, validate)
 
 	dmoRouting := app.Group("/dmo")
 
@@ -66,4 +70,5 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	dmoRouting.Put("/update/document/downloaded/:id/:type", dmoHandler.UpdateIsDownloadedDocumentDmo)
 	dmoRouting.Put("/update/document/signed/:id/:type", dmoHandler.UpdateTrueIsSignedDmoDocument)
 	dmoRouting.Put("/update/document/not_signed/:id/:type", dmoHandler.UpdateFalseIsSignedDmoDocument)
+	dmoRouting.Get("/master", dmoHandler.MasterCompanyTrader)
 }
