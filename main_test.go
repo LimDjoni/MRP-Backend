@@ -3040,7 +3040,77 @@ func TestUpdateFalseIsSignedDocumentDmo(t *testing.T) {
 	}
 }
 
+func TestMasterCompanyTrader(t *testing.T) {
+	tests := []struct {
+		expectedError bool
+		expectedCode  int
+		token         string
+	}{
+		{
+			expectedError: false,
+			expectedCode:  401,
+			token:         "",
+		},
+		{
+			expectedError: false,
+			expectedCode:  401,
+			token:         "afwifiwgjwigjianveri",
+		},
+		{
+			expectedError: false,
+			expectedCode:  200,
+			token:         token,
+		},
+	}
 
+	db, validate := startSetup()
+	app := fiber.New()
+	apiV1 := app.Group("/api/v1") // /api
+
+	Setup(db, validate, apiV1)
+
+	for _, test := range tests {
+		req, _ := http.NewRequest(
+			"GET",
+			"/api/v1/dmo/master",
+			nil,
+		)
+
+		req.Header.Add("Authorization", "Bearer "+test.token)
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+
+		// The -1 disables request latency.
+		res, err := app.Test(req, -1)
+
+		assert.Equalf(t, test.expectedError, err != nil, "list data master company & trader")
+		if test.expectedError {
+			continue
+		}
+
+		// Verify if the status code is as expected
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "list data master company & trader")
+
+		// Read the response body
+		body, err := ioutil.ReadAll(res.Body)
+
+		// Ensure that the body was read correctly
+		assert.Nilf(t, err, "list data master company & trader")
+
+		mapUnmarshal := make(map[string]interface{})
+
+		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
+
+		fmt.Println(errUnmarshal)
+		if res.StatusCode >= 400 {
+			continue
+		}
+
+		//// Verify, that the reponse body equals the expected body
+		assert.Contains(t, mapUnmarshal, "companies", "list data master company & trader")
+		assert.Contains(t, mapUnmarshal, "traders", "list data master company & trader")
+	}
+}
 var idCompany = 0
 
 // Company
