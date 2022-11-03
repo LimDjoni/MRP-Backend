@@ -3,6 +3,7 @@ package handler
 import (
 	"ajebackend/helper"
 	"ajebackend/model/awshelper"
+	"ajebackend/model/company"
 	"ajebackend/model/dmo"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
@@ -32,10 +33,11 @@ type dmoHandler struct {
 	traderService trader.Service
 	traderDmoService traderdmo.Service
 	notificationUserService notificationuser.Service
+	companyService company.Service
 	v *validator.Validate
 }
 
-func NewDmoHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, dmoService dmo.Service, traderService trader.Service, traderDmoService traderdmo.Service, notificationUserService notificationuser.Service, v *validator.Validate) *dmoHandler {
+func NewDmoHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, dmoService dmo.Service, traderService trader.Service, traderDmoService traderdmo.Service, notificationUserService notificationuser.Service, companyService company.Service,v *validator.Validate) *dmoHandler {
 	return &dmoHandler{
 		transactionService,
 		userService,
@@ -45,6 +47,7 @@ func NewDmoHandler(transactionService transaction.Service, userService user.Serv
 		traderService,
 		traderDmoService,
 		notificationUserService,
+		companyService,
 		v,
 	}
 }
@@ -1310,4 +1313,43 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(updateSignedDocumentDmo)
+}
+
+func (h *dmoHandler) MasterCompanyTrader(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	company, companyErr := h.companyService.ListCompany()
+
+	if companyErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": companyErr.Error(),
+		})
+	}
+
+	trader, traderErr := h.traderService.ListTrader()
+
+	if traderErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": traderErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"companies": company,
+		"traders": trader,
+	})
 }
