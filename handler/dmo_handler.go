@@ -769,14 +769,6 @@ func (h *dmoHandler) UpdateDocumentDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	getEndUser, getEndUserErr := h.traderDmoService.GetTraderEndUserDmo(idInt)
-
-	if getEndUserErr != nil {
-		return c.Status(404).JSON(fiber.Map{
-			"error": "trader end user " + getEndUserErr.Error(),
-		})
-	}
-
 	var inputNotification notification.InputNotification
 	inputNotification.Type = "dmo"
 
@@ -812,10 +804,7 @@ func (h *dmoHandler) UpdateDocumentDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(200).JSON(fiber.Map{
-		"dmo": updateDocumentDmo,
-		"end_user": getEndUser,
-	})
+	return c.Status(200).JSON(updateDocumentDmo)
 }
 
 func (h *dmoHandler) UpdateIsDownloadedDocumentDmo(c *fiber.Ctx) error {
