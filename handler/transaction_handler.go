@@ -267,7 +267,7 @@ func (h *transactionHandler) DeleteTransactionDN(c *fiber.Ctx) error {
 	}
 
 	if findTransaction.MinerbaId != nil || findTransaction.DmoId != nil {
-		return c.Status(404).JSON(fiber.Map{
+		return c.Status(400).JSON(fiber.Map{
 			"error": "can't delete transaction because it's bound to minerba or dmo",
 		})
 	}
