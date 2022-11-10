@@ -107,3 +107,8 @@ type ReportRecapOutput struct {
 	FulfillmentPercentageProductionObligation string `json:"fulfillment_percentage_production_obligation"`
 	Year int `json:"year"`
 }
+
+type ChooseTransactionDmo struct {
+	BargeTransaction []Transaction `json:"barge_transaction"`
+	VesselTransaction []Transaction `json:"vessel_transaction"`
+}

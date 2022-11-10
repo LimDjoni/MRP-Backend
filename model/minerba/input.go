@@ -13,10 +13,12 @@ type InputUpdateDocumentMinerba struct {
 	Data []map[string]interface{} `json:"data"`
 }
 
-type FilterMinerba struct {
+type FilterAndSortMinerba struct {
 	Quantity float64 `json:"quantity"`
 	CreatedStart string `json:"created_start"`
 	CreatedEnd string `json:"created_end"`
+	Field string `json:"field"`
+	Sort string `json:"sort"`
 }
 
 type CheckMinerbaPeriod struct {
