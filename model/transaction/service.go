@@ -19,7 +19,7 @@ type Service interface {
 	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int)([]Transaction, error)
 	GetDetailMinerba(id int) (DetailMinerba, error)
 	RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (map[string]interface{}, error)
-	ListDataDNWithoutDmo() ([]Transaction, error)
+	ListDataDNWithoutDmo() (ChooseTransactionDmo, error)
 	CheckDataDnAndDmo(listData []int) ([]Transaction, error)
 	GetDetailDmo(id int) (DetailDmo, error)
 	RequestCreateDmo(reqInput InputRequestCreateUploadDmo) (map[string]interface{}, error)
@@ -108,7 +108,7 @@ func (s *service) RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (m
 	return res, doReqErr
 }
 
-func (s *service) ListDataDNWithoutDmo() ([]Transaction, error) {
+func (s *service) ListDataDNWithoutDmo() (ChooseTransactionDmo, error) {
 	listDataDNWithoutDmo, listDataDNWithoutDmoErr := s.repository.ListDataDNWithoutDmo()
 
 	return listDataDNWithoutDmo, listDataDNWithoutDmoErr

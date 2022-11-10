@@ -410,7 +410,7 @@ func (h *dmoHandler) ListDmo(c *fiber.Ctx) error {
 		pageNumber = 1
 	}
 
-	var filterDmo dmo.FilterDmo
+	var filterDmo dmo.FilterAndSortDmo
 
 	quantity, errParsing := strconv.ParseFloat(c.Query("quantity"), 64)
 	if errParsing != nil {
@@ -421,6 +421,8 @@ func (h *dmoHandler) ListDmo(c *fiber.Ctx) error {
 
 	filterDmo.CreatedStart = c.Query("created_start")
 	filterDmo.CreatedEnd = c.Query("created_end")
+	filterDmo.Field = c.Query("field")
+	filterDmo.Sort = c.Query("sort")
 
 	listDmo, listDmoErr := h.dmoService.GetListReportDmoAll(pageNumber, filterDmo)
 
@@ -501,9 +503,7 @@ func (h *dmoHandler) ListDataDNWithoutDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(200).JSON(fiber.Map{
-		"list": listDataDNWithoutDmo,
-	})
+	return c.Status(200).JSON(listDataDNWithoutDmo)
 }
 
 func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {

@@ -675,7 +675,7 @@ func (h *minerbaHandler) ListMinerba(c *fiber.Ctx) error {
 		pageNumber = 1
 	}
 
-	var filterMinerba minerba.FilterMinerba
+	var filterMinerba minerba.FilterAndSortMinerba
 
 	quantity, errParsing := strconv.ParseFloat(c.Query("quantity"), 64)
 	if errParsing != nil {
@@ -686,6 +686,9 @@ func (h *minerbaHandler) ListMinerba(c *fiber.Ctx) error {
 
 	filterMinerba.CreatedStart = c.Query("created_start")
 	filterMinerba.CreatedEnd = c.Query("created_end")
+	filterMinerba.Field = c.Query("field")
+	filterMinerba.Sort = c.Query("sort")
+
 
 	listMinerba, listMinerbaErr := h.minerbaService.GetListReportMinerbaAll(pageNumber, filterMinerba)
 

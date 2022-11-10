@@ -72,7 +72,7 @@ func (r *repository) CreateNotification(input notification.InputNotification, us
 func (r *repository) GetNotification(userId uint) ([]NotificationUser, error) {
 	var listNotification []NotificationUser
 
-	errFind := r.db.Preload("Notification.User").Preload(clause.Associations).Where("user_id = ?", userId).Find(&listNotification).Error
+	errFind := r.db.Preload("Notification.User").Preload(clause.Associations).Order("id desc").Where("user_id = ?", userId).Find(&listNotification).Error
 
 	if errFind != nil {
 		return listNotification, errFind
@@ -84,7 +84,7 @@ func (r *repository) GetNotification(userId uint) ([]NotificationUser, error) {
 func (r *repository) UpdateReadNotification(userId uint) ([]NotificationUser, error) {
 	var listNotification []NotificationUser
 
-	errFind := r.db.Preload("Notification.User").Preload(clause.Associations).Where("user_id = ?", userId).Find(&listNotification).Error
+	errFind := r.db.Preload("Notification.User").Preload(clause.Associations).Order("id desc").Where("user_id = ?", userId).Find(&listNotification).Error
 
 	if errFind != nil {
 		return listNotification, errFind

@@ -3,11 +3,12 @@ package minerba
 import (
 	"fmt"
 	"gorm.io/gorm"
+	"strings"
 )
 
 type Repository interface {
 	GetReportMinerbaWithPeriod(period string) (Minerba, error)
-	GetListReportMinerbaAll(page int, filterMinerba FilterMinerba) (Pagination, error)
+	GetListReportMinerbaAll(page int, filterMinerba FilterAndSortMinerba) (Pagination, error)
 	GetDataMinerba(id int) (Minerba, error)
 }
 
@@ -27,13 +28,22 @@ func(r *repository) GetReportMinerbaWithPeriod(period string) (Minerba, error) {
 	return reportMinerba, errFind
 }
 
-func(r *repository) GetListReportMinerbaAll(page int, filterMinerba FilterMinerba) (Pagination, error) {
+func(r *repository) GetListReportMinerbaAll(page int, filterMinerba FilterAndSortMinerba) (Pagination, error) {
 	var listReportMinerba []Minerba
 
 	var pagination Pagination
 	pagination.Limit = 10
 	pagination.Page = page
 	queryFilter := ""
+	sortFilter := ""
+
+	if filterMinerba.Field != "" && filterMinerba.Sort != "" {
+		sortFilter = filterMinerba.Field + " " + filterMinerba.Sort
+
+		if strings.ToLower(filterMinerba.Field) == "period" {
+			sortFilter = "to_date(period,'Mon Year') " + filterMinerba.Sort
+		}
+	}
 
 	if filterMinerba.CreatedStart != "" {
 		queryFilter = queryFilter + "created_at >= '" + filterMinerba.CreatedStart + "'"
@@ -56,7 +66,7 @@ func(r *repository) GetListReportMinerbaAll(page int, filterMinerba FilterMinerb
 		}
 	}
 
-	errFind := r.db.Where(queryFilter).Scopes(paginateMinerba(listReportMinerba, &pagination, r.db, queryFilter)).Find(&listReportMinerba).Error
+	errFind := r.db.Where(queryFilter).Order(sortFilter).Scopes(paginateMinerba(listReportMinerba, &pagination, r.db, queryFilter)).Find(&listReportMinerba).Error
 
 	if errFind != nil {
 		return pagination, errFind
