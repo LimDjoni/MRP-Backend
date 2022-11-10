@@ -18,7 +18,7 @@ type Repository interface {
 	CheckDataDnAndMinerba(listData []int)(bool, error)
 	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int)([]Transaction, error)
 	GetDetailMinerba(id int)(DetailMinerba, error)
-	ListDataDNWithoutDmo() ([]Transaction, error)
+	ListDataDNWithoutDmo() (ChooseTransactionDmo, error)
 	CheckDataDnAndDmo(listData []int)([]Transaction, error)
 	GetDetailDmo(id int)(DetailDmo, error)
 	CheckDataUnique(inputTrans DataTransactionInput) (bool,bool,bool,bool)
@@ -244,12 +244,26 @@ func(r *repository) GetDetailMinerba(id int)(DetailMinerba, error) {
 
 // DMO
 
-func (r *repository) ListDataDNWithoutDmo() ([]Transaction, error) {
-	var listDataDnWithoutDmo []Transaction
+func (r *repository) ListDataDNWithoutDmo() (ChooseTransactionDmo, error) {
+	var listDataDnBargeDmo []Transaction
+	var listDataDnVesselDmo []Transaction
+	var listDataDnForDmo ChooseTransactionDmo
 
-	errFind := r.db.Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ?", "DN", false, false).Find(&listDataDnWithoutDmo).Error
+	errFindBarge := r.db.Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_name = ?", "DN", false, false, "").Find(&listDataDnBargeDmo).Error
 
-	return listDataDnWithoutDmo, errFind
+	if errFindBarge != nil {
+		return listDataDnForDmo, errFindBarge
+	}
+
+	errFindVessel := r.db.Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_name != ?", "DN", false, false, "").Find(&listDataDnVesselDmo).Error
+
+	if errFindVessel != nil {
+		return listDataDnForDmo, errFindVessel
+	}
+
+	listDataDnForDmo.BargeTransaction = listDataDnBargeDmo
+	listDataDnForDmo.VesselTransaction = listDataDnVesselDmo
+	return listDataDnForDmo, nil
 }
 
 func (r *repository) CheckDataDnAndDmo(listData []int)([]Transaction, error) {

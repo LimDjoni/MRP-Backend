@@ -2186,7 +2186,8 @@ func TestListDataDNWithoutDmo(t *testing.T) {
 		}
 
 		//// Verify, that the reponse body equals the expected body
-		assert.Contains(t, mapUnmarshal, "list")
+		assert.Contains(t, mapUnmarshal, "barge_transaction", "list data dn without dmo")
+		assert.Contains(t, mapUnmarshal, "vessel_transaction", "list data dn without dmo")
 	}
 }
 
@@ -4254,7 +4255,7 @@ func TestUpdateNotification(t *testing.T) {
 	for _, test := range tests {
 		req, _ := http.NewRequest(
 			"PUT",
-			"/api/v1/notification/update/read",
+			"/api/v1/notification/update",
 			nil,
 		)
 

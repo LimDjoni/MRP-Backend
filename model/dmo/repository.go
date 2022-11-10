@@ -3,11 +3,12 @@ package dmo
 import (
 	"fmt"
 	"gorm.io/gorm"
+	"strings"
 )
 
 type Repository interface {
 	GetReportDmoWithPeriod(period string) (Dmo, error)
-	GetListReportDmoAll(page int, filterDmo FilterDmo) (Pagination, error)
+	GetListReportDmoAll(page int, filterDmo FilterAndSortDmo) (Pagination, error)
 	GetDataDmo(id int) (Dmo, error)
 }
 
@@ -27,13 +28,30 @@ func(r *repository) GetReportDmoWithPeriod(period string) (Dmo, error) {
 	return reportDmo, errFind
 }
 
-func(r *repository) GetListReportDmoAll(page int, filterDmo FilterDmo) (Pagination, error) {
+func(r *repository) GetListReportDmoAll(page int, filterDmo FilterAndSortDmo) (Pagination, error) {
 	var listReportDmo []Dmo
 
 	var pagination Pagination
 	pagination.Limit = 10
 	pagination.Page = page
 	queryFilter := ""
+	sortFilter := ""
+
+	if filterDmo.Field != "" && filterDmo.Sort != "" {
+		sortFilter = filterDmo.Field + " " + filterDmo.Sort
+
+		if strings.ToLower(filterDmo.Field) == "period" {
+			sortFilter = "to_date(period,'Mon Year') " + filterDmo.Sort
+		}
+
+		if strings.ToLower(filterDmo.Field) == "quantity" {
+			sortFilter = "vessel_total_quantity + barge_total_quantity " + filterDmo.Sort
+		}
+
+		if strings.ToLower(filterDmo.Field) == "grand_total_quantity" {
+			sortFilter = "vessel_grand_total_quantity + barge_grand_total_quantity " + filterDmo.Sort
+		}
+	}
 
 	if filterDmo.CreatedStart != "" {
 		queryFilter = queryFilter + "created_at >= '" + filterDmo.CreatedStart + "'"
@@ -56,7 +74,7 @@ func(r *repository) GetListReportDmoAll(page int, filterDmo FilterDmo) (Paginati
 		}
 	}
 
-	errFind := r.db.Where(queryFilter).Scopes(paginateDmo(listReportDmo, &pagination, r.db, queryFilter)).Find(&listReportDmo).Error
+	errFind := r.db.Where(queryFilter).Order(sortFilter).Scopes(paginateDmo(listReportDmo, &pagination, r.db, queryFilter)).Find(&listReportDmo).Error
 
 	if errFind != nil {
 		return pagination, errFind

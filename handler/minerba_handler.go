@@ -330,7 +330,7 @@ func (h *minerbaHandler) UpdateMinerba(c *fiber.Ctx) error {
 	var createNotif notification.InputNotification
 
 	createNotif.Type = "minerba"
-	createNotif.Status = "success update minerba"
+	createNotif.Status = "mengedit"
 	createNotif.Period = updateMinerba.Period
 
 	_, createNotificationUpdateMinerbaErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)))
@@ -471,7 +471,7 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 	var createNotif notification.InputNotification
 
 	createNotif.Type = "minerba"
-	createNotif.Status = "success delete minerba"
+	createNotif.Status = "menghapus"
 	createNotif.Period = dataMinerba.Period
 
 	_, createNotificationDeleteMinerbaErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)))
@@ -614,7 +614,7 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 
 	var inputNotification notification.InputNotification
 	inputNotification.Type = "minerba"
-	inputNotification.Status = "success create document"
+	inputNotification.Status = "membuat"
 	inputNotification.Period = detailMinerba.Detail.Period
 	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
 
@@ -675,7 +675,7 @@ func (h *minerbaHandler) ListMinerba(c *fiber.Ctx) error {
 		pageNumber = 1
 	}
 
-	var filterMinerba minerba.FilterMinerba
+	var filterMinerba minerba.FilterAndSortMinerba
 
 	quantity, errParsing := strconv.ParseFloat(c.Query("quantity"), 64)
 	if errParsing != nil {
@@ -686,6 +686,9 @@ func (h *minerbaHandler) ListMinerba(c *fiber.Ctx) error {
 
 	filterMinerba.CreatedStart = c.Query("created_start")
 	filterMinerba.CreatedEnd = c.Query("created_end")
+	filterMinerba.Field = c.Query("field")
+	filterMinerba.Sort = c.Query("sort")
+
 
 	listMinerba, listMinerbaErr := h.minerbaService.GetListReportMinerbaAll(pageNumber, filterMinerba)
 

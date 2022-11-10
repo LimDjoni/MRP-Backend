@@ -20,8 +20,10 @@ type InputUpdateDocumentDmo struct {
 	Data []map[string]interface{} `json:"data"`
 }
 
-type FilterDmo struct {
+type FilterAndSortDmo struct {
 	Quantity float64 `json:"quantity"`
 	CreatedStart string `json:"created_start"`
 	CreatedEnd string `json:"created_end"`
+	Field string  `json:"field"`
+	Sort string `json:"sort"`
 }
