@@ -316,6 +316,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		})
 	}
 
+
 	if !inputCreateDmo.IsDocumentCustom {
 		var reqInputCreateUploadDmo transaction.InputRequestCreateUploadDmo
 
@@ -367,7 +368,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		bastFile := formPart.File["bast"][0]
 		reconciliationLetterFile := formPart.File["reconciliation_letter"][0]
 		statementLetterFile := formPart.File["statement_letter"][0]
-		_, reqJobDocumentCustomErr := h.transactionService.RequestCreateCustomDmo(createDmo, bastFile, reconciliationLetterFile, statementLetterFile, header["Authorization"])
+		_, reqJobDocumentCustomErr := h.transactionService.RequestCreateCustomDmo(createDmo, endUser, bastFile, reconciliationLetterFile, statementLetterFile, header["Authorization"])
 
 		if reqJobDocumentCustomErr != nil {
 			return c.Status(400).JSON(fiber.Map{
@@ -620,7 +621,7 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 	var createNotif notification.InputNotification
 
 	createNotif.Type = "dmo"
-	createNotif.Status = "success delete dmo"
+	createNotif.Status = "menghapus"
 	createNotif.Period = findDmo.Detail.Period
 	createNotif.EndUser = endUserDmo.Company.CompanyName
 
@@ -769,15 +770,42 @@ func (h *dmoHandler) UpdateDocumentDmo(c *fiber.Ctx) error {
 		})
 	}
 
+	getEndUserDmo, getEndUserDmoErr := h.traderDmoService.GetTraderEndUserDmo(idInt)
+
+	if getEndUserDmoErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["input"] = inputUpdateDmo
+		inputMap["dmo_id"] = idInt
+		inputJson ,_ := json.Marshal(inputMap)
+		messageJson ,_ := json.Marshal(map[string]interface{}{
+			"error": getEndUserDmoErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input: inputJson,
+			Message: messageJson,
+			DmoId: &dmoId,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		status := 400
+		if getEndUserDmoErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"error": getEndUserDmoErr.Error(),
+			"message": "failed to get end user dmo",
+		})
+	}
+
 	var inputNotification notification.InputNotification
 	inputNotification.Type = "dmo"
 
-	if detailDmo.Detail.IsDocumentCustom {
-		inputNotification.Status = "success upload document custom"
-	} else {
-		inputNotification.Status = "success create document"
-	}
-
+	inputNotification.Status = "membuat"
+	inputNotification.EndUser = getEndUserDmo.Company.CompanyName
 	inputNotification.Period = detailDmo.Detail.Period
 	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
 
@@ -1080,7 +1108,7 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 
 	var inputNotification notification.InputNotification
 	inputNotification.Type = "dmo"
-	inputNotification.Status = "success signed document"
+	inputNotification.Status = "mengupload"
 	inputNotification.Period = dataDmo.Period
 	inputNotification.Document = typeDocument
 	inputNotification.EndUser = endUserDmo.Company.CompanyName
@@ -1270,7 +1298,7 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 
 	var inputNotification notification.InputNotification
 	inputNotification.Type = "dmo"
-	inputNotification.Status = "success delete signed document"
+	inputNotification.Status = "menghapus"
 	inputNotification.Period = dataDmo.Period
 	inputNotification.Document = typeDocument
 	inputNotification.EndUser = endUserDmo.Company.CompanyName

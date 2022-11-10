@@ -330,7 +330,7 @@ func (h *minerbaHandler) UpdateMinerba(c *fiber.Ctx) error {
 	var createNotif notification.InputNotification
 
 	createNotif.Type = "minerba"
-	createNotif.Status = "success update minerba"
+	createNotif.Status = "mengedit"
 	createNotif.Period = updateMinerba.Period
 
 	_, createNotificationUpdateMinerbaErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)))
@@ -471,7 +471,7 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 	var createNotif notification.InputNotification
 
 	createNotif.Type = "minerba"
-	createNotif.Status = "success delete minerba"
+	createNotif.Status = "menghapus"
 	createNotif.Period = dataMinerba.Period
 
 	_, createNotificationDeleteMinerbaErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)))
@@ -614,7 +614,7 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 
 	var inputNotification notification.InputNotification
 	inputNotification.Type = "minerba"
-	inputNotification.Status = "success create document"
+	inputNotification.Status = "membuat"
 	inputNotification.Period = detailMinerba.Detail.Period
 	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
 
