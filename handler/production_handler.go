@@ -67,6 +67,8 @@ func (h *productionHandler) ListProduction(c *fiber.Ctx) error {
 
 	filterProduction.ProductionDateStart = c.Query("production_date_start")
 	filterProduction.ProductionDateEnd = c.Query("production_date_end")
+	filterProduction.Field = c.Query("field")
+	filterProduction.Sort = c.Query("sort")
 
 	quantity, errParsing := strconv.ParseFloat(c.Query("quantity"), 64)
 	if errParsing != nil {

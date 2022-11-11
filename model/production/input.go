@@ -9,4 +9,6 @@ type FilterListProduction struct {
 	ProductionDateStart string
 	ProductionDateEnd string
 	Quantity float64
+	Field string
+	Sort string
 }
