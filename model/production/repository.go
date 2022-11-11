@@ -25,6 +25,11 @@ func(r *repository) GetListProduction(page int, filter FilterListProduction) (Pa
 	pagination.Limit = 10
 	pagination.Page = page
 	queryFilter := ""
+	querySort := ""
+
+	if filter.Field != "" && filter.Sort != "" {
+		querySort = filter.Field + " " + filter.Sort
+	}
 
 	if filter.ProductionDateStart != "" {
 		queryFilter = queryFilter + "production_date >= '" + filter.ProductionDateStart + "'"
@@ -47,7 +52,7 @@ func(r *repository) GetListProduction(page int, filter FilterListProduction) (Pa
 		}
 	}
 
-	errFind := r.db.Where(queryFilter).Scopes(paginateProduction(listProduction, &pagination, r.db, queryFilter)).Find(&listProduction).Error
+	errFind := r.db.Where(queryFilter).Order(querySort).Scopes(paginateProduction(listProduction, &pagination, r.db, queryFilter)).Find(&listProduction).Error
 
 	if errFind != nil {
 		return pagination, errFind
