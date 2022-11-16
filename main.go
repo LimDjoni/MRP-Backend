@@ -134,11 +134,11 @@ func createDB(dsn string) {
 		fmt.Println("Success connect base db")
 		return
 	} else {
-		db = db.Exec("CREATE DATABASE deli_aje_development;")
+		db = db.Exec("CREATE DATABASE deli_aje;")
 
 		if db.Error != nil {
 			fmt.Println(db.Error)
-			fmt.Println("Unable to create DB deli_aje_development, attempting to connect assuming it exists...")
+			fmt.Println("Unable to create DB deli_aje, attempting to connect assuming it exists...")
 		}
 	}
 
