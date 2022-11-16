@@ -98,23 +98,12 @@ func main() {
 
 	app := fiber.New()
 
-	file, err := os.OpenFile("./logging.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("error opening file: %v", err)
-	}
-	defer file.Close()
-
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     "*",
 		AllowMethods:     "GET, POST, OPTIONS, PUT, DELETE",
 		AllowCredentials: true,
 		AllowHeaders:     "Origin, Content-Type, Accept, Content-Length, Accept-Language, Accept-Encoding, Connection, Access-Control-Allow-Origin, Authorization",
 		MaxAge:           2592000,
-	}), logger.New(logger.Config{
-		Format:     "[${time}] ${status} - ${latency} ${method} ${path}\n query params : ${queryParams}\n body: ${body}\n response body: ${resBody}\n\n",
-		TimeFormat: "02-Jan-2006 03:04:05 PM",
-		TimeZone:   "Asia/Jakarta",
-		Output:     file,
 	}))
 
 	apiV1 := app.Group("/api/v1") // /api
@@ -134,11 +123,14 @@ func createDB(dsn string) {
 		fmt.Println("Success connect base db")
 		return
 	} else {
-		db = db.Exec("CREATE DATABASE deli_aje;")
+		dbName := helper.GetEnvWithKey("DATABASE_NAME")
+		dbExec := fmt.Sprintf("CREATE DATABASE %s;", dbName)
+		db = db.Exec(dbExec)
 
 		if db.Error != nil {
 			fmt.Println(db.Error)
-			fmt.Println("Unable to create DB deli_aje, attempting to connect assuming it exists...")
+			errAssumingExist := fmt.Sprintf("Unable to create DB %s, attempting to connect assuming it exists...", dbName)
+			fmt.Println(errAssumingExist)
 		}
 	}
 
