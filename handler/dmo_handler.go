@@ -84,31 +84,63 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 			})
 		}
 
-		for _, trader := range formPart.Value["trader"] {
-			var traderArrayInt []int
-			errUnmarshal := json.Unmarshal([]byte(trader), &traderArrayInt)
-			fmt.Println(errUnmarshal)
-			inputCreateDmo.Trader = traderArrayInt
+		if len(inputCreateDmo.Trader) == 0 {
+			for _, trader := range formPart.Value["trader"] {
+				var traderArrayInt []int
+				errUnmarshal := json.Unmarshal([]byte(trader), &traderArrayInt)
+				fmt.Println(errUnmarshal)
+				inputCreateDmo.Trader = traderArrayInt
+			}
 		}
 
-		for _, barge := range formPart.Value["transaction_barge"] {
-			var bargeArrayInt []int
-			errUnmarshal := json.Unmarshal([]byte(barge), &bargeArrayInt)
-			fmt.Println(errUnmarshal)
-			inputCreateDmo.TransactionBarge = bargeArrayInt
+		if len(inputCreateDmo.TransactionBarge) == 0 {
+			for _, barge := range formPart.Value["transaction_barge"] {
+				var bargeArrayInt []int
+				errUnmarshal := json.Unmarshal([]byte(barge), &bargeArrayInt)
+				fmt.Println(errUnmarshal)
+				inputCreateDmo.TransactionBarge = bargeArrayInt
+			}
 		}
 
-		for _, vessel := range formPart.Value["transaction_vessel"] {
-			var bargeVesselInt []int
-			errUnmarshal := json.Unmarshal([]byte(vessel), &bargeVesselInt)
-			fmt.Println(errUnmarshal)
-			inputCreateDmo.TransactionVessel = bargeVesselInt
+		if len(inputCreateDmo.TransactionVessel) == 0 {
+			for _, vessel := range formPart.Value["transaction_vessel"] {
+				var bargeVesselInt []int
+				errUnmarshal := json.Unmarshal([]byte(vessel), &bargeVesselInt)
+				fmt.Println(errUnmarshal)
+				inputCreateDmo.TransactionVessel = bargeVesselInt
+			}
 		}
 
 		for _, vesselAdjustment := range formPart.Value["vessel_adjustment"] {
 			var newVesselAdjustmentArray []dmo.VesselAdjustmentInput
+
 			errUnmarshal := json.Unmarshal([]byte(vesselAdjustment), &newVesselAdjustmentArray)
 			fmt.Println(errUnmarshal)
+
+			inputCreateDmo.VesselAdjustment = newVesselAdjustmentArray
+		}
+	}
+
+	if len(inputCreateDmo.VesselAdjustment) == 0 {
+		formPart, errFormPart := c.MultipartForm()
+		if 	errFormPart != nil {
+			return c.Status(400).JSON(fiber.Map{
+				"error": "please check there is no data vessel adjustment",
+			})
+		}
+		for _, vesselAdjustment := range formPart.Value["vessel_adjustment"] {
+			var adjustReplace = strings.Replace(vesselAdjustment, "},{", "};{", -1)
+			var adjustSplit = strings.Split(adjustReplace, ";")
+
+			var newVesselAdjustmentArray []dmo.VesselAdjustmentInput
+
+			for _, adjustment := range adjustSplit {
+				var adjustmentVessel dmo.VesselAdjustmentInput
+				errUnmarshal := json.Unmarshal([]byte(adjustment), &adjustmentVessel)
+				fmt.Println(errUnmarshal)
+
+				newVesselAdjustmentArray = append(newVesselAdjustmentArray, adjustmentVessel)
+			}
 
 			inputCreateDmo.VesselAdjustment = newVesselAdjustmentArray
 		}
@@ -148,6 +180,20 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 					"error": "please check transaction is in vessel & barge",
 				})
 			}
+		}
+	}
+
+	if len(inputCreateDmo.TransactionBarge) == 1 {
+		if inputCreateDmo.TransactionBarge[0] == 0 {
+			var tempTransactionBarge []int
+			inputCreateDmo.TransactionBarge = tempTransactionBarge
+		}
+	}
+
+	if len(inputCreateDmo.TransactionVessel) == 1 {
+		if inputCreateDmo.TransactionVessel[0] == 0 {
+			var tempTransactionVessel []int
+			inputCreateDmo.TransactionVessel = tempTransactionVessel
 		}
 	}
 
