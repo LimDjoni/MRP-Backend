@@ -134,11 +134,14 @@ func createDB(dsn string) {
 		fmt.Println("Success connect base db")
 		return
 	} else {
-		db = db.Exec("CREATE DATABASE deli_aje;")
+		dbName := helper.GetEnvWithKey("DATABASE_NAME")
+		dbExec := fmt.Sprintf("CREATE DATABASE %s;", dbName)
+		db = db.Exec(dbExec)
 
 		if db.Error != nil {
 			fmt.Println(db.Error)
-			fmt.Println("Unable to create DB deli_aje, attempting to connect assuming it exists...")
+			errAssumingExist := fmt.Sprintf("Unable to create DB %s, attempting to connect assuming it exists...", dbName)
+			fmt.Println(errAssumingExist)
 		}
 	}
 
