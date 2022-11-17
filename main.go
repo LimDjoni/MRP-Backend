@@ -71,8 +71,6 @@ func main() {
 			&production.Production{},
 		)
 
-		db.Migrator().RenameColumn(&transaction.Transaction{}, "ship_name", "tugboat_name")
-
 		seeding.UpdateTransactionsRoyalty(db)
 		seeding.SeedingTraderAndCompanyData(db)
 
