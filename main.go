@@ -19,13 +19,11 @@ import (
 	"ajebackend/seeding"
 	"ajebackend/validatorfunc"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/logger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -72,8 +70,6 @@ func main() {
 			&notificationuser.NotificationUser{},
 			&production.Production{},
 		)
-
-		db.Migrator().RenameColumn(&transaction.Transaction{}, "ship_name", "tugboat_name")
 
 		seeding.UpdateTransactionsRoyalty(db)
 		seeding.SeedingTraderAndCompanyData(db)
