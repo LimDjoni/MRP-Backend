@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"time"
+	"strconv"
 )
 
 type Repository interface {
@@ -22,8 +23,7 @@ type Repository interface {
 	CheckDataDnAndDmo(listData []int)([]Transaction, error)
 	GetDetailDmo(id int)(DetailDmo, error)
 	CheckDataUnique(inputTrans DataTransactionInput) (bool,bool,bool,bool)
-	GetReportDetail(year int) (ReportDetailOutput, error)
-	GetReportRecap(year int) (ReportRecapOutput, error)
+	GetReport(year int) (ReportRecapOutput, ReportDetailOutput, error)
 }
 
 type repository struct {
@@ -321,368 +321,14 @@ func (r *repository) GetDetailDmo(id int)(DetailDmo, error) {
 
 // Report
 
-func (r *repository) GetReportDetail(year int) (ReportDetailOutput, error) {
-	var report ReportDetailOutput
-
-	var listTransactions []Transaction
-	var listProduction []production.Production
-	startFilter := fmt.Sprintf("%v-01-01", year)
-	endFilter := fmt.Sprintf("%v-12-31", year)
-
-	queryFilter := "minerba_id IS NOT NULL OR is_not_claim = true AND shipping_date >= '" + startFilter + "' AND shipping_date <= '" + endFilter + "'"
-	queryFilterProduction := "production_date >= '" + startFilter + "' AND production_date <= '" + endFilter + "'"
-	errFind := r.db.Where(queryFilter).Order("id ASC").Find(&listTransactions).Error
-	errFindProduction := r.db.Where(queryFilterProduction).Order("id ASC").Find(&listProduction).Error
-
-	if errFind != nil {
-		return  report, errFind
-	}
-
-	if errFindProduction != nil {
-		return  report, errFindProduction
-	}
-
-	report.Electricity.January = make(map[string]float64)
-	report.NonElectricity.January = make(map[string]float64)
-	report.Electricity.February = make(map[string]float64)
-	report.NonElectricity.February = make(map[string]float64)
-	report.Electricity.March = make(map[string]float64)
-	report.NonElectricity.March = make(map[string]float64)
-	report.Electricity.April = make(map[string]float64)
-	report.NonElectricity.April = make(map[string]float64)
-	report.Electricity.May = make(map[string]float64)
-	report.NonElectricity.May = make(map[string]float64)
-	report.Electricity.June = make(map[string]float64)
-	report.NonElectricity.June = make(map[string]float64)
-	report.Electricity.July = make(map[string]float64)
-	report.NonElectricity.July = make(map[string]float64)
-	report.Electricity.August = make(map[string]float64)
-	report.NonElectricity.August = make(map[string]float64)
-	report.Electricity.September = make(map[string]float64)
-	report.NonElectricity.September = make(map[string]float64)
-	report.Electricity.October = make(map[string]float64)
-	report.NonElectricity.October = make(map[string]float64)
-	report.Electricity.November = make(map[string]float64)
-	report.NonElectricity.November = make(map[string]float64)
-	report.Electricity.December = make(map[string]float64)
-	report.NonElectricity.December = make(map[string]float64)
-
-	for _, v := range listTransactions {
-		date, _ := time.Parse("2006-01-02T00:00:00Z", *v.ShippingDate)
-		_, month, _ := date.Date()
-
-		if v.IsNotClaim == false {
-			switch int(month) {
-				case 1:
-					if v.DmoCategory == "ELECTRICITY" {
-						if _, ok := report.Electricity.January[v.DmoBuyerName]; ok {
-							report.Electricity.January[v.DmoBuyerName] += v.Quantity
-							report.Electricity.Total += v.Quantity
-						} else {
-							report.Electricity.January[v.DmoBuyerName] = v.Quantity
-							report.Electricity.Total += v.Quantity
-						}
-					} else if v.DmoCategory == "NON ELECTRICITY" {
-						if _, ok := report.Electricity.January[v.DmoBuyerName]; ok {
-							report.NonElectricity.January[v.DmoBuyerName] += v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						} else {
-							report.NonElectricity.January[v.DmoBuyerName] = v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						}
-					}
-				case 2:
-					if v.DmoCategory == "ELECTRICITY" {
-						if _, ok := report.Electricity.February[v.DmoBuyerName]; ok {
-							report.Electricity.February[v.DmoBuyerName] += v.Quantity
-							report.Electricity.Total += v.Quantity
-						} else {
-							report.Electricity.February[v.DmoBuyerName] = v.Quantity
-							report.Electricity.Total += v.Quantity
-						}
-					} else if v.DmoCategory == "NON ELECTRICITY" {
-						if _, ok := report.NonElectricity.February[v.DmoBuyerName]; ok {
-							report.NonElectricity.February[v.DmoBuyerName] += v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						} else {
-							report.NonElectricity.February[v.DmoBuyerName] = v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						}
-					}
-				case 3:
-					if v.DmoCategory == "ELECTRICITY" {
-						if _, ok := report.Electricity.March[v.DmoBuyerName]; ok {
-							report.Electricity.March[v.DmoBuyerName] += v.Quantity
-							report.Electricity.Total += v.Quantity
-						} else {
-							report.Electricity.March[v.DmoBuyerName] = v.Quantity
-							report.Electricity.Total += v.Quantity
-						}
-					} else if v.DmoCategory == "NON ELECTRICITY" {
-						if _, ok := report.NonElectricity.March[v.DmoBuyerName]; ok {
-							report.NonElectricity.March[v.DmoBuyerName] += v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						} else {
-							report.NonElectricity.March[v.DmoBuyerName] = v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						}
-					}
-				case 4:
-					if v.DmoCategory == "ELECTRICITY" {
-						if _, ok := report.Electricity.April[v.DmoBuyerName]; ok {
-							 report.Electricity.April[v.DmoBuyerName] += v.Quantity
-							report.Electricity.Total += v.Quantity
-						} else {
-							report.Electricity.April[v.DmoBuyerName] = v.Quantity
-							report.Electricity.Total += v.Quantity
-						}
-					} else if v.DmoCategory == "NON ELECTRICITY" {
-						if _, ok := report.NonElectricity.April[v.DmoBuyerName]; ok {
-							report.NonElectricity.April[v.DmoBuyerName] += v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						} else {
-							report.NonElectricity.April[v.DmoBuyerName] = v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						}
-					}
-				case 5:
-					if v.DmoCategory == "ELECTRICITY" {
-						if _, ok := report.Electricity.May[v.DmoBuyerName]; ok {
-							report.Electricity.May[v.DmoBuyerName] += v.Quantity
-							report.Electricity.Total += v.Quantity
-						} else {
-							report.Electricity.May[v.DmoBuyerName] = v.Quantity
-							report.Electricity.Total += v.Quantity
-						}
-					} else if v.DmoCategory == "NON ELECTRICITY" {
-						if _, ok := report.NonElectricity.May[v.DmoBuyerName]; ok {
-							report.NonElectricity.May[v.DmoBuyerName] += v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						} else {
-							report.NonElectricity.May[v.DmoBuyerName] = v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						}
-					}
-				case 6:
-					if v.DmoCategory == "ELECTRICITY" {
-						if _, ok := report.Electricity.June[v.DmoBuyerName]; ok {
-							report.Electricity.June[v.DmoBuyerName] += v.Quantity
-							report.Electricity.Total += v.Quantity
-						} else {
-							report.Electricity.June[v.DmoBuyerName] = v.Quantity
-							report.Electricity.Total += v.Quantity
-						}
-					} else if v.DmoCategory == "NON ELECTRICITY" {
-						if _, ok := report.NonElectricity.June[v.DmoBuyerName]; ok {
-							report.NonElectricity.June[v.DmoBuyerName] += v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						} else {
-							report.NonElectricity.June[v.DmoBuyerName] = v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						}
-					}
-				case 7:
-					if v.DmoCategory == "ELECTRICITY" {
-						if _, ok := report.Electricity.July[v.DmoBuyerName]; ok {
-							report.Electricity.July[v.DmoBuyerName] += v.Quantity
-							report.Electricity.Total += v.Quantity
-						} else {
-							report.Electricity.July[v.DmoBuyerName] = v.Quantity
-							report.Electricity.Total += v.Quantity
-						}
-					} else if v.DmoCategory == "NON ELECTRICITY" {
-						if _, ok := report.NonElectricity.July[v.DmoBuyerName]; ok {
-							report.NonElectricity.July[v.DmoBuyerName] += v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						} else {
-							report.NonElectricity.July[v.DmoBuyerName] = v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						}
-					}
-				case 8:
-					if v.DmoCategory == "ELECTRICITY" {
-						if _, ok := report.Electricity.August[v.DmoBuyerName]; ok {
-							report.Electricity.August[v.DmoBuyerName] += v.Quantity
-							report.Electricity.Total += v.Quantity
-						} else {
-							report.Electricity.August[v.DmoBuyerName] = v.Quantity
-							report.Electricity.Total += v.Quantity
-						}
-					} else if v.DmoCategory == "NON ELECTRICITY" {
-						if _, ok := report.NonElectricity.August[v.DmoBuyerName]; ok {
-							report.NonElectricity.August[v.DmoBuyerName] += v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						} else {
-							report.NonElectricity.August[v.DmoBuyerName] = v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						}
-					}
-				case 9:
-					if v.DmoCategory == "ELECTRICITY" {
-						if _, ok := report.Electricity.September[v.DmoBuyerName]; ok {
-							report.Electricity.September[v.DmoBuyerName] += v.Quantity
-							report.Electricity.Total += v.Quantity
-						} else {
-							report.Electricity.September[v.DmoBuyerName] = v.Quantity
-							report.Electricity.Total += v.Quantity
-						}
-					} else if v.DmoCategory == "NON ELECTRICITY" {
-						if _, ok := report.NonElectricity.September[v.DmoBuyerName]; ok {
-							report.NonElectricity.September[v.DmoBuyerName] += v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						} else {
-							report.NonElectricity.September[v.DmoBuyerName] = v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						}
-					}
-				case 10:
-					if v.DmoCategory == "ELECTRICITY" {
-						if _, ok := report.Electricity.October[v.DmoBuyerName]; ok {
-							report.Electricity.October[v.DmoBuyerName] += v.Quantity
-							report.Electricity.Total += v.Quantity
-						} else {
-							report.Electricity.October[v.DmoBuyerName] = v.Quantity
-							report.Electricity.Total += v.Quantity
-						}
-					} else if v.DmoCategory == "NON ELECTRICITY" {
-						if _, ok := report.NonElectricity.October[v.DmoBuyerName]; ok {
-							report.NonElectricity.October[v.DmoBuyerName] += v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						} else {
-							report.NonElectricity.October[v.DmoBuyerName] = v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						}
-					}
-				case 11:
-					if v.DmoCategory == "ELECTRICITY" {
-						if _, ok := report.Electricity.November[v.DmoBuyerName]; ok {
-							report.Electricity.November[v.DmoBuyerName] += v.Quantity
-							report.Electricity.Total += v.Quantity
-						} else {
-							report.Electricity.November[v.DmoBuyerName] = v.Quantity
-							report.Electricity.Total += v.Quantity
-						}
-					} else if v.DmoCategory == "NON ELECTRICITY" {
-						if _, ok := report.NonElectricity.November[v.DmoBuyerName]; ok {
-							report.NonElectricity.November[v.DmoBuyerName] += v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						} else {
-							report.NonElectricity.November[v.DmoBuyerName] = v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						}
-					}
-				case 12:
-					if v.DmoCategory == "ELECTRICITY" {
-						if _, ok := report.Electricity.December[v.DmoBuyerName]; ok {
-							report.Electricity.December[v.DmoBuyerName] += v.Quantity
-							report.Electricity.Total += v.Quantity
-						} else {
-							report.Electricity.December[v.DmoBuyerName] = v.Quantity
-							report.Electricity.Total += v.Quantity
-						}
-					} else if v.DmoCategory == "NON ELECTRICITY" {
-						if _, ok := report.NonElectricity.December[v.DmoBuyerName]; ok {
-							report.NonElectricity.December[v.DmoBuyerName] += v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						} else {
-							report.NonElectricity.December[v.DmoBuyerName] = v.Quantity
-							report.NonElectricity.Total += v.Quantity
-						}
-					}
-			}
-		} else {
-			switch int(month) {
-			case 1:
-				report.NotClaimable.January += v.Quantity
-				report.NotClaimable.Total += v.Quantity
-			case 2:
-				report.NotClaimable.February += v.Quantity
-				report.NotClaimable.Total += v.Quantity
-			case 3:
-				report.NotClaimable.March += v.Quantity
-				report.NotClaimable.Total += v.Quantity
-			case 4:
-				report.NotClaimable.April += v.Quantity
-				report.NotClaimable.Total += v.Quantity
-			case 5:
-				report.NotClaimable.May += v.Quantity
-				report.NotClaimable.Total += v.Quantity
-			case 6:
-				report.NotClaimable.June += v.Quantity
-				report.NotClaimable.Total += v.Quantity
-			case 7:
-				report.NotClaimable.July += v.Quantity
-				report.NotClaimable.Total += v.Quantity
-			case 8:
-				report.NotClaimable.August += v.Quantity
-				report.NotClaimable.Total += v.Quantity
-			case 9:
-				report.NotClaimable.September += v.Quantity
-				report.NotClaimable.Total += v.Quantity
-			case 10:
-				report.NotClaimable.October += v.Quantity
-				report.NotClaimable.Total += v.Quantity
-			case 11:
-				report.NotClaimable.November += v.Quantity
-				report.NotClaimable.Total += v.Quantity
-			case 12:
-				report.NotClaimable.December += v.Quantity
-				report.NotClaimable.Total += v.Quantity
-			}
-		}
-	}
-
-	for _, v := range listProduction {
-		date, _ := time.Parse("2006-01-02T00:00:00Z", v.ProductionDate)
-		_, month, _ := date.Date()
-		switch int(month) {
-		case 1:
-			report.Production.January += v.Quantity
-			report.Production.Total += v.Quantity
-		case 2:
-			report.Production.February += v.Quantity
-			report.Production.Total += v.Quantity
-		case 3:
-			report.Production.March += v.Quantity
-			report.Production.Total += v.Quantity
-		case 4:
-			report.Production.April += v.Quantity
-			report.Production.Total += v.Quantity
-		case 5:
-			report.Production.May += v.Quantity
-			report.Production.Total += v.Quantity
-		case 6:
-			report.Production.June += v.Quantity
-			report.Production.Total += v.Quantity
-		case 7:
-			report.Production.July += v.Quantity
-			report.Production.Total += v.Quantity
-		case 8:
-			report.Production.August += v.Quantity
-			report.Production.Total += v.Quantity
-		case 9:
-			report.Production.September += v.Quantity
-			report.Production.Total += v.Quantity
-		case 10:
-			report.Production.October += v.Quantity
-			report.Production.Total += v.Quantity
-		case 11:
-			report.Production.November += v.Quantity
-			report.Production.Total += v.Quantity
-		case 12:
-			report.Production.December += v.Quantity
-			report.Production.Total += v.Quantity
-		}
-	}
-	return report, nil
-}
-
-func (r *repository) GetReportRecap(year int) (ReportRecapOutput, error) {
-	var report ReportRecapOutput
+func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput, error) {
+	var reportRecap ReportRecapOutput
+	var reportDetail ReportDetailOutput
 
 	var caloriesMinimum float64
 	var caloriesMaximum float64
 	var listTransactions []Transaction
+	var listProduction []production.Production
 
 	startFilter := fmt.Sprintf("%v-01-01", year)
 	endFilter := fmt.Sprintf("%v-12-31", year)
@@ -690,12 +336,45 @@ func (r *repository) GetReportRecap(year int) (ReportRecapOutput, error) {
 	queryFilter := "minerba_id IS NOT NULL AND shipping_date >= '" + startFilter + "' AND shipping_date <= '" + endFilter + "'"
 	queryFilterProduction := "production_date >= '" + startFilter + "' AND production_date <= '" + endFilter + "'"
 	errFind := r.db.Where(queryFilter).Order("id ASC").Find(&listTransactions).Error
+	errFindProduction := r.db.Where(queryFilterProduction).Order("id ASC").Find(&listProduction).Error
 
 	if errFind != nil {
-		return  report, errFind
+		return  reportRecap, reportDetail, errFind
 	}
 
+	if errFindProduction != nil {
+		return  reportRecap, reportDetail, errFindProduction
+	}
+
+	reportDetail.Electricity.January = make(map[string]float64)
+	reportDetail.NonElectricity.January = make(map[string]float64)
+	reportDetail.Electricity.February = make(map[string]float64)
+	reportDetail.NonElectricity.February = make(map[string]float64)
+	reportDetail.Electricity.March = make(map[string]float64)
+	reportDetail.NonElectricity.March = make(map[string]float64)
+	reportDetail.Electricity.April = make(map[string]float64)
+	reportDetail.NonElectricity.April = make(map[string]float64)
+	reportDetail.Electricity.May = make(map[string]float64)
+	reportDetail.NonElectricity.May = make(map[string]float64)
+	reportDetail.Electricity.June = make(map[string]float64)
+	reportDetail.NonElectricity.June = make(map[string]float64)
+	reportDetail.Electricity.July = make(map[string]float64)
+	reportDetail.NonElectricity.July = make(map[string]float64)
+	reportDetail.Electricity.August = make(map[string]float64)
+	reportDetail.NonElectricity.August = make(map[string]float64)
+	reportDetail.Electricity.September = make(map[string]float64)
+	reportDetail.NonElectricity.September = make(map[string]float64)
+	reportDetail.Electricity.October = make(map[string]float64)
+	reportDetail.NonElectricity.October = make(map[string]float64)
+	reportDetail.Electricity.November = make(map[string]float64)
+	reportDetail.NonElectricity.November = make(map[string]float64)
+	reportDetail.Electricity.December = make(map[string]float64)
+	reportDetail.NonElectricity.December = make(map[string]float64)
+
 	for i, v := range listTransactions {
+		date, _ := time.Parse("2006-01-02T00:00:00Z", *v.ShippingDate)
+		_, month, _ := date.Date()
+
 		if i == 0 {
 			caloriesMinimum = v.QualityCaloriesAr
 			caloriesMaximum = v.QualityCaloriesAr
@@ -710,21 +389,357 @@ func (r *repository) GetReportRecap(year int) (ReportRecapOutput, error) {
 		}
 
 		if v.DmoCategory == "ELECTRICITY" {
-			report.ElectricityTotal += v.Quantity
-			report.Total += v.Quantity
+			reportRecap.ElectricityTotal += v.Quantity
+			reportRecap.Total += v.Quantity
 		} else if v.DmoCategory == "NON ELECTRICITY" {
-			report.NonElectricityTotal += v.Quantity
-			report.Total += v.Quantity
+			reportRecap.NonElectricityTotal += v.Quantity
+			reportRecap.Total += v.Quantity
 		}
 
+		if v.IsNotClaim == false {
+			switch int(month) {
+			case 1:
+				if v.DmoCategory == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.January[v.DmoBuyerName]; ok {
+						reportDetail.Electricity.January[v.DmoBuyerName] += v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					} else {
+						reportDetail.Electricity.January[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					}
+				} else if v.DmoCategory == "NON ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.January[v.DmoBuyerName]; ok {
+						reportDetail.NonElectricity.January[v.DmoBuyerName] += v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					} else {
+						reportDetail.NonElectricity.January[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					}
+				}
+			case 2:
+				if v.DmoCategory == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.February[v.DmoBuyerName]; ok {
+						reportDetail.Electricity.February[v.DmoBuyerName] += v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					} else {
+						reportDetail.Electricity.February[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					}
+				} else if v.DmoCategory == "NON ELECTRICITY" {
+					if _, ok := reportDetail.NonElectricity.February[v.DmoBuyerName]; ok {
+						reportDetail.NonElectricity.February[v.DmoBuyerName] += v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					} else {
+						reportDetail.NonElectricity.February[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					}
+				}
+			case 3:
+				if v.DmoCategory == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.March[v.DmoBuyerName]; ok {
+						reportDetail.Electricity.March[v.DmoBuyerName] += v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					} else {
+						reportDetail.Electricity.March[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					}
+				} else if v.DmoCategory == "NON ELECTRICITY" {
+					if _, ok := reportDetail.NonElectricity.March[v.DmoBuyerName]; ok {
+						reportDetail.NonElectricity.March[v.DmoBuyerName] += v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					} else {
+						reportDetail.NonElectricity.March[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					}
+				}
+			case 4:
+				if v.DmoCategory == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.April[v.DmoBuyerName]; ok {
+						reportDetail.Electricity.April[v.DmoBuyerName] += v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					} else {
+						reportDetail.Electricity.April[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					}
+				} else if v.DmoCategory == "NON ELECTRICITY" {
+					if _, ok := reportDetail.NonElectricity.April[v.DmoBuyerName]; ok {
+						reportDetail.NonElectricity.April[v.DmoBuyerName] += v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					} else {
+						reportDetail.NonElectricity.April[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					}
+				}
+			case 5:
+				if v.DmoCategory == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.May[v.DmoBuyerName]; ok {
+						reportDetail.Electricity.May[v.DmoBuyerName] += v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					} else {
+						reportDetail.Electricity.May[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					}
+				} else if v.DmoCategory == "NON ELECTRICITY" {
+					if _, ok := reportDetail.NonElectricity.May[v.DmoBuyerName]; ok {
+						reportDetail.NonElectricity.May[v.DmoBuyerName] += v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					} else {
+						reportDetail.NonElectricity.May[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					}
+				}
+			case 6:
+				if v.DmoCategory == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.June[v.DmoBuyerName]; ok {
+						reportDetail.Electricity.June[v.DmoBuyerName] += v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					} else {
+						reportDetail.Electricity.June[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					}
+				} else if v.DmoCategory == "NON ELECTRICITY" {
+					if _, ok := reportDetail.NonElectricity.June[v.DmoBuyerName]; ok {
+						reportDetail.NonElectricity.June[v.DmoBuyerName] += v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					} else {
+						reportDetail.NonElectricity.June[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					}
+				}
+			case 7:
+				if v.DmoCategory == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.July[v.DmoBuyerName]; ok {
+						reportDetail.Electricity.July[v.DmoBuyerName] += v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					} else {
+						reportDetail.Electricity.July[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					}
+				} else if v.DmoCategory == "NON ELECTRICITY" {
+					if _, ok := reportDetail.NonElectricity.July[v.DmoBuyerName]; ok {
+						reportDetail.NonElectricity.July[v.DmoBuyerName] += v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					} else {
+						reportDetail.NonElectricity.July[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					}
+				}
+			case 8:
+				if v.DmoCategory == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.August[v.DmoBuyerName]; ok {
+						reportDetail.Electricity.August[v.DmoBuyerName] += v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					} else {
+						reportDetail.Electricity.August[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					}
+				} else if v.DmoCategory == "NON ELECTRICITY" {
+					if _, ok := reportDetail.NonElectricity.August[v.DmoBuyerName]; ok {
+						reportDetail.NonElectricity.August[v.DmoBuyerName] += v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					} else {
+						reportDetail.NonElectricity.August[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					}
+				}
+			case 9:
+				if v.DmoCategory == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.September[v.DmoBuyerName]; ok {
+						reportDetail.Electricity.September[v.DmoBuyerName] += v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					} else {
+						reportDetail.Electricity.September[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					}
+				} else if v.DmoCategory == "NON ELECTRICITY" {
+					if _, ok := reportDetail.NonElectricity.September[v.DmoBuyerName]; ok {
+						reportDetail.NonElectricity.September[v.DmoBuyerName] += v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					} else {
+						reportDetail.NonElectricity.September[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					}
+				}
+			case 10:
+				if v.DmoCategory == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.October[v.DmoBuyerName]; ok {
+						reportDetail.Electricity.October[v.DmoBuyerName] += v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					} else {
+						reportDetail.Electricity.October[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					}
+				} else if v.DmoCategory == "NON ELECTRICITY" {
+					if _, ok := reportDetail.NonElectricity.October[v.DmoBuyerName]; ok {
+						reportDetail.NonElectricity.October[v.DmoBuyerName] += v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					} else {
+						reportDetail.NonElectricity.October[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					}
+				}
+			case 11:
+				if v.DmoCategory == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.November[v.DmoBuyerName]; ok {
+						reportDetail.Electricity.November[v.DmoBuyerName] += v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					} else {
+						reportDetail.Electricity.November[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					}
+				} else if v.DmoCategory == "NON ELECTRICITY" {
+					if _, ok := reportDetail.NonElectricity.November[v.DmoBuyerName]; ok {
+						reportDetail.NonElectricity.November[v.DmoBuyerName] += v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					} else {
+						reportDetail.NonElectricity.November[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					}
+				}
+			case 12:
+				if v.DmoCategory == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.December[v.DmoBuyerName]; ok {
+						reportDetail.Electricity.December[v.DmoBuyerName] += v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					} else {
+						reportDetail.Electricity.December[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.Total += v.Quantity
+					}
+				} else if v.DmoCategory == "NON ELECTRICITY" {
+					if _, ok := reportDetail.NonElectricity.December[v.DmoBuyerName]; ok {
+						reportDetail.NonElectricity.December[v.DmoBuyerName] += v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					} else {
+						reportDetail.NonElectricity.December[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.Total += v.Quantity
+					}
+				}
+			}
+		} else {
+			switch int(month) {
+			case 1:
+				reportDetail.NotClaimable.January += v.Quantity
+				reportDetail.NotClaimable.Total += v.Quantity
+			case 2:
+				reportDetail.NotClaimable.February += v.Quantity
+				reportDetail.NotClaimable.Total += v.Quantity
+			case 3:
+				reportDetail.NotClaimable.March += v.Quantity
+				reportDetail.NotClaimable.Total += v.Quantity
+			case 4:
+				reportDetail.NotClaimable.April += v.Quantity
+				reportDetail.NotClaimable.Total += v.Quantity
+			case 5:
+				reportDetail.NotClaimable.May += v.Quantity
+				reportDetail.NotClaimable.Total += v.Quantity
+			case 6:
+				reportDetail.NotClaimable.June += v.Quantity
+				reportDetail.NotClaimable.Total += v.Quantity
+			case 7:
+				reportDetail.NotClaimable.July += v.Quantity
+				reportDetail.NotClaimable.Total += v.Quantity
+			case 8:
+				reportDetail.NotClaimable.August += v.Quantity
+				reportDetail.NotClaimable.Total += v.Quantity
+			case 9:
+				reportDetail.NotClaimable.September += v.Quantity
+				reportDetail.NotClaimable.Total += v.Quantity
+			case 10:
+				reportDetail.NotClaimable.October += v.Quantity
+				reportDetail.NotClaimable.Total += v.Quantity
+			case 11:
+				reportDetail.NotClaimable.November += v.Quantity
+				reportDetail.NotClaimable.Total += v.Quantity
+			case 12:
+				reportDetail.NotClaimable.December += v.Quantity
+				reportDetail.NotClaimable.Total += v.Quantity
+			}
+		}
 	}
+
+	for _, v := range listProduction {
+		date, _ := time.Parse("2006-01-02T00:00:00Z", v.ProductionDate)
+		_, month, _ := date.Date()
+		switch int(month) {
+		case 1:
+			reportDetail.Production.January += v.Quantity
+			reportDetail.Production.Total += v.Quantity
+		case 2:
+			reportDetail.Production.February += v.Quantity
+			reportDetail.Production.Total += v.Quantity
+		case 3:
+			reportDetail.Production.March += v.Quantity
+			reportDetail.Production.Total += v.Quantity
+		case 4:
+			reportDetail.Production.April += v.Quantity
+			reportDetail.Production.Total += v.Quantity
+		case 5:
+			reportDetail.Production.May += v.Quantity
+			reportDetail.Production.Total += v.Quantity
+		case 6:
+			reportDetail.Production.June += v.Quantity
+			reportDetail.Production.Total += v.Quantity
+		case 7:
+			reportDetail.Production.July += v.Quantity
+			reportDetail.Production.Total += v.Quantity
+		case 8:
+			reportDetail.Production.August += v.Quantity
+			reportDetail.Production.Total += v.Quantity
+		case 9:
+			reportDetail.Production.September += v.Quantity
+			reportDetail.Production.Total += v.Quantity
+		case 10:
+			reportDetail.Production.October += v.Quantity
+			reportDetail.Production.Total += v.Quantity
+		case 11:
+			reportDetail.Production.November += v.Quantity
+			reportDetail.Production.Total += v.Quantity
+		case 12:
+			reportDetail.Production.December += v.Quantity
+			reportDetail.Production.Total += v.Quantity
+		}
+	}
+
+
+	stringTempElectricityTotal := fmt.Sprintf("%.3f", reportDetail.Electricity.Total)
+	parseTempElectricityTotal, _ := strconv.ParseFloat(stringTempElectricityTotal, 64)
+
+	stringTempNonElectricityTotal := fmt.Sprintf("%.3f", reportDetail.NonElectricity.Total)
+	parseTempNonElectricityTotal, _ := strconv.ParseFloat(stringTempNonElectricityTotal, 64)
+
+	stringTempNotClaimableTotal := fmt.Sprintf("%.3f", reportDetail.NotClaimable.Total)
+	parseTempNotClaimableTotal, _ := strconv.ParseFloat(stringTempNotClaimableTotal, 64)
+
+	stringTempProductionTotal := fmt.Sprintf("%.3f", reportDetail.Production.Total)
+	parseTempProductionTotal, _ := strconv.ParseFloat(stringTempProductionTotal, 64)
+
+
+	reportDetail.Electricity.Total = parseTempElectricityTotal
+	reportDetail.NonElectricity.Total = parseTempNonElectricityTotal
+	reportDetail.NotClaimable.Total = parseTempNotClaimableTotal
+	reportDetail.Production.Total = parseTempProductionTotal
+
+
+	stringTempRecapElectricityTotal := fmt.Sprintf("%.3f", reportRecap.ElectricityTotal)
+	parseTempRecapElectricityTotal, _ := strconv.ParseFloat(stringTempRecapElectricityTotal, 64)
+
+	stringTempRecapNonElectricityTotal := fmt.Sprintf("%.3f", reportRecap.NonElectricityTotal)
+	parseTempRecapNonElectricityTotal, _ := strconv.ParseFloat(stringTempRecapNonElectricityTotal, 64)
+
+	stringTempRecapTotal := fmt.Sprintf("%.3f", reportRecap.Total)
+	parseTempRecapTotal, _ := strconv.ParseFloat(stringTempRecapTotal, 64)
+
+
+	reportRecap.ElectricityTotal  = parseTempRecapElectricityTotal
+	reportRecap.NonElectricityTotal = parseTempRecapNonElectricityTotal
+	reportRecap.Total = parseTempRecapTotal
 
 	var productionReality float64
 
 	r.db.Model(production.Production{}).Where(queryFilterProduction).Select("sum(quantity)").Row().Scan(&productionReality)
 
-	report.TotalProduction = productionReality
-	report.FulfillmentOfProductionRealization = fmt.Sprintf("%.2f%%", report.Total / productionReality * 100)
-	report.RateCalories = fmt.Sprintf("%v - %v GAR",caloriesMinimum, caloriesMaximum )
-	return report, nil
+	reportRecap.TotalProduction = productionReality
+	reportRecap.FulfillmentOfProductionRealization = fmt.Sprintf("%.2f%%", reportRecap.Total / productionReality * 100)
+	reportRecap.RateCalories = fmt.Sprintf("%v - %v GAR",caloriesMinimum, caloriesMaximum )
+	return reportRecap, reportDetail, nil
 }
