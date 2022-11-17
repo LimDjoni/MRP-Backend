@@ -15,7 +15,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type transactionHandler struct {
@@ -547,94 +546,4 @@ func (h *transactionHandler) UpdateDocumentTransactionDN (c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(editDocument)
-}
-
-func (h *transactionHandler) GetReportDetail (c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	responseUnauthorized := fiber.Map{
-		"error": "unauthorized",
-	}
-
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
-		return c.Status(401).JSON(responseUnauthorized)
-	}
-
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
-
-	if checkUserErr != nil || checkUser.IsActive == false {
-		return c.Status(401).JSON(responseUnauthorized)
-	}
-
-	report, reportErr := h.transactionService.GetReportDetail(2022)
-
-	if reportErr != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"message": "failed to get report",
-			"error": reportErr.Error(),
-		})
-	}
-
-	return c.Status(200).JSON(report)
-}
-
-func (h *transactionHandler) GetReportRecap (c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	responseUnauthorized := fiber.Map{
-		"error": "unauthorized",
-	}
-
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
-		return c.Status(401).JSON(responseUnauthorized)
-	}
-
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
-
-	if checkUserErr != nil || checkUser.IsActive == false {
-		return c.Status(401).JSON(responseUnauthorized)
-	}
-
-	reportInput := new(transaction.InputRequestGetReportRecap)
-
-	// Binds the request body to the Person struct
-	if err := c.BodyParser(reportInput); err != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-
-	errors := h.v.Struct(*reportInput)
-
-	if errors != nil {
-		dataErrors := validatorfunc.ValidateStruct(errors)
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"errors": dataErrors,
-		})
-	}
-
-	if reportInput.Year == 0 {
-		year, _, _ := time.Now().Date()
-		reportInput.Year = year
-	}
-
-	report, reportErr := h.transactionService.GetReportRecap(reportInput.Year)
-
-	report.Year = reportInput.Year
-	report.ProductionPlan = reportInput.ProductionPlan
-	report.PercentageProductionObligation = reportInput.PercentageProductionObligation
-	report.ProductionObligation = reportInput.ProductionPlan * reportInput.PercentageProductionObligation / 100
-
-	percentage := report.Total / report.ProductionObligation * 100
-	report.FulfillmentPercentageProductionObligation = fmt.Sprintf("%.2f%%", percentage)
-	report.ProrateProductionPlan = fmt.Sprintf("%.2f%%", report.Total / report.ProductionPlan * 100)
-	report.FulfillmentOfProductionPlan = fmt.Sprintf("%.2f%%", report.Total / report.ProductionPlan * 100)
-	if reportErr != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"message": "failed to get report",
-			"error": reportErr.Error(),
-		})
-	}
-
-	return c.Status(200).JSON(report)
 }

@@ -4373,80 +4373,7 @@ func TestDeleteDmo(t *testing.T) {
 }
 
 // Report
-func TestGetReportDetail(t *testing.T) {
-	tests := []struct {
-		expectedError bool
-		expectedCode  int
-		token string
-	}{
-		{
-			expectedError: false,
-			expectedCode:  401,
-			token: "",
-		},
-		{
-			expectedError: false,
-			expectedCode:  401,
-			token: "afwifiwgjwigjianveri",
-		},
-		{
-			expectedError: false,
-			expectedCode:  200,
-			token: token,
-		},
-	}
-
-	db, validate := startSetup()
-	app := fiber.New()
-	apiV1 := app.Group("/api/v1") // /api
-
-	Setup(db, validate, apiV1)
-
-	for _, test := range tests {
-		req, _ := http.NewRequest(
-			"GET",
-			"/api/v1/transaction/report/detail",
-			nil,
-		)
-
-		req.Header.Add("Authorization", "Bearer " + test.token)
-		req.Header.Add("Content-Type", "application/json")
-		req.Header.Add("Accept", "application/json")
-
-		// The -1 disables request latency.
-		res, err := app.Test(req, -1)
-
-		assert.Equalf(t, test.expectedError, err != nil, "report transaction detail")
-		if test.expectedError {
-			continue
-		}
-
-		// Verify if the status code is as expected
-		assert.Equalf(t, test.expectedCode, res.StatusCode, "report transaction detail")
-
-		// Read the response body
-		body, err := ioutil.ReadAll(res.Body)
-
-		// Ensure that the body was read correctly
-		assert.Nilf(t, err, "report transaction detail")
-
-		mapUnmarshal  := make(map[string]interface{})
-
-		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
-
-		fmt.Println(errUnmarshal)
-		if res.StatusCode >= 400 {
-			continue
-		}
-
-		//// Verify, that the reponse body equals the expected body
-		assert.Contains(t, mapUnmarshal,"electricity", "report transaction detail")
-		assert.Contains(t, mapUnmarshal,"non_electricity", "report transaction detail")
-		assert.Contains(t, mapUnmarshal,"not_claimable", "report transaction detail")
-	}
-}
-
-func TestGetReportRecap(t *testing.T) {
+func TestReport(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
@@ -4487,7 +4414,7 @@ func TestGetReportRecap(t *testing.T) {
 		var payload = bytes.NewBufferString(string(bodyJson))
 		req, _ := http.NewRequest(
 			"POST",
-			"/api/v1/transaction/report/recap",
+			"/api/v1/report",
 			payload,
 		)
 
@@ -4498,19 +4425,19 @@ func TestGetReportRecap(t *testing.T) {
 		// The -1 disables request latency.
 		res, err := app.Test(req, -1)
 
-		assert.Equalf(t, test.expectedError, err != nil, "report transaction recap")
+		assert.Equalf(t, test.expectedError, err != nil, "report")
 		if test.expectedError {
 			continue
 		}
 
 		// Verify if the status code is as expected
-		assert.Equalf(t, test.expectedCode, res.StatusCode, "report transaction recap")
+		assert.Equalf(t, test.expectedCode, res.StatusCode, "report")
 
 		// Read the response body
 		body, err := ioutil.ReadAll(res.Body)
 
 		// Ensure that the body was read correctly
-		assert.Nilf(t, err, "report transaction recap")
+		assert.Nilf(t, err, "report")
 
 		mapUnmarshal := make(map[string]interface{})
 
@@ -4522,18 +4449,8 @@ func TestGetReportRecap(t *testing.T) {
 		}
 
 		//// Verify, that the reponse body equals the expected body
-		assert.Contains(t, mapUnmarshal, "electricity_total", "report transaction recap")
-		assert.Contains(t, mapUnmarshal, "non_electricity_total", "report transaction recap")
-		assert.Contains(t, mapUnmarshal, "total", "report transaction recap")
-		assert.Contains(t, mapUnmarshal, "rate_calories", "report transaction recap")
-		assert.Contains(t, mapUnmarshal, "production_plan", "report transaction recap")
-		assert.Contains(t, mapUnmarshal, "production_obligation", "report transaction recap")
-		assert.Contains(t, mapUnmarshal, "percentage_production_obligation", "report transaction recap")
-		assert.Contains(t, mapUnmarshal, "prorate_production_plan", "report transaction recap")
-		assert.Contains(t, mapUnmarshal, "fulfillment_of_production_plan", "report transaction recap")
-		assert.Contains(t, mapUnmarshal, "fulfillment_of_production_realization", "report transaction recap")
-		assert.Contains(t, mapUnmarshal, "fulfillment_percentage_production_obligation", "report transaction recap")
-		assert.Contains(t, mapUnmarshal, "year", "report transaction recap")
+		assert.Contains(t, mapUnmarshal, "detail", "report")
+		assert.Contains(t, mapUnmarshal, "recap", "report")
 	}
 }
 

@@ -25,8 +25,7 @@ type Service interface {
 	GetDetailDmo(id int) (DetailDmo, error)
 	RequestCreateDmo(reqInput InputRequestCreateUploadDmo) (map[string]interface{}, error)
 	RequestCreateCustomDmo(dataDmo dmo.Dmo, traderEndUser trader.Trader ,bast *multipart.FileHeader, reconciliationLetter *multipart.FileHeader, statementLetter *multipart.FileHeader, authorization string ) (map[string]interface{}, error)
-	GetReportDetail(year int) (ReportDetailOutput, error)
-	GetReportRecap(year int) (ReportRecapOutput, error)
+	GetReport(year int) (ReportRecapOutput, ReportDetailOutput, error)
 }
 
 type service struct {
@@ -214,14 +213,8 @@ func (s *service) RequestCreateCustomDmo(dataDmo dmo.Dmo, traderEndUser trader.T
 	return res, doReqErr
 }
 
-func (s *service) GetReportDetail(year int) (ReportDetailOutput, error) {
-	report, reportErr := s.repository.GetReportDetail(year)
+func (s *service) GetReport(year int) (ReportRecapOutput, ReportDetailOutput, error) {
+	reportRecap, reportDetail, reportErr := s.repository.GetReport(year)
 
-	return report, reportErr
-}
-
-func (s *service) GetReportRecap(year int) (ReportRecapOutput, error) {
-	report, reportErr := s.repository.GetReportRecap(year)
-
-	return report, reportErr
+	return reportRecap, reportDetail, reportErr
 }
