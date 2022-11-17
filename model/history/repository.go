@@ -449,9 +449,15 @@ func (r *repository) CreateMinerba (period string, baseIdNumber string, updateTr
 		return createdMinerba, errors.New("please check some of transactions not found")
 	}
 
+	var tempQuantity float64
 	for _, v := range transactions {
-		createdMinerba.Quantity += v.Quantity
+		tempQuantity += v.Quantity
 	}
+
+	stringTempQuantity := fmt.Sprintf("%.3f", tempQuantity)
+	parseTempQuantity, _ := strconv.ParseFloat(stringTempQuantity, 64)
+
+	createdMinerba.Quantity = parseTempQuantity
 
 	errCreateMinerba := tx.Create(&createdMinerba).Error
 
@@ -721,8 +727,11 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string
 			bargeQuantity += v.Quantity
 		}
 
-		createdDmo.BargeTotalQuantity = bargeQuantity
-		createdDmo.BargeGrandTotalQuantity = bargeQuantity
+		stringBargeQuantity := fmt.Sprintf("%.3f", bargeQuantity)
+		parseBargeQuantity, _ := strconv.ParseFloat(stringBargeQuantity, 64)
+
+		createdDmo.BargeTotalQuantity = parseBargeQuantity
+		createdDmo.BargeGrandTotalQuantity = parseBargeQuantity
 	}
 
 	if len(dmoInput.TransactionVessel) > 0 {
@@ -730,6 +739,7 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string
 		var vesselAdjustment float64
 		vessel = true
 		findTransactionVesselErr := tx.Where("id IN ?", dmoInput.TransactionVessel).Find(&transactionVessel).Error
+
 		if findTransactionVesselErr != nil {
 			return createdDmo, findTransactionVesselErr
 		}
@@ -742,9 +752,18 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string
 			vesselAdjustment += v.Adjustment
 		}
 
-		createdDmo.VesselAdjustment = vesselAdjustment
-		createdDmo.VesselTotalQuantity = vesselQuantity
-		createdDmo.VesselGrandTotalQuantity = vesselQuantity + vesselAdjustment
+		stringVesselAdjustment := fmt.Sprintf("%.3f", vesselAdjustment)
+		parseVesselAdjustment, _ := strconv.ParseFloat(stringVesselAdjustment, 64)
+
+		stringVesselTotalQuantity := fmt.Sprintf("%.3f", vesselQuantity)
+		parseVesselTotalQuantity, _ := strconv.ParseFloat(stringVesselTotalQuantity, 64)
+
+		stringVesselGrandTotalQuantity := fmt.Sprintf("%.3f", vesselQuantity + vesselAdjustment)
+		parseVesselGrandTotalQuantity, _ := strconv.ParseFloat(stringVesselGrandTotalQuantity, 64)
+
+		createdDmo.VesselAdjustment = parseVesselAdjustment
+		createdDmo.VesselTotalQuantity = parseVesselTotalQuantity
+		createdDmo.VesselGrandTotalQuantity = parseVesselGrandTotalQuantity
 	}
 
 	if barge && vessel {
@@ -811,11 +830,22 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string
 		if len(dmoInput.VesselAdjustment) > 0 {
 			for _, value := range dmoInput.VesselAdjustment {
 				var vesselDummy dmovessel.DmoVessel
+
+				stringAdjustment := fmt.Sprintf("%.3f", value.Adjustment)
+				parseAdjustment, _ := strconv.ParseFloat(stringAdjustment, 64)
+
+				stringQuantity := fmt.Sprintf("%.3f", value.Quantity)
+				parseQuantity, _ := strconv.ParseFloat(stringQuantity, 64)
+
+				stringGrandTotalQuantity := fmt.Sprintf("%.3f", value.Quantity + value.Adjustment)
+				parseGrandTotalQuantity, _ := strconv.ParseFloat(stringGrandTotalQuantity, 64)
+
+
 				vesselDummy.VesselName = value.VesselName
-				vesselDummy.Adjustment = value.Adjustment
-				vesselDummy.Quantity = value.Quantity
+				vesselDummy.Adjustment = parseAdjustment
+				vesselDummy.Quantity = parseQuantity
 				vesselDummy.DmoId = createdDmo.ID
-				vesselDummy.GrandTotalQuantity = value.Quantity + value.Adjustment
+				vesselDummy.GrandTotalQuantity = parseGrandTotalQuantity
 				dmoVessels = append(dmoVessels, vesselDummy)
 			}
 
