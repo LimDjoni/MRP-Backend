@@ -209,7 +209,6 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		})
 	}
 
-
 	_, checkListTraderErr := h.traderService.CheckListTrader(inputCreateDmo.Trader)
 
 	if checkListTraderErr != nil {
