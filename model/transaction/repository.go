@@ -6,23 +6,24 @@ import (
 	"ajebackend/model/production"
 	"errors"
 	"fmt"
+	"strconv"
+	"time"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"time"
-	"strconv"
 )
 
 type Repository interface {
 	ListDataDN(page int, sortFilter SortAndFilter) (Pagination, error)
 	DetailTransactionDN(id int) (Transaction, error)
 	ListDataDNWithoutMinerba() ([]Transaction, error)
-	CheckDataDnAndMinerba(listData []int)(bool, error)
-	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int)([]Transaction, error)
-	GetDetailMinerba(id int)(DetailMinerba, error)
+	CheckDataDnAndMinerba(listData []int) (bool, error)
+	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) ([]Transaction, error)
+	GetDetailMinerba(id int) (DetailMinerba, error)
 	ListDataDNWithoutDmo() (ChooseTransactionDmo, error)
-	CheckDataDnAndDmo(listData []int)([]Transaction, error)
-	GetDetailDmo(id int)(DetailDmo, error)
-	CheckDataUnique(inputTrans DataTransactionInput) (bool,bool,bool,bool)
+	CheckDataDnAndDmo(listData []int) ([]Transaction, error)
+	GetDetailDmo(id int) (DetailDmo, error)
+	CheckDataUnique(inputTrans DataTransactionInput) (bool, bool, bool, bool)
 	GetReport(year int) (ReportRecapOutput, ReportDetailOutput, error)
 }
 
@@ -71,7 +72,7 @@ func (r *repository) ListDataDN(page int, sortFilter SortAndFilter) (Pagination,
 
 	if sortFilter.Quantity != 0 {
 		quantity := fmt.Sprintf("%v", sortFilter.Quantity)
-		queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" +  quantity + "%'"
+		queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" + quantity + "%'"
 	}
 
 	errFind := r.db.Preload(clause.Associations).Where(queryFilter).Order(sortString).Scopes(paginateDataDN(transactions, &pagination, r.db, queryFilter)).Find(&transactions).Error
@@ -101,12 +102,12 @@ func (r *repository) DetailTransactionDN(id int) (Transaction, error) {
 func (r *repository) ListDataDNWithoutMinerba() ([]Transaction, error) {
 	var listDataDnWithoutMinerba []Transaction
 
-	errFind := r.db.Where("minerba_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ?", "DN", false, false).Find(&listDataDnWithoutMinerba).Error
+	errFind := r.db.Where("minerba_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND is_finance_check = ?", "DN", false, false, true).Find(&listDataDnWithoutMinerba).Error
 
 	return listDataDnWithoutMinerba, errFind
 }
 
-func (r *repository) CheckDataUnique(inputTrans DataTransactionInput) (bool,bool,bool,bool) {
+func (r *repository) CheckDataUnique(inputTrans DataTransactionInput) (bool, bool, bool, bool) {
 	isDpRoyaltyNtpnUnique := false
 	isDpRoyaltyBillingCodeUnique := false
 	isPaymentDpRoyaltyNtpnUnique := false
@@ -157,7 +158,7 @@ func (r *repository) CheckDataUnique(inputTrans DataTransactionInput) (bool,bool
 
 // Minerba
 
-func (r *repository) CheckDataDnAndMinerba(listData []int)(bool, error) {
+func (r *repository) CheckDataDnAndMinerba(listData []int) (bool, error) {
 	var listDnValid []Transaction
 
 	errFindValid := r.db.Where("id IN ?", listData).Find(&listDnValid).Error
@@ -185,7 +186,7 @@ func (r *repository) CheckDataDnAndMinerba(listData []int)(bool, error) {
 	return true, nil
 }
 
-func (r *repository) CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int)([]Transaction, error) {
+func (r *repository) CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) ([]Transaction, error) {
 	var listDnValid []Transaction
 
 	errFindValid := r.db.Where("id IN ?", listData).Find(&listDnValid).Error
@@ -217,7 +218,7 @@ func (r *repository) CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int)(
 	return listDn, nil
 }
 
-func(r *repository) GetDetailMinerba(id int)(DetailMinerba, error) {
+func (r *repository) GetDetailMinerba(id int) (DetailMinerba, error) {
 
 	var detailMinerba DetailMinerba
 
@@ -249,13 +250,13 @@ func (r *repository) ListDataDNWithoutDmo() (ChooseTransactionDmo, error) {
 	var listDataDnVesselDmo []Transaction
 	var listDataDnForDmo ChooseTransactionDmo
 
-	errFindBarge := r.db.Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_name = ?", "DN", false, false, "").Find(&listDataDnBargeDmo).Error
+	errFindBarge := r.db.Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_name = ? AND is_finance_check = ?", "DN", false, false, "", true).Find(&listDataDnBargeDmo).Error
 
 	if errFindBarge != nil {
 		return listDataDnForDmo, errFindBarge
 	}
 
-	errFindVessel := r.db.Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_name != ?", "DN", false, false, "").Find(&listDataDnVesselDmo).Error
+	errFindVessel := r.db.Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_name != ? AND is_finance_check = ?", "DN", false, false, "", true).Find(&listDataDnVesselDmo).Error
 
 	if errFindVessel != nil {
 		return listDataDnForDmo, errFindVessel
@@ -266,7 +267,7 @@ func (r *repository) ListDataDNWithoutDmo() (ChooseTransactionDmo, error) {
 	return listDataDnForDmo, nil
 }
 
-func (r *repository) CheckDataDnAndDmo(listData []int)([]Transaction, error) {
+func (r *repository) CheckDataDnAndDmo(listData []int) ([]Transaction, error) {
 	var listDnValid []Transaction
 
 	errFindValid := r.db.Where("id IN ?", listData).Find(&listDnValid).Error
@@ -294,7 +295,7 @@ func (r *repository) CheckDataDnAndDmo(listData []int)([]Transaction, error) {
 	return listDn, nil
 }
 
-func (r *repository) GetDetailDmo(id int)(DetailDmo, error) {
+func (r *repository) GetDetailDmo(id int) (DetailDmo, error) {
 
 	var detailDmo DetailDmo
 
@@ -339,11 +340,11 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 	errFindProduction := r.db.Where(queryFilterProduction).Order("id ASC").Find(&listProduction).Error
 
 	if errFind != nil {
-		return  reportRecap, reportDetail, errFind
+		return reportRecap, reportDetail, errFind
 	}
 
 	if errFindProduction != nil {
-		return  reportRecap, reportDetail, errFindProduction
+		return reportRecap, reportDetail, errFindProduction
 	}
 
 	reportDetail.Electricity.January = make(map[string]float64)
@@ -700,7 +701,6 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 		}
 	}
 
-
 	stringTempElectricityTotal := fmt.Sprintf("%.3f", reportDetail.Electricity.Total)
 	parseTempElectricityTotal, _ := strconv.ParseFloat(stringTempElectricityTotal, 64)
 
@@ -713,12 +713,10 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 	stringTempProductionTotal := fmt.Sprintf("%.3f", reportDetail.Production.Total)
 	parseTempProductionTotal, _ := strconv.ParseFloat(stringTempProductionTotal, 64)
 
-
 	reportDetail.Electricity.Total = parseTempElectricityTotal
 	reportDetail.NonElectricity.Total = parseTempNonElectricityTotal
 	reportDetail.NotClaimable.Total = parseTempNotClaimableTotal
 	reportDetail.Production.Total = parseTempProductionTotal
-
 
 	stringTempRecapElectricityTotal := fmt.Sprintf("%.3f", reportRecap.ElectricityTotal)
 	parseTempRecapElectricityTotal, _ := strconv.ParseFloat(stringTempRecapElectricityTotal, 64)
@@ -729,8 +727,7 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 	stringTempRecapTotal := fmt.Sprintf("%.3f", reportRecap.Total)
 	parseTempRecapTotal, _ := strconv.ParseFloat(stringTempRecapTotal, 64)
 
-
-	reportRecap.ElectricityTotal  = parseTempRecapElectricityTotal
+	reportRecap.ElectricityTotal = parseTempRecapElectricityTotal
 	reportRecap.NonElectricityTotal = parseTempRecapNonElectricityTotal
 	reportRecap.Total = parseTempRecapTotal
 
@@ -739,7 +736,7 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 	r.db.Model(production.Production{}).Where(queryFilterProduction).Select("sum(quantity)").Row().Scan(&productionReality)
 
 	reportRecap.TotalProduction = productionReality
-	reportRecap.FulfillmentOfProductionRealization = fmt.Sprintf("%.2f%%", reportRecap.Total / productionReality * 100)
-	reportRecap.RateCalories = fmt.Sprintf("%v - %v GAR",caloriesMinimum, caloriesMaximum )
+	reportRecap.FulfillmentOfProductionRealization = fmt.Sprintf("%.2f%%", reportRecap.Total/productionReality*100)
+	reportRecap.RateCalories = fmt.Sprintf("%v - %v GAR", caloriesMinimum, caloriesMaximum)
 	return reportRecap, reportDetail, nil
 }
