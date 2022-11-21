@@ -775,6 +775,11 @@ func (r *repository) CreateDmo(dmoInput dmo.CreateDmoInput, baseIdNumber string,
 		createdDmo.Type = "Vessel"
 	}
 
+	if dmoInput.IsDocumentCustom {
+		createdDmo.IsReconciliationLetterDownloaded = true
+		createdDmo.IsReconciliationLetterSigned = true
+	}
+
 	createdDmoErr := tx.Create(&createdDmo).Error
 
 	if createdDmoErr != nil {
@@ -957,6 +962,9 @@ func (r *repository) UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocum
 				editData["bast_document_link"] = value["Location"]
 			}
 			if strings.Contains(value["Location"].(string), "berita_acara") {
+				if dmoUpdate.IsDocumentCustom {
+					editData["signed_reconciliation_letter_document_link"] = value["Location"]
+				}
 				editData["reconciliation_letter_document_link"] = value["Location"]
 			}
 			if strings.Contains(value["Location"].(string), "surat_pernyataan") {
