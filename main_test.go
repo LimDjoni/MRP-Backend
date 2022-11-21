@@ -7,14 +7,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/joho/godotenv"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"io/ioutil"
 	"log"
 	"mime/multipart"
 	"os"
 	"strings"
+
+	"github.com/joho/godotenv"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -104,7 +105,6 @@ func TestRegisterUser(t *testing.T) {
 		// The -1 disables request latency.
 		res, err := app.Test(req, -1)
 
-
 		assert.Equalf(t, test.expectedError, err != nil, "register user")
 		if test.expectedError {
 			continue
@@ -157,7 +157,7 @@ func TestLoginUser(t *testing.T) {
 			expectedError: false,
 			expectedCode:  400,
 			body: fiber.Map{
-				"data": "Hendri",
+				"data":     "Hendri",
 				"password": "hendini",
 			},
 		},
@@ -165,7 +165,7 @@ func TestLoginUser(t *testing.T) {
 			expectedError: false,
 			expectedCode:  200,
 			body: fiber.Map{
-				"data": "hendarin6",
+				"data":     "hendarin6",
 				"password": "hendarin6",
 			},
 		},
@@ -173,7 +173,7 @@ func TestLoginUser(t *testing.T) {
 			expectedError: false,
 			expectedCode:  400,
 			body: fiber.Map{
-				"data": "hendarin6",
+				"data":     "hendarin6",
 				"password": "hendarin",
 			},
 		},
@@ -199,7 +199,6 @@ func TestLoginUser(t *testing.T) {
 
 		// The -1 disables request latency.
 		res, err := app.Test(req, -1)
-
 
 		assert.Equalf(t, test.expectedError, err != nil, "login user")
 		if test.expectedError {
@@ -240,22 +239,22 @@ func TestListDataDN(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
+		token         string
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			token: "",
+			token:         "",
 		},
 		{
 			expectedError: false,
 			expectedCode:  401,
-			token: "afwifiwgjwigjianveri",
+			token:         "afwifiwgjwigjianveri",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			token: token,
+			token:         token,
 		},
 	}
 
@@ -272,7 +271,7 @@ func TestListDataDN(t *testing.T) {
 			nil,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
@@ -315,26 +314,26 @@ func TestDetailTransactionDN(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
-		id int
+		token         string
+		id            int
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			id: 1,
-			token: "asdawfaeac",
+			id:            1,
+			token:         "asdawfaeac",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: 38,
-			token: token,
+			id:            38,
+			token:         token,
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
-			id: 1050,
-			token: token,
+			id:            1050,
+			token:         token,
 		},
 	}
 
@@ -352,7 +351,7 @@ func TestDetailTransactionDN(t *testing.T) {
 			nil,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
@@ -466,23 +465,23 @@ func TestCreateTransactionDN(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
-		body map[string]interface{}
+		token         string
+		body          map[string]interface{}
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			body: fiber.Map{},
-			token: "asdawfaeac",
+			body:          fiber.Map{},
+			token:         "asdawfaeac",
 		},
 		{
 			expectedError: false,
 			expectedCode:  201,
 			body: fiber.Map{
-				"shipping_date": "2022-02-01",
-				"coa_date": "2022-02-01",
-				"quantity": 1023.122,
-				"tugboat_name": "AJE",
+				"shipping_date":   "2022-02-01",
+				"coa_date":        "2022-02-01",
+				"quantity":        1023.122,
+				"tugboat_name":    "AJE",
 				"dp_royalty_ntpn": "A123SSSS",
 			},
 			token: token,
@@ -491,8 +490,8 @@ func TestCreateTransactionDN(t *testing.T) {
 			expectedError: false,
 			expectedCode:  400,
 			body: fiber.Map{
-				"coa_date": "2022-22-01",
-				"quantity": 1023.122,
+				"coa_date":     "2022-22-01",
+				"quantity":     1023.122,
 				"tugboat_name": "AJE",
 			},
 			token: token,
@@ -501,12 +500,12 @@ func TestCreateTransactionDN(t *testing.T) {
 			expectedError: false,
 			expectedCode:  400,
 			body: fiber.Map{
-				"coa_date": "2022-22-01",
-				"quantity": 1023.122,
-				"tugboat_name": "AJE",
-				"dp_royalty_ntpn": "A123SSSS",
-				"dp_royalty_billing_code": "A123SS",
-				"payment_dp_royalty_ntpn": "A123SS",
+				"coa_date":                        "2022-22-01",
+				"quantity":                        1023.122,
+				"tugboat_name":                    "AJE",
+				"dp_royalty_ntpn":                 "A123SSSS",
+				"dp_royalty_billing_code":         "A123SS",
+				"payment_dp_royalty_ntpn":         "A123SS",
 				"payment_dp_royalty_billing_code": "A123SS",
 			},
 			token: token,
@@ -528,7 +527,7 @@ func TestCreateTransactionDN(t *testing.T) {
 			payload,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
@@ -640,6 +639,7 @@ func TestCreateTransactionDN(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "lhv_document_link", "create data dn")
 		assert.Contains(t, mapUnmarshal, "is_not_claim", "create data dn")
 		assert.Contains(t, mapUnmarshal, "is_migration", "create data dn")
+		assert.Contains(t, mapUnmarshal, "is_finance_check", "create data dn")
 	}
 }
 
@@ -647,264 +647,267 @@ func TestUpdateTransactionDN(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
-		body map[string]interface{}
-		id int
+		token         string
+		body          map[string]interface{}
+		id            int
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			body: fiber.Map{},
-			id: 49,
-			token: "asdawfaeac",
+			body:          fiber.Map{},
+			id:            49,
+			token:         "asdawfaeac",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
 			body: fiber.Map{
-				"ID": 49,
-				"CreatedAt": "2022-08-24T11:59:40.094282+07:00",
-				"UpdatedAt": "2022-08-24T11:59:40.094282+07:00",
-				"DeletedAt": nil,
-				"dmo_id": nil,
-				"dmo": nil,
-				"id_number": "DN-2022-8-0035",
-				"transaction_type": "DN",
-				"shipping_date": "2022-01-01",
-				"quantity": 1023.122,
-				"tugboat_name": "AJE",
-				"barge_name": "SHIPIPP",
-				"vessel_name": "",
-				"seller": "",
-				"customer_name": "",
-				"loading_port_name": "",
-				"loading_port_location": "",
-				"unloading_port_name": "",
-				"unloading_port_location": "",
-				"dmo_destination_port": "",
-				"skb_date": nil,
-				"skb_number": "",
-				"skab_date": nil,
-				"skab_number": "",
-				"bill_of_lading_date": nil,
-				"bill_of_lading_number": "",
-				"royalty_rate": 0,
-				"dp_royalty_currency": "IDR",
-				"dp_royalty_date": nil,
-				"dp_royalty_ntpn": nil,
-				"dp_royalty_billing_code": nil,
-				"dp_royalty_total": 0,
-				"payment_dp_royalty_currency": "IDR",
-				"payment_dp_royalty_date": nil,
-				"payment_dp_royalty_ntpn": nil,
-				"payment_dp_royalty_billing_code": nil,
-				"payment_dp_royalty_total": 0,
-				"lhv_date": nil,
-				"lhv_number": "",
-				"surveyor_name": "",
-				"cow_date": nil,
-				"cow_number": "",
-				"coa_date": "2022-02-01",
-				"coa_number": "",
-				"quality_tm_ar": 0,
-				"quality_im_adb": 0,
-				"quality_ash_ar": 0,
-				"quality_ash_adb": 0,
-				"quality_vm_adb": 0,
-				"quality_fc_adb": 0,
-				"quality_ts_ar": 0,
-				"quality_ts_adb": 0,
-				"quality_calories_ar": 0,
-				"quality_calories_adb": 0,
-				"barging_distance": 0,
-				"sales_system": "",
-				"invoice_date": nil,
-				"invoice_number": "",
-				"invoice_price_unit": 0,
-				"invoice_price_total": 0,
-				"dmo_reconciliation_letter": "",
-				"contract_date": nil,
-				"contract_number": "",
-				"dmo_buyer_name": "",
-				"dmo_industry_type": "",
-				"skb_document_link": "",
-				"skab_document_link": "",
-				"bl_document_link": "",
-				"royalti_provision_document_link": "",
-				"royalti_final_document_link": "",
-				"cow_document_link": "",
-				"coa_document_link": "",
+				"ID":                                 49,
+				"CreatedAt":                          "2022-08-24T11:59:40.094282+07:00",
+				"UpdatedAt":                          "2022-08-24T11:59:40.094282+07:00",
+				"DeletedAt":                          nil,
+				"dmo_id":                             nil,
+				"dmo":                                nil,
+				"id_number":                          "DN-2022-8-0035",
+				"transaction_type":                   "DN",
+				"shipping_date":                      "2022-01-01",
+				"quantity":                           1023.122,
+				"tugboat_name":                       "AJE",
+				"barge_name":                         "SHIPIPP",
+				"vessel_name":                        "",
+				"seller":                             "",
+				"customer_name":                      "",
+				"loading_port_name":                  "",
+				"loading_port_location":              "",
+				"unloading_port_name":                "",
+				"unloading_port_location":            "",
+				"dmo_destination_port":               "",
+				"skb_date":                           nil,
+				"skb_number":                         "",
+				"skab_date":                          nil,
+				"skab_number":                        "",
+				"bill_of_lading_date":                nil,
+				"bill_of_lading_number":              "",
+				"royalty_rate":                       0,
+				"dp_royalty_currency":                "IDR",
+				"dp_royalty_date":                    nil,
+				"dp_royalty_ntpn":                    nil,
+				"dp_royalty_billing_code":            nil,
+				"dp_royalty_total":                   0,
+				"payment_dp_royalty_currency":        "IDR",
+				"payment_dp_royalty_date":            nil,
+				"payment_dp_royalty_ntpn":            nil,
+				"payment_dp_royalty_billing_code":    nil,
+				"payment_dp_royalty_total":           0,
+				"lhv_date":                           nil,
+				"lhv_number":                         "",
+				"surveyor_name":                      "",
+				"cow_date":                           nil,
+				"cow_number":                         "",
+				"coa_date":                           "2022-02-01",
+				"coa_number":                         "",
+				"quality_tm_ar":                      0,
+				"quality_im_adb":                     0,
+				"quality_ash_ar":                     0,
+				"quality_ash_adb":                    0,
+				"quality_vm_adb":                     0,
+				"quality_fc_adb":                     0,
+				"quality_ts_ar":                      0,
+				"quality_ts_adb":                     0,
+				"quality_calories_ar":                0,
+				"quality_calories_adb":               0,
+				"barging_distance":                   0,
+				"sales_system":                       "",
+				"invoice_date":                       nil,
+				"invoice_number":                     "",
+				"invoice_price_unit":                 0,
+				"invoice_price_total":                0,
+				"dmo_reconciliation_letter":          "",
+				"contract_date":                      nil,
+				"contract_number":                    "",
+				"dmo_buyer_name":                     "",
+				"dmo_industry_type":                  "",
+				"skb_document_link":                  "",
+				"skab_document_link":                 "",
+				"bl_document_link":                   "",
+				"royalti_provision_document_link":    "",
+				"royalti_final_document_link":        "",
+				"cow_document_link":                  "",
+				"coa_document_link":                  "",
 				"invoice_and_contract_document_link": "",
-				"lhv_document_link": "",
-				"is_not_claim": false,
+				"lhv_document_link":                  "",
+				"is_not_claim":                       false,
+				"is_finance_check":                   true,
 			},
-			id: dataId,
+			id:    dataId,
 			token: token,
 		},
 		{
 			expectedError: false,
 			expectedCode:  400,
 			body: fiber.Map{
-				"ID": 49,
-				"CreatedAt": "2022-08-24T11:59:40.094282+07:00",
-				"UpdatedAt": "2022-08-24T11:59:40.094282+07:00",
-				"DeletedAt": nil,
-				"dmo_id": nil,
-				"dmo": nil,
-				"id_number": "DN-2022-8-0035",
-				"transaction_type": "DN",
-				"shipping_date": nil,
-				"quantity": 1023.122,
-				"tugboat_name": "AJE",
-				"barge_name": "SHIPIPP",
-				"vessel_name": "",
-				"seller": "",
-				"customer_name": "",
-				"loading_port_name": "",
-				"loading_port_location": "",
-				"unloading_port_name": "",
-				"unloading_port_location": "",
-				"dmo_destination_port": "",
-				"skb_date": "2022",
-				"skb_number": "",
-				"skab_date": nil,
-				"skab_number": "",
-				"bill_of_lading_date": nil,
-				"bill_of_lading_number": "",
-				"royalty_rate": 0,
-				"dp_royalty_currency": "IDR",
-				"dp_royalty_date": nil,
-				"dp_royalty_ntpn": "",
-				"dp_royalty_billing_code": "",
-				"dp_royalty_total": 0,
-				"payment_dp_royalty_currency": "IDR",
-				"payment_dp_royalty_date": nil,
-				"payment_dp_royalty_ntpn": "",
-				"payment_dp_royalty_billing_code": "",
-				"payment_dp_royalty_total": 0,
-				"lhv_date": nil,
-				"lhv_number": "",
-				"surveyor_name": "",
-				"cow_date": nil,
-				"cow_number": "",
-				"coa_date": "2022-02-01",
-				"coa_number": "",
-				"quality_tm_ar": 0,
-				"quality_im_adb": 0,
-				"quality_ash_ar": 0,
-				"quality_ash_adb": 0,
-				"quality_vm_adb": 0,
-				"quality_fc_adb": 0,
-				"quality_ts_ar": 0,
-				"quality_ts_adb": 0,
-				"quality_calories_ar": 0,
-				"quality_calories_adb": 0,
-				"barging_distance": 0,
-				"sales_system": "",
-				"invoice_date": nil,
-				"invoice_number": "",
-				"invoice_price_unit": 0,
-				"invoice_price_total": 0,
-				"dmo_reconciliation_letter": "",
-				"contract_date": nil,
-				"contract_number": "",
-				"dmo_buyer_name": "",
-				"dmo_industry_type": "",
-				"skb_document_link": "",
-				"skab_document_link": "",
-				"bl_document_link": "",
-				"royalti_provision_document_link": "",
-				"royalti_final_document_link": "",
-				"cow_document_link": "",
-				"coa_document_link": "",
+				"ID":                                 49,
+				"CreatedAt":                          "2022-08-24T11:59:40.094282+07:00",
+				"UpdatedAt":                          "2022-08-24T11:59:40.094282+07:00",
+				"DeletedAt":                          nil,
+				"dmo_id":                             nil,
+				"dmo":                                nil,
+				"id_number":                          "DN-2022-8-0035",
+				"transaction_type":                   "DN",
+				"shipping_date":                      nil,
+				"quantity":                           1023.122,
+				"tugboat_name":                       "AJE",
+				"barge_name":                         "SHIPIPP",
+				"vessel_name":                        "",
+				"seller":                             "",
+				"customer_name":                      "",
+				"loading_port_name":                  "",
+				"loading_port_location":              "",
+				"unloading_port_name":                "",
+				"unloading_port_location":            "",
+				"dmo_destination_port":               "",
+				"skb_date":                           "2022",
+				"skb_number":                         "",
+				"skab_date":                          nil,
+				"skab_number":                        "",
+				"bill_of_lading_date":                nil,
+				"bill_of_lading_number":              "",
+				"royalty_rate":                       0,
+				"dp_royalty_currency":                "IDR",
+				"dp_royalty_date":                    nil,
+				"dp_royalty_ntpn":                    "",
+				"dp_royalty_billing_code":            "",
+				"dp_royalty_total":                   0,
+				"payment_dp_royalty_currency":        "IDR",
+				"payment_dp_royalty_date":            nil,
+				"payment_dp_royalty_ntpn":            "",
+				"payment_dp_royalty_billing_code":    "",
+				"payment_dp_royalty_total":           0,
+				"lhv_date":                           nil,
+				"lhv_number":                         "",
+				"surveyor_name":                      "",
+				"cow_date":                           nil,
+				"cow_number":                         "",
+				"coa_date":                           "2022-02-01",
+				"coa_number":                         "",
+				"quality_tm_ar":                      0,
+				"quality_im_adb":                     0,
+				"quality_ash_ar":                     0,
+				"quality_ash_adb":                    0,
+				"quality_vm_adb":                     0,
+				"quality_fc_adb":                     0,
+				"quality_ts_ar":                      0,
+				"quality_ts_adb":                     0,
+				"quality_calories_ar":                0,
+				"quality_calories_adb":               0,
+				"barging_distance":                   0,
+				"sales_system":                       "",
+				"invoice_date":                       nil,
+				"invoice_number":                     "",
+				"invoice_price_unit":                 0,
+				"invoice_price_total":                0,
+				"dmo_reconciliation_letter":          "",
+				"contract_date":                      nil,
+				"contract_number":                    "",
+				"dmo_buyer_name":                     "",
+				"dmo_industry_type":                  "",
+				"skb_document_link":                  "",
+				"skab_document_link":                 "",
+				"bl_document_link":                   "",
+				"royalti_provision_document_link":    "",
+				"royalti_final_document_link":        "",
+				"cow_document_link":                  "",
+				"coa_document_link":                  "",
 				"invoice_and_contract_document_link": "",
-				"lhv_document_link": "",
-				"is_not_claim": false,
+				"lhv_document_link":                  "",
+				"is_not_claim":                       false,
+				"is_finance_check":                   true,
 			},
-			id: 49,
+			id:    49,
 			token: token,
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
 			body: fiber.Map{
-				"ID": 49,
-				"CreatedAt": "2022-08-24T11:59:40.094282+07:00",
-				"UpdatedAt": "2022-08-24T11:59:40.094282+07:00",
-				"DeletedAt": nil,
-				"dmo_id": nil,
-				"dmo": nil,
-				"id_number": "DN-2022-8-0035",
-				"transaction_type": "DN",
-				"shipping_date": "2022-01-01",
-				"quantity": 1023.122,
-				"tugboat_name": "AJE",
-				"barge_name": "SHIPIPP",
-				"vessel_name": "",
-				"seller": "",
-				"customer_name": "",
-				"loading_port_name": "",
-				"loading_port_location": "",
-				"unloading_port_name": "",
-				"unloading_port_location": "",
-				"dmo_destination_port": "",
-				"skb_date": nil,
-				"skb_number": "",
-				"skab_date": nil,
-				"skab_number": "",
-				"bill_of_lading_date": nil,
-				"bill_of_lading_number": "",
-				"royalty_rate": 0,
-				"dp_royalty_currency": "IDR",
-				"dp_royalty_date": nil,
-				"dp_royalty_ntpn": nil,
-				"dp_royalty_billing_code": nil,
-				"dp_royalty_total": 0,
-				"payment_dp_royalty_currency": "IDR",
-				"payment_dp_royalty_date": nil,
-				"payment_dp_royalty_ntpn": nil,
-				"payment_dp_royalty_billing_code": nil,
-				"payment_dp_royalty_total": 0,
-				"lhv_date": nil,
-				"lhv_number": "",
-				"surveyor_name": "",
-				"cow_date": nil,
-				"cow_number": "",
-				"coa_date": "2022-02-01",
-				"coa_number": "",
-				"quality_tm_ar": 0,
-				"quality_im_adb": 0,
-				"quality_ash_ar": 0,
-				"quality_ash_adb": 0,
-				"quality_vm_adb": 0,
-				"quality_fc_adb": 0,
-				"quality_ts_ar": 0,
-				"quality_ts_adb": 0,
-				"quality_calories_ar": 0,
-				"quality_calories_adb": 0,
-				"barging_distance": 0,
-				"sales_system": "",
-				"invoice_date": nil,
-				"invoice_number": "",
-				"invoice_price_unit": 0,
-				"invoice_price_total": 0,
-				"dmo_reconciliation_letter": "",
-				"contract_date": nil,
-				"contract_number": "",
-				"dmo_buyer_name": "",
-				"dmo_industry_type": "",
-				"skb_document_link": "",
-				"skab_document_link": "",
-				"bl_document_link": "",
-				"royalti_provision_document_link": "",
-				"royalti_final_document_link": "",
-				"cow_document_link": "",
-				"coa_document_link": "",
+				"ID":                                 49,
+				"CreatedAt":                          "2022-08-24T11:59:40.094282+07:00",
+				"UpdatedAt":                          "2022-08-24T11:59:40.094282+07:00",
+				"DeletedAt":                          nil,
+				"dmo_id":                             nil,
+				"dmo":                                nil,
+				"id_number":                          "DN-2022-8-0035",
+				"transaction_type":                   "DN",
+				"shipping_date":                      "2022-01-01",
+				"quantity":                           1023.122,
+				"tugboat_name":                       "AJE",
+				"barge_name":                         "SHIPIPP",
+				"vessel_name":                        "",
+				"seller":                             "",
+				"customer_name":                      "",
+				"loading_port_name":                  "",
+				"loading_port_location":              "",
+				"unloading_port_name":                "",
+				"unloading_port_location":            "",
+				"dmo_destination_port":               "",
+				"skb_date":                           nil,
+				"skb_number":                         "",
+				"skab_date":                          nil,
+				"skab_number":                        "",
+				"bill_of_lading_date":                nil,
+				"bill_of_lading_number":              "",
+				"royalty_rate":                       0,
+				"dp_royalty_currency":                "IDR",
+				"dp_royalty_date":                    nil,
+				"dp_royalty_ntpn":                    nil,
+				"dp_royalty_billing_code":            nil,
+				"dp_royalty_total":                   0,
+				"payment_dp_royalty_currency":        "IDR",
+				"payment_dp_royalty_date":            nil,
+				"payment_dp_royalty_ntpn":            nil,
+				"payment_dp_royalty_billing_code":    nil,
+				"payment_dp_royalty_total":           0,
+				"lhv_date":                           nil,
+				"lhv_number":                         "",
+				"surveyor_name":                      "",
+				"cow_date":                           nil,
+				"cow_number":                         "",
+				"coa_date":                           "2022-02-01",
+				"coa_number":                         "",
+				"quality_tm_ar":                      0,
+				"quality_im_adb":                     0,
+				"quality_ash_ar":                     0,
+				"quality_ash_adb":                    0,
+				"quality_vm_adb":                     0,
+				"quality_fc_adb":                     0,
+				"quality_ts_ar":                      0,
+				"quality_ts_adb":                     0,
+				"quality_calories_ar":                0,
+				"quality_calories_adb":               0,
+				"barging_distance":                   0,
+				"sales_system":                       "",
+				"invoice_date":                       nil,
+				"invoice_number":                     "",
+				"invoice_price_unit":                 0,
+				"invoice_price_total":                0,
+				"dmo_reconciliation_letter":          "",
+				"contract_date":                      nil,
+				"contract_number":                    "",
+				"dmo_buyer_name":                     "",
+				"dmo_industry_type":                  "",
+				"skb_document_link":                  "",
+				"skab_document_link":                 "",
+				"bl_document_link":                   "",
+				"royalti_provision_document_link":    "",
+				"royalti_final_document_link":        "",
+				"cow_document_link":                  "",
+				"coa_document_link":                  "",
 				"invoice_and_contract_document_link": "",
-				"lhv_document_link": "",
-				"is_not_claim": false,
+				"lhv_document_link":                  "",
+				"is_not_claim":                       false,
+				"is_finance_check":                   true,
 			},
-			id: 904,
+			id:    904,
 			token: token,
 		},
 	}
@@ -925,7 +928,7 @@ func TestUpdateTransactionDN(t *testing.T) {
 			payload,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
@@ -1037,8 +1040,8 @@ func TestUpdateTransactionDN(t *testing.T) {
 }
 
 func TestUpdateDocumentTransactionDN(t *testing.T) {
-	openDocumentPdf , errOpenDocumentPdf := os.Open("upload_test/output.pdf")
-	openDocumentPng , errOpenDocumentPng := os.Open("upload_test/output.png")
+	openDocumentPdf, errOpenDocumentPdf := os.Open("upload_test/output.pdf")
+	openDocumentPng, errOpenDocumentPng := os.Open("upload_test/output.png")
 
 	assert.Nilf(t, errOpenDocumentPdf, "update document data dn")
 	assert.Nilf(t, errOpenDocumentPng, "update document data dn")
@@ -1046,37 +1049,37 @@ func TestUpdateDocumentTransactionDN(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
-		id int
-		file string
+		token         string
+		id            int
+		file          string
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			id: 49,
-			token: "asdawfaeac",
-			file: "upload_test/output.pdf",
+			id:            49,
+			token:         "asdawfaeac",
+			file:          "upload_test/output.pdf",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: dataId,
-			token: token,
-			file: "upload_test/output.pdf",
+			id:            dataId,
+			token:         token,
+			file:          "upload_test/output.pdf",
 		},
 		{
 			expectedError: false,
 			expectedCode:  400,
-			id: 49,
-			token: token,
-			file: "upload_test/output.png",
+			id:            49,
+			token:         token,
+			file:          "upload_test/output.png",
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
-			id: 904,
-			token: token,
-			file: "upload_test/output.pdf",
+			id:            904,
+			token:         token,
+			file:          "upload_test/output.pdf",
 		},
 	}
 
@@ -1115,12 +1118,11 @@ func TestUpdateDocumentTransactionDN(t *testing.T) {
 			bytes.NewReader(bodyRequest.Bytes()),
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", writer.FormDataContentType())
 
 		// The -1 disables request latency.
 		res, errTest := app.Test(req, -1)
-
 
 		assert.Equalf(t, test.expectedError, errTest != nil, "update document data dn")
 		if test.expectedError {
@@ -1230,26 +1232,26 @@ func TestDeleteTransactionDN(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
-		id int
+		token         string
+		id            int
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			id: 1,
-			token: "asdawfaeac",
+			id:            1,
+			token:         "asdawfaeac",
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
-			id: 1050,
-			token: token,
+			id:            1050,
+			token:         token,
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: dataId,
-			token: token,
+			id:            dataId,
+			token:         token,
 		},
 	}
 
@@ -1267,7 +1269,7 @@ func TestDeleteTransactionDN(t *testing.T) {
 			nil,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
@@ -1305,26 +1307,27 @@ func TestDeleteTransactionDN(t *testing.T) {
 // Minerba Handler Test
 var idMinerba = 0
 var periodMinerba = ""
+
 func TestListMinerba(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
+		token         string
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			token: "",
+			token:         "",
 		},
 		{
 			expectedError: false,
 			expectedCode:  401,
-			token: "afwifiwgjwigjianveri",
+			token:         "afwifiwgjwigjianveri",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			token: token,
+			token:         token,
 		},
 	}
 
@@ -1341,7 +1344,7 @@ func TestListMinerba(t *testing.T) {
 			nil,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
@@ -1681,26 +1684,26 @@ func TestDetailMinerba(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
-		id int
+		token         string
+		id            int
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			id: 1,
-			token: "asdawfaeac",
+			id:            1,
+			token:         "asdawfaeac",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idMinerba,
-			token: token,
+			id:            idMinerba,
+			token:         token,
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
-			id: 1050,
-			token: token,
+			id:            1050,
+			token:         token,
 		},
 	}
 
@@ -1718,7 +1721,7 @@ func TestDetailMinerba(t *testing.T) {
 			nil,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
@@ -1849,24 +1852,24 @@ func TestUpdateDocumentMinerba(t *testing.T) {
 
 	bodyString["data"] = []map[string]interface{}{
 		{
-			"Key": "LM-2022-03-0008/sp3medn.xlsx",
-			"key": "LM-2022-03-0008/sp3medn.xlsx",
-			"ETag": "23acbb2e206c924f5b438162ffa0b425",
-			"Bucket": "deli-aje",
+			"Key":      "LM-2022-03-0008/sp3medn.xlsx",
+			"key":      "LM-2022-03-0008/sp3medn.xlsx",
+			"ETag":     "23acbb2e206c924f5b438162ffa0b425",
+			"Bucket":   "deli-aje",
 			"Location": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/LM-2022-03-0008/sp3medn.xlsx",
 		},
 		{
-			"Key": "LM-2022-03-0008/recapdmo.xlsx",
-			"key": "LM-2022-03-0008/recapdmo.xlsx",
-			"ETag": "610288c6357a94aba8d5c4e04ee588e3",
-			"Bucket": "deli-aje",
+			"Key":      "LM-2022-03-0008/recapdmo.xlsx",
+			"key":      "LM-2022-03-0008/recapdmo.xlsx",
+			"ETag":     "610288c6357a94aba8d5c4e04ee588e3",
+			"Bucket":   "deli-aje",
 			"Location": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/LM-2022-03-0008/recapdmo.xlsx",
 		},
 		{
-			"Key": "LM-2022-03-0008/detaildmo.xlsx",
-			"key": "LM-2022-03-0008/detaildmo.xlsx",
-			"ETag": "fbb861e4a88950eb7d38845219f99f43",
-			"Bucket": "deli-aje",
+			"Key":      "LM-2022-03-0008/detaildmo.xlsx",
+			"key":      "LM-2022-03-0008/detaildmo.xlsx",
+			"ETag":     "fbb861e4a88950eb7d38845219f99f43",
+			"Bucket":   "deli-aje",
 			"Location": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/LM-2022-03-0008/detaildmo.xlsx",
 		},
 	}
@@ -1874,30 +1877,30 @@ func TestUpdateDocumentMinerba(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
-		id int
-		body map[string][]map[string]interface{}
+		token         string
+		id            int
+		body          map[string][]map[string]interface{}
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			id: 49,
-			token: "asdawfaeac",
-			body: bodyString,
+			id:            49,
+			token:         "asdawfaeac",
+			body:          bodyString,
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idMinerba,
-			token: token,
-			body: bodyString,
+			id:            idMinerba,
+			token:         token,
+			body:          bodyString,
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
-			id: 904,
-			token: token,
-			body: bodyString,
+			id:            904,
+			token:         token,
+			body:          bodyString,
 		},
 	}
 
@@ -1918,13 +1921,12 @@ func TestUpdateDocumentMinerba(t *testing.T) {
 			payload,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
 		// The -1 disables request latency.
 		res, errTest := app.Test(req, -1)
-
 
 		assert.Equalf(t, test.expectedError, errTest != nil, "update data document minerba")
 		if test.expectedError {
@@ -1969,26 +1971,26 @@ func TestDeleteMinerba(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
-		id int
+		token         string
+		id            int
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			id: 1,
-			token: "asdawfaeac",
+			id:            1,
+			token:         "asdawfaeac",
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
-			id: 1050,
-			token: token,
+			id:            1050,
+			token:         token,
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idMinerba,
-			token: token,
+			id:            idMinerba,
+			token:         token,
 		},
 	}
 
@@ -2006,7 +2008,7 @@ func TestDeleteMinerba(t *testing.T) {
 			nil,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
@@ -2044,26 +2046,27 @@ func TestDeleteMinerba(t *testing.T) {
 // Dmo Handler Test
 
 var idDmo = 0
+
 func TestListDmo(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
+		token         string
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			token: "",
+			token:         "",
 		},
 		{
 			expectedError: false,
 			expectedCode:  401,
-			token: "afwifiwgjwigjianveri",
+			token:         "afwifiwgjwigjianveri",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			token: token,
+			token:         token,
 		},
 	}
 
@@ -2080,7 +2083,7 @@ func TestListDmo(t *testing.T) {
 			nil,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
@@ -2201,7 +2204,7 @@ func TestCreateDmo(t *testing.T) {
 	traderList = append(traderList, 78, 79)
 
 	var vesselAdjustment []dmo.VesselAdjustmentInput
-	
+
 	vesselAdjustment = append(vesselAdjustment, dmo.VesselAdjustmentInput{
 		VesselName: "MV. PACIFIC BULK",
 		Quantity:   7504.086,
@@ -2224,11 +2227,11 @@ func TestCreateDmo(t *testing.T) {
 			expectedError: false,
 			expectedCode:  201,
 			body: fiber.Map{
-				"period": "Dec 2022",
-				"trader": traderList,
-				"end_user":  endUser,
-				"vessel_adjustment": vesselAdjustment,
-				"transaction_barge": []int{150,151},
+				"period":             "Dec 2022",
+				"trader":             traderList,
+				"end_user":           endUser,
+				"vessel_adjustment":  vesselAdjustment,
+				"transaction_barge":  []int{150, 151},
 				"transaction_vessel": []int{152},
 				"is_document_custom": false,
 			},
@@ -2238,11 +2241,11 @@ func TestCreateDmo(t *testing.T) {
 			expectedError: false,
 			expectedCode:  400,
 			body: fiber.Map{
-				"period": "Dec 2022",
-				"trader": traderList,
-				"end_user":  endUser,
-				"vessel_adjustment": vesselAdjustment,
-				"transaction_barge": []int{150,151},
+				"period":             "Dec 2022",
+				"trader":             traderList,
+				"end_user":           endUser,
+				"vessel_adjustment":  vesselAdjustment,
+				"transaction_barge":  []int{150, 151},
 				"transaction_vessel": []int{152},
 				"is_document_custom": false,
 			},
@@ -2252,11 +2255,11 @@ func TestCreateDmo(t *testing.T) {
 			expectedError: false,
 			expectedCode:  400,
 			body: fiber.Map{
-				"period": "Dec 2023",
-				"trader": traderList,
-				"end_user":  endUser,
-				"vessel_adjustment": vesselAdjustment,
-				"transaction_barge": []int{150,151},
+				"period":             "Dec 2023",
+				"trader":             traderList,
+				"end_user":           endUser,
+				"vessel_adjustment":  vesselAdjustment,
+				"transaction_barge":  []int{150, 151},
 				"transaction_vessel": []int{152},
 				"is_document_custom": false,
 			},
@@ -2266,11 +2269,11 @@ func TestCreateDmo(t *testing.T) {
 			expectedError: false,
 			expectedCode:  400,
 			body: fiber.Map{
-				"period": "Dec 2023",
-				"trader": traderList,
-				"end_user":  endUser,
-				"vessel_adjustment": vesselAdjustment,
-				"transaction_barge": []int{152},
+				"period":             "Dec 2023",
+				"trader":             traderList,
+				"end_user":           endUser,
+				"vessel_adjustment":  vesselAdjustment,
+				"transaction_barge":  []int{152},
 				"transaction_vessel": []int{152},
 				"is_document_custom": false,
 			},
@@ -2280,11 +2283,11 @@ func TestCreateDmo(t *testing.T) {
 			expectedError: false,
 			expectedCode:  400,
 			body: fiber.Map{
-				"period": "Jun 2022",
-				"trader": traderList,
-				"end_user":  endUser,
-				"vessel_adjustment": vesselAdjustment,
-				"transaction_barge": []int{},
+				"period":             "Jun 2022",
+				"trader":             traderList,
+				"end_user":           endUser,
+				"vessel_adjustment":  vesselAdjustment,
+				"transaction_barge":  []int{},
 				"transaction_vessel": []int{},
 				"is_document_custom": false,
 			},
@@ -2294,11 +2297,11 @@ func TestCreateDmo(t *testing.T) {
 			expectedError: false,
 			expectedCode:  400,
 			body: fiber.Map{
-				"period": "Dec 2022",
-				"trader": traderList,
-				"end_user":  endUser,
-				"vessel_adjustment": []dmo.VesselAdjustmentInput{},
-				"transaction_barge": []int{},
+				"period":             "Dec 2022",
+				"trader":             traderList,
+				"end_user":           endUser,
+				"vessel_adjustment":  []dmo.VesselAdjustmentInput{},
+				"transaction_barge":  []int{},
 				"transaction_vessel": []int{153},
 				"is_document_custom": false,
 			},
@@ -2363,7 +2366,6 @@ func TestCreateDmo(t *testing.T) {
 		transactionVesselFormMarshal, _ := json.Marshal(test.body["transaction_vessel"])
 
 		transactionVesselForm.Write(transactionVesselFormMarshal)
-
 
 		isDocumentCustom, err := writer.CreateFormField("is_document_custom")
 		if err != nil {
@@ -2447,26 +2449,26 @@ func TestDetailDmo(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
-		id int
+		token         string
+		id            int
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			id: 1,
-			token: "asdawfaeac",
+			id:            1,
+			token:         "asdawfaeac",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idDmo,
-			token: token,
+			id:            idDmo,
+			token:         token,
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
-			id: 1050,
-			token: token,
+			id:            1050,
+			token:         token,
 		},
 	}
 
@@ -2484,7 +2486,7 @@ func TestDetailDmo(t *testing.T) {
 			nil,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
@@ -2526,24 +2528,24 @@ func TestUpdateDocumentDmo(t *testing.T) {
 
 	bodyString["data"] = []map[string]interface{}{
 		{
-			"Key": "DD-2022-03-0008/bast.pdf",
-			"key": "DD-2022-03-0008/bast.pdf",
-			"ETag": "23acbb2e206c924f5b438162ffa0b425",
-			"Bucket": "deli-aje",
+			"Key":      "DD-2022-03-0008/bast.pdf",
+			"key":      "DD-2022-03-0008/bast.pdf",
+			"ETag":     "23acbb2e206c924f5b438162ffa0b425",
+			"Bucket":   "deli-aje",
 			"Location": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DD-2022-03-0008/bast.pdf",
 		},
 		{
-			"Key": "DD-2022-03-0008/berita_acara.pdf",
-			"key": "DD-2022-03-0008/berita_acara.pdf",
-			"ETag": "610288c6357a94aba8d5c4e04ee588e3",
-			"Bucket": "deli-aje",
+			"Key":      "DD-2022-03-0008/berita_acara.pdf",
+			"key":      "DD-2022-03-0008/berita_acara.pdf",
+			"ETag":     "610288c6357a94aba8d5c4e04ee588e3",
+			"Bucket":   "deli-aje",
 			"Location": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DD-2022-03-0008/berita_acara.pdf",
 		},
 		{
-			"Key": "DD-2022-03-0008/surat_pernyataan.pdf",
-			"key": "DD-2022-03-0008/surat_pernyataan.pdf",
-			"ETag": "fbb861e4a88950eb7d38845219f99f43",
-			"Bucket": "deli-aje",
+			"Key":      "DD-2022-03-0008/surat_pernyataan.pdf",
+			"key":      "DD-2022-03-0008/surat_pernyataan.pdf",
+			"ETag":     "fbb861e4a88950eb7d38845219f99f43",
+			"Bucket":   "deli-aje",
 			"Location": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/DD-2022-03-0008/surat_pernyataan.pdf",
 		},
 	}
@@ -2551,37 +2553,37 @@ func TestUpdateDocumentDmo(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
-		id int
-		body map[string][]map[string]interface{}
+		token         string
+		id            int
+		body          map[string][]map[string]interface{}
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			id: 49,
-			token: "asdawfaeac",
-			body: bodyString,
+			id:            49,
+			token:         "asdawfaeac",
+			body:          bodyString,
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idDmo,
-			token: token,
-			body: bodyString,
+			id:            idDmo,
+			token:         token,
+			body:          bodyString,
 		},
 		{
 			expectedError: false,
 			expectedCode:  400,
-			id: idDmo,
-			token: token,
-			body: bodyString,
+			id:            idDmo,
+			token:         token,
+			body:          bodyString,
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
-			id: 904,
-			token: token,
-			body: bodyString,
+			id:            904,
+			token:         token,
+			body:          bodyString,
 		},
 	}
 
@@ -2602,13 +2604,12 @@ func TestUpdateDocumentDmo(t *testing.T) {
 			payload,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
 		// The -1 disables request latency.
 		res, errTest := app.Test(req, -1)
-
 
 		assert.Equalf(t, test.expectedError, errTest != nil, "update document data dmo")
 		if test.expectedError {
@@ -2666,51 +2667,51 @@ func TestUpdateIsDownloadedDocumentDmo(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
-		id int
-		typeDocument string
+		token         string
+		id            int
+		typeDocument  string
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			id: idDmo,
-			token: "asdawfaeac",
-			typeDocument: "bast",
+			id:            idDmo,
+			token:         "asdawfaeac",
+			typeDocument:  "bast",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idDmo,
-			token: token,
-			typeDocument: "statement_letter",
+			id:            idDmo,
+			token:         token,
+			typeDocument:  "statement_letter",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idDmo,
-			token: token,
-			typeDocument: "reconciliation_letter",
+			id:            idDmo,
+			token:         token,
+			typeDocument:  "reconciliation_letter",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idDmo,
-			token: token,
-			typeDocument: "bast",
+			id:            idDmo,
+			token:         token,
+			typeDocument:  "bast",
 		},
 		{
 			expectedError: false,
 			expectedCode:  400,
-			id: idDmo,
-			token: token,
-			typeDocument: "link_onl",
+			id:            idDmo,
+			token:         token,
+			typeDocument:  "link_onl",
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
-			id: 1000,
-			token: token,
-			typeDocument: "bast",
+			id:            1000,
+			token:         token,
+			typeDocument:  "bast",
 		},
 	}
 
@@ -2729,13 +2730,12 @@ func TestUpdateIsDownloadedDocumentDmo(t *testing.T) {
 			nil,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
 		// The -1 disables request latency.
 		res, errTest := app.Test(req, -1)
-
 
 		assert.Equalf(t, test.expectedError, errTest != nil, "update document data downloaded dmo")
 		if test.expectedError {
@@ -2790,58 +2790,58 @@ func TestUpdateIsDownloadedDocumentDmo(t *testing.T) {
 }
 
 func TestUpdateTrueIsSignedDocumentDmo(t *testing.T) {
-	openDocumentPdf , errOpenDocumentPdf := os.Open("upload_test/output.pdf")
+	openDocumentPdf, errOpenDocumentPdf := os.Open("upload_test/output.pdf")
 	defer openDocumentPdf.Close()
 	assert.Nilf(t, errOpenDocumentPdf, "update document data signed dmo")
 
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
-		id int
-		typeDocument string
+		token         string
+		id            int
+		typeDocument  string
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			id: idDmo,
-			token: "asdawfaeac",
-			typeDocument: "bast",
+			id:            idDmo,
+			token:         "asdawfaeac",
+			typeDocument:  "bast",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idDmo,
-			token: token,
-			typeDocument: "bast",
+			id:            idDmo,
+			token:         token,
+			typeDocument:  "bast",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idDmo,
-			token: token,
-			typeDocument: "statement_letter",
+			id:            idDmo,
+			token:         token,
+			typeDocument:  "statement_letter",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idDmo,
-			token: token,
-			typeDocument: "reconciliation_letter",
+			id:            idDmo,
+			token:         token,
+			typeDocument:  "reconciliation_letter",
 		},
 		{
 			expectedError: false,
 			expectedCode:  400,
-			id: idDmo,
-			token: token,
-			typeDocument: "link_onl",
+			id:            idDmo,
+			token:         token,
+			typeDocument:  "link_onl",
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
-			id: 1000,
-			token: token,
-			typeDocument: "bast",
+			id:            1000,
+			token:         token,
+			typeDocument:  "bast",
 		},
 	}
 
@@ -2877,12 +2877,11 @@ func TestUpdateTrueIsSignedDocumentDmo(t *testing.T) {
 			bytes.NewReader(bodyRequest.Bytes()),
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", writer.FormDataContentType())
 
 		// The -1 disables request latency.
 		res, errTest := app.Test(req, -1)
-
 
 		assert.Equalf(t, test.expectedError, errTest != nil, "update document data signed dmo")
 		if test.expectedError {
@@ -2940,51 +2939,51 @@ func TestUpdateFalseIsSignedDocumentDmo(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
-		id int
-		typeDocument string
+		token         string
+		id            int
+		typeDocument  string
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			id: idDmo,
-			token: "asdawfaeac",
-			typeDocument: "bast",
+			id:            idDmo,
+			token:         "asdawfaeac",
+			typeDocument:  "bast",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idDmo,
-			token: token,
-			typeDocument: "bast",
+			id:            idDmo,
+			token:         token,
+			typeDocument:  "bast",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idDmo,
-			token: token,
-			typeDocument: "statement_letter",
+			id:            idDmo,
+			token:         token,
+			typeDocument:  "statement_letter",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idDmo,
-			token: token,
-			typeDocument: "reconciliation_letter",
+			id:            idDmo,
+			token:         token,
+			typeDocument:  "reconciliation_letter",
 		},
 		{
 			expectedError: false,
 			expectedCode:  400,
-			id: idDmo,
-			token: token,
-			typeDocument: "link_onl",
+			id:            idDmo,
+			token:         token,
+			typeDocument:  "link_onl",
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
-			id: 1000,
-			token: token,
-			typeDocument: "bast",
+			id:            1000,
+			token:         token,
+			typeDocument:  "bast",
 		},
 	}
 
@@ -3004,13 +3003,12 @@ func TestUpdateFalseIsSignedDocumentDmo(t *testing.T) {
 			nil,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
 		// The -1 disables request latency.
 		res, errTest := app.Test(req, -1)
-
 
 		assert.Equalf(t, test.expectedError, errTest != nil, "update document data signed dmo")
 		if test.expectedError {
@@ -3135,6 +3133,7 @@ func TestMasterCompanyTrader(t *testing.T) {
 		assert.Contains(t, mapUnmarshal, "traders", "list data master company & trader")
 	}
 }
+
 var idCompany = 0
 
 // Company
@@ -3142,22 +3141,22 @@ func TestListCompany(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
+		token         string
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			token: "",
+			token:         "",
 		},
 		{
 			expectedError: false,
 			expectedCode:  401,
-			token: "afwifiwgjwigjianveri",
+			token:         "afwifiwgjwigjianveri",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			token: token,
+			token:         token,
 		},
 	}
 
@@ -3174,7 +3173,7 @@ func TestListCompany(t *testing.T) {
 			nil,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
@@ -3195,7 +3194,7 @@ func TestListCompany(t *testing.T) {
 		// Ensure that the body was read correctly
 		assert.Nilf(t, err, "list data company")
 
-		mapUnmarshal  := make(map[string]interface{})
+		mapUnmarshal := make(map[string]interface{})
 
 		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
 
@@ -3205,7 +3204,7 @@ func TestListCompany(t *testing.T) {
 		}
 
 		//// Verify, that the reponse body equals the expected body
-		assert.Contains(t, mapUnmarshal,"companies")
+		assert.Contains(t, mapUnmarshal, "companies")
 	}
 }
 
@@ -3326,7 +3325,7 @@ func TestUpdateCompany(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		id	int
+		id            int
 		token         string
 		body          map[string]interface{}
 	}{
@@ -3339,7 +3338,7 @@ func TestUpdateCompany(t *testing.T) {
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idCompany,
+			id:            idCompany,
 			body: fiber.Map{
 				"company_name": "PT. Integrata",
 				"address":      "Narata Koplo, Japan 1231412",
@@ -3352,7 +3351,7 @@ func TestUpdateCompany(t *testing.T) {
 		{
 			expectedError: false,
 			expectedCode:  400,
-			id: idCompany,
+			id:            idCompany,
 			body: fiber.Map{
 				"company_name": "PT. Maju Mundur",
 				"address":      "Rasakana kan Ciledug",
@@ -3365,7 +3364,7 @@ func TestUpdateCompany(t *testing.T) {
 		{
 			expectedError: false,
 			expectedCode:  400,
-			id: idCompany,
+			id:            idCompany,
 			body: fiber.Map{
 				"company_name": "",
 				"address":      "Namgong Plateu",
@@ -3378,7 +3377,7 @@ func TestUpdateCompany(t *testing.T) {
 		{
 			expectedError: false,
 			expectedCode:  404,
-			id: 1002,
+			id:            1002,
 			body: fiber.Map{
 				"company_name": "PT JUMAN",
 				"address":      "Namgong Plateu",
@@ -3453,26 +3452,26 @@ func TestDetailCompany(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
-		id int
+		token         string
+		id            int
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			id: 1,
-			token: "asdawfaeac",
+			id:            1,
+			token:         "asdawfaeac",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idCompany,
-			token: token,
+			id:            idCompany,
+			token:         token,
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
-			id: 1050,
-			token: token,
+			id:            1050,
+			token:         token,
 		},
 	}
 
@@ -3490,7 +3489,7 @@ func TestDetailCompany(t *testing.T) {
 			nil,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
@@ -3527,27 +3526,28 @@ func TestDetailCompany(t *testing.T) {
 }
 
 var idTrader = 0
+
 // Trader
 func TestListTrader(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
+		token         string
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			token: "",
+			token:         "",
 		},
 		{
 			expectedError: false,
 			expectedCode:  401,
-			token: "afwifiwgjwigjianveri",
+			token:         "afwifiwgjwigjianveri",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			token: token,
+			token:         token,
 		},
 	}
 
@@ -3564,7 +3564,7 @@ func TestListTrader(t *testing.T) {
 			nil,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
@@ -3585,7 +3585,7 @@ func TestListTrader(t *testing.T) {
 		// Ensure that the body was read correctly
 		assert.Nilf(t, err, "list data trader")
 
-		mapUnmarshal  := make(map[string]interface{})
+		mapUnmarshal := make(map[string]interface{})
 
 		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
 
@@ -3595,7 +3595,7 @@ func TestListTrader(t *testing.T) {
 		}
 
 		//// Verify, that the reponse body equals the expected body
-		assert.Contains(t, mapUnmarshal,"traders")
+		assert.Contains(t, mapUnmarshal, "traders")
 	}
 }
 
@@ -3617,9 +3617,9 @@ func TestCreateTrader(t *testing.T) {
 			expectedCode:  201,
 			body: fiber.Map{
 				"trader_name": "Budi Arya",
-				"position": "Procu",
-				"company_id": idCompany,
-				"email": nil,
+				"position":    "Procu",
+				"company_id":  idCompany,
+				"email":       nil,
 			},
 			token: token,
 		},
@@ -3628,9 +3628,9 @@ func TestCreateTrader(t *testing.T) {
 			expectedCode:  404,
 			body: fiber.Map{
 				"trader_name": "Budi Arya",
-				"position": "Procu",
-				"company_id": 1000,
-				"email": nil,
+				"position":    "Procu",
+				"company_id":  1000,
+				"email":       nil,
 			},
 			token: token,
 		},
@@ -3639,9 +3639,9 @@ func TestCreateTrader(t *testing.T) {
 			expectedCode:  400,
 			body: fiber.Map{
 				"trader_name": "Budi Arya",
-				"position": "Procu",
-				"company_id": idCompany,
-				"email": "abcsesd",
+				"position":    "Procu",
+				"company_id":  idCompany,
+				"email":       "abcsesd",
 			},
 			token: token,
 		},
@@ -3650,9 +3650,9 @@ func TestCreateTrader(t *testing.T) {
 			expectedCode:  400,
 			body: fiber.Map{
 				"trader_name": "",
-				"position": "",
-				"company_id": idCompany,
-				"email": nil,
+				"position":    "",
+				"company_id":  idCompany,
+				"email":       nil,
 			},
 			token: token,
 		},
@@ -3724,7 +3724,7 @@ func TestUpdateTrader(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		id	int
+		id            int
 		token         string
 		body          map[string]interface{}
 	}{
@@ -3737,36 +3737,36 @@ func TestUpdateTrader(t *testing.T) {
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idTrader,
+			id:            idTrader,
 			body: fiber.Map{
 				"trader_name": "Budi Arya",
-				"position": "Procu",
-				"company_id": idCompany,
-				"email": nil,
+				"position":    "Procu",
+				"company_id":  idCompany,
+				"email":       nil,
 			},
 			token: token,
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
-			id: idCompany,
+			id:            idCompany,
 			body: fiber.Map{
 				"trader_name": "Budi Arya",
-				"position": "Procu",
-				"company_id": 1000,
-				"email": nil,
+				"position":    "Procu",
+				"company_id":  1000,
+				"email":       nil,
 			},
 			token: token,
 		},
 		{
 			expectedError: false,
 			expectedCode:  400,
-			id: idCompany,
+			id:            idCompany,
 			body: fiber.Map{
 				"trader_name": "",
-				"position": "",
-				"company_id": idCompany,
-				"email": nil,
+				"position":    "",
+				"company_id":  idCompany,
+				"email":       nil,
 			},
 			token: token,
 		},
@@ -3835,26 +3835,26 @@ func TestDetailTrader(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
-		id int
+		token         string
+		id            int
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			id: 1,
-			token: "asdawfaeac",
+			id:            1,
+			token:         "asdawfaeac",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idTrader,
-			token: token,
+			id:            idTrader,
+			token:         token,
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
-			id: 1050,
-			token: token,
+			id:            1050,
+			token:         token,
 		},
 	}
 
@@ -3872,7 +3872,7 @@ func TestDetailTrader(t *testing.T) {
 			nil,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
@@ -3919,26 +3919,26 @@ func TestDeleteTrader(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
-		id int
+		token         string
+		id            int
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			id: 1,
-			token: "asdawfaeac",
+			id:            1,
+			token:         "asdawfaeac",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idTrader,
-			token: token,
+			id:            idTrader,
+			token:         token,
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
-			id: 1000,
-			token: token,
+			id:            1000,
+			token:         token,
 		},
 	}
 
@@ -3956,7 +3956,7 @@ func TestDeleteTrader(t *testing.T) {
 			nil,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
@@ -3996,26 +3996,26 @@ func TestDeleteCompany(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
-		id int
+		token         string
+		id            int
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			id: 1,
-			token: "asdawfaeac",
+			id:            1,
+			token:         "asdawfaeac",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idCompany,
-			token: token,
+			id:            idCompany,
+			token:         token,
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
-			id: 1000,
-			token: token,
+			id:            1000,
+			token:         token,
 		},
 	}
 
@@ -4033,7 +4033,7 @@ func TestDeleteCompany(t *testing.T) {
 			nil,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
@@ -4087,9 +4087,9 @@ func TestCreateNotification(t *testing.T) {
 			expectedError: false,
 			expectedCode:  201,
 			body: fiber.Map{
-				"status" : "success create",
-				"type" : "dmo",
-				"period" : "Jan 2022",
+				"status": "success create",
+				"type":   "dmo",
+				"period": "Jan 2022",
 			},
 			token: token,
 		},
@@ -4156,22 +4156,22 @@ func TestGetNotification(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
+		token         string
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			token: "",
+			token:         "",
 		},
 		{
 			expectedError: false,
 			expectedCode:  401,
-			token: "afwifiwgjwigjianveri",
+			token:         "afwifiwgjwigjianveri",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			token: token,
+			token:         token,
 		},
 	}
 
@@ -4188,7 +4188,7 @@ func TestGetNotification(t *testing.T) {
 			nil,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
@@ -4209,7 +4209,7 @@ func TestGetNotification(t *testing.T) {
 		// Ensure that the body was read correctly
 		assert.Nilf(t, err, "list data notification")
 
-		mapUnmarshal  := make(map[string]interface{})
+		mapUnmarshal := make(map[string]interface{})
 
 		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
 
@@ -4219,7 +4219,7 @@ func TestGetNotification(t *testing.T) {
 		}
 
 		//// Verify, that the reponse body equals the expected body
-		assert.Contains(t, mapUnmarshal,"list", "list data notification")
+		assert.Contains(t, mapUnmarshal, "list", "list data notification")
 	}
 }
 
@@ -4227,22 +4227,22 @@ func TestUpdateNotification(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
+		token         string
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			token: "",
+			token:         "",
 		},
 		{
 			expectedError: false,
 			expectedCode:  401,
-			token: "afwifiwgjwigjianveri",
+			token:         "afwifiwgjwigjianveri",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			token: token,
+			token:         token,
 		},
 	}
 
@@ -4259,7 +4259,7 @@ func TestUpdateNotification(t *testing.T) {
 			nil,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
@@ -4280,7 +4280,7 @@ func TestUpdateNotification(t *testing.T) {
 		// Ensure that the body was read correctly
 		assert.Nilf(t, err, "list update data notification")
 
-		mapUnmarshal  := make(map[string]interface{})
+		mapUnmarshal := make(map[string]interface{})
 
 		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
 
@@ -4290,7 +4290,7 @@ func TestUpdateNotification(t *testing.T) {
 		}
 
 		//// Verify, that the reponse body equals the expected body
-		assert.Contains(t, mapUnmarshal,"list", "list update data notification")
+		assert.Contains(t, mapUnmarshal, "list", "list update data notification")
 	}
 }
 
@@ -4300,26 +4300,26 @@ func TestDeleteDmo(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
-		id int
+		token         string
+		id            int
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			id: 1,
-			token: "asdawfaeac",
+			id:            1,
+			token:         "asdawfaeac",
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
-			id: 1050,
-			token: token,
+			id:            1050,
+			token:         token,
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idDmo,
-			token: token,
+			id:            idDmo,
+			token:         token,
 		},
 	}
 
@@ -4337,7 +4337,7 @@ func TestDeleteDmo(t *testing.T) {
 			nil,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
@@ -4455,6 +4455,7 @@ func TestReport(t *testing.T) {
 }
 
 var idProduction = 0
+
 // Production
 func TestCreateProduction(t *testing.T) {
 	tests := []struct {
@@ -4474,7 +4475,7 @@ func TestCreateProduction(t *testing.T) {
 			expectedCode:  201,
 			body: fiber.Map{
 				"production_date": "2022-10-30",
-				"quantity": 2524.242,
+				"quantity":        2524.242,
 			},
 			token: token,
 		},
@@ -4483,7 +4484,7 @@ func TestCreateProduction(t *testing.T) {
 			expectedCode:  400,
 			body: fiber.Map{
 				"production_date": "2022-10-30",
-				"quantity": 0,
+				"quantity":        0,
 			},
 			token: token,
 		},
@@ -4492,7 +4493,7 @@ func TestCreateProduction(t *testing.T) {
 			expectedCode:  400,
 			body: fiber.Map{
 				"production_date": "2022-15-10",
-				"quantity": 125123,
+				"quantity":        125123,
 			},
 			token: token,
 		},
@@ -4562,14 +4563,14 @@ func TestUpdateProduction(t *testing.T) {
 		expectedError bool
 		expectedCode  int
 		token         string
-		id	int
+		id            int
 		body          map[string]interface{}
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
 			body:          fiber.Map{},
-			id: idProduction,
+			id:            idProduction,
 			token:         "asdawfaeac",
 		},
 		{
@@ -4577,9 +4578,9 @@ func TestUpdateProduction(t *testing.T) {
 			expectedCode:  200,
 			body: fiber.Map{
 				"production_date": "2022-10-30",
-				"quantity": 2562,
+				"quantity":        2562,
 			},
-			id: idProduction,
+			id:    idProduction,
 			token: token,
 		},
 		{
@@ -4587,9 +4588,9 @@ func TestUpdateProduction(t *testing.T) {
 			expectedCode:  404,
 			body: fiber.Map{
 				"production_date": "2022-10-30",
-				"quantity": 3535,
+				"quantity":        3535,
 			},
-			id: 1000,
+			id:    1000,
 			token: token,
 		},
 		{
@@ -4597,7 +4598,7 @@ func TestUpdateProduction(t *testing.T) {
 			expectedCode:  400,
 			body: fiber.Map{
 				"production_date": "2022-15-10",
-				"quantity": 125123,
+				"quantity":        125123,
 			},
 			token: token,
 		},
@@ -4663,22 +4664,22 @@ func TestListProduction(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
+		token         string
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			token: "",
+			token:         "",
 		},
 		{
 			expectedError: false,
 			expectedCode:  401,
-			token: "afwifiwgjwigjianveri",
+			token:         "afwifiwgjwigjianveri",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			token: token,
+			token:         token,
 		},
 	}
 
@@ -4695,7 +4696,7 @@ func TestListProduction(t *testing.T) {
 			nil,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
@@ -4716,7 +4717,7 @@ func TestListProduction(t *testing.T) {
 		// Ensure that the body was read correctly
 		assert.Nilf(t, err, "list data production")
 
-		mapUnmarshal  := make(map[string]interface{})
+		mapUnmarshal := make(map[string]interface{})
 
 		errUnmarshal := json.Unmarshal(body, &mapUnmarshal)
 
@@ -4738,26 +4739,26 @@ func TestDetailProduction(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
-		id int
+		token         string
+		id            int
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			id: 1,
-			token: "asdawfaeac",
+			id:            1,
+			token:         "asdawfaeac",
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idProduction,
-			token: token,
+			id:            idProduction,
+			token:         token,
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
-			id: 1050,
-			token: token,
+			id:            1050,
+			token:         token,
 		},
 	}
 
@@ -4775,7 +4776,7 @@ func TestDetailProduction(t *testing.T) {
 			nil,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 
@@ -4819,26 +4820,26 @@ func TestDeleteProduction(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
-		token string
-		id int
+		token         string
+		id            int
 	}{
 		{
 			expectedError: false,
 			expectedCode:  401,
-			id: 1,
-			token: "asdawfaeac",
+			id:            1,
+			token:         "asdawfaeac",
 		},
 		{
 			expectedError: false,
 			expectedCode:  404,
-			id: 1050,
-			token: token,
+			id:            1050,
+			token:         token,
 		},
 		{
 			expectedError: false,
 			expectedCode:  200,
-			id: idProduction,
-			token: token,
+			id:            idProduction,
+			token:         token,
 		},
 	}
 
@@ -4856,7 +4857,7 @@ func TestDeleteProduction(t *testing.T) {
 			nil,
 		)
 
-		req.Header.Add("Authorization", "Bearer " + test.token)
+		req.Header.Add("Authorization", "Bearer "+test.token)
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 

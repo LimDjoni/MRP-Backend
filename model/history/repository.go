@@ -11,23 +11,24 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
 	"strconv"
 	"strings"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type Repository interface {
-	CreateTransactionDN (inputTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
+	CreateTransactionDN(inputTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
 	DeleteTransactionDN(id int, userId uint) (bool, error)
-	UpdateTransactionDN (idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
-	UploadDocumentTransactionDN (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error)
-	CreateMinerba (period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error)
-	UpdateMinerba (id int, updateTransaction []int, userId uint) (minerba.Minerba, error)
-	DeleteMinerba (idMinerba int, userId uint) (bool, error)
+	UpdateTransactionDN(idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
+	UploadDocumentTransactionDN(idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error)
+	CreateMinerba(period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error)
+	UpdateMinerba(id int, updateTransaction []int, userId uint) (minerba.Minerba, error)
+	DeleteMinerba(idMinerba int, userId uint) (bool, error)
 	UpdateDocumentMinerba(id int, documentLink minerba.InputUpdateDocumentMinerba, userId uint) (minerba.Minerba, error)
-	CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string, userId uint) (dmo.Dmo, error)
-	DeleteDmo (idDmo int, userId uint) (bool, error)
+	CreateDmo(dmoInput dmo.CreateDmoInput, baseIdNumber string, userId uint) (dmo.Dmo, error)
+	DeleteDmo(idDmo int, userId uint) (bool, error)
 	UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocumentDmo, userId uint) (dmo.Dmo, error)
 	UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error)
 	UpdateTrueIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint, location string) (dmo.Dmo, error)
@@ -45,7 +46,7 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
-func createIdNumber(model string, id uint) string{
+func createIdNumber(model string, id uint) string {
 	year, month, _ := time.Now().Date()
 
 	monthNumber := strconv.Itoa(int(month))
@@ -61,7 +62,7 @@ func createIdNumber(model string, id uint) string{
 
 // Transaction
 
-func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error) {
+func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error) {
 	var createdTransaction transaction.Transaction
 
 	tx := r.db.Begin()
@@ -169,7 +170,7 @@ func (r *repository) CreateTransactionDN (inputTransactionDN transaction.DataTra
 
 	if updateTransactionsErr != nil {
 		tx.Rollback()
-		return  createdTransaction, updateTransactionsErr
+		return createdTransaction, updateTransactionsErr
 	}
 
 	var history History
@@ -223,7 +224,7 @@ func (r *repository) DeleteTransactionDN(id int, userId uint) (bool, error) {
 	return true, createHistoryErr
 }
 
-func (r *repository) UpdateTransactionDN (idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error) {
+func (r *repository) UpdateTransactionDN(idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error) {
 	var transaction transaction.Transaction
 
 	tx := r.db.Begin()
@@ -235,7 +236,7 @@ func (r *repository) UpdateTransactionDN (idTransaction int, inputEditTransactio
 		return transaction, errFind
 	}
 
-	beforeData , errorBeforeDataJsonMarshal := json.Marshal(transaction)
+	beforeData, errorBeforeDataJsonMarshal := json.Marshal(transaction)
 
 	if errorBeforeDataJsonMarshal != nil {
 		tx.Rollback()
@@ -294,7 +295,7 @@ func (r *repository) UpdateTransactionDN (idTransaction int, inputEditTransactio
 
 	if errorMarshal != nil {
 		tx.Rollback()
-		return  transaction, errorMarshal
+		return transaction, errorMarshal
 	}
 
 	var dataInputMapString map[string]interface{}
@@ -303,17 +304,17 @@ func (r *repository) UpdateTransactionDN (idTransaction int, inputEditTransactio
 
 	if errorUnmarshal != nil {
 		tx.Rollback()
-		return  transaction, errorUnmarshal
+		return transaction, errorUnmarshal
 	}
 
 	updateErr := tx.Model(&transaction).Updates(dataInputMapString).Error
 
 	if updateErr != nil {
 		tx.Rollback()
-		return  transaction, updateErr
+		return transaction, updateErr
 	}
 
-	afterData , errorAfterDataJsonMarshal := json.Marshal(transaction)
+	afterData, errorAfterDataJsonMarshal := json.Marshal(transaction)
 
 	if errorBeforeDataJsonMarshal != nil {
 		tx.Rollback()
@@ -339,7 +340,7 @@ func (r *repository) UpdateTransactionDN (idTransaction int, inputEditTransactio
 	return transaction, nil
 }
 
-func (r *repository) UploadDocumentTransactionDN (idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error) {
+func (r *repository) UploadDocumentTransactionDN(idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error) {
 	var uploadedTransaction transaction.Transaction
 
 	tx := r.db.Begin()
@@ -353,51 +354,51 @@ func (r *repository) UploadDocumentTransactionDN (idTransaction uint, urlS3 stri
 	editData := make(map[string]interface{})
 
 	switch documentType {
-		case "skb":
-			if uploadedTransaction.SkbDocumentLink != "" {
-				isReupload = true
-			}
-			editData["skb_document_link"] = urlS3
-		case "skab":
-			if uploadedTransaction.SkabDocumentLink != "" {
-				isReupload = true
-			}
-			editData["skab_document_link"] = urlS3
-		case "bl":
-			if uploadedTransaction.BLDocumentLink != "" {
-				isReupload = true
-			}
-			editData["bl_document_link"] = urlS3
-		case "royalti_provision":
-			if uploadedTransaction.RoyaltiProvisionDocumentLink != "" {
-				isReupload = true
-			}
-			editData["royalti_provision_document_link"] = urlS3
-		case "royalti_final":
-			if uploadedTransaction.RoyaltiFinalDocumentLink != "" {
-				isReupload = true
-			}
-			editData["royalti_final_document_link"] = urlS3
-		case "cow":
-			if uploadedTransaction.COWDocumentLink != "" {
-				isReupload = true
-			}
-			editData["cow_document_link"] = urlS3
-		case "coa":
-			if uploadedTransaction.COADocumentLink != "" {
-				isReupload = true
-			}
-			editData["coa_document_link"] = urlS3
-		case "invoice":
-			if uploadedTransaction.InvoiceAndContractDocumentLink != "" {
-				isReupload = true
-			}
-			editData["invoice_and_contract_document_link"] = urlS3
-		case "lhv":
-			if uploadedTransaction.LHVDocumentLink != "" {
-				isReupload = true
-			}
-			editData["lhv_document_link"] = urlS3
+	case "skb":
+		if uploadedTransaction.SkbDocumentLink != "" {
+			isReupload = true
+		}
+		editData["skb_document_link"] = urlS3
+	case "skab":
+		if uploadedTransaction.SkabDocumentLink != "" {
+			isReupload = true
+		}
+		editData["skab_document_link"] = urlS3
+	case "bl":
+		if uploadedTransaction.BLDocumentLink != "" {
+			isReupload = true
+		}
+		editData["bl_document_link"] = urlS3
+	case "royalti_provision":
+		if uploadedTransaction.RoyaltiProvisionDocumentLink != "" {
+			isReupload = true
+		}
+		editData["royalti_provision_document_link"] = urlS3
+	case "royalti_final":
+		if uploadedTransaction.RoyaltiFinalDocumentLink != "" {
+			isReupload = true
+		}
+		editData["royalti_final_document_link"] = urlS3
+	case "cow":
+		if uploadedTransaction.COWDocumentLink != "" {
+			isReupload = true
+		}
+		editData["cow_document_link"] = urlS3
+	case "coa":
+		if uploadedTransaction.COADocumentLink != "" {
+			isReupload = true
+		}
+		editData["coa_document_link"] = urlS3
+	case "invoice":
+		if uploadedTransaction.InvoiceAndContractDocumentLink != "" {
+			isReupload = true
+		}
+		editData["invoice_and_contract_document_link"] = urlS3
+	case "lhv":
+		if uploadedTransaction.LHVDocumentLink != "" {
+			isReupload = true
+		}
+		editData["lhv_document_link"] = urlS3
 	}
 
 	errEdit := tx.Model(&uploadedTransaction).Updates(editData).Error
@@ -431,7 +432,7 @@ func (r *repository) UploadDocumentTransactionDN (idTransaction uint, urlS3 stri
 
 // Minerba
 
-func (r *repository) CreateMinerba (period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error) {
+func (r *repository) CreateMinerba(period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error) {
 	var createdMinerba minerba.Minerba
 
 	tx := r.db.Begin()
@@ -472,7 +473,7 @@ func (r *repository) CreateMinerba (period string, baseIdNumber string, updateTr
 
 	if updateMinerbaErr != nil {
 		tx.Rollback()
-		return  createdMinerba, updateMinerbaErr
+		return createdMinerba, updateMinerbaErr
 	}
 
 	updateTransactionErr := tx.Table("transactions").Where("id IN ?", updateTransaction).Update("minerba_id", createdMinerba.ID).Error
@@ -499,7 +500,7 @@ func (r *repository) CreateMinerba (period string, baseIdNumber string, updateTr
 	return createdMinerba, nil
 }
 
-func (r *repository) UpdateMinerba (id int, updateTransaction []int, userId uint) (minerba.Minerba, error) {
+func (r *repository) UpdateMinerba(id int, updateTransaction []int, userId uint) (minerba.Minerba, error) {
 	var updatedMinerba minerba.Minerba
 	var quantityMinerba float64
 
@@ -572,8 +573,8 @@ func (r *repository) UpdateMinerba (id int, updateTransaction []int, userId uint
 	}
 
 	var history History
-	beforeData , errorBeforeDataJsonMarshal := json.Marshal(historyBefore)
-	afterData , errorAfterDataJsonMarshal := json.Marshal(historyAfter)
+	beforeData, errorBeforeDataJsonMarshal := json.Marshal(historyBefore)
+	afterData, errorAfterDataJsonMarshal := json.Marshal(historyAfter)
 
 	if errorBeforeDataJsonMarshal != nil {
 		tx.Rollback()
@@ -601,7 +602,7 @@ func (r *repository) UpdateMinerba (id int, updateTransaction []int, userId uint
 	return updatedMinerba, nil
 }
 
-func (r *repository) DeleteMinerba (idMinerba int, userId uint) (bool, error) {
+func (r *repository) DeleteMinerba(idMinerba int, userId uint) (bool, error) {
 
 	tx := r.db.Begin()
 	var minerba minerba.Minerba
@@ -640,9 +641,7 @@ func (r *repository) UpdateDocumentMinerba(id int, documentLink minerba.InputUpd
 	tx := r.db.Begin()
 	var minerba minerba.Minerba
 
-
 	errFind := tx.Where("id = ?", id).First(&minerba).Error
-
 
 	if errFind != nil {
 		tx.Rollback()
@@ -650,8 +649,6 @@ func (r *repository) UpdateDocumentMinerba(id int, documentLink minerba.InputUpd
 	}
 
 	editData := make(map[string]interface{})
-
-
 
 	for _, value := range documentLink.Data {
 		if value["Location"] != nil {
@@ -697,12 +694,12 @@ func (r *repository) UpdateDocumentMinerba(id int, documentLink minerba.InputUpd
 	}
 
 	tx.Commit()
-	return  minerba, nil
+	return minerba, nil
 }
 
 // Dmo
 
-func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string, userId uint) (dmo.Dmo, error) {
+func (r *repository) CreateDmo(dmoInput dmo.CreateDmoInput, baseIdNumber string, userId uint) (dmo.Dmo, error) {
 	var createdDmo dmo.Dmo
 	var transactionBarge []transaction.Transaction
 	var transactionVessel []transaction.Transaction
@@ -758,7 +755,7 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string
 		stringVesselTotalQuantity := fmt.Sprintf("%.3f", vesselQuantity)
 		parseVesselTotalQuantity, _ := strconv.ParseFloat(stringVesselTotalQuantity, 64)
 
-		stringVesselGrandTotalQuantity := fmt.Sprintf("%.3f", vesselQuantity + vesselAdjustment)
+		stringVesselGrandTotalQuantity := fmt.Sprintf("%.3f", vesselQuantity+vesselAdjustment)
 		parseVesselGrandTotalQuantity, _ := strconv.ParseFloat(stringVesselGrandTotalQuantity, 64)
 
 		createdDmo.VesselAdjustment = parseVesselAdjustment
@@ -778,11 +775,16 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string
 		createdDmo.Type = "Vessel"
 	}
 
+	if dmoInput.IsDocumentCustom {
+		createdDmo.IsReconciliationLetterDownloaded = true
+		createdDmo.IsReconciliationLetterSigned = true
+	}
+
 	createdDmoErr := tx.Create(&createdDmo).Error
 
 	if createdDmoErr != nil {
 		tx.Rollback()
-		return  createdDmo, createdDmoErr
+		return createdDmo, createdDmoErr
 	}
 
 	idNumber := baseIdNumber + "-" + helper.CreateIdNumber(int(createdDmo.ID))
@@ -791,7 +793,7 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string
 
 	if updateDmoErr != nil {
 		tx.Rollback()
-		return  createdDmo, updateDmoErr
+		return createdDmo, updateDmoErr
 	}
 
 	if len(dmoInput.TransactionBarge) > 0 {
@@ -837,9 +839,8 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string
 				stringQuantity := fmt.Sprintf("%.3f", value.Quantity)
 				parseQuantity, _ := strconv.ParseFloat(stringQuantity, 64)
 
-				stringGrandTotalQuantity := fmt.Sprintf("%.3f", value.Quantity + value.Adjustment)
+				stringGrandTotalQuantity := fmt.Sprintf("%.3f", value.Quantity+value.Adjustment)
 				parseGrandTotalQuantity, _ := strconv.ParseFloat(stringGrandTotalQuantity, 64)
-
 
 				vesselDummy.VesselName = value.VesselName
 				vesselDummy.Adjustment = parseAdjustment
@@ -858,7 +859,7 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string
 		}
 	}
 
-	if len(transactionBarge) != len(dmoInput.TransactionBarge) && len(transactionVessel) != len(dmoInput.TransactionVessel){
+	if len(transactionBarge) != len(dmoInput.TransactionBarge) && len(transactionVessel) != len(dmoInput.TransactionVessel) {
 		tx.Rollback()
 		return createdDmo, errors.New("please check some of transactions not found")
 	}
@@ -907,7 +908,7 @@ func (r *repository) CreateDmo (dmoInput dmo.CreateDmoInput, baseIdNumber string
 	return createdDmo, nil
 }
 
-func (r *repository) DeleteDmo (idDmo int, userId uint) (bool, error) {
+func (r *repository) DeleteDmo(idDmo int, userId uint) (bool, error) {
 
 	tx := r.db.Begin()
 	var dmo dmo.Dmo
@@ -942,7 +943,7 @@ func (r *repository) DeleteDmo (idDmo int, userId uint) (bool, error) {
 	return true, nil
 }
 
-func(r *repository) UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocumentDmo, userId uint) (dmo.Dmo, error) {
+func (r *repository) UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocumentDmo, userId uint) (dmo.Dmo, error) {
 	tx := r.db.Begin()
 	var dmoUpdate dmo.Dmo
 
@@ -961,6 +962,9 @@ func(r *repository) UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocume
 				editData["bast_document_link"] = value["Location"]
 			}
 			if strings.Contains(value["Location"].(string), "berita_acara") {
+				if dmoUpdate.IsDocumentCustom {
+					editData["signed_reconciliation_letter_document_link"] = value["Location"]
+				}
 				editData["reconciliation_letter_document_link"] = value["Location"]
 			}
 			if strings.Contains(value["Location"].(string), "surat_pernyataan") {
@@ -993,10 +997,10 @@ func(r *repository) UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocume
 	}
 
 	tx.Commit()
-	return  dmoUpdate, nil
+	return dmoUpdate, nil
 }
 
-func(r *repository) UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error) {
+func (r *repository) UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error) {
 	var dmoUpdate dmo.Dmo
 
 	tx := r.db.Begin()
@@ -1008,7 +1012,7 @@ func(r *repository) UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter
 		return dmoUpdate, findErr
 	}
 
-	beforeData , errorBeforeDataJsonMarshal := json.Marshal(dmoUpdate)
+	beforeData, errorBeforeDataJsonMarshal := json.Marshal(dmoUpdate)
 
 	if errorBeforeDataJsonMarshal != nil {
 		tx.Rollback()
@@ -1057,7 +1061,7 @@ func(r *repository) UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter
 	return dmoUpdate, nil
 }
 
-func(r *repository) UpdateTrueIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint, location string) (dmo.Dmo, error) {
+func (r *repository) UpdateTrueIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint, location string) (dmo.Dmo, error) {
 	var dmoUpdate dmo.Dmo
 
 	tx := r.db.Begin()
@@ -1069,7 +1073,7 @@ func(r *repository) UpdateTrueIsSignedDmoDocument(isBast bool, isStatementLetter
 		return dmoUpdate, findErr
 	}
 
-	beforeData , errorBeforeDataJsonMarshal := json.Marshal(dmoUpdate)
+	beforeData, errorBeforeDataJsonMarshal := json.Marshal(dmoUpdate)
 
 	if errorBeforeDataJsonMarshal != nil {
 		tx.Rollback()
@@ -1125,7 +1129,7 @@ func(r *repository) UpdateTrueIsSignedDmoDocument(isBast bool, isStatementLetter
 	return dmoUpdate, nil
 }
 
-func(r *repository) UpdateFalseIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error) {
+func (r *repository) UpdateFalseIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error) {
 	var dmoUpdate dmo.Dmo
 
 	tx := r.db.Begin()
@@ -1137,7 +1141,7 @@ func(r *repository) UpdateFalseIsSignedDmoDocument(isBast bool, isStatementLette
 		return dmoUpdate, findErr
 	}
 
-	beforeData , errorBeforeDataJsonMarshal := json.Marshal(dmoUpdate)
+	beforeData, errorBeforeDataJsonMarshal := json.Marshal(dmoUpdate)
 
 	if errorBeforeDataJsonMarshal != nil {
 		tx.Rollback()
@@ -1193,9 +1197,8 @@ func(r *repository) UpdateFalseIsSignedDmoDocument(isBast bool, isStatementLette
 	return dmoUpdate, nil
 }
 
-
 // Production
-func(r *repository) CreateProduction(input production.InputCreateProduction, userId uint) (production.Production, error) {
+func (r *repository) CreateProduction(input production.InputCreateProduction, userId uint) (production.Production, error) {
 	var createdProduction production.Production
 
 	createdProduction.ProductionDate = input.ProductionDate
@@ -1227,7 +1230,7 @@ func(r *repository) CreateProduction(input production.InputCreateProduction, use
 	return createdProduction, nil
 }
 
-func(r *repository) UpdateProduction(input production.InputCreateProduction, productionId int, userId uint) (production.Production, error) {
+func (r *repository) UpdateProduction(input production.InputCreateProduction, productionId int, userId uint) (production.Production, error) {
 	var updatedProduction production.Production
 
 	tx := r.db.Begin()
@@ -1260,7 +1263,7 @@ func(r *repository) UpdateProduction(input production.InputCreateProduction, pro
 	history.Status = "Update Production"
 	history.UserId = userId
 	history.BeforeData = beforeData
-	history.AfterData =	afterData
+	history.AfterData = afterData
 
 	createHistoryErr := tx.Create(&history).Error
 
@@ -1273,7 +1276,7 @@ func(r *repository) UpdateProduction(input production.InputCreateProduction, pro
 	return updatedProduction, nil
 }
 
-func(r *repository) DeleteProduction(productionId int, userId uint) (bool, error) {
+func (r *repository) DeleteProduction(productionId int, userId uint) (bool, error) {
 	tx := r.db.Begin()
 	var deletedProduction production.Production
 
