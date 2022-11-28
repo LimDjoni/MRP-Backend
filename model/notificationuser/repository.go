@@ -3,6 +3,7 @@ package notificationuser
 import (
 	"ajebackend/model/notification"
 	"ajebackend/model/user"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -50,7 +51,7 @@ func (r *repository) CreateNotification(input notification.InputNotification, us
 	}
 
 	var notificationUser []NotificationUser
-	for _, v := range allUsers  {
+	for _, v := range allUsers {
 		var notif NotificationUser
 		notif.NotificationId = createdNotification.ID
 		notif.UserId = v.ID
@@ -84,16 +85,16 @@ func (r *repository) GetNotification(userId uint) ([]NotificationUser, error) {
 func (r *repository) UpdateReadNotification(userId uint) ([]NotificationUser, error) {
 	var listNotification []NotificationUser
 
+	updErr := r.db.Model(&listNotification).Where("user_id = ?", userId).Update("is_read", true).Error
+
+	if updErr != nil {
+		return listNotification, updErr
+	}
+
 	errFind := r.db.Preload("Notification.User").Preload(clause.Associations).Order("id desc").Where("user_id = ?", userId).Find(&listNotification).Error
 
 	if errFind != nil {
 		return listNotification, errFind
-	}
-
-	updErr := r.db.Model(&listNotification).Update("is_read", true).Error
-
-	if updErr != nil {
-		return listNotification, updErr
 	}
 
 	return listNotification, nil
