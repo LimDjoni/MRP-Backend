@@ -8,20 +8,21 @@ import (
 	"ajebackend/model/user"
 	"ajebackend/validatorfunc"
 	"encoding/json"
+	"reflect"
+	"strconv"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
-	"reflect"
-	"strconv"
 )
 
 type traderHandler struct {
-	userService user.Service
-	traderService trader.Service
-	companyService company.Service
+	userService      user.Service
+	traderService    trader.Service
+	companyService   company.Service
 	traderDmoService traderdmo.Service
-	logsService logs.Service
-	v *validator.Validate
+	logsService      logs.Service
+	v                *validator.Validate
 }
 
 func NewTraderHandler(userService user.Service, traderService trader.Service, companyService company.Service, traderDmoService traderdmo.Service, logsService logs.Service, v *validator.Validate) *traderHandler {
@@ -42,7 +43,7 @@ func (h *traderHandler) ListTrader(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -71,7 +72,7 @@ func (h *traderHandler) CreateTrader(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -97,14 +98,14 @@ func (h *traderHandler) CreateTrader(c *fiber.Ctx) error {
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
 		inputMap["input"] = inputCreateTrader
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
-			"errors": dataErrors,
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"errors":  dataErrors,
 			"message": "failed to create trader",
 		})
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
+			Input:   inputJson,
 			Message: messageJson,
 		}
 
@@ -121,14 +122,14 @@ func (h *traderHandler) CreateTrader(c *fiber.Ctx) error {
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
 		inputMap["input"] = inputCreateTrader
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
-			"error": createTraderErr.Error(),
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error":   createTraderErr.Error(),
 			"message": "failed to create trader",
 		})
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
+			Input:   inputJson,
 			Message: messageJson,
 		}
 
@@ -156,7 +157,7 @@ func (h *traderHandler) UpdateTrader(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -218,13 +219,13 @@ func (h *traderHandler) UpdateTrader(c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["trader_id"] = idInt
 
-		inputJson , _ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
 			"error": updateTraderErr.Error(),
 		})
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
+			Input:   inputJson,
 			Message: messageJson,
 		}
 
@@ -232,13 +233,13 @@ func (h *traderHandler) UpdateTrader(c *fiber.Ctx) error {
 
 		status := 400
 
-		if  updateTraderErr.Error() == "record not found" {
+		if updateTraderErr.Error() == "record not found" {
 			status = 404
 		}
 
 		return c.Status(status).JSON(fiber.Map{
 			"message": "failed to update trader",
-			"error": updateTraderErr.Error(),
+			"error":   updateTraderErr.Error(),
 		})
 	}
 
@@ -252,7 +253,7 @@ func (h *traderHandler) DeleteTrader(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -268,7 +269,7 @@ func (h *traderHandler) DeleteTrader(c *fiber.Ctx) error {
 
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{
-			"error": "record not found",
+			"error":   "record not found",
 			"message": "failed to delete trader",
 		})
 	}
@@ -277,7 +278,7 @@ func (h *traderHandler) DeleteTrader(c *fiber.Ctx) error {
 
 	if findTraderErr != nil {
 		return c.Status(404).JSON(fiber.Map{
-			"error": findTraderErr.Error(),
+			"error":   findTraderErr.Error(),
 			"message": "failed to delete trader",
 		})
 	}
@@ -286,14 +287,14 @@ func (h *traderHandler) DeleteTrader(c *fiber.Ctx) error {
 
 	if findTraderErr != nil {
 		return c.Status(404).JSON(fiber.Map{
-			"error": listDmoWithTraderIdErr.Error(),
+			"error":   listDmoWithTraderIdErr.Error(),
 			"message": "failed to delete trader",
 		})
 	}
 
 	if len(listDmoWithTraderId) > 0 {
 		return c.Status(400).JSON(fiber.Map{
-			"error": "trader is already used in dmo",
+			"error":   "trader is already used in dmo",
 			"message": "failed to delete trader",
 		})
 	}
@@ -305,13 +306,13 @@ func (h *traderHandler) DeleteTrader(c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["trader_id"] = idInt
 
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
 			"error": deleteTraderErr.Error(),
 		})
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
+			Input:   inputJson,
 			Message: messageJson,
 		}
 
@@ -319,13 +320,13 @@ func (h *traderHandler) DeleteTrader(c *fiber.Ctx) error {
 
 		status := 400
 
-		if  deleteTraderErr.Error() == "record not found" {
+		if deleteTraderErr.Error() == "record not found" {
 			status = 404
 		}
 
 		return c.Status(status).JSON(fiber.Map{
 			"message": "failed to delete trader",
-			"error": deleteTraderErr.Error(),
+			"error":   deleteTraderErr.Error(),
 		})
 	}
 
@@ -341,7 +342,7 @@ func (h *traderHandler) DetailTrader(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
