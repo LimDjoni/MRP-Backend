@@ -3,14 +3,16 @@ package handler
 import (
 	"ajebackend/model/user"
 	"ajebackend/validatorfunc"
+	"reflect"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v4"
 )
-
 
 type userHandler struct {
 	userService user.Service
-	v               *validator.Validate
+	v           *validator.Validate
 }
 
 func NewUserHandler(userService user.Service, v *validator.Validate) *userHandler {
@@ -71,4 +73,27 @@ func (h *userHandler) LoginUser(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(loginUser)
+}
+
+func (h *userHandler) Validate(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"message": "validate",
+	})
 }
