@@ -2,8 +2,9 @@ package minerba
 
 import (
 	"fmt"
-	"gorm.io/gorm"
 	"strings"
+
+	"gorm.io/gorm"
 )
 
 type Repository interface {
@@ -20,7 +21,7 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
-func(r *repository) GetReportMinerbaWithPeriod(period string) (Minerba, error) {
+func (r *repository) GetReportMinerbaWithPeriod(period string) (Minerba, error) {
 	var reportMinerba Minerba
 
 	errFind := r.db.Where("period = ?", period).First(&reportMinerba).Error
@@ -28,14 +29,14 @@ func(r *repository) GetReportMinerbaWithPeriod(period string) (Minerba, error) {
 	return reportMinerba, errFind
 }
 
-func(r *repository) GetListReportMinerbaAll(page int, filterMinerba FilterAndSortMinerba) (Pagination, error) {
+func (r *repository) GetListReportMinerbaAll(page int, filterMinerba FilterAndSortMinerba) (Pagination, error) {
 	var listReportMinerba []Minerba
 
 	var pagination Pagination
 	pagination.Limit = 10
 	pagination.Page = page
 	queryFilter := ""
-	sortFilter := ""
+	sortFilter := "id desc"
 
 	if filterMinerba.Field != "" && filterMinerba.Sort != "" {
 		sortFilter = filterMinerba.Field + " " + filterMinerba.Sort
@@ -60,9 +61,9 @@ func(r *repository) GetListReportMinerbaAll(page int, filterMinerba FilterAndSor
 	if filterMinerba.Quantity != 0 {
 		quantity := fmt.Sprintf("%v", filterMinerba.Quantity)
 		if queryFilter != "" {
-			queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" +  quantity + "%'"
+			queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" + quantity + "%'"
 		} else {
-			queryFilter = "cast(quantity AS TEXT) LIKE '%" +  quantity + "%'"
+			queryFilter = "cast(quantity AS TEXT) LIKE '%" + quantity + "%'"
 		}
 	}
 
@@ -77,11 +78,10 @@ func(r *repository) GetListReportMinerbaAll(page int, filterMinerba FilterAndSor
 	return pagination, nil
 }
 
-func(r *repository) GetDataMinerba(id int) (Minerba, error) {
+func (r *repository) GetDataMinerba(id int) (Minerba, error) {
 	var minerba Minerba
 
 	errFind := r.db.Where("id = ?", id).First(&minerba).Error
 
 	return minerba, errFind
 }
-
