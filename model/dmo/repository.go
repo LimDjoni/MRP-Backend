@@ -2,8 +2,9 @@ package dmo
 
 import (
 	"fmt"
-	"gorm.io/gorm"
 	"strings"
+
+	"gorm.io/gorm"
 )
 
 type Repository interface {
@@ -20,7 +21,7 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
-func(r *repository) GetReportDmoWithPeriod(period string) (Dmo, error) {
+func (r *repository) GetReportDmoWithPeriod(period string) (Dmo, error) {
 	var reportDmo Dmo
 
 	errFind := r.db.Where("period = ?", period).First(&reportDmo).Error
@@ -28,14 +29,14 @@ func(r *repository) GetReportDmoWithPeriod(period string) (Dmo, error) {
 	return reportDmo, errFind
 }
 
-func(r *repository) GetListReportDmoAll(page int, filterDmo FilterAndSortDmo) (Pagination, error) {
+func (r *repository) GetListReportDmoAll(page int, filterDmo FilterAndSortDmo) (Pagination, error) {
 	var listReportDmo []Dmo
 
 	var pagination Pagination
 	pagination.Limit = 10
 	pagination.Page = page
 	queryFilter := ""
-	sortFilter := ""
+	sortFilter := "id desc"
 
 	if filterDmo.Field != "" && filterDmo.Sort != "" {
 		sortFilter = filterDmo.Field + " " + filterDmo.Sort
@@ -68,9 +69,9 @@ func(r *repository) GetListReportDmoAll(page int, filterDmo FilterAndSortDmo) (P
 	if filterDmo.Quantity != 0 {
 		quantity := fmt.Sprintf("%v", filterDmo.Quantity)
 		if queryFilter != "" {
-			queryFilter = queryFilter + " AND cast(vessel_grand_total_quantity + barge_grand_total_quantity AS TEXT) LIKE '%" +  quantity + "%'"
+			queryFilter = queryFilter + " AND cast(vessel_grand_total_quantity + barge_grand_total_quantity AS TEXT) LIKE '%" + quantity + "%'"
 		} else {
-			queryFilter = "cast(vessel_grand_total_quantity + barge_grand_total_quantity AS TEXT) LIKE '%" +  quantity + "%'"
+			queryFilter = "cast(vessel_grand_total_quantity + barge_grand_total_quantity AS TEXT) LIKE '%" + quantity + "%'"
 		}
 	}
 
@@ -85,7 +86,7 @@ func(r *repository) GetListReportDmoAll(page int, filterDmo FilterAndSortDmo) (P
 	return pagination, nil
 }
 
-func(r *repository) GetDataDmo(id int) (Dmo, error) {
+func (r *repository) GetDataDmo(id int) (Dmo, error) {
 	var dmo Dmo
 
 	errFind := r.db.Where("id = ?", id).First(&dmo).Error

@@ -2,6 +2,7 @@ package production
 
 import (
 	"fmt"
+
 	"gorm.io/gorm"
 )
 
@@ -18,14 +19,14 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
-func(r *repository) GetListProduction(page int, filter FilterListProduction) (Pagination, error) {
+func (r *repository) GetListProduction(page int, filter FilterListProduction) (Pagination, error) {
 	var listProduction []Production
 
 	var pagination Pagination
 	pagination.Limit = 10
 	pagination.Page = page
 	queryFilter := ""
-	querySort := ""
+	querySort := "id desc"
 
 	if filter.Field != "" && filter.Sort != "" {
 		querySort = filter.Field + " " + filter.Sort
@@ -46,9 +47,9 @@ func(r *repository) GetListProduction(page int, filter FilterListProduction) (Pa
 	if filter.Quantity != 0 {
 		quantity := fmt.Sprintf("%v", filter.Quantity)
 		if queryFilter != "" {
-			queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" +  quantity + "%'"
+			queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" + quantity + "%'"
 		} else {
-			queryFilter = "cast(quantity AS TEXT) LIKE '%" +  quantity + "%'"
+			queryFilter = "cast(quantity AS TEXT) LIKE '%" + quantity + "%'"
 		}
 	}
 

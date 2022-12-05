@@ -102,7 +102,7 @@ func (r *repository) DetailTransactionDN(id int) (Transaction, error) {
 func (r *repository) ListDataDNWithoutMinerba() ([]Transaction, error) {
 	var listDataDnWithoutMinerba []Transaction
 
-	errFind := r.db.Where("minerba_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND is_finance_check = ?", "DN", false, false, true).Find(&listDataDnWithoutMinerba).Error
+	errFind := r.db.Order("id desc").Where("minerba_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND is_finance_check = ?", "DN", false, false, true).Find(&listDataDnWithoutMinerba).Error
 
 	return listDataDnWithoutMinerba, errFind
 }
@@ -233,7 +233,7 @@ func (r *repository) GetDetailMinerba(id int) (DetailMinerba, error) {
 
 	detailMinerba.Detail = minerba
 
-	transactionFindErr := r.db.Where("minerba_id = ?", id).Find(&transactions).Error
+	transactionFindErr := r.db.Order("id desc").Where("minerba_id = ?", id).Find(&transactions).Error
 
 	if transactionFindErr != nil {
 		return detailMinerba, transactionFindErr
@@ -250,13 +250,13 @@ func (r *repository) ListDataDNWithoutDmo() (ChooseTransactionDmo, error) {
 	var listDataDnVesselDmo []Transaction
 	var listDataDnForDmo ChooseTransactionDmo
 
-	errFindBarge := r.db.Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_name = ? AND is_finance_check = ?", "DN", false, false, "", true).Find(&listDataDnBargeDmo).Error
+	errFindBarge := r.db.Order("id desc").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_name = ? AND is_finance_check = ?", "DN", false, false, "", true).Find(&listDataDnBargeDmo).Error
 
 	if errFindBarge != nil {
 		return listDataDnForDmo, errFindBarge
 	}
 
-	errFindVessel := r.db.Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_name != ? AND is_finance_check = ?", "DN", false, false, "", true).Find(&listDataDnVesselDmo).Error
+	errFindVessel := r.db.Order("id desc").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_name != ? AND is_finance_check = ?", "DN", false, false, "", true).Find(&listDataDnVesselDmo).Error
 
 	if errFindVessel != nil {
 		return listDataDnForDmo, errFindVessel
@@ -310,7 +310,7 @@ func (r *repository) GetDetailDmo(id int) (DetailDmo, error) {
 
 	detailDmo.Detail = dmoData
 
-	transactionFindErr := r.db.Where("dmo_id = ?", id).Find(&transactions).Error
+	transactionFindErr := r.db.Order("id desc").Where("dmo_id = ?", id).Find(&transactions).Error
 
 	if transactionFindErr != nil {
 		return detailDmo, transactionFindErr
