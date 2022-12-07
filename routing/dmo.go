@@ -5,6 +5,7 @@ import (
 	"ajebackend/helper"
 	"ajebackend/model/company"
 	"ajebackend/model/dmo"
+	"ajebackend/model/dmovessel"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
 	"ajebackend/model/notificationuser"
@@ -12,6 +13,7 @@ import (
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	jwtware "github.com/gofiber/jwt/v3"
@@ -46,7 +48,10 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	notificationUserRepository := notificationuser.NewRepository(db)
 	notificationUserService := notificationuser.NewService(notificationUserRepository)
 
-	dmoHandler := handler.NewDmoHandler(transactionService, userService, historyService, logService, dmoService, traderService, traderDmoService, notificationUserService, companyService, validate)
+	dmoVesselRepository := dmovessel.NewRepository(db)
+	dmoVesselService := dmovessel.NewService(dmoVesselRepository)
+
+	dmoHandler := handler.NewDmoHandler(transactionService, userService, historyService, logService, dmoService, traderService, traderDmoService, notificationUserService, companyService, validate, dmoVesselService)
 
 	dmoRouting := app.Group("/dmo")
 
@@ -56,7 +61,7 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
 			return ctx.Status(401).JSON(fiber.Map{
 				"error": "unauthorized",
-				"err": err.Error(),
+				"err":   err.Error(),
 			})
 		},
 	}))
