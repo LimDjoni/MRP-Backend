@@ -2209,6 +2209,7 @@ func TestCreateDmo(t *testing.T) {
 		VesselName: "MV. PACIFIC BULK",
 		Quantity:   7504.086,
 		Adjustment: -10,
+		BlDate:     "2022-10-10",
 	})
 
 	tests := []struct {
@@ -2228,6 +2229,7 @@ func TestCreateDmo(t *testing.T) {
 			expectedCode:  201,
 			body: fiber.Map{
 				"period":             "Dec 2022",
+				"document_date":      "2022-05-15",
 				"trader":             traderList,
 				"end_user":           endUser,
 				"vessel_adjustment":  vesselAdjustment,
@@ -2243,6 +2245,7 @@ func TestCreateDmo(t *testing.T) {
 			body: fiber.Map{
 				"period":             "Dec 2022",
 				"trader":             traderList,
+				"document_date":      "2022-05-15",
 				"end_user":           endUser,
 				"vessel_adjustment":  vesselAdjustment,
 				"transaction_barge":  []int{150, 151},
@@ -2256,6 +2259,7 @@ func TestCreateDmo(t *testing.T) {
 			expectedCode:  400,
 			body: fiber.Map{
 				"period":             "Dec 2023",
+				"document_date":      "2022-05-15",
 				"trader":             traderList,
 				"end_user":           endUser,
 				"vessel_adjustment":  vesselAdjustment,
@@ -2270,6 +2274,7 @@ func TestCreateDmo(t *testing.T) {
 			expectedCode:  400,
 			body: fiber.Map{
 				"period":             "Dec 2023",
+				"document_date":      "2022-05-15",
 				"trader":             traderList,
 				"end_user":           endUser,
 				"vessel_adjustment":  vesselAdjustment,
@@ -2284,6 +2289,7 @@ func TestCreateDmo(t *testing.T) {
 			expectedCode:  400,
 			body: fiber.Map{
 				"period":             "Jun 2022",
+				"document_date":      "2022-05-15",
 				"trader":             traderList,
 				"end_user":           endUser,
 				"vessel_adjustment":  vesselAdjustment,
@@ -2298,6 +2304,7 @@ func TestCreateDmo(t *testing.T) {
 			expectedCode:  400,
 			body: fiber.Map{
 				"period":             "Dec 2022",
+				"document_date":      "2022-05-15",
 				"trader":             traderList,
 				"end_user":           endUser,
 				"vessel_adjustment":  []dmo.VesselAdjustmentInput{},
