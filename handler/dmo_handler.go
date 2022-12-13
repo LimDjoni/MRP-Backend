@@ -310,7 +310,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 
 	splitPeriod := strings.Split(inputCreateDmo.Period, " ")
 
-	baseIdNumber := fmt.Sprintf("DD-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
+	baseIdNumber := fmt.Sprintf("SR-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
 	createDmo, createDmoErr := h.historyService.CreateDmo(*inputCreateDmo, baseIdNumber, uint(claims["id"].(float64)))
 
 	if createDmoErr != nil {
@@ -630,7 +630,7 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	fileName := fmt.Sprintf("%s/", *findDmo.Detail.IdNumber)
+	fileName := fmt.Sprintf("SR/%s/", *findDmo.Detail.IdNumber)
 	_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
 
 	if deleteAwsErr != nil {
