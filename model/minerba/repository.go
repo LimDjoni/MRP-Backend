@@ -33,7 +33,7 @@ func (r *repository) GetListReportMinerbaAll(page int, filterMinerba FilterAndSo
 	var listReportMinerba []Minerba
 
 	var pagination Pagination
-	pagination.Limit = 10
+	pagination.Limit = 7
 	pagination.Page = page
 	queryFilter := ""
 	sortFilter := "id desc"

@@ -4,15 +4,17 @@ import (
 	"ajebackend/helper"
 	"context"
 	"fmt"
+	"mime/multipart"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"mime/multipart"
 )
 
-func UploadDocument(file *multipart.FileHeader, fileName string) (*s3manager.UploadOutput, error){
+func UploadDocument(file *multipart.FileHeader, fileName string) (*s3manager.UploadOutput, error) {
 	fileBody, openFileErr := file.Open()
 
 	if openFileErr != nil {
@@ -30,20 +32,21 @@ func UploadDocument(file *multipart.FileHeader, fileName string) (*s3manager.Upl
 	MyBucket := helper.GetEnvWithKey("AWS_BUCKET_NAME")
 
 	contentType := "application/pdf"
-	contentDisposition := fmt.Sprintf("inline; filename=\"%s\"", fileName)
+	splitFile := strings.Split(fileName, "/")
+	contentDisposition := fmt.Sprintf("inline; filename=\"%s\"", splitFile[len(splitFile)-1])
 
 	up, err := uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String(MyBucket),
-		Key:    aws.String(fileName),
-		Body:   fileBody,
-		ContentType: &contentType,
+		Bucket:             aws.String(MyBucket),
+		Key:                aws.String(fileName),
+		Body:               fileBody,
+		ContentType:        &contentType,
 		ContentDisposition: &contentDisposition,
 	})
 
 	return up, err
 }
 
-func DeleteDocument(key string) (bool, error){
+func DeleteDocument(key string) (bool, error) {
 	AccessKeyID := helper.GetEnvWithKey("AWS_ID")
 	SecretAccessKey := helper.GetEnvWithKey("AWS_SECRET_KEY")
 
@@ -78,7 +81,7 @@ func DeleteDocument(key string) (bool, error){
 	return true, err
 }
 
-func DeleteDocumentBatch(key string) (bool, error){
+func DeleteDocumentBatch(key string) (bool, error) {
 	ctx := context.Background()
 	AccessKeyID := helper.GetEnvWithKey("AWS_ID")
 	SecretAccessKey := helper.GetEnvWithKey("AWS_SECRET_KEY")
@@ -102,7 +105,7 @@ func DeleteDocumentBatch(key string) (bool, error){
 	keyFile := key
 	request := &s3.ListObjectsInput{
 		Bucket: aws.String(bucket),
-		Prefix:   aws.String(keyFile),
+		Prefix: aws.String(keyFile),
 	}
 
 	iter := s3manager.NewDeleteListIterator(svc, request)
@@ -112,7 +115,6 @@ func DeleteDocumentBatch(key string) (bool, error){
 	if err := s3manager.NewBatchDeleteWithClient(svc).Delete(ctx, iter); err != nil {
 		return false, err
 	}
-
 
 	return true, nil
 }

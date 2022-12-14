@@ -13,22 +13,23 @@ import (
 	"ajebackend/validatorfunc"
 	"encoding/json"
 	"fmt"
-	"github.com/go-playground/validator/v10"
-	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v4"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type minerbaHandler struct {
-	transactionService transaction.Service
-	userService user.Service
-	historyService history.Service
-	logService logs.Service
-	minerbaService minerba.Service
+	transactionService      transaction.Service
+	userService             user.Service
+	historyService          history.Service
+	logService              logs.Service
+	minerbaService          minerba.Service
 	notificationUserService notificationuser.Service
-	v *validator.Validate
+	v                       *validator.Validate
 }
 
 func NewMinerbaHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, minerbaService minerba.Service, notificationUserService notificationuser.Service, v *validator.Validate) *minerbaHandler {
@@ -50,7 +51,7 @@ func (h *minerbaHandler) ListDataDNWithoutMinerba(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -80,7 +81,7 @@ func (h *minerbaHandler) CreateMinerba(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -107,13 +108,13 @@ func (h *minerbaHandler) CreateMinerba(c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["minerba_period"] = inputCreateMinerba.Period
 		inputMap["list_dn"] = inputCreateMinerba.ListDataDn
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
 			"errors": dataErrors,
 		})
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
+			Input:   inputJson,
 			Message: messageJson,
 		}
 
@@ -140,13 +141,13 @@ func (h *minerbaHandler) CreateMinerba(c *fiber.Ctx) error {
 		inputMap["minerba_period"] = inputCreateMinerba.Period
 		inputMap["list_dn"] = inputCreateMinerba.ListDataDn
 
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
 			"error": checkMinerbaTransactionErr.Error(),
 		})
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
+			Input:   inputJson,
 			Message: messageJson,
 		}
 
@@ -165,7 +166,7 @@ func (h *minerbaHandler) CreateMinerba(c *fiber.Ctx) error {
 
 	splitPeriod := strings.Split(inputCreateMinerba.Period, " ")
 
-	baseIdNumber := fmt.Sprintf("LM-%s-%s",  helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
+	baseIdNumber := fmt.Sprintf("LM-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
 	createMinerba, createMinerbaErr := h.historyService.CreateMinerba(inputCreateMinerba.Period, baseIdNumber, inputCreateMinerba.ListDataDn, uint(claims["id"].(float64)))
 
 	if createMinerbaErr != nil {
@@ -174,13 +175,13 @@ func (h *minerbaHandler) CreateMinerba(c *fiber.Ctx) error {
 		inputMap["minerba_period"] = inputCreateMinerba.Period
 		inputMap["list_dn"] = inputCreateMinerba.ListDataDn
 
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
 			"error": createMinerbaErr.Error(),
 		})
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
+			Input:   inputJson,
 			Message: messageJson,
 		}
 
@@ -201,7 +202,7 @@ func (h *minerbaHandler) UpdateMinerba(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -228,7 +229,7 @@ func (h *minerbaHandler) UpdateMinerba(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"message": "failed to update minerba",
-			"error": "record not found",
+			"error":   "record not found",
 		})
 	}
 
@@ -240,15 +241,15 @@ func (h *minerbaHandler) UpdateMinerba(c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["minerba_id"] = idInt
 		inputMap["list_dn"] = inputUpdateMinerba.ListDataDn
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
 			"errors": dataErrors,
 		})
 
 		createdErrLog := logs.Logs{
 			MinerbaId: &minerbaId,
-			Input: inputJson,
-			Message: messageJson,
+			Input:     inputJson,
+			Message:   messageJson,
 		}
 
 		h.logService.CreateLogs(createdErrLog)
@@ -263,7 +264,7 @@ func (h *minerbaHandler) UpdateMinerba(c *fiber.Ctx) error {
 	if findDetailMinerbaErr != nil {
 		status := 400
 
-		if  findDetailMinerbaErr.Error() == "record not found" {
+		if findDetailMinerbaErr.Error() == "record not found" {
 			status = 404
 		}
 		return c.Status(status).JSON(fiber.Map{
@@ -279,13 +280,13 @@ func (h *minerbaHandler) UpdateMinerba(c *fiber.Ctx) error {
 		inputMap["minerba_id"] = idInt
 		inputMap["list_dn"] = inputUpdateMinerba.ListDataDn
 
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
 			"error": checkMinerbaUpdateTransactionErr.Error(),
 		})
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
+			Input:   inputJson,
 			Message: messageJson,
 		}
 
@@ -310,13 +311,13 @@ func (h *minerbaHandler) UpdateMinerba(c *fiber.Ctx) error {
 		inputMap["minerba_id"] = idInt
 		inputMap["list_dn"] = inputUpdateMinerba.ListDataDn
 
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
 			"error": updateMinerbaErr.Error(),
 		})
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
+			Input:   inputJson,
 			Message: messageJson,
 		}
 
@@ -341,13 +342,13 @@ func (h *minerbaHandler) UpdateMinerba(c *fiber.Ctx) error {
 		inputMap["minerba_id"] = idInt
 		inputMap["list_dn"] = inputUpdateMinerba.ListDataDn
 
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
 			"error": createNotificationUpdateMinerbaErr.Error(),
 		})
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
+			Input:   inputJson,
 			Message: messageJson,
 		}
 
@@ -368,7 +369,7 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -385,7 +386,7 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"message": "failed to delete minerba",
-			"error": "record not found",
+			"error":   "record not found",
 		})
 	}
 
@@ -394,7 +395,7 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 	if getDataMinerbaErr != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"message": "failed to delete minerba",
-			"error": "record not found",
+			"error":   "record not found",
 		})
 	}
 
@@ -405,34 +406,34 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["minerba_id"] = idInt
 
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
 			"error": deleteMinerbaErr.Error(),
 		})
 
 		minerbaId := uint(idInt)
 		createdErrLog := logs.Logs{
 			MinerbaId: &minerbaId,
-			Input: inputJson,
-			Message: messageJson,
+			Input:     inputJson,
+			Message:   messageJson,
 		}
 
 		h.logService.CreateLogs(createdErrLog)
 
 		status := 400
 
-		if  deleteMinerbaErr.Error() == "record not found" {
+		if deleteMinerbaErr.Error() == "record not found" {
 			status = 404
 		}
 
 		return c.Status(status).JSON(fiber.Map{
 			"message": "failed to delete minerba",
-			"error": deleteMinerbaErr.Error(),
+			"error":   deleteMinerbaErr.Error(),
 		})
 	}
 
 	if dataMinerba.RecapDmoDocumentLink != nil || dataMinerba.DetailDmoDocumentLink != nil || dataMinerba.SP3MEDNDocumentLink != nil || dataMinerba.SP3MELNDocumentLink != nil || dataMinerba.INSWExportDocumentLink != nil {
-		fileName := fmt.Sprintf("%s/", *dataMinerba.IdNumber)
+		fileName := fmt.Sprintf("LM/%s/", *dataMinerba.IdNumber)
 		_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
 
 		if deleteAwsErr != nil {
@@ -440,29 +441,29 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 			inputMap["user_id"] = claims["id"]
 			inputMap["minerba_id"] = idInt
 
-			inputJson ,_ := json.Marshal(inputMap)
-			messageJson ,_ := json.Marshal(map[string]interface{}{
+			inputJson, _ := json.Marshal(inputMap)
+			messageJson, _ := json.Marshal(map[string]interface{}{
 				"error": deleteAwsErr.Error(),
 			})
 
 			minerbaId := uint(idInt)
 			createdErrLog := logs.Logs{
 				MinerbaId: &minerbaId,
-				Input: inputJson,
-				Message: messageJson,
+				Input:     inputJson,
+				Message:   messageJson,
 			}
 
 			h.logService.CreateLogs(createdErrLog)
 
 			status := 400
 
-			if  deleteMinerbaErr.Error() == "record not found" {
+			if deleteMinerbaErr.Error() == "record not found" {
 				status = 404
 			}
 
 			return c.Status(status).JSON(fiber.Map{
 				"message": "failed to delete minerba aws",
-				"error": deleteAwsErr.Error(),
+				"error":   deleteAwsErr.Error(),
 			})
 		}
 
@@ -481,13 +482,13 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["minerba_id"] = idInt
 		inputMap["minerba_period"] = dataMinerba.Period
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
 			"error": createNotificationDeleteMinerbaErr.Error(),
 		})
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
+			Input:   inputJson,
 			Message: messageJson,
 		}
 
@@ -510,7 +511,7 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -525,7 +526,7 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 	// Binds the request body to the Person struct
 	if err := c.BodyParser(inputUpdateMinerba); err != nil {
 		return c.Status(400).JSON(fiber.Map{
-			"error": err.Error(),
+			"error":   err.Error(),
 			"message": "failed to update minerba",
 		})
 	}
@@ -539,7 +540,7 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"message": "failed to update minerba",
-			"error": "record not found",
+			"error":   "record not found",
 		})
 	}
 
@@ -549,16 +550,16 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["input"] = inputUpdateMinerba
 		inputMap["minerba_id"] = idInt
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
 			"errors": dataErrors,
 		})
 
 		minerbaId := uint(idInt)
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
-			Message: messageJson,
+			Input:     inputJson,
+			Message:   messageJson,
 			MinerbaId: &minerbaId,
 		}
 
@@ -574,7 +575,7 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 	if detailMinerbaErr != nil {
 		status := 400
 
-		if  detailMinerbaErr.Error() == "record not found" {
+		if detailMinerbaErr.Error() == "record not found" {
 			status = 404
 		}
 		return c.Status(status).JSON(fiber.Map{
@@ -589,13 +590,13 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["input"] = inputUpdateMinerba
 
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
 			"error": updateMinerbaErr.Error(),
 		})
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
+			Input:   inputJson,
 			Message: messageJson,
 		}
 
@@ -607,7 +608,7 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 		}
 
 		return c.Status(status).JSON(fiber.Map{
-			"error": updateMinerbaErr.Error(),
+			"error":   updateMinerbaErr.Error(),
 			"message": "failed to update minerba",
 		})
 	}
@@ -623,20 +624,20 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["input"] = inputUpdateMinerba
 
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
 			"error": createdNotificationErr.Error(),
 		})
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
+			Input:   inputJson,
 			Message: messageJson,
 		}
 
 		h.logService.CreateLogs(createdErrLog)
 
 		return c.Status(400).JSON(fiber.Map{
-			"error": createdNotificationErr.Error(),
+			"error":   createdNotificationErr.Error(),
 			"message": "failed to create notification update minerba",
 		})
 	}
@@ -651,7 +652,7 @@ func (h *minerbaHandler) ListMinerba(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -689,7 +690,6 @@ func (h *minerbaHandler) ListMinerba(c *fiber.Ctx) error {
 	filterMinerba.Field = c.Query("field")
 	filterMinerba.Sort = c.Query("sort")
 
-
 	listMinerba, listMinerbaErr := h.minerbaService.GetListReportMinerbaAll(pageNumber, filterMinerba)
 
 	if listMinerbaErr != nil {
@@ -708,7 +708,7 @@ func (h *minerbaHandler) DetailMinerba(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -733,7 +733,7 @@ func (h *minerbaHandler) DetailMinerba(c *fiber.Ctx) error {
 	if detailMinerbaErr != nil {
 		status := 400
 
-		if  detailMinerbaErr.Error() == "record not found" {
+		if detailMinerbaErr.Error() == "record not found" {
 			status = 404
 		}
 		return c.Status(status).JSON(fiber.Map{
@@ -751,7 +751,7 @@ func (h *minerbaHandler) RequestCreateExcelMinerba(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -778,7 +778,7 @@ func (h *minerbaHandler) RequestCreateExcelMinerba(c *fiber.Ctx) error {
 	if detailMinerbaErr != nil {
 		status := 400
 
-		if  detailMinerbaErr.Error() == "record not found" {
+		if detailMinerbaErr.Error() == "record not found" {
 			status = 404
 		}
 		return c.Status(status).JSON(fiber.Map{
@@ -811,7 +811,7 @@ func (h *minerbaHandler) CheckValidPeriodMinerba(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -835,13 +835,13 @@ func (h *minerbaHandler) CheckValidPeriodMinerba(c *fiber.Ctx) error {
 		dataErrors := validatorfunc.ValidateStruct(errors)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "invalid period",
-			"errors": dataErrors,
+			"errors":  dataErrors,
 		})
 	}
 
 	_, detailMinerbaErr := h.minerbaService.GetReportMinerbaWithPeriod(inputCheckMinerba.Period)
 
-	if  detailMinerbaErr != nil && detailMinerbaErr.Error() == "record not found" {
+	if detailMinerbaErr != nil && detailMinerbaErr.Error() == "record not found" {
 		return c.Status(200).JSON(fiber.Map{
 			"message": "valid period",
 		})

@@ -710,7 +710,7 @@ func (r *repository) CreateDmo(dmoInput dmo.CreateDmoInput, baseIdNumber string,
 
 	createdDmo.Period = dmoInput.Period
 	createdDmo.IsDocumentCustom = dmoInput.IsDocumentCustom
-
+	createdDmo.DocumentDate = dmoInput.DocumentDate
 	if len(dmoInput.TransactionBarge) > 0 {
 		var bargeQuantity float64
 		barge = true
@@ -847,6 +847,7 @@ func (r *repository) CreateDmo(dmoInput dmo.CreateDmoInput, baseIdNumber string,
 				vesselDummy.Quantity = parseQuantity
 				vesselDummy.DmoId = createdDmo.ID
 				vesselDummy.GrandTotalQuantity = parseGrandTotalQuantity
+				vesselDummy.BlDate = value.BlDate
 				dmoVessels = append(dmoVessels, vesselDummy)
 			}
 

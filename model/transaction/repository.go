@@ -40,7 +40,7 @@ func NewRepository(db *gorm.DB) *repository {
 func (r *repository) ListDataDN(page int, sortFilter SortAndFilter) (Pagination, error) {
 	var transactions []Transaction
 	var pagination Pagination
-	pagination.Limit = 10
+	pagination.Limit = 7
 	pagination.Page = page
 	defaultSort := "id desc"
 	sortString := fmt.Sprintf("%s %s", sortFilter.Field, sortFilter.Sort)

@@ -2,6 +2,7 @@ package transaction
 
 import (
 	"ajebackend/model/dmo"
+	"ajebackend/model/dmovessel"
 	"ajebackend/model/trader"
 )
 
@@ -90,12 +91,14 @@ type InputRequestCreateExcelMinerba struct {
 }
 
 type InputRequestCreateUploadDmo struct {
-	Authorization    string          `json:"authorization"`
-	BastNumber       string          `json:"bast_number"`
-	DataDmo          dmo.Dmo         `json:"data_dmo"`
-	DataTransactions []Transaction   `json:"data_transactions"`
-	Trader           []trader.Trader `json:"trader"`
-	TraderEndUser    trader.Trader   `json:"trader_end_user"`
+	Authorization          string                `json:"authorization"`
+	BastNumber             string                `json:"bast_number"`
+	DataDmo                dmo.Dmo               `json:"data_dmo"`
+	DataTransactions       []Transaction         `json:"data_transactions"`
+	DataTransactionsVessel []Transaction         `json:"data_transactions_vessel"`
+	Trader                 []trader.Trader       `json:"trader"`
+	TraderEndUser          trader.Trader         `json:"trader_end_user"`
+	DataVessel             []dmovessel.DmoVessel `json:"data_vessel"`
 }
 
 type InputRequestGetReport struct {
