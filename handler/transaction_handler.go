@@ -9,20 +9,21 @@ import (
 	"ajebackend/validatorfunc"
 	"encoding/json"
 	"fmt"
-	"github.com/go-playground/validator/v10"
-	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v4"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type transactionHandler struct {
 	transactionService transaction.Service
-	userService user.Service
-	historyService history.Service
-	v               *validator.Validate
-	logService logs.Service
+	userService        user.Service
+	historyService     history.Service
+	v                  *validator.Validate
+	logService         logs.Service
 }
 
 func NewTransactionHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, v *validator.Validate, logService logs.Service) *transactionHandler {
@@ -42,7 +43,7 @@ func (h *transactionHandler) CreateTransactionDN(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -115,19 +116,19 @@ func (h *transactionHandler) CreateTransactionDN(c *fiber.Ctx) error {
 	createdTransaction, createdTransactionErr := h.historyService.CreateTransactionDN(*transactionInput, uint(claims["id"].(float64)))
 
 	if createdTransactionErr != nil {
-		inputJson , _ := json.Marshal(transactionInput)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
+		inputJson, _ := json.Marshal(transactionInput)
+		messageJson, _ := json.Marshal(map[string]interface{}{
 			"error": createdTransactionErr.Error(),
 		})
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
+			Input:   inputJson,
 			Message: messageJson,
 		}
 
 		h.logService.CreateLogs(createdErrLog)
 
- 		return c.Status(400).JSON(fiber.Map{
+		return c.Status(400).JSON(fiber.Map{
 			"error": createdTransactionErr.Error(),
 		})
 	}
@@ -142,7 +143,7 @@ func (h *transactionHandler) ListDataDN(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -199,7 +200,7 @@ func (h *transactionHandler) DetailTransactionDN(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -237,7 +238,7 @@ func (h *transactionHandler) DeleteTransactionDN(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -278,34 +279,34 @@ func (h *transactionHandler) DeleteTransactionDN(c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["transaction_id"] = idInt
 
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
 			"error": deleteTransactionErr.Error(),
 		})
 
 		transactionId := uint(idInt)
 		createdErrLog := logs.Logs{
 			TransactionId: &transactionId,
-			Input: inputJson,
-			Message: messageJson,
+			Input:         inputJson,
+			Message:       messageJson,
 		}
 
 		h.logService.CreateLogs(createdErrLog)
 
 		status := 400
 
-		if  deleteTransactionErr.Error() == "record not found" {
+		if deleteTransactionErr.Error() == "record not found" {
 			status = 404
 		}
 
 		return c.Status(status).JSON(fiber.Map{
 			"message": "failed to delete transaction",
-			"error": deleteTransactionErr.Error(),
+			"error":   deleteTransactionErr.Error(),
 		})
 	}
 
 	if findTransaction.SkbDocumentLink != "" || findTransaction.SkabDocumentLink != "" || findTransaction.BLDocumentLink != "" || findTransaction.RoyaltiProvisionDocumentLink != "" || findTransaction.RoyaltiFinalDocumentLink != "" || findTransaction.COWDocumentLink != "" || findTransaction.COADocumentLink != "" || findTransaction.InvoiceAndContractDocumentLink != "" || findTransaction.LHVDocumentLink != "" {
-		fileName := fmt.Sprintf("%s/", *findTransaction.IdNumber)
+		fileName := fmt.Sprintf("DN/%s/", *findTransaction.IdNumber)
 		_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
 
 		if deleteAwsErr != nil {
@@ -313,14 +314,14 @@ func (h *transactionHandler) DeleteTransactionDN(c *fiber.Ctx) error {
 			inputMap["user_id"] = claims["id"]
 			inputMap["transaction_id"] = idInt
 
-			inputJson ,_ := json.Marshal(inputMap)
-			messageJson ,_ := json.Marshal(map[string]interface{}{
-				"error": deleteAwsErr.Error(),
+			inputJson, _ := json.Marshal(inputMap)
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error":     deleteAwsErr.Error(),
 				"id_number": findTransaction.IdNumber,
 			})
 
 			createdErrLog := logs.Logs{
-				Input: inputJson,
+				Input:   inputJson,
 				Message: messageJson,
 			}
 
@@ -328,7 +329,7 @@ func (h *transactionHandler) DeleteTransactionDN(c *fiber.Ctx) error {
 
 			return c.Status(400).JSON(fiber.Map{
 				"message": "failed to delete transaction aws",
-				"error": deleteAwsErr.Error(),
+				"error":   deleteAwsErr.Error(),
 			})
 		}
 	}
@@ -345,7 +346,7 @@ func (h *transactionHandler) UpdateTransactionDN(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -383,7 +384,7 @@ func (h *transactionHandler) UpdateTransactionDN(c *fiber.Ctx) error {
 		})
 	}
 
-	updateTransaction, updateTransactionErr := h.historyService.UpdateTransactionDN(idInt, *transactionInput ,uint(claims["id"].(float64)))
+	updateTransaction, updateTransactionErr := h.historyService.UpdateTransactionDN(idInt, *transactionInput, uint(claims["id"].(float64)))
 
 	if updateTransactionErr != nil {
 		inputMap := make(map[string]interface{})
@@ -391,43 +392,43 @@ func (h *transactionHandler) UpdateTransactionDN(c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["transaction_id"] = id
 
-		inputJson , _ := json.Marshal(transactionInput)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
+		inputJson, _ := json.Marshal(transactionInput)
+		messageJson, _ := json.Marshal(map[string]interface{}{
 			"error": updateTransactionErr.Error(),
 		})
 
 		transactionId := uint(idInt)
 		createdErrLog := logs.Logs{
 			TransactionId: &transactionId,
-			Input: inputJson,
-			Message: messageJson,
+			Input:         inputJson,
+			Message:       messageJson,
 		}
 
 		h.logService.CreateLogs(createdErrLog)
 
 		status := 400
 
-		if  updateTransactionErr.Error() == "record not found" {
+		if updateTransactionErr.Error() == "record not found" {
 			status = 404
 		}
 
 		return c.Status(status).JSON(fiber.Map{
 			"message": "failed to update transaction",
-			"error": updateTransactionErr.Error(),
+			"error":   updateTransactionErr.Error(),
 		})
 	}
 
 	return c.Status(200).JSON(updateTransaction)
 }
 
-func (h *transactionHandler) UpdateDocumentTransactionDN (c *fiber.Ctx) error {
+func (h *transactionHandler) UpdateDocumentTransactionDN(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	responseUnauthorized := fiber.Map{
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -451,18 +452,18 @@ func (h *transactionHandler) UpdateDocumentTransactionDN (c *fiber.Ctx) error {
 		return c.Status(400).JSON(responseErr)
 	}
 
-	if !strings.Contains(file.Filename, ".pdf" ) {
+	if !strings.Contains(file.Filename, ".pdf") {
 		responseErr["error"] = "document must be pdf"
 		return c.Status(400).JSON(responseErr)
 	}
 
 	switch documentType {
-		case "skb","skab","bl","royalti_provision","royalti_final","cow","coa","invoice","lhv":
-		default:
-			return c.Status(400).JSON(fiber.Map{
-				"error": "document type not found",
-				"message": "failed to upload document",
-			})
+	case "skb", "skab", "bl", "royalti_provision", "royalti_final", "cow", "coa", "invoice", "lhv":
+	default:
+		return c.Status(400).JSON(fiber.Map{
+			"error":   "document type not found",
+			"message": "failed to upload document",
+		})
 	}
 
 	idInt, err := strconv.Atoi(id)
@@ -478,11 +479,11 @@ func (h *transactionHandler) UpdateDocumentTransactionDN (c *fiber.Ctx) error {
 	if detailTransactionErr != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"message": "failed to upload document",
-			"error": detailTransactionErr.Error(),
+			"error":   detailTransactionErr.Error(),
 		})
 	}
 
-	fileName := fmt.Sprintf("%s/%s.pdf", *detailTransaction.IdNumber, documentType)
+	fileName := fmt.Sprintf("DN/%v/%v_%s.pdf", *detailTransaction.IdNumber, *detailTransaction.IdNumber, documentType)
 
 	up, uploadErr := awshelper.UploadDocument(file, fileName)
 
@@ -493,16 +494,16 @@ func (h *transactionHandler) UpdateDocumentTransactionDN (c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["transaction_id"] = idInt
 
-		inputJson , _ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
 			"error": uploadErr.Error(),
 		})
 
 		transactionId := uint(idInt)
 		createdErrLog := logs.Logs{
 			TransactionId: &transactionId,
-			Input: inputJson,
-			Message: messageJson,
+			Input:         inputJson,
+			Message:       messageJson,
 		}
 
 		h.logService.CreateLogs(createdErrLog)
@@ -520,17 +521,17 @@ func (h *transactionHandler) UpdateDocumentTransactionDN (c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["transaction_id"] = idInt
 
-		inputJson , _ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
-			"error": editDocumentErr.Error(),
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error":           editDocumentErr.Error(),
 			"upload_response": up,
 		})
 
 		transactionId := uint(idInt)
 		createdErrLog := logs.Logs{
 			TransactionId: &transactionId,
-			Input: inputJson,
-			Message: messageJson,
+			Input:         inputJson,
+			Message:       messageJson,
 		}
 		h.logService.CreateLogs(createdErrLog)
 

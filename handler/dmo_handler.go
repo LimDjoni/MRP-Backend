@@ -5,6 +5,7 @@ import (
 	"ajebackend/model/awshelper"
 	"ajebackend/model/company"
 	"ajebackend/model/dmo"
+	"ajebackend/model/dmovessel"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
 	"ajebackend/model/notification"
@@ -36,9 +37,10 @@ type dmoHandler struct {
 	notificationUserService notificationuser.Service
 	companyService          company.Service
 	v                       *validator.Validate
+	dmoVesselService        dmovessel.Service
 }
 
-func NewDmoHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, dmoService dmo.Service, traderService trader.Service, traderDmoService traderdmo.Service, notificationUserService notificationuser.Service, companyService company.Service, v *validator.Validate) *dmoHandler {
+func NewDmoHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, dmoService dmo.Service, traderService trader.Service, traderDmoService traderdmo.Service, notificationUserService notificationuser.Service, companyService company.Service, v *validator.Validate, dmoVesselService dmovessel.Service) *dmoHandler {
 	return &dmoHandler{
 		transactionService,
 		userService,
@@ -50,6 +52,7 @@ func NewDmoHandler(transactionService transaction.Service, userService user.Serv
 		notificationUserService,
 		companyService,
 		v,
+		dmoVesselService,
 	}
 }
 
@@ -227,7 +230,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	}
 
 	var dataTransactions []transaction.Transaction
-
+	var dataTransactionsVessel []transaction.Transaction
 	if len(inputCreateDmo.TransactionBarge) > 0 {
 		checkDmoBarge, checkDmoBargeErr := h.transactionService.CheckDataDnAndDmo(inputCreateDmo.TransactionBarge)
 
@@ -277,7 +280,6 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 			inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
 			inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
 			inputMap["input"] = inputCreateDmo
-
 			inputJson, _ := json.Marshal(inputMap)
 			messageJson, _ := json.Marshal(map[string]interface{}{
 				"error": checkDmoVesselErr.Error(),
@@ -302,13 +304,13 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		}
 
 		for _, v := range checkDmoVessel {
-			dataTransactions = append(dataTransactions, v)
+			dataTransactionsVessel = append(dataTransactionsVessel, v)
 		}
 	}
 
 	splitPeriod := strings.Split(inputCreateDmo.Period, " ")
 
-	baseIdNumber := fmt.Sprintf("DD-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
+	baseIdNumber := fmt.Sprintf("SR-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
 	createDmo, createDmoErr := h.historyService.CreateDmo(*inputCreateDmo, baseIdNumber, uint(claims["id"].(float64)))
 
 	if createDmoErr != nil {
@@ -362,6 +364,33 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		})
 	}
 
+	listDmoVessel, listDmoVesselErr := h.dmoVesselService.GetDataDmoVessel(createDmo.ID)
+
+	if listDmoVesselErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_period"] = inputCreateDmo.Period
+		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
+		inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+		inputMap["input"] = inputCreateDmo
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": listDmoVesselErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Dmo already has been created, but get list dmo vessel failed",
+			"error":   listDmoVesselErr.Error(),
+		})
+	}
+
 	if !inputCreateDmo.IsDocumentCustom {
 		var reqInputCreateUploadDmo transaction.InputRequestCreateUploadDmo
 
@@ -371,7 +400,8 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		reqInputCreateUploadDmo.DataTransactions = dataTransactions
 		reqInputCreateUploadDmo.Trader = list
 		reqInputCreateUploadDmo.TraderEndUser = endUser
-
+		reqInputCreateUploadDmo.DataVessel = listDmoVessel
+		reqInputCreateUploadDmo.DataTransactionsVessel = dataTransactionsVessel
 		_, requestJobDmoErr := h.transactionService.RequestCreateDmo(reqInputCreateUploadDmo)
 
 		if requestJobDmoErr != nil {
@@ -600,7 +630,7 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	fileName := fmt.Sprintf("%s/", *findDmo.Detail.IdNumber)
+	fileName := fmt.Sprintf("SR/%s/", *findDmo.Detail.IdNumber)
 	_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
 
 	if deleteAwsErr != nil {

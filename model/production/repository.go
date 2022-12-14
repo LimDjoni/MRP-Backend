@@ -23,7 +23,7 @@ func (r *repository) GetListProduction(page int, filter FilterListProduction) (P
 	var listProduction []Production
 
 	var pagination Pagination
-	pagination.Limit = 10
+	pagination.Limit = 7
 	pagination.Page = page
 	queryFilter := ""
 	querySort := "id desc"
