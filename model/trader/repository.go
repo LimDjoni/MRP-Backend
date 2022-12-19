@@ -4,9 +4,10 @@ import (
 	"ajebackend/model/company"
 	"encoding/json"
 	"errors"
+	"strings"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"strings"
 )
 
 type Repository interface {
@@ -31,7 +32,7 @@ func NewRepository(db *gorm.DB) *repository {
 func (r *repository) ListTrader() ([]Trader, error) {
 	var listTrader []Trader
 
-	getListTraderErr := r.db.Preload(clause.Associations).Find(&listTrader).Error
+	getListTraderErr := r.db.Preload(clause.Associations).Order("trader_name asc").Find(&listTrader).Error
 
 	return listTrader, getListTraderErr
 }
@@ -74,8 +75,8 @@ func (r *repository) CreateTrader(inputTrader InputCreateUpdateTrader) (Trader, 
 		return createdTrader, errFindCompany
 	}
 
-	createdTrader.TraderName = strings.ToUpper(inputTrader.TraderName)
-	createdTrader.Position = strings.ToUpper(inputTrader.Position)
+	createdTrader.TraderName = inputTrader.TraderName
+	createdTrader.Position = inputTrader.Position
 	var email string
 	if inputTrader.Email != nil {
 		email = strings.ToLower(*inputTrader.Email)
@@ -103,8 +104,8 @@ func (r *repository) CreateTrader(inputTrader InputCreateUpdateTrader) (Trader, 
 func (r *repository) UpdateTrader(inputTrader InputCreateUpdateTrader, id int) (Trader, error) {
 	var updatedTrader Trader
 
-	inputTrader.TraderName = strings.ToUpper(inputTrader.TraderName)
-	inputTrader.Position = strings.ToUpper(inputTrader.Position)
+	inputTrader.TraderName = inputTrader.TraderName
+	inputTrader.Position = inputTrader.Position
 	var email string
 	if inputTrader.Email != nil {
 		email = strings.ToLower(*inputTrader.Email)
@@ -116,7 +117,7 @@ func (r *repository) UpdateTrader(inputTrader InputCreateUpdateTrader, id int) (
 	errFind := r.db.Preload(clause.Associations).Where("id = ?", id).First(&updatedTrader).Error
 
 	if errFind != nil {
-		return  updatedTrader, errFind
+		return updatedTrader, errFind
 	}
 
 	var findCompany company.Company
@@ -124,13 +125,13 @@ func (r *repository) UpdateTrader(inputTrader InputCreateUpdateTrader, id int) (
 	errFindCompany := r.db.Where("id = ?", inputTrader.CompanyId).First(&findCompany).Error
 
 	if errFindCompany != nil {
-		return  updatedTrader, errFindCompany
+		return updatedTrader, errFindCompany
 	}
 
 	dataInput, errorMarshal := json.Marshal(inputTrader)
 
 	if errorMarshal != nil {
-		return  updatedTrader, errorMarshal
+		return updatedTrader, errorMarshal
 	}
 
 	var dataInputMapString map[string]interface{}
@@ -138,13 +139,13 @@ func (r *repository) UpdateTrader(inputTrader InputCreateUpdateTrader, id int) (
 	errorUnmarshal := json.Unmarshal(dataInput, &dataInputMapString)
 
 	if errorUnmarshal != nil {
-		return  updatedTrader, errorUnmarshal
+		return updatedTrader, errorUnmarshal
 	}
 
 	updateErr := r.db.Model(&updatedTrader).Updates(dataInputMapString).Error
 
 	if updateErr != nil {
-		return  updatedTrader, updateErr
+		return updatedTrader, updateErr
 	}
 
 	return updatedTrader, nil
