@@ -125,7 +125,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		}
 	}
 
-	if len(inputCreateDmo.VesselAdjustment) == 0 && len(inputCreateDmo.TransactionVessel) > 0 {
+	if len(inputCreateDmo.VesselAdjustment) == 0 && inputCreateDmo.TransactionVessel[0] != 0 {
 		formPart, errFormPart := c.MultipartForm()
 		if errFormPart != nil {
 			return c.Status(400).JSON(fiber.Map{
