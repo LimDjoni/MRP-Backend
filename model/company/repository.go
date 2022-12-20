@@ -2,9 +2,9 @@ package company
 
 import (
 	"encoding/json"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"strings"
 )
 
 type Repository interface {
@@ -26,7 +26,7 @@ func NewRepository(db *gorm.DB) *repository {
 func (r *repository) ListCompany() ([]Company, error) {
 	var listCompany []Company
 
-	getListCompanyErr := r.db.Preload(clause.Associations).Find(&listCompany).Error
+	getListCompanyErr := r.db.Preload(clause.Associations).Order("company_name asc").Find(&listCompany).Error
 
 	return listCompany, getListCompanyErr
 }
@@ -34,9 +34,9 @@ func (r *repository) ListCompany() ([]Company, error) {
 func (r *repository) CreateCompany(inputCompany InputCreateUpdateCompany) (Company, error) {
 	var createdCompany Company
 
-	createdCompany.CompanyName = strings.ToUpper(inputCompany.CompanyName)
+	createdCompany.CompanyName = inputCompany.CompanyName
 	createdCompany.Address = inputCompany.Address
-	createdCompany.Province = strings.ToUpper(inputCompany.Province)
+	createdCompany.Province = inputCompany.Province
 	createdCompany.PhoneNumber = inputCompany.PhoneNumber
 	createdCompany.FaxNumber = inputCompany.FaxNumber
 
@@ -51,19 +51,19 @@ func (r *repository) CreateCompany(inputCompany InputCreateUpdateCompany) (Compa
 func (r *repository) UpdateCompany(inputCompany InputCreateUpdateCompany, id int) (Company, error) {
 	var updatedCompany Company
 
-	inputCompany.CompanyName = strings.ToUpper(inputCompany.CompanyName)
-	inputCompany.Province = strings.ToUpper(inputCompany.Province)
+	inputCompany.CompanyName = inputCompany.CompanyName
+	inputCompany.Province = inputCompany.Province
 
 	errFind := r.db.Where("id = ?", id).First(&updatedCompany).Error
 
 	if errFind != nil {
-		return  updatedCompany, errFind
+		return updatedCompany, errFind
 	}
 
 	dataInput, errorMarshal := json.Marshal(inputCompany)
 
 	if errorMarshal != nil {
-		return  updatedCompany, errorMarshal
+		return updatedCompany, errorMarshal
 	}
 
 	var dataInputMapString map[string]interface{}
@@ -71,13 +71,13 @@ func (r *repository) UpdateCompany(inputCompany InputCreateUpdateCompany, id int
 	errorUnmarshal := json.Unmarshal(dataInput, &dataInputMapString)
 
 	if errorUnmarshal != nil {
-		return  updatedCompany, errorUnmarshal
+		return updatedCompany, errorUnmarshal
 	}
 
 	updateErr := r.db.Model(&updatedCompany).Updates(dataInputMapString).Error
 
 	if updateErr != nil {
-		return  updatedCompany, updateErr
+		return updatedCompany, updateErr
 	}
 
 	return updatedCompany, nil
@@ -107,7 +107,7 @@ func (r *repository) DetailCompany(id int) (Company, error) {
 	errFind := r.db.Where("id = ?", id).First(&detailCompany).Error
 
 	if errFind != nil {
-		return  detailCompany, errFind
+		return detailCompany, errFind
 	}
 
 	return detailCompany, nil
