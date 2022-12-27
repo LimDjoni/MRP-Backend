@@ -75,6 +75,22 @@ func (r *repository) ListDataDN(page int, sortFilter SortAndFilter) (Pagination,
 		queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" + quantity + "%'"
 	}
 
+	if sortFilter.VerificationFilter == "Belum diverifikasi" {
+		queryFilter = queryFilter + " AND is_finance_check = FALSE"
+	}
+
+	if sortFilter.VerificationFilter == "Sudah diverifikasi" {
+		queryFilter = queryFilter + " AND is_finance_check = TRUE AND is_coa_finish IS NOT TRUE AND is_royalty_final_finish IS NOT TRUE"
+	}
+
+	if sortFilter.VerificationFilter == "Data belum lengkap" {
+		queryFilter = queryFilter + " AND is_finance_check = TRUE AND ((is_coa_finish = TRUE AND is_royalty_final_finish = FALSE) OR (is_coa_finish IS NOT TRUE AND is_royalty_final_finish = TRUE))"
+	}
+
+	if sortFilter.VerificationFilter == "Data lengkap" {
+		queryFilter = queryFilter + " AND is_finance_check = TRUE AND is_coa_finish = TRUE AND is_royalty_final_finish = TRUE"
+	}
+
 	errFind := r.db.Preload(clause.Associations).Where(queryFilter).Order(sortString).Scopes(paginateDataDN(transactions, &pagination, r.db, queryFilter)).Find(&transactions).Error
 
 	if errFind != nil {

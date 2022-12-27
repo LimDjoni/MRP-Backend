@@ -69,17 +69,20 @@ type DataTransactionInput struct {
 	DmoCategory                 string  `json:"dmo_category"`
 	IsNotClaim                  bool    `json:"is_not_claim"`
 	IsFinanceCheck              bool    `json:"is_finance_check"`
+	IsCoaFinish                 bool    `json:"is_coa_finish"`
+	IsRoyaltyFinalFinish        bool    `json:"is_royalty_final_finish"`
 }
 
 type SortAndFilter struct {
-	Field        string
-	Sort         string
-	Quantity     float64
-	TugboatName  string
-	BargeName    string
-	VesselName   string
-	ShippingFrom string
-	ShippingTo   string
+	Field              string
+	Sort               string
+	Quantity           float64
+	TugboatName        string
+	BargeName          string
+	VesselName         string
+	ShippingFrom       string
+	ShippingTo         string
+	VerificationFilter string
 }
 
 type InputRequestCreateExcelMinerba struct {

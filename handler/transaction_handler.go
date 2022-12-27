@@ -170,6 +170,7 @@ func (h *transactionHandler) ListDataDN(c *fiber.Ctx) error {
 	sortAndFilter.VesselName = c.Query("vessel_name")
 	sortAndFilter.ShippingFrom = c.Query("shipping_from")
 	sortAndFilter.ShippingTo = c.Query("shipping_to")
+	sortAndFilter.VerificationFilter = c.Query("verification_filter")
 
 	pageNumber, err := strconv.Atoi(page)
 
