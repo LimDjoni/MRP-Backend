@@ -87,6 +87,8 @@ type Transaction struct {
 	IsNotClaim                     bool             `json:"is_not_claim"`
 	IsMigration                    bool             `json:"is_migration"`
 	IsFinanceCheck                 bool             `json:"is_finance_check"`
+	IsCoaFinish                    bool             `json:"is_coa_finish"`
+	IsRoyaltyFinalFinish           bool             `json:"is_royalty_final_finish"`
 }
 
 type InATrade struct {

@@ -1,9 +1,10 @@
 package validatorfunc
 
 import (
-	"github.com/go-playground/validator/v10"
 	"strconv"
 	"strings"
+
+	"github.com/go-playground/validator/v10"
 )
 
 func isStringInSlicesString(str string, slc []string) bool {
@@ -18,7 +19,7 @@ func isStringInSlicesString(str string, slc []string) bool {
 func ValidationPeriod(fl validator.FieldLevel) bool {
 
 	var month []string
-	month = append(month, "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+	month = append(month, "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des")
 	value := fl.Field().String()
 
 	if !strings.Contains(value, " ") {
