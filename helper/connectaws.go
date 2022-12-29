@@ -12,7 +12,7 @@ func ConnectAws() (*session.Session, error) {
 
 	sess, err := session.NewSession(
 		&aws.Config{
-			Region: aws.String("ap-southeast-1"),
+			Region: aws.String("ap-southeast-3"),
 			Credentials: credentials.NewStaticCredentials(
 				AccessKeyID,
 				SecretAccessKey,
