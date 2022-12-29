@@ -156,7 +156,8 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 	createdTransaction.DmoBuyerName = inputTransactionDN.DmoBuyerName
 	createdTransaction.DmoIndustryType = inputTransactionDN.DmoIndustryType
 	createdTransaction.DmoCategory = strings.ToUpper(inputTransactionDN.DmoCategory)
-
+	createdTransaction.IsCoaFinish = inputTransactionDN.IsCoaFinish
+	createdTransaction.IsRoyaltyFinalFinish = inputTransactionDN.IsRoyaltyFinalFinish
 	createTransactionErr := tx.Create(&createdTransaction).Error
 
 	if createTransactionErr != nil {
