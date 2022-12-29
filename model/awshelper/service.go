@@ -51,7 +51,7 @@ func DeleteDocument(key string) (bool, error) {
 	SecretAccessKey := helper.GetEnvWithKey("AWS_SECRET_KEY")
 
 	newSession, errNewSession := session.NewSession(&aws.Config{
-		Region: aws.String("ap-southeast-1"),
+		Region: aws.String(helper.GetEnvWithKey("AWS_REGION")),
 		Credentials: credentials.NewStaticCredentials(
 			AccessKeyID,
 			SecretAccessKey,
@@ -87,7 +87,7 @@ func DeleteDocumentBatch(key string) (bool, error) {
 	SecretAccessKey := helper.GetEnvWithKey("AWS_SECRET_KEY")
 
 	newSession, errNewSession := session.NewSession(&aws.Config{
-		Region: aws.String("ap-southeast-1"),
+		Region: aws.String(helper.GetEnvWithKey("AWS_REGION")),
 		Credentials: credentials.NewStaticCredentials(
 			AccessKeyID,
 			SecretAccessKey,
