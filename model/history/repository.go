@@ -30,9 +30,9 @@ type Repository interface {
 	CreateDmo(dmoInput dmo.CreateDmoInput, baseIdNumber string, userId uint) (dmo.Dmo, error)
 	DeleteDmo(idDmo int, userId uint) (bool, error)
 	UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocumentDmo, userId uint) (dmo.Dmo, error)
-	UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error)
-	UpdateTrueIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint, location string) (dmo.Dmo, error)
-	UpdateFalseIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error)
+	UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, isReconciliationLetterEndUser bool, id int, userId uint) (dmo.Dmo, error)
+	UpdateTrueIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, isReconciliationLetterEndUser bool, id int, userId uint, location string) (dmo.Dmo, error)
+	UpdateFalseIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, isReconciliationLetterEndUser bool, id int, userId uint) (dmo.Dmo, error)
 	CreateProduction(input production.InputCreateProduction, userId uint) (production.Production, error)
 	UpdateProduction(input production.InputCreateProduction, productionId int, userId uint) (production.Production, error)
 	DeleteProduction(productionId int, userId uint) (bool, error)
@@ -963,7 +963,7 @@ func (r *repository) UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocum
 			if strings.Contains(value["Location"].(string), "bast") {
 				editData["bast_document_link"] = value["Location"]
 			}
-			if strings.Contains(value["Location"].(string), "berita_acara") {
+			if strings.Contains(value["Location"].(string), "berita_acara.pdf") {
 				if dmoUpdate.IsDocumentCustom {
 					editData["signed_reconciliation_letter_document_link"] = value["Location"]
 				}
@@ -971,6 +971,9 @@ func (r *repository) UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocum
 			}
 			if strings.Contains(value["Location"].(string), "surat_pernyataan") {
 				editData["statement_letter_document_link"] = value["Location"]
+			}
+			if strings.Contains(value["Location"].(string), "berita_acara_pengguna_akhir") {
+				editData["reconciliation_letter_end_user_document_link"] = value["Location"]
 			}
 		}
 	}
@@ -1002,7 +1005,7 @@ func (r *repository) UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocum
 	return dmoUpdate, nil
 }
 
-func (r *repository) UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error) {
+func (r *repository) UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, isReconciliationLetterEndUser bool, id int, userId uint) (dmo.Dmo, error) {
 	var dmoUpdate dmo.Dmo
 
 	tx := r.db.Begin()
@@ -1035,6 +1038,10 @@ func (r *repository) UpdateIsDownloadedDmoDocument(isBast bool, isStatementLette
 		field = "is_reconciliation_letter_downloaded"
 	}
 
+	if isReconciliationLetterEndUser {
+		field = "is_reconciliation_letter_end_user_downloaded"
+	}
+
 	updateErr := tx.Model(&dmoUpdate).Where("id = ?", id).Update(field, true).Error
 
 	if findErr != nil {
@@ -1063,7 +1070,7 @@ func (r *repository) UpdateIsDownloadedDmoDocument(isBast bool, isStatementLette
 	return dmoUpdate, nil
 }
 
-func (r *repository) UpdateTrueIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint, location string) (dmo.Dmo, error) {
+func (r *repository) UpdateTrueIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, isReconciliationLetterEndUser bool, id int, userId uint, location string) (dmo.Dmo, error) {
 	var dmoUpdate dmo.Dmo
 
 	tx := r.db.Begin()
@@ -1103,6 +1110,12 @@ func (r *repository) UpdateTrueIsSignedDmoDocument(isBast bool, isStatementLette
 		updatesDmo["signed_reconciliation_letter_document_link"] = location
 	}
 
+	if isReconciliationLetterEndUser {
+		field = "reconciliation_letter_end_user"
+		updatesDmo["is_reconciliation_letter_end_user_signed"] = true
+		updatesDmo["signed_reconciliation_letter_end_user_document_link"] = location
+	}
+
 	updateErr := tx.Model(&dmoUpdate).Where("id = ?", id).Updates(updatesDmo).Error
 
 	if findErr != nil {
@@ -1131,7 +1144,7 @@ func (r *repository) UpdateTrueIsSignedDmoDocument(isBast bool, isStatementLette
 	return dmoUpdate, nil
 }
 
-func (r *repository) UpdateFalseIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, id int, userId uint) (dmo.Dmo, error) {
+func (r *repository) UpdateFalseIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, isReconciliationLetterEndUser bool, id int, userId uint) (dmo.Dmo, error) {
 	var dmoUpdate dmo.Dmo
 
 	tx := r.db.Begin()
@@ -1169,6 +1182,12 @@ func (r *repository) UpdateFalseIsSignedDmoDocument(isBast bool, isStatementLett
 		field = "signed_reconciliation_letter false"
 		updatesDmo["is_reconciliation_letter_signed"] = false
 		updatesDmo["signed_reconciliation_letter_document_link"] = nil
+	}
+
+	if isReconciliationLetterEndUser {
+		field = "signed_reconciliation_letter_end_user false"
+		updatesDmo["is_reconciliation_letter_end_user_signed"] = false
+		updatesDmo["signed_reconciliation_letter_end_user_document_link"] = nil
 	}
 
 	updateErr := tx.Model(&dmoUpdate).Where("id = ?", id).Updates(updatesDmo).Error
