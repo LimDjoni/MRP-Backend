@@ -24,3 +24,5 @@ go.sum
 logging.log
 
 ajebackend
+
+./Book1.xlsx

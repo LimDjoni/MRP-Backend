@@ -207,3 +207,8 @@ func (s *service) GetReport(year int) (ReportRecapOutput, ReportDetailOutput, er
 
 	return reportRecap, reportDetail, reportErr
 }
+
+func (s *service) DownloadReport(reportDetail ReportDetailOutput, reportRecap ReportRecapOutput) error {
+
+	return nil
+}
