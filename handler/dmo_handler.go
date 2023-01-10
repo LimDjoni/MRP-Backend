@@ -395,7 +395,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		var reqInputCreateUploadDmo transaction.InputRequestCreateUploadDmo
 
 		reqInputCreateUploadDmo.Authorization = header["Authorization"]
-		reqInputCreateUploadDmo.BastNumber = fmt.Sprintf("%s/BAST/%s", splitPeriod[1], helper.CreateIdNumber(int(createDmo.ID)))
+		reqInputCreateUploadDmo.BastNumber = fmt.Sprintf("%s/BAST/AJE/%s", splitPeriod[1], helper.CreateIdNumber(int(createDmo.ID)))
 		reqInputCreateUploadDmo.DataDmo = createDmo
 		reqInputCreateUploadDmo.DataTransactions = dataTransactions
 		reqInputCreateUploadDmo.Trader = list
