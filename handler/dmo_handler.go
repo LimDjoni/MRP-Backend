@@ -1071,7 +1071,9 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 
 	var fileName string
 
-	fileName = *dataDmo.IdNumber
+	idNumber := *dataDmo.IdNumber
+	fileName = "SR/"
+	fileName += idNumber
 
 	file, errFormFile := c.FormFile("document")
 
@@ -1111,22 +1113,22 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 
 	if typeDocument == "bast" {
 		isBast = true
-		fileName += "/signed_bast.pdf"
+		fileName += fmt.Sprintf("/%v_signed_bast.pdf", idNumber)
 	}
 
 	if typeDocument == "statement_letter" {
 		isStatementLetter = true
-		fileName += "/signed_surat_pernyataan.pdf"
+		fileName += fmt.Sprintf("/%v_signed_surat_pernyataan.pdf", idNumber)
 	}
 
 	if typeDocument == "reconciliation_letter" {
 		isReconciliationLetter = true
-		fileName += "/signed_berita_acara.pdf"
+		fileName += fmt.Sprintf("/%v_signed_berita_acara.pdf", idNumber)
 	}
 
 	if typeDocument == "reconciliation_letter_end_user" {
 		isReconciliationLetterEndUser = true
-		fileName += "/signed_berita_acara_pengguna_akhir.pdf"
+		fileName += fmt.Sprintf("/%v_signed_berita_acara_pengguna_akhir.pdf", idNumber)
 	}
 
 	up, uploadErr := awshelper.UploadDocument(file, fileName)
