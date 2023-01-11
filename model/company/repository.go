@@ -39,6 +39,7 @@ func (r *repository) CreateCompany(inputCompany InputCreateUpdateCompany) (Compa
 	createdCompany.Province = inputCompany.Province
 	createdCompany.PhoneNumber = inputCompany.PhoneNumber
 	createdCompany.FaxNumber = inputCompany.FaxNumber
+	createdCompany.IndustryType = inputCompany.IndustryType
 
 	errCreate := r.db.Create(&createdCompany).Error
 
@@ -50,9 +51,6 @@ func (r *repository) CreateCompany(inputCompany InputCreateUpdateCompany) (Compa
 
 func (r *repository) UpdateCompany(inputCompany InputCreateUpdateCompany, id int) (Company, error) {
 	var updatedCompany Company
-
-	inputCompany.CompanyName = inputCompany.CompanyName
-	inputCompany.Province = inputCompany.Province
 
 	errFind := r.db.Where("id = ?", id).First(&updatedCompany).Error
 

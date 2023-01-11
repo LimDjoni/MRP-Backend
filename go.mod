@@ -11,7 +11,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/joho/godotenv v1.4.0
 	github.com/stretchr/testify v1.8.0
-	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa
+	golang.org/x/crypto v0.0.0-20220817201139-bc19a97f63c8
 	gorm.io/datatypes v1.0.7
 	gorm.io/driver/postgres v1.3.8
 	gorm.io/gorm v1.23.8
@@ -36,10 +36,16 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
+	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/richardlehane/mscfb v1.0.4 // indirect
+	github.com/richardlehane/msoleps v1.0.3 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.39.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
+	github.com/xuri/efp v0.0.0-20220603152613-6918739fd470 // indirect
+	github.com/xuri/excelize/v2 v2.6.1 // indirect
+	github.com/xuri/nfp v0.0.0-20220409054826-5e722a1d9e22 // indirect
 	golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b // indirect
 	golang.org/x/sys v0.0.0-20220823224334-20c2bfdbfe24 // indirect
 	golang.org/x/text v0.3.7 // indirect
