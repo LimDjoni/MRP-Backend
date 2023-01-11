@@ -395,7 +395,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		var reqInputCreateUploadDmo transaction.InputRequestCreateUploadDmo
 
 		reqInputCreateUploadDmo.Authorization = header["Authorization"]
-		reqInputCreateUploadDmo.BastNumber = fmt.Sprintf("%s/BAST/%s", splitPeriod[1], helper.CreateIdNumber(int(createDmo.ID)))
+		reqInputCreateUploadDmo.BastNumber = fmt.Sprintf("%s/BAST/AJE/%s", splitPeriod[1], helper.CreateIdNumber(int(createDmo.ID)))
 		reqInputCreateUploadDmo.DataDmo = createDmo
 		reqInputCreateUploadDmo.DataTransactions = dataTransactions
 		reqInputCreateUploadDmo.Trader = list
@@ -941,10 +941,11 @@ func (h *dmoHandler) UpdateIsDownloadedDocumentDmo(c *fiber.Ctx) error {
 	var isBast bool
 	var isStatementLetter bool
 	var isReconciliationLetter bool
+	var isReconciliationLetterEndUser bool
 
 	typeDocument := c.Params("type")
 
-	if typeDocument != "bast" && typeDocument != "statement_letter" && typeDocument != "reconciliation_letter" {
+	if typeDocument != "bast" && typeDocument != "statement_letter" && typeDocument != "reconciliation_letter" && typeDocument != "reconciliation_letter_end_user" {
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
 		inputMap["type"] = typeDocument
@@ -981,7 +982,11 @@ func (h *dmoHandler) UpdateIsDownloadedDocumentDmo(c *fiber.Ctx) error {
 		isReconciliationLetter = true
 	}
 
-	updateDownloadedDocumentDmo, updateDownloadedDocumentDmoErr := h.historyService.UpdateIsDownloadedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, idInt, uint(claims["id"].(float64)))
+	if typeDocument == "reconciliation_letter_end_user" {
+		isReconciliationLetterEndUser = true
+	}
+
+	updateDownloadedDocumentDmo, updateDownloadedDocumentDmoErr := h.historyService.UpdateIsDownloadedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, isReconciliationLetterEndUser, idInt, uint(claims["id"].(float64)))
 
 	if updateDownloadedDocumentDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -1048,6 +1053,7 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 	var isBast bool
 	var isStatementLetter bool
 	var isReconciliationLetter bool
+	var isReconciliationLetterEndUser bool
 
 	dataDmo, dataDmoErr := h.dmoService.GetDataDmo(idInt)
 
@@ -1065,7 +1071,9 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 
 	var fileName string
 
-	fileName = *dataDmo.IdNumber
+	idNumber := *dataDmo.IdNumber
+	fileName = "SR/"
+	fileName += idNumber
 
 	file, errFormFile := c.FormFile("document")
 
@@ -1078,7 +1086,7 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 
 	typeDocument := c.Params("type")
 
-	if typeDocument != "bast" && typeDocument != "statement_letter" && typeDocument != "reconciliation_letter" {
+	if typeDocument != "bast" && typeDocument != "statement_letter" && typeDocument != "reconciliation_letter" && typeDocument != "reconciliation_letter_end_user" {
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
 		inputMap["type"] = typeDocument
@@ -1105,17 +1113,22 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 
 	if typeDocument == "bast" {
 		isBast = true
-		fileName += "/signed_bast.pdf"
+		fileName += fmt.Sprintf("/%v_signed_bast.pdf", idNumber)
 	}
 
 	if typeDocument == "statement_letter" {
 		isStatementLetter = true
-		fileName += "/signed_surat_pernyataan.pdf"
+		fileName += fmt.Sprintf("/%v_signed_surat_pernyataan.pdf", idNumber)
 	}
 
 	if typeDocument == "reconciliation_letter" {
 		isReconciliationLetter = true
-		fileName += "/signed_berita_acara.pdf"
+		fileName += fmt.Sprintf("/%v_signed_berita_acara.pdf", idNumber)
+	}
+
+	if typeDocument == "reconciliation_letter_end_user" {
+		isReconciliationLetterEndUser = true
+		fileName += fmt.Sprintf("/%v_signed_berita_acara_pengguna_akhir.pdf", idNumber)
 	}
 
 	up, uploadErr := awshelper.UploadDocument(file, fileName)
@@ -1146,7 +1159,7 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 		})
 	}
 
-	updateSignedDocumentDmo, updateSignedDocumentDmoErr := h.historyService.UpdateTrueIsSignedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, idInt, uint(claims["id"].(float64)), up.Location)
+	updateSignedDocumentDmo, updateSignedDocumentDmoErr := h.historyService.UpdateTrueIsSignedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, isReconciliationLetterEndUser, idInt, uint(claims["id"].(float64)), up.Location)
 
 	if updateSignedDocumentDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -1248,6 +1261,7 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 	var isBast bool
 	var isStatementLetter bool
 	var isReconciliationLetter bool
+	var isReconciliationLetterEndUser bool
 
 	dataDmo, dataDmoErr := h.dmoService.GetDataDmo(idInt)
 
@@ -1269,7 +1283,7 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 
 	typeDocument := c.Params("type")
 
-	if typeDocument != "bast" && typeDocument != "statement_letter" && typeDocument != "reconciliation_letter" {
+	if typeDocument != "bast" && typeDocument != "statement_letter" && typeDocument != "reconciliation_letter" && typeDocument != "reconciliation_letter_end_user" {
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
 		inputMap["type"] = typeDocument
@@ -1309,6 +1323,11 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 		fileName += "/signed_berita_acara.pdf"
 	}
 
+	if typeDocument == "reconciliation_letter_end_user" {
+		isReconciliationLetterEndUser = true
+		fileName += "/signed_berita_acara_pengguna_akhir.pdf"
+	}
+
 	deleteUpload, deleteUploadErr := awshelper.DeleteDocument(fileName)
 
 	if deleteUploadErr != nil {
@@ -1336,7 +1355,7 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 		})
 	}
 
-	updateSignedDocumentDmo, updateSignedDocumentDmoErr := h.historyService.UpdateFalseIsSignedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, idInt, uint(claims["id"].(float64)))
+	updateSignedDocumentDmo, updateSignedDocumentDmoErr := h.historyService.UpdateFalseIsSignedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, isReconciliationLetterEndUser, idInt, uint(claims["id"].(float64)))
 
 	if updateSignedDocumentDmoErr != nil {
 		inputMap := make(map[string]interface{})

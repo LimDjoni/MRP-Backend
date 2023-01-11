@@ -13,6 +13,15 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+func helperString(listString []string, dataString string) bool {
+	for _, v := range listString {
+		if v == dataString {
+			return true
+		}
+	}
+	return false
+}
+
 type Repository interface {
 	ListDataDN(page int, sortFilter SortAndFilter) (Pagination, error)
 	DetailTransactionDN(id int) (Transaction, error)
@@ -346,6 +355,8 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 	var caloriesMaximum float64
 	var listTransactions []Transaction
 	var listProduction []production.Production
+	var companyElectricity []string
+	var companyNonElectricity []string
 
 	startFilter := fmt.Sprintf("%v-01-01", year)
 	endFilter := fmt.Sprintf("%v-12-31", year)
@@ -421,6 +432,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.Electricity.January[v.DmoBuyerName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
+						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						}
 						reportDetail.Electricity.January[v.DmoBuyerName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
@@ -429,6 +443,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.NonElectricity.January[v.DmoBuyerName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
+						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						}
 						reportDetail.NonElectricity.January[v.DmoBuyerName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					}
@@ -439,6 +456,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.Electricity.February[v.DmoBuyerName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
+						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						}
 						reportDetail.Electricity.February[v.DmoBuyerName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
@@ -447,6 +467,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.NonElectricity.February[v.DmoBuyerName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
+						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						}
 						reportDetail.NonElectricity.February[v.DmoBuyerName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					}
@@ -457,6 +480,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.Electricity.March[v.DmoBuyerName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
+						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						}
 						reportDetail.Electricity.March[v.DmoBuyerName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
@@ -465,6 +491,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.NonElectricity.March[v.DmoBuyerName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
+						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						}
 						reportDetail.NonElectricity.March[v.DmoBuyerName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					}
@@ -475,6 +504,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.Electricity.April[v.DmoBuyerName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
+						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						}
 						reportDetail.Electricity.April[v.DmoBuyerName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
@@ -483,6 +515,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.NonElectricity.April[v.DmoBuyerName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
+						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						}
 						reportDetail.NonElectricity.April[v.DmoBuyerName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					}
@@ -493,6 +528,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.Electricity.May[v.DmoBuyerName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
+						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						}
 						reportDetail.Electricity.May[v.DmoBuyerName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
@@ -501,6 +539,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.NonElectricity.May[v.DmoBuyerName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
+						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						}
 						reportDetail.NonElectricity.May[v.DmoBuyerName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					}
@@ -511,6 +552,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.Electricity.June[v.DmoBuyerName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
+						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						}
 						reportDetail.Electricity.June[v.DmoBuyerName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
@@ -519,6 +563,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.NonElectricity.June[v.DmoBuyerName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
+						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						}
 						reportDetail.NonElectricity.June[v.DmoBuyerName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					}
@@ -529,6 +576,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.Electricity.July[v.DmoBuyerName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
+						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						}
 						reportDetail.Electricity.July[v.DmoBuyerName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
@@ -537,6 +587,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.NonElectricity.July[v.DmoBuyerName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
+						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						}
 						reportDetail.NonElectricity.July[v.DmoBuyerName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					}
@@ -547,6 +600,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.Electricity.August[v.DmoBuyerName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
+						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						}
 						reportDetail.Electricity.August[v.DmoBuyerName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
@@ -555,6 +611,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.NonElectricity.August[v.DmoBuyerName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
+						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						}
 						reportDetail.NonElectricity.August[v.DmoBuyerName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					}
@@ -565,6 +624,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.Electricity.September[v.DmoBuyerName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
+						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						}
 						reportDetail.Electricity.September[v.DmoBuyerName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
@@ -573,6 +635,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.NonElectricity.September[v.DmoBuyerName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
+						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						}
 						reportDetail.NonElectricity.September[v.DmoBuyerName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					}
@@ -583,6 +648,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.Electricity.October[v.DmoBuyerName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
+						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						}
 						reportDetail.Electricity.October[v.DmoBuyerName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
@@ -591,6 +659,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.NonElectricity.October[v.DmoBuyerName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
+						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						}
 						reportDetail.NonElectricity.October[v.DmoBuyerName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					}
@@ -601,6 +672,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.Electricity.November[v.DmoBuyerName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
+						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						}
 						reportDetail.Electricity.November[v.DmoBuyerName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
@@ -611,6 +685,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 					} else {
 						reportDetail.NonElectricity.November[v.DmoBuyerName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
+						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						}
 					}
 				}
 			case 12:
@@ -619,6 +696,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.Electricity.December[v.DmoBuyerName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
+						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						}
 						reportDetail.Electricity.December[v.DmoBuyerName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
@@ -627,6 +707,9 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 						reportDetail.NonElectricity.December[v.DmoBuyerName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
+						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						}
 						reportDetail.NonElectricity.December[v.DmoBuyerName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					}
@@ -733,6 +816,8 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 	reportDetail.NonElectricity.Total = parseTempNonElectricityTotal
 	reportDetail.NotClaimable.Total = parseTempNotClaimableTotal
 	reportDetail.Production.Total = parseTempProductionTotal
+	reportDetail.ElectricityCompany = companyElectricity
+	reportDetail.NonElectricityCompany = companyNonElectricity
 
 	stringTempRecapElectricityTotal := fmt.Sprintf("%.3f", reportRecap.ElectricityTotal)
 	parseTempRecapElectricityTotal, _ := strconv.ParseFloat(stringTempRecapElectricityTotal, 64)
