@@ -8,6 +8,7 @@ import (
 	"ajebackend/model/production"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
+	"ajebackend/model/vessel"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -547,6 +548,19 @@ func (r *repository) CreateTransactionLN(inputTransactionLN transaction.DataTran
 		return createdTransactionLn, updateTransactionsErr
 	}
 
+	if inputTransactionLN.VesselName != "" {
+		var createVesselMaster vessel.Vessel
+
+		createVesselMaster.Name = inputTransactionLN.VesselName
+
+		errCreateVesselMaster := tx.FirstOrCreate(&createVesselMaster, createVesselMaster).Error
+
+		if errCreateVesselMaster != nil {
+			tx.Rollback()
+			return createdTransactionLn, errCreateVesselMaster
+		}
+	}
+
 	var history History
 
 	history.TransactionId = &createdTransactionLn.ID
@@ -702,6 +716,19 @@ func (r *repository) UpdateTransactionLN(id int, inputTransactionLN transaction.
 	if errorBeforeDataJsonMarshal != nil {
 		tx.Rollback()
 		return updatedTransactionLn, errorAfterDataJsonMarshal
+	}
+
+	if inputTransactionLN.VesselName != "" {
+		var createVesselMaster vessel.Vessel
+
+		createVesselMaster.Name = inputTransactionLN.VesselName
+
+		errCreateVesselMaster := tx.FirstOrCreate(&createVesselMaster, createVesselMaster).Error
+
+		if errCreateVesselMaster != nil {
+			tx.Rollback()
+			return updatedTransactionLn, errCreateVesselMaster
+		}
 	}
 
 	var history History
