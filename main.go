@@ -5,9 +5,12 @@ import (
 	"ajebackend/model/company"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
+	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/history"
+	"ajebackend/model/insw"
 	"ajebackend/model/logs"
 	"ajebackend/model/minerba"
+	"ajebackend/model/minerbaln"
 	"ajebackend/model/notification"
 	"ajebackend/model/notificationuser"
 	"ajebackend/model/production"
@@ -15,6 +18,7 @@ import (
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
+	"ajebackend/model/vessel"
 	routing2 "ajebackend/routing"
 	"ajebackend/seeding"
 	"ajebackend/validatorfunc"
@@ -69,6 +73,10 @@ func main() {
 			&notification.Notification{},
 			&notificationuser.NotificationUser{},
 			&production.Production{},
+			&vessel.Vessel{},
+			&groupingvesselln.GroupingVesselLn{},
+			&minerbaln.MinerbaLn{},
+			&insw.Insw{},
 		)
 
 		seeding.UpdateTransactionsRoyalty(db)

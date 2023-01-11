@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -23,8 +24,8 @@ func helperString(listString []string, dataString string) bool {
 }
 
 type Repository interface {
-	ListDataDN(page int, sortFilter SortAndFilter) (Pagination, error)
-	DetailTransactionDN(id int) (Transaction, error)
+	ListData(page int, sortFilter SortAndFilter, transactionType string) (Pagination, error)
+	DetailTransaction(id int, transactionType string) (Transaction, error)
 	ListDataDNWithoutMinerba() ([]Transaction, error)
 	CheckDataDnAndMinerba(listData []int) (bool, error)
 	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) ([]Transaction, error)
@@ -46,7 +47,7 @@ func NewRepository(db *gorm.DB) *repository {
 
 // Transaction
 
-func (r *repository) ListDataDN(page int, sortFilter SortAndFilter) (Pagination, error) {
+func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionType string) (Pagination, error) {
 	var transactions []Transaction
 	var pagination Pagination
 	pagination.Limit = 7
@@ -57,7 +58,7 @@ func (r *repository) ListDataDN(page int, sortFilter SortAndFilter) (Pagination,
 		sortString = defaultSort
 	}
 
-	queryFilter := fmt.Sprintf("transaction_type = '%s' ", "DN")
+	queryFilter := fmt.Sprintf("transaction_type = '%s' ", strings.ToUpper(transactionType))
 
 	if sortFilter.TugboatName != "" {
 		queryFilter = queryFilter + " AND tugboat_name = '" + sortFilter.TugboatName + "'"
@@ -100,10 +101,10 @@ func (r *repository) ListDataDN(page int, sortFilter SortAndFilter) (Pagination,
 		queryFilter = queryFilter + " AND is_finance_check = TRUE AND is_coa_finish = TRUE AND is_royalty_final_finish = TRUE"
 	}
 
-	errFind := r.db.Preload(clause.Associations).Where(queryFilter).Order(sortString).Scopes(paginateDataDN(transactions, &pagination, r.db, queryFilter)).Find(&transactions).Error
+	errFind := r.db.Preload(clause.Associations).Where(queryFilter).Order(sortString).Scopes(paginateData(transactions, &pagination, r.db, queryFilter)).Find(&transactions).Error
 
 	if errFind != nil {
-		errWithoutOrder := r.db.Preload(clause.Associations).Where(queryFilter).Order(defaultSort).Scopes(paginateDataDN(transactions, &pagination, r.db, queryFilter)).Find(&transactions).Error
+		errWithoutOrder := r.db.Preload(clause.Associations).Where(queryFilter).Order(defaultSort).Scopes(paginateData(transactions, &pagination, r.db, queryFilter)).Find(&transactions).Error
 
 		if errWithoutOrder != nil {
 			pagination.Data = transactions
@@ -116,10 +117,10 @@ func (r *repository) ListDataDN(page int, sortFilter SortAndFilter) (Pagination,
 	return pagination, nil
 }
 
-func (r *repository) DetailTransactionDN(id int) (Transaction, error) {
+func (r *repository) DetailTransaction(id int, transactionType string) (Transaction, error) {
 	var transaction Transaction
 
-	errFind := r.db.Where("id = ?", id).First(&transaction).Error
+	errFind := r.db.Preload(clause.Associations).Where("id = ? AND transaction_type = ?", id, transactionType).First(&transaction).Error
 
 	return transaction, errFind
 }
@@ -361,7 +362,7 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 	startFilter := fmt.Sprintf("%v-01-01", year)
 	endFilter := fmt.Sprintf("%v-12-31", year)
 
-	queryFilter := "minerba_id IS NOT NULL AND shipping_date >= '" + startFilter + "' AND shipping_date <= '" + endFilter + "'"
+	queryFilter := "transaction_type = DN" + "minerba_id IS NOT NULL AND shipping_date >= '" + startFilter + "' AND shipping_date <= '" + endFilter + "'"
 	queryFilterProduction := "production_date >= '" + startFilter + "' AND production_date <= '" + endFilter + "'"
 	errFind := r.db.Where(queryFilter).Order("id ASC").Find(&listTransactions).Error
 	errFindProduction := r.db.Where(queryFilterProduction).Order("id ASC").Find(&listProduction).Error

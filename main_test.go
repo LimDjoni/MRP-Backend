@@ -310,7 +310,7 @@ func TestListDataDN(t *testing.T) {
 	}
 }
 
-func TestDetailTransactionDN(t *testing.T) {
+func TestDetailTransaction(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
@@ -1039,7 +1039,7 @@ func TestUpdateTransactionDN(t *testing.T) {
 	}
 }
 
-func TestUpdateDocumentTransactionDN(t *testing.T) {
+func TestUpdateDocumentTransaction(t *testing.T) {
 	openDocumentPdf, errOpenDocumentPdf := os.Open("upload_test/output.pdf")
 	openDocumentPng, errOpenDocumentPng := os.Open("upload_test/output.png")
 
@@ -1228,7 +1228,7 @@ func TestUpdateDocumentTransactionDN(t *testing.T) {
 	}
 }
 
-func TestDeleteTransactionDN(t *testing.T) {
+func TestDeleteTransaction(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int

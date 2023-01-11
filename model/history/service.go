@@ -9,9 +9,11 @@ import (
 
 type Service interface {
 	CreateTransactionDN(inputTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
-	DeleteTransactionDN(id int, userId uint) (bool, error)
+	DeleteTransaction(id int, userId uint, transactionType string) (bool, error)
 	UpdateTransactionDN(idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
-	UploadDocumentTransactionDN(idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error)
+	UploadDocumentTransaction(idTransaction uint, urlS3 string, userId uint, documentType string, transactionType string) (transaction.Transaction, error)
+	CreateTransactionLN(inputTransactionLN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
+	UpdateTransactionLN(id int, inputTransactionLN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
 	CreateMinerba(period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error)
 	UpdateMinerba(id int, updateTransaction []int, userId uint) (minerba.Minerba, error)
 	DeleteMinerba(idMinerba int, userId uint) (bool, error)
@@ -41,8 +43,8 @@ func (s *service) CreateTransactionDN(inputTransactionDN transaction.DataTransac
 	return transaction, transactionErr
 }
 
-func (s *service) DeleteTransactionDN(id int, userId uint) (bool, error) {
-	isDeletedTransaction, isDeletedTransactionErr := s.repository.DeleteTransactionDN(id, userId)
+func (s *service) DeleteTransaction(id int, userId uint, transactionType string) (bool, error) {
+	isDeletedTransaction, isDeletedTransactionErr := s.repository.DeleteTransaction(id, userId, transactionType)
 
 	return isDeletedTransaction, isDeletedTransactionErr
 }
@@ -53,10 +55,22 @@ func (s *service) UpdateTransactionDN(idTransaction int, inputEditTransactionDN 
 	return updateTransaction, updateTransactionErr
 }
 
-func (s *service) UploadDocumentTransactionDN(idTransaction uint, urlS3 string, userId uint, documentType string) (transaction.Transaction, error) {
-	uploadedDocument, uploadedDocumentErr := s.repository.UploadDocumentTransactionDN(idTransaction, urlS3, userId, documentType)
+func (s *service) UploadDocumentTransaction(idTransaction uint, urlS3 string, userId uint, documentType string, transactionType string) (transaction.Transaction, error) {
+	uploadedDocument, uploadedDocumentErr := s.repository.UploadDocumentTransaction(idTransaction, urlS3, userId, documentType, transactionType)
 
 	return uploadedDocument, uploadedDocumentErr
+}
+
+func (s *service) CreateTransactionLN(inputTransactionLN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error) {
+	transactionLn, transactionLnErr := s.repository.CreateTransactionLN(inputTransactionLN, userId)
+
+	return transactionLn, transactionLnErr
+}
+
+func (s *service) UpdateTransactionLN(id int, inputTransactionLN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error) {
+	transactionLn, transactionLnErr := s.repository.UpdateTransactionLN(id, inputTransactionLN, userId)
+
+	return transactionLn, transactionLnErr
 }
 
 func (s *service) CreateMinerba(period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error) {
