@@ -93,6 +93,6 @@ type Transaction struct {
 	IsRoyaltyFinalFinish           bool                               `json:"is_royalty_final_finish"`
 	MinerbaLnId                    *uint                              `json:"minerba_ln_id"`
 	MinerbaLn                      *minerbaln.MinerbaLn               `json:"minerba_ln" gorm:"constraint:OnDelete:SET NULL;"`
-	GroupingVesselLnId             *uint                              `json:"grouping_vessel_id"`
-	GroupingVesselLn               *groupingvesselln.GroupingVesselLn `json:"grouping_vessel" gorm:"constraint:OnDelete:SET NULL;"`
+	GroupingVesselLnId             *uint                              `json:"grouping_vessel_ln_id"`
+	GroupingVesselLn               *groupingvesselln.GroupingVesselLn `json:"grouping_vessel_ln" gorm:"constraint:OnDelete:SET NULL;"`
 }

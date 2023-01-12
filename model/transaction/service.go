@@ -26,6 +26,7 @@ type Service interface {
 	RequestCreateDmo(reqInput InputRequestCreateUploadDmo) (map[string]interface{}, error)
 	RequestCreateCustomDmo(dataDmo dmo.Dmo, traderEndUser trader.Trader, reconciliationLetter *multipart.FileHeader, authorization string) (map[string]interface{}, error)
 	GetReport(year int) (ReportRecapOutput, ReportDetailOutput, error)
+	GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, error)
 }
 
 type service struct {
@@ -206,4 +207,10 @@ func (s *service) GetReport(year int) (ReportRecapOutput, ReportDetailOutput, er
 	reportRecap, reportDetail, reportErr := s.repository.GetReport(year)
 
 	return reportRecap, reportDetail, reportErr
+}
+
+func (s *service) GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, error) {
+	detailGroupingVesselLn, detailGroupingVesselLnErr := s.repository.GetDetailGroupingVesselLn(id)
+
+	return detailGroupingVesselLn, detailGroupingVesselLnErr
 }

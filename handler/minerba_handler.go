@@ -166,7 +166,7 @@ func (h *minerbaHandler) CreateMinerba(c *fiber.Ctx) error {
 
 	splitPeriod := strings.Split(inputCreateMinerba.Period, " ")
 
-	baseIdNumber := fmt.Sprintf("LM-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
+	baseIdNumber := fmt.Sprintf("LMD-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
 	createMinerba, createMinerbaErr := h.historyService.CreateMinerba(inputCreateMinerba.Period, baseIdNumber, inputCreateMinerba.ListDataDn, uint(claims["id"].(float64)))
 
 	if createMinerbaErr != nil {
@@ -433,7 +433,7 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 	}
 
 	if dataMinerba.RecapDmoDocumentLink != nil || dataMinerba.DetailDmoDocumentLink != nil || dataMinerba.SP3MEDNDocumentLink != nil || dataMinerba.SP3MELNDocumentLink != nil || dataMinerba.INSWExportDocumentLink != nil {
-		fileName := fmt.Sprintf("LM/%s/", *dataMinerba.IdNumber)
+		fileName := fmt.Sprintf("LMD/%s/", *dataMinerba.IdNumber)
 		_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
 
 		if deleteAwsErr != nil {

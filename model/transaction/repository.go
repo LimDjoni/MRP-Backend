@@ -2,6 +2,7 @@ package transaction
 
 import (
 	"ajebackend/model/dmo"
+	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/minerba"
 	"ajebackend/model/production"
 	"errors"
@@ -35,6 +36,7 @@ type Repository interface {
 	GetDetailDmo(id int) (DetailDmo, error)
 	CheckDataUnique(inputTrans DataTransactionInput) (bool, bool, bool, bool)
 	GetReport(year int) (ReportRecapOutput, ReportDetailOutput, error)
+	GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, error)
 }
 
 type repository struct {
@@ -841,4 +843,31 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 	reportRecap.FulfillmentOfProductionRealization = fmt.Sprintf("%.2f%%", reportRecap.Total/productionReality*100)
 	reportRecap.RateCalories = fmt.Sprintf("%v - %v GAR", caloriesMinimum, caloriesMaximum)
 	return reportRecap, reportDetail, nil
+}
+
+// Grouping Vessel Ln
+func (r *repository) GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, error) {
+
+	var detailGroupingVesselLn DetailGroupingVesselLn
+
+	var groupingVesselLn groupingvesselln.GroupingVesselLn
+	var transactions []Transaction
+
+	findGroupingVesselLnErr := r.db.Where("id = ?", id).First(&groupingVesselLn).Error
+
+	if findGroupingVesselLnErr != nil {
+		return detailGroupingVesselLn, findGroupingVesselLnErr
+	}
+
+	detailGroupingVesselLn.Detail = groupingVesselLn
+
+	transactionFindErr := r.db.Order("id desc").Where("grouping_vessel_ln_id = ?", id).Find(&transactions).Error
+
+	if transactionFindErr != nil {
+		return detailGroupingVesselLn, transactionFindErr
+	}
+
+	detailGroupingVesselLn.ListTransactions = transactions
+
+	return detailGroupingVesselLn, nil
 }

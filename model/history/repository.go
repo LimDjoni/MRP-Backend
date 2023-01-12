@@ -4,6 +4,7 @@ import (
 	"ajebackend/helper"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
+	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/minerba"
 	"ajebackend/model/production"
 	"ajebackend/model/traderdmo"
@@ -40,6 +41,10 @@ type Repository interface {
 	CreateProduction(input production.InputCreateProduction, userId uint) (production.Production, error)
 	UpdateProduction(input production.InputCreateProduction, productionId int, userId uint) (production.Production, error)
 	DeleteProduction(productionId int, userId uint) (bool, error)
+	CreateGroupingVesselLN(inputGrouping groupingvesselln.InputGroupingVesselLn, userId uint) (groupingvesselln.GroupingVesselLn, error)
+	EditGroupingVesselLn(id int, editGrouping groupingvesselln.InputEditGroupingVesselLn, userId uint) (groupingvesselln.GroupingVesselLn, error)
+	UploadDocumentGroupingVesselLn(id uint, urlS3 string, userId uint, documentType string) (groupingvesselln.GroupingVesselLn, error)
+	DeleteGroupingVesselLn(id int, userId uint) (bool, error)
 }
 
 type repository struct {
@@ -1637,6 +1642,313 @@ func (r *repository) DeleteProduction(productionId int, userId uint) (bool, erro
 	var history History
 
 	history.Status = fmt.Sprintf("Deleted Production with id %v", deletedProduction.ID)
+	history.UserId = userId
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return false, createHistoryErr
+	}
+
+	tx.Commit()
+	return true, nil
+}
+
+// Grouping Vessel LN
+func (r *repository) CreateGroupingVesselLN(inputGrouping groupingvesselln.InputGroupingVesselLn, userId uint) (groupingvesselln.GroupingVesselLn, error) {
+	var createdGroupingVesselLn groupingvesselln.GroupingVesselLn
+	var transactions []transaction.Transaction
+	tx := r.db.Begin()
+
+	findTransactionsErr := tx.Where("id IN ? AND transaction_type = ? AND grouping_vessel_ln_id is NULL", inputGrouping.ListTransactions, "LN").Find(&transactions).Error
+
+	if findTransactionsErr != nil {
+		tx.Rollback()
+		return createdGroupingVesselLn, findTransactionsErr
+	}
+
+	if len(transactions) != len(inputGrouping.ListTransactions) {
+		tx.Rollback()
+		return createdGroupingVesselLn, errors.New("please check some of transactions not found or already created in another group")
+	}
+
+	createdGroupingVesselLn.VesselName = inputGrouping.VesselName
+	createdGroupingVesselLn.Quantity = inputGrouping.Quantity
+	createdGroupingVesselLn.Adjustment = inputGrouping.Adjustment
+	createdGroupingVesselLn.GrandTotalQuantity = inputGrouping.GrandTotalQuantity
+	createdGroupingVesselLn.DescriptionOfDocumentType = inputGrouping.DescriptionOfDocumentType
+	createdGroupingVesselLn.CodeOfDocumentType = inputGrouping.CodeOfDocumentType
+	createdGroupingVesselLn.AjuNumber = strings.ToUpper(inputGrouping.AjuNumber)
+	createdGroupingVesselLn.PebRegisterNumber = strings.ToUpper(inputGrouping.PebRegisterNumber)
+	createdGroupingVesselLn.PebRegisterDate = inputGrouping.PebRegisterDate
+	createdGroupingVesselLn.DescriptionOfPabeanOffice = inputGrouping.DescriptionOfPabeanOffice
+	createdGroupingVesselLn.CodeOfPabeanOffice = inputGrouping.CodeOfPabeanOffice
+	createdGroupingVesselLn.SeriesPebGoods = inputGrouping.SeriesPebGoods
+	createdGroupingVesselLn.DescriptionOfGoods = inputGrouping.DescriptionOfGoods
+	createdGroupingVesselLn.TarifPosHs = strings.ToUpper(inputGrouping.TarifPosHs)
+	createdGroupingVesselLn.PebQuantity = inputGrouping.PebQuantity
+	createdGroupingVesselLn.PebUnit = inputGrouping.PebUnit
+	createdGroupingVesselLn.ExportValue = inputGrouping.ExportValue
+	createdGroupingVesselLn.Currency = inputGrouping.Currency
+	createdGroupingVesselLn.LoadingPort = inputGrouping.LoadingPort
+	createdGroupingVesselLn.SkaCooNumber = strings.ToUpper(inputGrouping.SkaCooNumber)
+	createdGroupingVesselLn.SkaCooDate = inputGrouping.SkaCooDate
+	createdGroupingVesselLn.DestinationCountry = inputGrouping.DestinationCountry
+	createdGroupingVesselLn.CodeOfDestinationCountry = inputGrouping.CodeOfDestinationCountry
+	createdGroupingVesselLn.LsExportNumber = strings.ToUpper(inputGrouping.LsExportNumber)
+	createdGroupingVesselLn.LsExportDate = inputGrouping.LsExportDate
+	createdGroupingVesselLn.InsuranceCompanyName = inputGrouping.InsuranceCompanyName
+	createdGroupingVesselLn.PolisNumber = strings.ToUpper(inputGrouping.PolisNumber)
+	createdGroupingVesselLn.NavyCompanyName = inputGrouping.NavyCompanyName
+	createdGroupingVesselLn.NavyShipName = inputGrouping.NavyShipName
+	createdGroupingVesselLn.NavyImoNumber = strings.ToUpper(inputGrouping.NavyImoNumber)
+	createdGroupingVesselLn.Deadweight = inputGrouping.Deadweight
+
+	errCreatedGroupingVesselLn := tx.Create(&createdGroupingVesselLn).Error
+
+	if errCreatedGroupingVesselLn != nil {
+		tx.Rollback()
+		return createdGroupingVesselLn, errCreatedGroupingVesselLn
+	}
+
+	idNumber := createIdNumber("GML", createdGroupingVesselLn.ID)
+
+	updatedGroupingVesselLnErr := tx.Model(&createdGroupingVesselLn).Update("id_number", idNumber).Error
+
+	if updatedGroupingVesselLnErr != nil {
+		tx.Rollback()
+		return createdGroupingVesselLn, updatedGroupingVesselLnErr
+	}
+
+	updateTransactions := make(map[string]interface{})
+
+	updateTransactions["vessel_name"] = inputGrouping.VesselName
+	updateTransactions["grouping_vessel_ln_id"] = createdGroupingVesselLn.ID
+
+	errUpdateTransactions := tx.Table("transactions").Where("id IN ?", inputGrouping.ListTransactions).Updates(updateTransactions).Error
+
+	if errUpdateTransactions != nil {
+		tx.Rollback()
+		return createdGroupingVesselLn, errUpdateTransactions
+	}
+
+	var history History
+
+	history.GroupingVesselLnId = &createdGroupingVesselLn.ID
+	history.Status = "Created Grouping Vessel LN"
+	history.UserId = userId
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return createdGroupingVesselLn, createHistoryErr
+	}
+
+	tx.Commit()
+
+	return createdGroupingVesselLn, nil
+}
+
+func (r *repository) EditGroupingVesselLn(id int, editGrouping groupingvesselln.InputEditGroupingVesselLn, userId uint) (groupingvesselln.GroupingVesselLn, error) {
+	var updatedGroupingVesselLn groupingvesselln.GroupingVesselLn
+	tx := r.db.Begin()
+
+	errFind := r.db.Where("id = ?", id).First(&updatedGroupingVesselLn).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return updatedGroupingVesselLn, errFind
+	}
+
+	if updatedGroupingVesselLn.VesselName != editGrouping.VesselName {
+		var transactions []transaction.Transaction
+		var listIdTransaction []uint
+		errFindTransaction := tx.Where("grouping_vessel_ln_id = ?", id).Find(&transactions).Error
+
+		if errFindTransaction != nil {
+			return updatedGroupingVesselLn, errFindTransaction
+		}
+
+		for _, trans := range transactions {
+			listIdTransaction = append(listIdTransaction, trans.ID)
+		}
+
+		errUpdateTransaction := tx.Table("transactions").Where("id IN ?", listIdTransaction).Update("vessel_name", editGrouping.VesselName).Error
+
+		if errUpdateTransaction != nil {
+			tx.Rollback()
+			return updatedGroupingVesselLn, errUpdateTransaction
+		}
+	}
+
+	beforeData, errorBeforeDataJsonMarshal := json.Marshal(updatedGroupingVesselLn)
+
+	if errorBeforeDataJsonMarshal != nil {
+		tx.Rollback()
+		return updatedGroupingVesselLn, errorBeforeDataJsonMarshal
+	}
+
+	editGrouping.AjuNumber = strings.ToUpper(editGrouping.AjuNumber)
+	editGrouping.PebRegisterNumber = strings.ToUpper(editGrouping.PebRegisterNumber)
+	editGrouping.SkaCooNumber = strings.ToUpper(editGrouping.SkaCooNumber)
+	editGrouping.LsExportNumber = strings.ToUpper(editGrouping.LsExportNumber)
+	editGrouping.PolisNumber = strings.ToUpper(editGrouping.PolisNumber)
+	editGrouping.NavyImoNumber = strings.ToUpper(editGrouping.NavyImoNumber)
+
+	editGroupingVesselLn, errorMarshal := json.Marshal(editGrouping)
+
+	if errorMarshal != nil {
+		tx.Rollback()
+		return updatedGroupingVesselLn, errorMarshal
+	}
+
+	var editGroupingVesselLnInput map[string]interface{}
+
+	errorUnmarshalGroupingVesselLn := json.Unmarshal(editGroupingVesselLn, &editGroupingVesselLnInput)
+
+	if errorUnmarshalGroupingVesselLn != nil {
+		tx.Rollback()
+		return updatedGroupingVesselLn, errorUnmarshalGroupingVesselLn
+	}
+
+	updateGroupingVesselErr := tx.Model(&updatedGroupingVesselLn).Updates(editGroupingVesselLnInput).Error
+
+	if updateGroupingVesselErr != nil {
+		tx.Rollback()
+		return updatedGroupingVesselLn, updateGroupingVesselErr
+	}
+
+	afterData, errorAfterDataJsonMarshal := json.Marshal(updatedGroupingVesselLn)
+
+	if errorBeforeDataJsonMarshal != nil {
+		tx.Rollback()
+		return updatedGroupingVesselLn, errorAfterDataJsonMarshal
+	}
+
+	var history History
+
+	history.GroupingVesselLnId = &updatedGroupingVesselLn.ID
+	history.Status = "Updated Grouping Vessel LN"
+	history.UserId = userId
+	history.BeforeData = beforeData
+	history.AfterData = afterData
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return updatedGroupingVesselLn, createHistoryErr
+	}
+
+	tx.Commit()
+	return updatedGroupingVesselLn, nil
+}
+
+func (r *repository) UploadDocumentGroupingVesselLn(id uint, urlS3 string, userId uint, documentType string) (groupingvesselln.GroupingVesselLn, error) {
+	var uploadedGroupingVesselLn groupingvesselln.GroupingVesselLn
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("id = ?", id).First(&uploadedGroupingVesselLn).Error
+
+	if errFind != nil {
+		return uploadedGroupingVesselLn, errFind
+	}
+
+	var isReupload = false
+	editData := make(map[string]interface{})
+
+	switch documentType {
+	case "peb":
+		if uploadedGroupingVesselLn.PebDocumentLink != "" {
+			isReupload = true
+		}
+		editData["peb_document_link"] = urlS3
+	case "insurance":
+		if uploadedGroupingVesselLn.InsuranceDocumentLink != "" {
+			isReupload = true
+		}
+		editData["insurance_document_link"] = urlS3
+	case "ls_export":
+		if uploadedGroupingVesselLn.LsExportDocumentLink != "" {
+			isReupload = true
+		}
+		editData["ls_export_document_link"] = urlS3
+	case "navy":
+		if uploadedGroupingVesselLn.NavyDocumentLink != "" {
+			isReupload = true
+		}
+		editData["navy_document_link"] = urlS3
+	case "ska_coo":
+		if uploadedGroupingVesselLn.SkaCooDocumentLink != "" {
+			isReupload = true
+		}
+		editData["ska_coo_document_link"] = urlS3
+	case "coa_cow":
+		if uploadedGroupingVesselLn.CoaCowDocumentLink != "" {
+			isReupload = true
+		}
+		editData["coa_cow_document_link"] = urlS3
+	case "bl_mv":
+		if uploadedGroupingVesselLn.BlMvDocumentLink != "" {
+			isReupload = true
+		}
+		editData["bl_mv_document_link"] = urlS3
+	}
+
+	errEdit := tx.Model(&uploadedGroupingVesselLn).Updates(editData).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return uploadedGroupingVesselLn, errEdit
+	}
+	var history History
+
+	history.GroupingVesselLnId = &uploadedGroupingVesselLn.ID
+	history.UserId = userId
+	if isReupload == false {
+		history.Status = fmt.Sprintf("Uploaded %s document", documentType)
+	}
+
+	if isReupload == true {
+		history.Status = fmt.Sprintf("Reupload %s document", documentType)
+	}
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return uploadedGroupingVesselLn, createHistoryErr
+	}
+
+	tx.Commit()
+	return uploadedGroupingVesselLn, nil
+}
+
+func (r *repository) DeleteGroupingVesselLn(id int, userId uint) (bool, error) {
+
+	tx := r.db.Begin()
+	var groupingVesselLn groupingvesselln.GroupingVesselLn
+
+	findGroupingVesselLnErr := tx.Where("id = ?", id).First(&groupingVesselLn).Error
+
+	if findGroupingVesselLnErr != nil {
+		tx.Rollback()
+		return false, findGroupingVesselLnErr
+	}
+
+	errDelete := tx.Unscoped().Where("id = ?", id).Delete(&groupingVesselLn).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+		return false, errDelete
+	}
+
+	var history History
+
+	history.Status = fmt.Sprintf("Deleted Grouping Vessel Ln with id number %s and id %v", *groupingVesselLn.IdNumber, groupingVesselLn.ID)
 	history.UserId = userId
 
 	createHistoryErr := tx.Create(&history).Error

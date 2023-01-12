@@ -2,6 +2,7 @@ package transaction
 
 import (
 	"ajebackend/model/dmo"
+	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/minerba"
 )
 
@@ -113,4 +114,9 @@ type ReportRecapOutput struct {
 type ChooseTransactionDmo struct {
 	BargeTransaction  []Transaction `json:"barge_transaction"`
 	VesselTransaction []Transaction `json:"vessel_transaction"`
+}
+
+type DetailGroupingVesselLn struct {
+	ListTransactions []Transaction                     `json:"list_transactions"`
+	Detail           groupingvesselln.GroupingVesselLn `json:"detail"`
 }

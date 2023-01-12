@@ -156,4 +156,5 @@ func Setup(db *gorm.DB, validate *validator.Validate, route fiber.Router) {
 	routing2.NotificationRouting(db, route, validate)
 	routing2.ProductionRouting(db, route, validate)
 	routing2.ReportRouting(db, route, validate)
+	routing2.GroupingVesselLnRouting(db, route, validate)
 }
