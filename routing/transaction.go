@@ -3,10 +3,12 @@ package routing
 import (
 	"ajebackend/handler"
 	"ajebackend/helper"
+	"ajebackend/model/destination"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	jwtware "github.com/gofiber/jwt/v3"
@@ -26,7 +28,10 @@ func TransactionRouting(db *gorm.DB, app fiber.Router, validate *validator.Valid
 	logRepository := logs.NewRepository(db)
 	logService := logs.NewService(logRepository)
 
-	transactionHandler := handler.NewTransactionHandler(transactionService, userService, historyService, validate, logService)
+	destinationRepository := destination.NewRepository(db)
+	destinationService := destination.NewService(destinationRepository)
+
+	transactionHandler := handler.NewTransactionHandler(transactionService, userService, historyService, validate, logService, destinationService)
 
 	transactionRouting := app.Group("/transaction")
 
@@ -36,7 +41,7 @@ func TransactionRouting(db *gorm.DB, app fiber.Router, validate *validator.Valid
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
 			return ctx.Status(401).JSON(fiber.Map{
 				"error": "unauthorized",
-				"err": err.Error(),
+				"err":   err.Error(),
 			})
 		},
 	}))

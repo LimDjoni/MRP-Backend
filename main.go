@@ -73,7 +73,7 @@ func main() {
 
 		seeding.UpdateTransactionsRoyalty(db)
 		seeding.SeedingTraderAndCompanyData(db)
-
+		seeding.SeedingDestination(db)
 		fmt.Println(errMigrate)
 	}
 
@@ -148,4 +148,5 @@ func Setup(db *gorm.DB, validate *validator.Validate, route fiber.Router) {
 	routing2.NotificationRouting(db, route, validate)
 	routing2.ProductionRouting(db, route, validate)
 	routing2.ReportRouting(db, route, validate)
+	routing2.MasterRouting(db, route, validate)
 }

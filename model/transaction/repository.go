@@ -110,7 +110,7 @@ func (r *repository) ListDataDN(page int, sortFilter SortAndFilter) (Pagination,
 func (r *repository) DetailTransactionDN(id int) (Transaction, error) {
 	var transaction Transaction
 
-	errFind := r.db.Where("id = ?", id).First(&transaction).Error
+	errFind := r.db.Preload(clause.Associations).Where("id = ?", id).First(&transaction).Error
 
 	return transaction, errFind
 }
