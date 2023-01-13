@@ -4,6 +4,7 @@ import (
 	"ajebackend/model/dmo"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/minerba"
+	"ajebackend/model/minerbaln"
 	"ajebackend/model/production"
 	"ajebackend/model/transaction"
 )
@@ -32,6 +33,8 @@ type Service interface {
 	EditGroupingVesselLn(id int, editGrouping groupingvesselln.InputEditGroupingVesselLn, userId uint) (groupingvesselln.GroupingVesselLn, error)
 	UploadDocumentGroupingVesselLn(id uint, urlS3 string, userId uint, documentType string) (groupingvesselln.GroupingVesselLn, error)
 	DeleteGroupingVesselLn(id int, userId uint) (bool, error)
+	CreateMinerbaLn(period string, baseIdNumber string, listTransactions []int, userId uint) (minerbaln.MinerbaLn, error)
+	UpdateMinerbaLn(id int, listTransactions []int, userId uint) (minerbaln.MinerbaLn, error)
 }
 
 type service struct {
@@ -178,4 +181,16 @@ func (s *service) DeleteGroupingVesselLn(id int, userId uint) (bool, error) {
 	deleteGroupingVesselLn, deleteGroupingVesselLnErr := s.repository.DeleteGroupingVesselLn(id, userId)
 
 	return deleteGroupingVesselLn, deleteGroupingVesselLnErr
+}
+
+func (s *service) CreateMinerbaLn(period string, baseIdNumber string, listTransactions []int, userId uint) (minerbaln.MinerbaLn, error) {
+	createMinerbaLn, createMinerbaLnErr := s.repository.CreateMinerbaLn(period, baseIdNumber, listTransactions, userId)
+
+	return createMinerbaLn, createMinerbaLnErr
+}
+
+func (s *service) UpdateMinerbaLn(id int, listTransactions []int, userId uint) (minerbaln.MinerbaLn, error) {
+	updateMinerbaLn, updateMinerbaLnErr := s.repository.UpdateMinerbaLn(id, listTransactions, userId)
+
+	return updateMinerbaLn, updateMinerbaLnErr
 }

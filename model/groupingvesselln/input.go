@@ -33,6 +33,7 @@ type InputGroupingVesselLn struct {
 	NavyShipName              string  `json:"navy_ship_name"`
 	NavyImoNumber             string  `json:"navy_imo_number"`
 	Deadweight                float64 `json:"deadweight"`
+	IsCoaFinish               bool    `json:"is_coa_finish"`
 }
 
 type InputEditGroupingVesselLn struct {
@@ -67,6 +68,7 @@ type InputEditGroupingVesselLn struct {
 	NavyShipName              string  `json:"navy_ship_name"`
 	NavyImoNumber             string  `json:"navy_imo_number"`
 	Deadweight                float64 `json:"deadweight"`
+	IsCoaFinish               bool    `json:"is_coa_finish"`
 }
 
 type SortFilterGroupingVesselLn struct {

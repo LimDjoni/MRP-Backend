@@ -4,6 +4,7 @@ import (
 	"ajebackend/model/dmo"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/minerba"
+	"ajebackend/model/minerbaln"
 	"ajebackend/model/production"
 	"ajebackend/model/transaction"
 
@@ -25,4 +26,6 @@ type Logs struct {
 	Production         production.Production             `json:"production" gorm:"constraint:OnDelete:CASCADE;"`
 	GroupingVesselLnId *uint                             `json:"grouping_vessel_ln_id"`
 	GroupingVesselLn   groupingvesselln.GroupingVesselLn `json:"grouping_vessel_ln" gorm:"constraint:OnDelete:CASCADE;"`
+	MinerbaLnId        *uint                             `json:"minerba_ln_id"`
+	MinerbaLn          *minerbaln.MinerbaLn              `json:"minerba_ln" gorm:"constraint:OnDelete:CASCADE;"`
 }

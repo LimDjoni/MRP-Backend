@@ -47,6 +47,7 @@ type GroupingVesselLn struct {
 	SkaCooDocumentLink        string     `json:"ska_coo_document_link"`
 	CoaCowDocumentLink        string     `json:"coa_cow_document_link"`
 	BlMvDocumentLink          string     `json:"bl_mv_document_link"`
+	IsCoaFinish               bool       `json:"is_coa_finish"`
 	InswId                    *uint      `json:"insw_id"`
 	Insw                      *insw.Insw `json:"insw"`
 }

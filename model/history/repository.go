@@ -6,6 +6,7 @@ import (
 	"ajebackend/model/dmovessel"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/minerba"
+	"ajebackend/model/minerbaln"
 	"ajebackend/model/production"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
@@ -45,6 +46,8 @@ type Repository interface {
 	EditGroupingVesselLn(id int, editGrouping groupingvesselln.InputEditGroupingVesselLn, userId uint) (groupingvesselln.GroupingVesselLn, error)
 	UploadDocumentGroupingVesselLn(id uint, urlS3 string, userId uint, documentType string) (groupingvesselln.GroupingVesselLn, error)
 	DeleteGroupingVesselLn(id int, userId uint) (bool, error)
+	CreateMinerbaLn(period string, baseIdNumber string, listTransactions []int, userId uint) (minerbaln.MinerbaLn, error)
+	UpdateMinerbaLn(id int, listTransactions []int, userId uint) (minerbaln.MinerbaLn, error)
 }
 
 type repository struct {
@@ -1704,6 +1707,7 @@ func (r *repository) CreateGroupingVesselLN(inputGrouping groupingvesselln.Input
 	createdGroupingVesselLn.NavyShipName = inputGrouping.NavyShipName
 	createdGroupingVesselLn.NavyImoNumber = strings.ToUpper(inputGrouping.NavyImoNumber)
 	createdGroupingVesselLn.Deadweight = inputGrouping.Deadweight
+	createdGroupingVesselLn.IsCoaFinish = inputGrouping.IsCoaFinish
 
 	errCreatedGroupingVesselLn := tx.Create(&createdGroupingVesselLn).Error
 
@@ -1960,4 +1964,176 @@ func (r *repository) DeleteGroupingVesselLn(id int, userId uint) (bool, error) {
 
 	tx.Commit()
 	return true, nil
+}
+
+// Minerba LN
+
+func (r *repository) CreateMinerbaLn(period string, baseIdNumber string, listTransactions []int, userId uint) (minerbaln.MinerbaLn, error) {
+	var createdMinerbaLn minerbaln.MinerbaLn
+
+	tx := r.db.Begin()
+	createdMinerbaLn.Period = period
+	var transactions []transaction.Transaction
+	findTransactionsErr := tx.Where("id IN ? AND transaction_type = ? AND minerba_ln_id is NULL AND is_finance_check = ?", listTransactions, "LN", true).Find(&transactions).Error
+
+	if findTransactionsErr != nil {
+		tx.Rollback()
+		return createdMinerbaLn, findTransactionsErr
+	}
+
+	if len(transactions) != len(listTransactions) {
+		tx.Rollback()
+		return createdMinerbaLn, errors.New("please check some of transactions not found or already in report")
+	}
+
+	var tempQuantity float64
+	for _, v := range transactions {
+		tempQuantity += v.Quantity
+	}
+
+	stringTempQuantity := fmt.Sprintf("%.3f", tempQuantity)
+	parseTempQuantity, _ := strconv.ParseFloat(stringTempQuantity, 64)
+
+	createdMinerbaLn.Quantity = parseTempQuantity
+
+	errCreateMinerbaLn := tx.Create(&createdMinerbaLn).Error
+
+	if errCreateMinerbaLn != nil {
+		tx.Rollback()
+		return createdMinerbaLn, errCreateMinerbaLn
+	}
+
+	idNumber := baseIdNumber + "-" + helper.CreateIdNumber(int(createdMinerbaLn.ID))
+
+	updateMinerbaErr := tx.Model(&createdMinerbaLn).Update("id_number", idNumber).Error
+
+	if updateMinerbaErr != nil {
+		tx.Rollback()
+		return createdMinerbaLn, updateMinerbaErr
+	}
+
+	listTransactionsErr := tx.Table("transactions").Where("id IN ?", listTransactions).Update("minerba_ln_id", createdMinerbaLn.ID).Error
+
+	if listTransactionsErr != nil {
+		tx.Rollback()
+		return createdMinerbaLn, listTransactionsErr
+	}
+
+	var history History
+
+	history.MinerbaLnId = &createdMinerbaLn.ID
+	history.Status = "Created Minerba LN Report"
+	history.UserId = userId
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return createdMinerbaLn, createHistoryErr
+	}
+
+	tx.Commit()
+	return createdMinerbaLn, nil
+}
+
+func (r *repository) UpdateMinerbaLn(id int, listTransactions []int, userId uint) (minerbaln.MinerbaLn, error) {
+	var updatedMinerbaLn minerbaln.MinerbaLn
+	var quantityMinerba float64
+
+	historyBefore := make(map[string]interface{})
+	historyAfter := make(map[string]interface{})
+	tx := r.db.Begin()
+
+	findMinerbaLnErr := tx.Where("id = ?", id).First(&updatedMinerbaLn).Error
+
+	if findMinerbaLnErr != nil {
+		return updatedMinerbaLn, findMinerbaLnErr
+	}
+
+	historyBefore["minerba_ln"] = updatedMinerbaLn
+
+	var beforeTransaction []transaction.Transaction
+	findTransactionBeforeErr := tx.Where("minerba_ln_id = ?", id).Find(&beforeTransaction).Error
+
+	if findTransactionBeforeErr != nil {
+		return updatedMinerbaLn, findTransactionBeforeErr
+	}
+
+	var transactionBefore []uint
+
+	for _, v := range beforeTransaction {
+		transactionBefore = append(transactionBefore, v.ID)
+	}
+
+	historyBefore["transactions"] = transactionBefore
+
+	errUpdMinerbaNil := tx.Model(&beforeTransaction).Where("minerba_ln_id = ?", id).Update("minerba_ln_id", nil).Error
+
+	if errUpdMinerbaNil != nil {
+		tx.Rollback()
+		return updatedMinerbaLn, errUpdMinerbaNil
+	}
+
+	var transactions []transaction.Transaction
+	findTransactionsErr := tx.Where("id IN ? AND transaction_type = ? AND minerba_ln_id is NULL AND is_finance_check = ?", listTransactions, "LN", true).Find(&transactions).Error
+
+	if findTransactionsErr != nil {
+		tx.Rollback()
+		return updatedMinerbaLn, findTransactionsErr
+	}
+
+	if len(transactions) != len(listTransactions) {
+		tx.Rollback()
+		return updatedMinerbaLn, errors.New("please check some of transactions not found")
+	}
+
+	for _, v := range transactions {
+		quantityMinerba += v.Quantity
+	}
+
+	errUpdateMinerba := tx.Model(&updatedMinerbaLn).Update("quantity", quantityMinerba).Error
+
+	if errUpdateMinerba != nil {
+		tx.Rollback()
+		return updatedMinerbaLn, errUpdateMinerba
+	}
+
+	historyAfter["minerba_ln"] = updatedMinerbaLn
+	historyAfter["transactions"] = listTransactions
+
+	listTransactionsErr := tx.Table("transactions").Where("id IN ?", listTransactions).Update("minerba_ln_id", id).Error
+
+	if listTransactionsErr != nil {
+		tx.Rollback()
+		return updatedMinerbaLn, listTransactionsErr
+	}
+
+	var history History
+	beforeData, errorBeforeDataJsonMarshal := json.Marshal(historyBefore)
+	afterData, errorAfterDataJsonMarshal := json.Marshal(historyAfter)
+
+	if errorBeforeDataJsonMarshal != nil {
+		tx.Rollback()
+		return updatedMinerbaLn, errorBeforeDataJsonMarshal
+	}
+
+	if errorAfterDataJsonMarshal != nil {
+		tx.Rollback()
+		return updatedMinerbaLn, errorAfterDataJsonMarshal
+	}
+
+	history.MinerbaLnId = &updatedMinerbaLn.ID
+	history.Status = "Updated Minerba Ln Report"
+	history.UserId = userId
+	history.AfterData = afterData
+	history.BeforeData = beforeData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return updatedMinerbaLn, createHistoryErr
+	}
+
+	tx.Commit()
+	return updatedMinerbaLn, nil
 }

@@ -850,5 +850,4 @@ func (h *minerbaHandler) CheckValidPeriodMinerba(c *fiber.Ctx) error {
 	return c.Status(400).JSON(fiber.Map{
 		"message": "invalid period",
 	})
-
 }

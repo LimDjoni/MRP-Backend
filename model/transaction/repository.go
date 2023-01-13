@@ -871,3 +871,13 @@ func (r *repository) GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, 
 
 	return detailGroupingVesselLn, nil
 }
+
+// Minerba LN
+
+func (r *repository) ListDataLNWithoutMinerba() ([]Transaction, error) {
+	var listDataLnWithoutMinerba []Transaction
+
+	errFind := r.db.Order("id desc").Where("minerba_ln_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND is_finance_check = ?", "LN", false, false, true).Find(&listDataLnWithoutMinerba).Error
+
+	return listDataLnWithoutMinerba, errFind
+}
