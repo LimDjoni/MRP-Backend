@@ -71,6 +71,8 @@ type DataTransactionInput struct {
 	IsFinanceCheck              bool    `json:"is_finance_check"`
 	IsCoaFinish                 bool    `json:"is_coa_finish"`
 	IsRoyaltyFinalFinish        bool    `json:"is_royalty_final_finish"`
+	DestinationName             string  `json:"destination_name" validate:"required"`
+	DestinationId               uint
 }
 
 type SortAndFilter struct {
