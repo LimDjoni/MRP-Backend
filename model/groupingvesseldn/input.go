@@ -9,7 +9,7 @@ type InputGroupingVesselDn struct {
 	BlDate                *string  `json:"bl_date" validate:"DateValidation"`
 	SalesSystem           string   `json:"sales_system" validate:"required,SalesSystemValidation=Barge_Vessel"`
 	Destination           string   `json:"destination" validate:"required"`
-	DestinationId         *uint    `json:"destination_id"`
+	DestinationId         uint     `json:"destination_id"`
 	DestinationCountry    string   `json:"destination_country"`
 	UnloadingPortLocation string   `json:"unloading_port_location"`
 	CowDate               *string  `json:"cow_date" validate:"omitempty,DateValidation"`
@@ -37,7 +37,7 @@ type InputEditGroupingVesselDn struct {
 	BlDate                *string  `json:"bl_date" validate:"DateValidation"`
 	SalesSystem           string   `json:"sales_system" validate:"required,SalesSystemValidation=Barge_Vessel"`
 	Destination           string   `json:"destination" validate:"required"`
-	DestinationId         *uint    `json:"destination_id"`
+	DestinationId         uint     `json:"destination_id"`
 	DestinationCountry    string   `json:"destination_country"`
 	UnloadingPortLocation string   `json:"unloading_port_location"`
 	CowDate               *string  `json:"cow_date" validate:"omitempty,DateValidation"`

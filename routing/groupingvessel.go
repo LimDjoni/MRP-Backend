@@ -3,6 +3,7 @@ package routing
 import (
 	"ajebackend/handler"
 	"ajebackend/helper"
+	"ajebackend/model/destination"
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/history"
@@ -37,7 +38,10 @@ func GroupingVesselLnRouting(db *gorm.DB, app fiber.Router, validate *validator.
 	groupingVesselDnRepository := groupingvesseldn.NewRepository(db)
 	groupingVesselDnService := groupingvesseldn.NewService(groupingVesselDnRepository)
 
-	groupingVesselDnHandler := handler.NewGroupingVesselDnHandler(transactionService, userService, historyService, validate, logService, groupingVesselDnService)
+	destinationRepository := destination.NewRepository(db)
+	destinationService := destination.NewService(destinationRepository)
+
+	groupingVesselDnHandler := handler.NewGroupingVesselDnHandler(transactionService, userService, historyService, validate, logService, groupingVesselDnService, destinationService)
 
 	groupingVesselRouting := app.Group("/groupingvessel")
 

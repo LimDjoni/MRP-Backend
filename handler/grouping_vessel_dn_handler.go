@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"ajebackend/model/destination"
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
@@ -23,9 +24,10 @@ type groupingVesselDnHandler struct {
 	v                       *validator.Validate
 	logService              logs.Service
 	groupingVesselDnService groupingvesseldn.Service
+	destinationService      destination.Service
 }
 
-func NewGroupingVesselDnHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, v *validator.Validate, logService logs.Service, groupingVesselDnService groupingvesseldn.Service) *groupingVesselDnHandler {
+func NewGroupingVesselDnHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, v *validator.Validate, logService logs.Service, groupingVesselDnService groupingvesseldn.Service, destinationService destination.Service) *groupingVesselDnHandler {
 	return &groupingVesselDnHandler{
 		transactionService,
 		userService,
@@ -33,6 +35,7 @@ func NewGroupingVesselDnHandler(transactionService transaction.Service, userServ
 		v,
 		logService,
 		groupingVesselDnService,
+		destinationService,
 	}
 }
 
@@ -123,6 +126,16 @@ func (h *groupingVesselDnHandler) CreateGroupingVesselDn(c *fiber.Ctx) error {
 			"errors": dataErrors,
 		})
 	}
+
+	findDestination, findDestinationErr := h.destinationService.GetDestinationByName(*&groupingVesselDnInput.Destination)
+
+	if findDestinationErr != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "destination not found",
+		})
+	}
+
+	groupingVesselDnInput.DestinationId = findDestination.ID
 
 	createdGroupingVesselDn, createdGroupingVesselDnErr := h.historyService.CreateGroupingVesselDN(*groupingVesselDnInput, uint(claims["id"].(float64)))
 

@@ -72,7 +72,7 @@ type DataTransactionInput struct {
 	IsCoaFinish                 bool    `json:"is_coa_finish"`
 	IsRoyaltyFinalFinish        bool    `json:"is_royalty_final_finish"`
 	DestinationName             string  `json:"destination_name" validate:"required"`
-	DestinationId               uint
+	DestinationId               uint    `json:"destination_id"`
 }
 
 type SortAndFilter struct {
