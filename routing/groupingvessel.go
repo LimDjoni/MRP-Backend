@@ -65,6 +65,7 @@ func GroupingVesselLnRouting(db *gorm.DB, app fiber.Router, validate *validator.
 	groupingVesselRouting.Get("/list/ln", groupingVesselLnHandler.ListGroupingVesselLn)
 
 	// DN
-	groupingVesselRouting.Get("list/dn", groupingVesselDnHandler.ListGroupingVesselDn)
+	groupingVesselRouting.Get("/list/dn", groupingVesselDnHandler.ListGroupingVesselDn)
 	groupingVesselRouting.Post("/create/dn", groupingVesselDnHandler.CreateGroupingVesselDn)
+	groupingVesselRouting.Put("/update/dn/:id", groupingVesselDnHandler.EditGroupingVesselDn)
 }

@@ -159,3 +159,80 @@ func (h *groupingVesselDnHandler) CreateGroupingVesselDn(c *fiber.Ctx) error {
 
 	return c.Status(201).JSON(createdGroupingVesselDn)
 }
+
+func (h *groupingVesselDnHandler) EditGroupingVesselDn(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := fiber.Map{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	editGroupingVesselDnInput := new(groupingvesseldn.InputEditGroupingVesselDn)
+
+	// Binds the request body to the Person struct
+	if err := c.BodyParser(editGroupingVesselDnInput); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	errors := h.v.Struct(*editGroupingVesselDnInput)
+
+	if errors != nil {
+		dataErrors := validatorfunc.ValidateStruct(errors)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": dataErrors,
+		})
+	}
+
+	id := c.Params("id")
+	idInt, err := strconv.Atoi(id)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "record not found",
+		})
+	}
+
+	findDestination, findDestinationErr := h.destinationService.GetDestinationByName(*&editGroupingVesselDnInput.Destination)
+
+	if findDestinationErr != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "destination not found",
+		})
+	}
+
+	editGroupingVesselDnInput.DestinationId = findDestination.ID
+
+	editGroupingVesselDn, editGroupingVesselDnErr := h.historyService.EditGroupingVesselDn(idInt, *editGroupingVesselDnInput, uint(claims["id"].(float64)))
+
+	if editGroupingVesselDnErr != nil {
+		inputJson, _ := json.Marshal(editGroupingVesselDnInput)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": editGroupingVesselDnErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": editGroupingVesselDnErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(editGroupingVesselDn)
+}
