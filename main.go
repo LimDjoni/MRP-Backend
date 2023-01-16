@@ -3,6 +3,7 @@ package main
 import (
 	"ajebackend/helper"
 	"ajebackend/model/company"
+	"ajebackend/model/destination"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
 	"ajebackend/model/groupingvesselln"
@@ -77,11 +78,12 @@ func main() {
 			&groupingvesselln.GroupingVesselLn{},
 			&minerbaln.MinerbaLn{},
 			&insw.Insw{},
+			&destination.Destination{},
 		)
 
 		seeding.UpdateTransactionsRoyalty(db)
 		seeding.SeedingTraderAndCompanyData(db)
-
+		seeding.SeedingDestination(db)
 		fmt.Println(errMigrate)
 	}
 
@@ -157,4 +159,5 @@ func Setup(db *gorm.DB, validate *validator.Validate, route fiber.Router) {
 	routing2.ProductionRouting(db, route, validate)
 	routing2.ReportRouting(db, route, validate)
 	routing2.GroupingVesselLnRouting(db, route, validate)
+	routing2.MasterRouting(db, route, validate)
 }

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"ajebackend/model/awshelper"
+	"ajebackend/model/destination"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
 	"ajebackend/model/transaction"
@@ -24,15 +25,17 @@ type transactionHandler struct {
 	historyService     history.Service
 	v                  *validator.Validate
 	logService         logs.Service
+	destinationService destination.Service
 }
 
-func NewTransactionHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, v *validator.Validate, logService logs.Service) *transactionHandler {
+func NewTransactionHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, v *validator.Validate, logService logs.Service, destinationService destination.Service) *transactionHandler {
 	return &transactionHandler{
 		transactionService,
 		userService,
 		historyService,
 		v,
 		logService,
+		destinationService,
 	}
 }
 
@@ -113,6 +116,15 @@ func (h *transactionHandler) CreateTransactionDN(c *fiber.Ctx) error {
 		})
 	}
 
+	findDestination, findDestinationErr := h.destinationService.GetDestinationByName(*&transactionInput.DestinationName)
+
+	if findDestinationErr != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "destination not found",
+		})
+	}
+
+	transactionInput.DestinationId = findDestination.ID
 	createdTransaction, createdTransactionErr := h.historyService.CreateTransactionDN(*transactionInput, uint(claims["id"].(float64)))
 
 	if createdTransactionErr != nil {
@@ -386,6 +398,15 @@ func (h *transactionHandler) UpdateTransactionDN(c *fiber.Ctx) error {
 		})
 	}
 
+	findDestination, findDestinationErr := h.destinationService.GetDestinationByName(*&transactionInput.DestinationName)
+
+	if findDestinationErr != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "destination not found",
+		})
+	}
+
+	transactionInput.DestinationId = findDestination.ID
 	updateTransaction, updateTransactionErr := h.historyService.UpdateTransactionDN(idInt, *transactionInput, uint(claims["id"].(float64)))
 
 	if updateTransactionErr != nil {

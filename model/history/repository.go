@@ -170,6 +170,7 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 	createdTransaction.DmoCategory = strings.ToUpper(inputTransactionDN.DmoCategory)
 	createdTransaction.IsCoaFinish = inputTransactionDN.IsCoaFinish
 	createdTransaction.IsRoyaltyFinalFinish = inputTransactionDN.IsRoyaltyFinalFinish
+	createdTransaction.DestinationId = &inputTransactionDN.DestinationId
 	createTransactionErr := tx.Create(&createdTransaction).Error
 
 	if createTransactionErr != nil {
@@ -303,7 +304,7 @@ func (r *repository) UpdateTransactionDN(idTransaction int, inputEditTransaction
 	inputEditTransactionDN.DmoBuyerName = inputEditTransactionDN.DmoBuyerName
 	inputEditTransactionDN.DmoIndustryType = inputEditTransactionDN.DmoIndustryType
 	inputEditTransactionDN.DmoCategory = strings.ToUpper(inputEditTransactionDN.DmoCategory)
-
+	inputEditTransactionDN.DestinationId = inputEditTransactionDN.DestinationId
 	dataInput, errorMarshal := json.Marshal(inputEditTransactionDN)
 
 	if errorMarshal != nil {
@@ -319,6 +320,8 @@ func (r *repository) UpdateTransactionDN(idTransaction int, inputEditTransaction
 		tx.Rollback()
 		return transaction, errorUnmarshal
 	}
+
+	delete(dataInputMapString, "destination_name")
 
 	updateErr := tx.Model(&transaction).Updates(dataInputMapString).Error
 
