@@ -3,6 +3,7 @@ package transaction
 import (
 	"ajebackend/model/destination"
 	"ajebackend/model/dmo"
+	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/minerba"
 	"ajebackend/model/minerbaln"
@@ -98,4 +99,6 @@ type Transaction struct {
 	GroupingVesselLn               *groupingvesselln.GroupingVesselLn `json:"grouping_vessel_ln" gorm:"constraint:OnDelete:SET NULL;"`
 	DestinationId                  *uint                              `json:"destination_id"`
 	Destination                    *destination.Destination           `json:"destination"`
+	GroupingVesselDnId             *uint                              `json:"grouping_vessel_dn_id"`
+	GroupingVesselDn               *groupingvesseldn.GroupingVesselDn `json:"grouping_vessel_dn" gorm:"constraint:OnDelete:SET NULL;"`
 }

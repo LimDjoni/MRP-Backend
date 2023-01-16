@@ -31,12 +31,16 @@ type Repository interface {
 	CheckDataDnAndMinerba(listData []int) (bool, error)
 	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) ([]Transaction, error)
 	GetDetailMinerba(id int) (DetailMinerba, error)
-	ListDataDNWithoutDmo() (ChooseTransactionDmo, error)
+	ListDataDNBargeWithoutVessel() ([]Transaction, error)
+	ListDataDNBargeWithVessel() ([]Transaction, error)
+	ListDataDNVessel() ([]Transaction, error)
 	CheckDataDnAndDmo(listData []int) ([]Transaction, error)
 	GetDetailDmo(id int) (DetailDmo, error)
 	CheckDataUnique(inputTrans DataTransactionInput) (bool, bool, bool, bool)
 	GetReport(year int) (ReportRecapOutput, ReportDetailOutput, error)
 	GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, error)
+	ListDataLnWithoutGroup() ([]Transaction, error)
+	ListDataLNWithoutMinerba() ([]Transaction, error)
 }
 
 type repository struct {
@@ -273,26 +277,40 @@ func (r *repository) GetDetailMinerba(id int) (DetailMinerba, error) {
 
 // DMO
 
-func (r *repository) ListDataDNWithoutDmo() (ChooseTransactionDmo, error) {
+func (r *repository) ListDataDNBargeWithoutVessel() ([]Transaction, error) {
 	var listDataDnBargeDmo []Transaction
-	var listDataDnVesselDmo []Transaction
-	var listDataDnForDmo ChooseTransactionDmo
 
-	errFindBarge := r.db.Order("id desc").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_name = ? AND is_finance_check = ?", "DN", false, false, "", true).Find(&listDataDnBargeDmo).Error
+	errFindBarge := r.db.Order("id desc").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_name = ? AND is_finance_check = ? AND sales_system LIKE '%BARGE' AND grouping_vessel_dn_id is NULL", "DN", false, false, "", true).Find(&listDataDnBargeDmo).Error
 
 	if errFindBarge != nil {
-		return listDataDnForDmo, errFindBarge
+		return listDataDnBargeDmo, errFindBarge
 	}
 
-	errFindVessel := r.db.Order("id desc").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_name != ? AND is_finance_check = ?", "DN", false, false, "", true).Find(&listDataDnVesselDmo).Error
+	return listDataDnBargeDmo, nil
+}
 
-	if errFindVessel != nil {
-		return listDataDnForDmo, errFindVessel
+func (r *repository) ListDataDNBargeWithVessel() ([]Transaction, error) {
+	var listDataDnBargeDmo []Transaction
+
+	errFindBarge := r.db.Order("id desc").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_name NOT LIKE '' AND is_finance_check = ? AND sales_system LIKE '%BARGE' AND grouping_vessel_dn_id is NULL", "DN", false, false, true).Find(&listDataDnBargeDmo).Error
+
+	if errFindBarge != nil {
+		return listDataDnBargeDmo, errFindBarge
 	}
 
-	listDataDnForDmo.BargeTransaction = listDataDnBargeDmo
-	listDataDnForDmo.VesselTransaction = listDataDnVesselDmo
-	return listDataDnForDmo, nil
+	return listDataDnBargeDmo, nil
+}
+
+func (r *repository) ListDataDNVessel() ([]Transaction, error) {
+	var listDataDnVessel []Transaction
+
+	errFindBarge := r.db.Order("id desc").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_name = ? AND is_finance_check = ? AND sales_system LIKE '%VESSEL' AND grouping_vessel_dn_id is NULL", "DN", false, false, "", true).Find(&listDataDnVessel).Error
+
+	if errFindBarge != nil {
+		return listDataDnVessel, errFindBarge
+	}
+
+	return listDataDnVessel, nil
 }
 
 func (r *repository) CheckDataDnAndDmo(listData []int) ([]Transaction, error) {
@@ -870,6 +888,18 @@ func (r *repository) GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, 
 	detailGroupingVesselLn.ListTransactions = transactions
 
 	return detailGroupingVesselLn, nil
+}
+
+func (r *repository) ListDataLnWithoutGroup() ([]Transaction, error) {
+	var listDataLnWithoutGrouping []Transaction
+
+	errListDataLnWithoutGrouping := r.db.Order("id desc").Where("transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND is_finance_check = ? AND grouping_vessel_ln_id is NULL", "LN", false, false, true).Find(&listDataLnWithoutGrouping).Error
+
+	if errListDataLnWithoutGrouping != nil {
+		return listDataLnWithoutGrouping, errListDataLnWithoutGrouping
+	}
+
+	return listDataLnWithoutGrouping, nil
 }
 
 // Minerba LN

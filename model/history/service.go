@@ -2,6 +2,7 @@ package history
 
 import (
 	"ajebackend/model/dmo"
+	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/minerba"
 	"ajebackend/model/minerbaln"
@@ -29,6 +30,10 @@ type Service interface {
 	CreateProduction(input production.InputCreateProduction, userId uint) (production.Production, error)
 	UpdateProduction(input production.InputCreateProduction, productionId int, userId uint) (production.Production, error)
 	DeleteProduction(productionId int, userId uint) (bool, error)
+	CreateGroupingVesselDN(inputGrouping groupingvesseldn.InputGroupingVesselDn, userId uint) (groupingvesseldn.GroupingVesselDn, error)
+	EditGroupingVesselDn(id int, editGrouping groupingvesseldn.InputEditGroupingVesselDn, userId uint) (groupingvesseldn.GroupingVesselDn, error)
+	DeleteGroupingVesselDn(id int, userId uint) (bool, error)
+	UploadDocumentGroupingVesselDn(id uint, urlS3 string, userId uint, documentType string) (groupingvesseldn.GroupingVesselDn, error)
 	CreateGroupingVesselLN(inputGrouping groupingvesselln.InputGroupingVesselLn, userId uint) (groupingvesselln.GroupingVesselLn, error)
 	EditGroupingVesselLn(id int, editGrouping groupingvesselln.InputEditGroupingVesselLn, userId uint) (groupingvesselln.GroupingVesselLn, error)
 	UploadDocumentGroupingVesselLn(id uint, urlS3 string, userId uint, documentType string) (groupingvesselln.GroupingVesselLn, error)
@@ -157,6 +162,30 @@ func (s *service) DeleteProduction(productionId int, userId uint) (bool, error) 
 	deleteProduction, deleteProductionErr := s.repository.DeleteProduction(productionId, userId)
 
 	return deleteProduction, deleteProductionErr
+}
+
+func (s *service) CreateGroupingVesselDN(inputGrouping groupingvesseldn.InputGroupingVesselDn, userId uint) (groupingvesseldn.GroupingVesselDn, error) {
+	createGroupingVesselDn, errCreateGroupingVesselDn := s.repository.CreateGroupingVesselDN(inputGrouping, userId)
+
+	return createGroupingVesselDn, errCreateGroupingVesselDn
+}
+
+func (s *service) EditGroupingVesselDn(id int, editGrouping groupingvesseldn.InputEditGroupingVesselDn, userId uint) (groupingvesseldn.GroupingVesselDn, error) {
+	editGroupingVesselDn, errEditGroupingVesselDn := s.repository.EditGroupingVesselDn(id, editGrouping, userId)
+
+	return editGroupingVesselDn, errEditGroupingVesselDn
+}
+
+func (s *service) DeleteGroupingVesselDn(id int, userId uint) (bool, error) {
+	deleteGroupingVesselDn, errDeleteGroupingVesselDn := s.repository.DeleteGroupingVesselDn(id, userId)
+
+	return deleteGroupingVesselDn, errDeleteGroupingVesselDn
+}
+
+func (s *service) UploadDocumentGroupingVesselDn(id uint, urlS3 string, userId uint, documentType string) (groupingvesseldn.GroupingVesselDn, error) {
+	uploadDocumentGroupingVesselDn, errUploadDocumentGroupingVesselDn := s.repository.UploadDocumentGroupingVesselDn(id, urlS3, userId, documentType)
+
+	return uploadDocumentGroupingVesselDn, errUploadDocumentGroupingVesselDn
 }
 
 func (s *service) CreateGroupingVesselLN(inputGrouping groupingvesselln.InputGroupingVesselLn, userId uint) (groupingvesselln.GroupingVesselLn, error) {

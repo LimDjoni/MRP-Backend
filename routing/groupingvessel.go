@@ -3,6 +3,7 @@ package routing
 import (
 	"ajebackend/handler"
 	"ajebackend/helper"
+	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
@@ -31,7 +32,12 @@ func GroupingVesselLnRouting(db *gorm.DB, app fiber.Router, validate *validator.
 	groupingVesselLnRepository := groupingvesselln.NewRepository(db)
 	groupingVesselLnService := groupingvesselln.NewService(groupingVesselLnRepository)
 
-	groupingVesselHandler := handler.NewGroupingVesselHandler(transactionService, userService, historyService, validate, logService, groupingVesselLnService)
+	groupingVesselLnHandler := handler.NewGroupingVesselLnHandler(transactionService, userService, historyService, validate, logService, groupingVesselLnService)
+
+	groupingVesselDnRepository := groupingvesseldn.NewRepository(db)
+	groupingVesselDnService := groupingvesseldn.NewService(groupingVesselDnRepository)
+
+	groupingVesselDnHandler := handler.NewGroupingVesselDnHandler(transactionService, userService, historyService, validate, logService, groupingVesselDnService)
 
 	groupingVesselRouting := app.Group("/groupingvessel")
 
@@ -46,10 +52,15 @@ func GroupingVesselLnRouting(db *gorm.DB, app fiber.Router, validate *validator.
 		},
 	}))
 
-	groupingVesselRouting.Post("/create/ln", groupingVesselHandler.CreateGroupingVesselLn)
-	groupingVesselRouting.Get("/detail/ln/:id", groupingVesselHandler.GetDetailGroupingVesselLn)
-	groupingVesselRouting.Put("/update/ln/:id", groupingVesselHandler.EditGroupingVesselLn)
-	groupingVesselRouting.Put("/update/document/ln/:id/:type", groupingVesselHandler.UploadDocumentGroupingVesselLn)
-	groupingVesselRouting.Delete("/delete/ln/:id", groupingVesselHandler.DeleteGroupingVesselLn)
-	groupingVesselRouting.Get("/list/ln", groupingVesselHandler.ListGroupingVesselLn)
+	// LN
+	groupingVesselRouting.Post("/create/ln", groupingVesselLnHandler.CreateGroupingVesselLn)
+	groupingVesselRouting.Get("/detail/ln/:id", groupingVesselLnHandler.GetDetailGroupingVesselLn)
+	groupingVesselRouting.Put("/update/ln/:id", groupingVesselLnHandler.EditGroupingVesselLn)
+	groupingVesselRouting.Put("/update/document/ln/:id/:type", groupingVesselLnHandler.UploadDocumentGroupingVesselLn)
+	groupingVesselRouting.Delete("/delete/ln/:id", groupingVesselLnHandler.DeleteGroupingVesselLn)
+	groupingVesselRouting.Get("/list/ln", groupingVesselLnHandler.ListGroupingVesselLn)
+
+	// DN
+	groupingVesselRouting.Get("list/dn", groupingVesselDnHandler.ListGroupingVesselDn)
+	groupingVesselRouting.Post("/create/dn", groupingVesselDnHandler.CreateGroupingVesselDn)
 }

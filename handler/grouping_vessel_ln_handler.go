@@ -19,7 +19,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-type groupingVesselHandler struct {
+type groupingVesselLnHandler struct {
 	transactionService      transaction.Service
 	userService             user.Service
 	historyService          history.Service
@@ -28,8 +28,8 @@ type groupingVesselHandler struct {
 	groupingVesselLnService groupingvesselln.Service
 }
 
-func NewGroupingVesselHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, v *validator.Validate, logService logs.Service, groupingVesselLnService groupingvesselln.Service) *groupingVesselHandler {
-	return &groupingVesselHandler{
+func NewGroupingVesselLnHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, v *validator.Validate, logService logs.Service, groupingVesselLnService groupingvesselln.Service) *groupingVesselLnHandler {
+	return &groupingVesselLnHandler{
 		transactionService,
 		userService,
 		historyService,
@@ -39,7 +39,7 @@ func NewGroupingVesselHandler(transactionService transaction.Service, userServic
 	}
 }
 
-func (h *groupingVesselHandler) CreateGroupingVesselLn(c *fiber.Ctx) error {
+func (h *groupingVesselLnHandler) CreateGroupingVesselLn(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	responseUnauthorized := fiber.Map{
@@ -97,7 +97,7 @@ func (h *groupingVesselHandler) CreateGroupingVesselLn(c *fiber.Ctx) error {
 	return c.Status(201).JSON(createdGroupingVesselLn)
 }
 
-func (h *groupingVesselHandler) GetDetailGroupingVesselLn(c *fiber.Ctx) error {
+func (h *groupingVesselLnHandler) GetDetailGroupingVesselLn(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	responseUnauthorized := fiber.Map{
@@ -139,7 +139,7 @@ func (h *groupingVesselHandler) GetDetailGroupingVesselLn(c *fiber.Ctx) error {
 	return c.Status(200).JSON(detailGroupingVesselLn)
 }
 
-func (h *groupingVesselHandler) EditGroupingVesselLn(c *fiber.Ctx) error {
+func (h *groupingVesselLnHandler) EditGroupingVesselLn(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	responseUnauthorized := fiber.Map{
@@ -206,7 +206,7 @@ func (h *groupingVesselHandler) EditGroupingVesselLn(c *fiber.Ctx) error {
 	return c.Status(200).JSON(editGroupingVesselLn)
 }
 
-func (h *groupingVesselHandler) UploadDocumentGroupingVesselLn(c *fiber.Ctx) error {
+func (h *groupingVesselLnHandler) UploadDocumentGroupingVesselLn(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	responseUnauthorized := fiber.Map{
@@ -340,7 +340,7 @@ func (h *groupingVesselHandler) UploadDocumentGroupingVesselLn(c *fiber.Ctx) err
 	return c.Status(200).JSON(editDocument)
 }
 
-func (h *groupingVesselHandler) DeleteGroupingVesselLn(c *fiber.Ctx) error {
+func (h *groupingVesselLnHandler) DeleteGroupingVesselLn(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	responseUnauthorized := map[string]interface{}{
@@ -452,7 +452,7 @@ func (h *groupingVesselHandler) DeleteGroupingVesselLn(c *fiber.Ctx) error {
 	})
 }
 
-func (h *groupingVesselHandler) ListGroupingVesselLn(c *fiber.Ctx) error {
+func (h *groupingVesselLnHandler) ListGroupingVesselLn(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	responseUnauthorized := map[string]interface{}{

@@ -552,7 +552,7 @@ func (h *dmoHandler) DetailDmo(c *fiber.Ctx) error {
 	return c.Status(200).JSON(detailDmo)
 }
 
-func (h *dmoHandler) ListDataDNWithoutDmo(c *fiber.Ctx) error {
+func (h *dmoHandler) ListDataDNBargeWithoutVessel(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	responseUnauthorized := map[string]interface{}{
@@ -569,7 +569,7 @@ func (h *dmoHandler) ListDataDNWithoutDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	listDataDNWithoutDmo, listDataDNWithoutDmoErr := h.transactionService.ListDataDNWithoutDmo()
+	listDataDNWithoutDmo, listDataDNWithoutDmoErr := h.transactionService.ListDataDNBargeWithoutVessel()
 
 	if listDataDNWithoutDmoErr != nil {
 		return c.Status(400).JSON(fiber.Map{

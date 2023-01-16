@@ -89,6 +89,12 @@ func main() {
 
 	var validate = validator.New()
 
+	errSalesSystem := validate.RegisterValidation("SalesSystemValidation", validatorfunc.CheckEnum)
+
+	if errSalesSystem != nil {
+		fmt.Println(errSalesSystem.Error())
+	}
+
 	// Make Validation for Date
 	errDate := validate.RegisterValidation("DateValidation", validatorfunc.CheckDateString)
 	if errDate != nil {

@@ -2122,7 +2122,7 @@ func TestListDmo(t *testing.T) {
 	}
 }
 
-func TestListDataDNWithoutDmo(t *testing.T) {
+func TestListDataDNBargeWithoutVessel(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int

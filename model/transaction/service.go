@@ -20,7 +20,9 @@ type Service interface {
 	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) ([]Transaction, error)
 	GetDetailMinerba(id int) (DetailMinerba, error)
 	RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (map[string]interface{}, error)
-	ListDataDNWithoutDmo() (ChooseTransactionDmo, error)
+	ListDataDNBargeWithoutVessel() ([]Transaction, error)
+	ListDataDNBargeWithVessel() ([]Transaction, error)
+	ListDataDNVessel() ([]Transaction, error)
 	CheckDataDnAndDmo(listData []int) ([]Transaction, error)
 	GetDetailDmo(id int) (DetailDmo, error)
 	RequestCreateDmo(reqInput InputRequestCreateUploadDmo) (map[string]interface{}, error)
@@ -109,10 +111,22 @@ func (s *service) RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (m
 	return res, doReqErr
 }
 
-func (s *service) ListDataDNWithoutDmo() (ChooseTransactionDmo, error) {
-	listDataDNWithoutDmo, listDataDNWithoutDmoErr := s.repository.ListDataDNWithoutDmo()
+func (s *service) ListDataDNBargeWithoutVessel() ([]Transaction, error) {
+	listDataDNBargeWithoutVessel, listDataDNBargeWithoutVesselErr := s.repository.ListDataDNBargeWithoutVessel()
 
-	return listDataDNWithoutDmo, listDataDNWithoutDmoErr
+	return listDataDNBargeWithoutVessel, listDataDNBargeWithoutVesselErr
+}
+
+func (s *service) ListDataDNBargeWithVessel() ([]Transaction, error) {
+	listDataDNBargeWithVessel, listDataDNBargeWithVesselErr := s.repository.ListDataDNBargeWithVessel()
+
+	return listDataDNBargeWithVessel, listDataDNBargeWithVesselErr
+}
+
+func (s *service) ListDataDNVessel() ([]Transaction, error) {
+	listDataDNVessel, listDataDNVesselErr := s.repository.ListDataDNVessel()
+
+	return listDataDNVessel, listDataDNVesselErr
 }
 
 func (s *service) CheckDataDnAndDmo(listData []int) ([]Transaction, error) {

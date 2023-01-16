@@ -33,6 +33,21 @@ type InputGroupingVesselLn struct {
 	NavyShipName              string  `json:"navy_ship_name"`
 	NavyImoNumber             string  `json:"navy_imo_number"`
 	Deadweight                float64 `json:"deadweight"`
+	CowDate                   *string `json:"cow_date" validate:"omitempty,DateValidation"`
+	CowNumber                 string  `json:"cow_number"`
+	CoaDate                   *string `json:"coa_date" validate:"omitempty,DateValidation"`
+	CoaNumber                 string  `json:"coa_number"`
+	QualityTmAr               float64 `json:"quality_tm_ar"`
+	QualityImAdb              float64 `json:"quality_im_adb"`
+	QualityAshAr              float64 `json:"quality_ash_ar"`
+	QualityAshAdb             float64 `json:"quality_ash_adb"`
+	QualityVmAdb              float64 `json:"quality_vm_adb"`
+	QualityFcAdb              float64 `json:"quality_fc_adb"`
+	QualityTsAr               float64 `json:"quality_ts_ar"`
+	QualityTsAdb              float64 `json:"quality_ts_adb"`
+	QualityCaloriesAr         float64 `json:"quality_calories_ar"`
+	QualityCaloriesAdb        float64 `json:"quality_calories_adb"`
+	NettQualityCaloriesAr     float64 `json:"nett_quality_calories_ar"`
 	IsCoaFinish               bool    `json:"is_coa_finish"`
 }
 
@@ -68,6 +83,21 @@ type InputEditGroupingVesselLn struct {
 	NavyShipName              string  `json:"navy_ship_name"`
 	NavyImoNumber             string  `json:"navy_imo_number"`
 	Deadweight                float64 `json:"deadweight"`
+	CowDate                   *string `json:"cow_date" validate:"omitempty,DateValidation"`
+	CowNumber                 string  `json:"cow_number"`
+	CoaDate                   *string `json:"coa_date" validate:"omitempty,DateValidation"`
+	CoaNumber                 string  `json:"coa_number"`
+	QualityTmAr               float64 `json:"quality_tm_ar"`
+	QualityImAdb              float64 `json:"quality_im_adb"`
+	QualityAshAr              float64 `json:"quality_ash_ar"`
+	QualityAshAdb             float64 `json:"quality_ash_adb"`
+	QualityVmAdb              float64 `json:"quality_vm_adb"`
+	QualityFcAdb              float64 `json:"quality_fc_adb"`
+	QualityTsAr               float64 `json:"quality_ts_ar"`
+	QualityTsAdb              float64 `json:"quality_ts_adb"`
+	QualityCaloriesAr         float64 `json:"quality_calories_ar"`
+	QualityCaloriesAdb        float64 `json:"quality_calories_adb"`
+	NettQualityCaloriesAr     float64 `json:"nett_quality_calories_ar"`
 	IsCoaFinish               bool    `json:"is_coa_finish"`
 }
 

@@ -2,6 +2,7 @@ package dmovessel
 
 import (
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Repository interface {
@@ -19,7 +20,7 @@ func NewRepository(db *gorm.DB) *repository {
 func (r *repository) GetDataDmoVessel(id uint) ([]DmoVessel, error) {
 	var listDmoVessel []DmoVessel
 
-	errFind := r.db.Where("dmo_id = ?", id).Find(&listDmoVessel).Error
+	errFind := r.db.Preload(clause.Associations).Where("dmo_id = ?", id).Find(&listDmoVessel).Error
 
 	return listDmoVessel, errFind
 }

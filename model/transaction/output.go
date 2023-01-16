@@ -120,3 +120,8 @@ type DetailGroupingVesselLn struct {
 	ListTransactions []Transaction                     `json:"list_transactions"`
 	Detail           groupingvesselln.GroupingVesselLn `json:"detail"`
 }
+
+type ListDataDnForGroupingVessel struct {
+	ListDataDnBargeWithVessel []Transaction `json:"list_data_dn_barge_with_vessel"`
+	ListDataDnVessel          []Transaction `json:"list_data_dn_vessel"`
+}
