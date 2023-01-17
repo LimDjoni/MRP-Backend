@@ -2,13 +2,20 @@ package transaction
 
 import (
 	"ajebackend/model/dmo"
+	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/minerba"
+	"ajebackend/model/minerbaln"
 )
 
 type DetailMinerba struct {
 	Detail minerba.Minerba `json:"detail"`
 	List   []Transaction   `json:"list"`
+}
+
+type DetailMinerbaLn struct {
+	Detail minerbaln.MinerbaLn `json:"detail"`
+	List   []Transaction       `json:"list"`
 }
 
 type DetailDmo struct {
@@ -114,6 +121,11 @@ type ReportRecapOutput struct {
 type ChooseTransactionDmo struct {
 	BargeTransaction  []Transaction `json:"barge_transaction"`
 	VesselTransaction []Transaction `json:"vessel_transaction"`
+}
+
+type DetailGroupingVesselDn struct {
+	ListTransactions []Transaction                     `json:"list_transactions"`
+	Detail           groupingvesseldn.GroupingVesselDn `json:"detail"`
 }
 
 type DetailGroupingVesselLn struct {

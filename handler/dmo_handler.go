@@ -106,47 +106,13 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 			}
 		}
 
-		if len(inputCreateDmo.TransactionVessel) == 0 {
-			for _, vessel := range formPart.Value["transaction_vessel"] {
-				var bargeVesselInt []int
-				errUnmarshal := json.Unmarshal([]byte(vessel), &bargeVesselInt)
+		if len(inputCreateDmo.GroupingVessel) == 0 {
+			for _, vessel := range formPart.Value["grouping_vessel"] {
+				var groupingVesselInt []int
+				errUnmarshal := json.Unmarshal([]byte(vessel), &groupingVesselInt)
 				fmt.Println(errUnmarshal)
-				inputCreateDmo.TransactionVessel = bargeVesselInt
+				inputCreateDmo.GroupingVessel = groupingVesselInt
 			}
-		}
-
-		for _, vesselAdjustment := range formPart.Value["vessel_adjustment"] {
-			var newVesselAdjustmentArray []dmo.VesselAdjustmentInput
-
-			errUnmarshal := json.Unmarshal([]byte(vesselAdjustment), &newVesselAdjustmentArray)
-			fmt.Println(errUnmarshal)
-
-			inputCreateDmo.VesselAdjustment = newVesselAdjustmentArray
-		}
-	}
-
-	if len(inputCreateDmo.VesselAdjustment) == 0 && inputCreateDmo.TransactionVessel[0] != 0 {
-		formPart, errFormPart := c.MultipartForm()
-		if errFormPart != nil {
-			return c.Status(400).JSON(fiber.Map{
-				"error": "please check there is no data vessel adjustment",
-			})
-		}
-		for _, vesselAdjustment := range formPart.Value["vessel_adjustment"] {
-			var adjustReplace = strings.Replace(vesselAdjustment, "},{", "};{", -1)
-			var adjustSplit = strings.Split(adjustReplace, ";")
-
-			var newVesselAdjustmentArray []dmo.VesselAdjustmentInput
-
-			for _, adjustment := range adjustSplit {
-				var adjustmentVessel dmo.VesselAdjustmentInput
-				errUnmarshal := json.Unmarshal([]byte(adjustment), &adjustmentVessel)
-				fmt.Println(errUnmarshal)
-
-				newVesselAdjustmentArray = append(newVesselAdjustmentArray, adjustmentVessel)
-			}
-
-			inputCreateDmo.VesselAdjustment = newVesselAdjustmentArray
 		}
 	}
 
@@ -157,8 +123,9 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
 		inputMap["dmo_period"] = inputCreateDmo.Period
-		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-		inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+		inputMap["transaction_barge"] = inputCreateDmo.TransactionBarge
+		inputMap["grouping_vessel"] = inputCreateDmo.GroupingVessel
+		inputMap["input"] = inputCreateDmo
 		inputJson, _ := json.Marshal(inputMap)
 		messageJson, _ := json.Marshal(map[string]interface{}{
 			"errors": dataErrors,
@@ -177,16 +144,6 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	}
 	header := c.GetReqHeaders()
 
-	for _, valueVessel := range inputCreateDmo.TransactionVessel {
-		for _, valueBarge := range inputCreateDmo.TransactionBarge {
-			if valueVessel == valueBarge {
-				return c.Status(400).JSON(fiber.Map{
-					"error": "please check transaction is in vessel & barge",
-				})
-			}
-		}
-	}
-
 	if len(inputCreateDmo.TransactionBarge) == 1 {
 		if inputCreateDmo.TransactionBarge[0] == 0 {
 			var tempTransactionBarge []int
@@ -194,31 +151,34 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		}
 	}
 
-	if len(inputCreateDmo.TransactionVessel) == 1 {
-		if inputCreateDmo.TransactionVessel[0] == 0 {
-			var tempTransactionVessel []int
-			inputCreateDmo.TransactionVessel = tempTransactionVessel
+	if len(inputCreateDmo.GroupingVessel) == 1 {
+		if inputCreateDmo.GroupingVessel[0] == 0 {
+			var tempGroupingVessel []int
+			inputCreateDmo.GroupingVessel = tempGroupingVessel
 		}
 	}
 
-	if len(inputCreateDmo.TransactionVessel) > 0 && len(inputCreateDmo.VesselAdjustment) == 0 {
+	if len(inputCreateDmo.Trader) == 1 {
+		if inputCreateDmo.Trader[0] == 0 {
+			var tempTrader []int
+			inputCreateDmo.Trader = tempTrader
+		}
+	}
+
+	if len(inputCreateDmo.GroupingVessel) == 0 && len(inputCreateDmo.TransactionBarge) == 0 {
 		return c.Status(400).JSON(fiber.Map{
-			"error": "please check vessel adjustment",
+			"error": "please check there is no grouping vessel and transaction barge",
 		})
 	}
 
-	if len(inputCreateDmo.TransactionVessel) == 0 && len(inputCreateDmo.TransactionBarge) == 0 {
-		return c.Status(400).JSON(fiber.Map{
-			"error": "please check there is no transaction vessel and transaction barge",
-		})
-	}
+	if len(inputCreateDmo.Trader) > 0 {
+		_, checkListTraderErr := h.traderService.CheckListTrader(inputCreateDmo.Trader)
 
-	_, checkListTraderErr := h.traderService.CheckListTrader(inputCreateDmo.Trader)
-
-	if checkListTraderErr != nil {
-		return c.Status(404).JSON(fiber.Map{
-			"error": "trader " + checkListTraderErr.Error(),
-		})
+		if checkListTraderErr != nil {
+			return c.Status(404).JSON(fiber.Map{
+				"error": "trader " + checkListTraderErr.Error(),
+			})
+		}
 	}
 
 	_, checkEndUserErr := h.traderService.CheckEndUser(inputCreateDmo.EndUser)
@@ -239,7 +199,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 			inputMap["user_id"] = claims["id"]
 			inputMap["dmo_period"] = inputCreateDmo.Period
 			inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-			inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+			inputMap["list_dn_vessel"] = inputCreateDmo.GroupingVessel
 			inputMap["input"] = inputCreateDmo
 
 			inputJson, _ := json.Marshal(inputMap)
@@ -270,15 +230,15 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		}
 	}
 
-	if len(inputCreateDmo.TransactionVessel) > 0 {
-		checkDmoVessel, checkDmoVesselErr := h.transactionService.CheckDataDnAndDmo(inputCreateDmo.TransactionVessel)
+	if len(inputCreateDmo.GroupingVessel) > 0 {
+		checkDmoVessel, checkDmoVesselErr := h.transactionService.CheckDataDnAndDmo(inputCreateDmo.GroupingVessel)
 
 		if checkDmoVesselErr != nil {
 			inputMap := make(map[string]interface{})
 			inputMap["user_id"] = claims["id"]
 			inputMap["dmo_period"] = inputCreateDmo.Period
 			inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-			inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+			inputMap["list_dn_vessel"] = inputCreateDmo.GroupingVessel
 			inputMap["input"] = inputCreateDmo
 			inputJson, _ := json.Marshal(inputMap)
 			messageJson, _ := json.Marshal(map[string]interface{}{
@@ -318,7 +278,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["dmo_period"] = inputCreateDmo.Period
 		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-		inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+		inputMap["list_dn_vessel"] = inputCreateDmo.GroupingVessel
 		inputMap["input"] = inputCreateDmo
 		inputJson, _ := json.Marshal(inputMap)
 		messageJson, _ := json.Marshal(map[string]interface{}{
@@ -344,7 +304,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["dmo_period"] = inputCreateDmo.Period
 		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-		inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+		inputMap["list_dn_vessel"] = inputCreateDmo.GroupingVessel
 		inputMap["input"] = inputCreateDmo
 		inputJson, _ := json.Marshal(inputMap)
 		messageJson, _ := json.Marshal(map[string]interface{}{
@@ -371,7 +331,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["dmo_period"] = inputCreateDmo.Period
 		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-		inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+		inputMap["list_dn_vessel"] = inputCreateDmo.GroupingVessel
 		inputMap["input"] = inputCreateDmo
 		inputJson, _ := json.Marshal(inputMap)
 		messageJson, _ := json.Marshal(map[string]interface{}{
@@ -409,7 +369,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 			inputMap["user_id"] = claims["id"]
 			inputMap["dmo_period"] = inputCreateDmo.Period
 			inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-			inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+			inputMap["list_dn_vessel"] = inputCreateDmo.GroupingVessel
 			inputMap["input"] = inputCreateDmo
 			inputMap["input_job"] = reqInputCreateUploadDmo
 			inputJson, _ := json.Marshal(inputMap)

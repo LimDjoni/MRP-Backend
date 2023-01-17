@@ -49,6 +49,9 @@ type InputGroupingVesselLn struct {
 	QualityCaloriesAdb        float64 `json:"quality_calories_adb"`
 	NettQualityCaloriesAr     float64 `json:"nett_quality_calories_ar"`
 	IsCoaFinish               bool    `json:"is_coa_finish"`
+	BlDate                    *string `json:"bl_date" validate:"omitempty,DateValidation"`
+	BlNumber                  string  `json:"bl_number"`
+	UnloadingPortLocation     string  `json:"unloading_port_location"`
 }
 
 type InputEditGroupingVesselLn struct {
@@ -99,6 +102,9 @@ type InputEditGroupingVesselLn struct {
 	QualityCaloriesAdb        float64 `json:"quality_calories_adb"`
 	NettQualityCaloriesAr     float64 `json:"nett_quality_calories_ar"`
 	IsCoaFinish               bool    `json:"is_coa_finish"`
+	BlDate                    *string `json:"bl_date" validate:"omitempty,DateValidation"`
+	BlNumber                  string  `json:"bl_number"`
+	UnloadingPortLocation     string  `json:"unloading_port_location"`
 }
 
 type SortFilterGroupingVesselLn struct {

@@ -9,6 +9,9 @@ import (
 type GroupingVesselLn struct {
 	gorm.Model
 	IdNumber                  *string    `json:"id_number" gorm:"UNIQUE"`
+	BlDate                    *string    `json:"bl_date" gorm:"type:DATE"`
+	BlNumber                  string     `json:"bl_number"`
+	UnloadingPortLocation     string     `json:"unloading_port_location"`
 	VesselName                string     `json:"vessel_name"`
 	Quantity                  float64    `json:"quantity"`
 	Adjustment                float64    `json:"adjustment"`

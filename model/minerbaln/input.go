@@ -10,7 +10,7 @@ type InputUpdateMinerbaLn struct {
 }
 
 type InputUpdateDocumentMinerbaLn struct {
-	Data map[string]interface{} `json:"data"`
+	Data []map[string]interface{} `json:"data"`
 }
 
 type FilterAndSortMinerbaLn struct {

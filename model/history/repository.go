@@ -53,6 +53,8 @@ type Repository interface {
 	DeleteGroupingVesselLn(id int, userId uint) (bool, error)
 	CreateMinerbaLn(period string, baseIdNumber string, listTransactions []int, userId uint) (minerbaln.MinerbaLn, error)
 	UpdateMinerbaLn(id int, listTransactions []int, userId uint) (minerbaln.MinerbaLn, error)
+	DeleteMinerbaLn(idMinerbaLn int, userId uint) (bool, error)
+	UpdateDocumentMinerbaLn(id int, documentLink minerbaln.InputUpdateDocumentMinerbaLn, userId uint) (minerbaln.MinerbaLn, error)
 }
 
 type repository struct {
@@ -991,18 +993,6 @@ func (r *repository) UpdateDocumentMinerba(id int, documentLink minerba.InputUpd
 			if strings.Contains(value["Location"].(string), "sp3medn") {
 				editData["sp3_medn_document_link"] = value["Location"]
 			}
-			if strings.Contains(value["Location"].(string), "recapdmo") {
-				editData["recap_dmo_document_link"] = value["Location"]
-			}
-			if strings.Contains(value["Location"].(string), "detaildmo") {
-				editData["detail_dmo_document_link"] = value["Location"]
-			}
-			if strings.Contains(value["Location"].(string), "sp3meln") {
-				editData["sp3_meln_document_link"] = value["Location"]
-			}
-			if strings.Contains(value["Location"].(string), "inswexport") {
-				editData["insw_export_document_link"] = value["Location"]
-			}
 		}
 	}
 
@@ -1038,7 +1028,7 @@ func (r *repository) UpdateDocumentMinerba(id int, documentLink minerba.InputUpd
 func (r *repository) CreateDmo(dmoInput dmo.CreateDmoInput, baseIdNumber string, userId uint) (dmo.Dmo, error) {
 	var createdDmo dmo.Dmo
 	var transactionBarge []transaction.Transaction
-	var transactionVessel []transaction.Transaction
+	var groupingVessel []groupingvesseldn.GroupingVesselDn
 
 	barge := false
 	vessel := false
@@ -1050,53 +1040,66 @@ func (r *repository) CreateDmo(dmoInput dmo.CreateDmoInput, baseIdNumber string,
 	if len(dmoInput.TransactionBarge) > 0 {
 		var bargeQuantity float64
 		barge = true
-		findTransactionBargeErr := tx.Where("id IN ?", dmoInput.TransactionBarge).Find(&transactionBarge).Error
+		findTransactionBargeErr := tx.Where("id IN ? AND dmo_id IS NULL", dmoInput.TransactionBarge).Find(&transactionBarge).Error
 
 		if findTransactionBargeErr != nil {
+			tx.Rollback()
 			return createdDmo, findTransactionBargeErr
+		}
+
+		if len(transactionBarge) != len(dmoInput.TransactionBarge) {
+			tx.Rollback()
+			return createdDmo, errors.New("Ada transaksi yang sudah digunakan")
 		}
 
 		for _, v := range transactionBarge {
 			bargeQuantity += v.Quantity
 		}
 
-		stringBargeQuantity := fmt.Sprintf("%.3f", bargeQuantity)
-		parseBargeQuantity, _ := strconv.ParseFloat(stringBargeQuantity, 64)
-
-		createdDmo.BargeTotalQuantity = parseBargeQuantity
-		createdDmo.BargeGrandTotalQuantity = parseBargeQuantity
+		createdDmo.BargeTotalQuantity = bargeQuantity
+		createdDmo.BargeGrandTotalQuantity = bargeQuantity
 	}
 
-	if len(dmoInput.TransactionVessel) > 0 {
+	if len(dmoInput.GroupingVessel) > 0 {
 		var vesselQuantity float64
 		var vesselAdjustment float64
+		var vesselGrandTotalQuantity float64
 		vessel = true
-		findTransactionVesselErr := tx.Where("id IN ?", dmoInput.TransactionVessel).Find(&transactionVessel).Error
+		var checkDmoGrouping []dmovessel.DmoVessel
 
-		if findTransactionVesselErr != nil {
-			return createdDmo, findTransactionVesselErr
+		findCheckDmoGroupingErr := tx.Where("grouping_vessel_dn_id IN ?", dmoInput.GroupingVessel).Find(&checkDmoGrouping).Error
+
+		if findCheckDmoGroupingErr != nil {
+			tx.Rollback()
+			return createdDmo, findCheckDmoGroupingErr
 		}
 
-		for _, v := range transactionVessel {
+		if len(checkDmoGrouping) > 0 {
+			tx.Rollback()
+			return createdDmo, errors.New("Ada grouping vessel yang sudah digunakan")
+		}
+
+		findGroupingVesselErr := tx.Where("id IN ?", dmoInput.GroupingVessel).Find(&groupingVessel).Error
+
+		if findGroupingVesselErr != nil {
+			tx.Rollback()
+			return createdDmo, findGroupingVesselErr
+		}
+
+		for _, v := range groupingVessel {
 			vesselQuantity += v.Quantity
-		}
-
-		for _, v := range dmoInput.VesselAdjustment {
 			vesselAdjustment += v.Adjustment
+			vesselGrandTotalQuantity += v.GrandTotalQuantity
 		}
 
-		stringVesselAdjustment := fmt.Sprintf("%.3f", vesselAdjustment)
-		parseVesselAdjustment, _ := strconv.ParseFloat(stringVesselAdjustment, 64)
+		createdDmo.VesselAdjustment = vesselAdjustment
+		createdDmo.VesselTotalQuantity = vesselQuantity
+		createdDmo.VesselGrandTotalQuantity = vesselGrandTotalQuantity
+	}
 
-		stringVesselTotalQuantity := fmt.Sprintf("%.3f", vesselQuantity)
-		parseVesselTotalQuantity, _ := strconv.ParseFloat(stringVesselTotalQuantity, 64)
-
-		stringVesselGrandTotalQuantity := fmt.Sprintf("%.3f", vesselQuantity+vesselAdjustment)
-		parseVesselGrandTotalQuantity, _ := strconv.ParseFloat(stringVesselGrandTotalQuantity, 64)
-
-		createdDmo.VesselAdjustment = parseVesselAdjustment
-		createdDmo.VesselTotalQuantity = parseVesselTotalQuantity
-		createdDmo.VesselGrandTotalQuantity = parseVesselGrandTotalQuantity
+	if len(transactionBarge) != len(dmoInput.TransactionBarge) && len(groupingVessel) != len(dmoInput.GroupingVessel) {
+		tx.Rollback()
+		return createdDmo, errors.New("please check some of transactions not found")
 	}
 
 	if barge && vessel {
@@ -1133,13 +1136,6 @@ func (r *repository) CreateDmo(dmoInput dmo.CreateDmoInput, baseIdNumber string,
 	}
 
 	if len(dmoInput.TransactionBarge) > 0 {
-		findTransactionsBargeErr := tx.Where("id IN ?", dmoInput.TransactionBarge).Find(&transactionBarge).Error
-
-		if findTransactionsBargeErr != nil {
-			tx.Rollback()
-			return createdDmo, findTransactionsBargeErr
-		}
-
 		updateTransactionBargeErr := tx.Table("transactions").Where("id IN ?", dmoInput.TransactionBarge).Update("dmo_id", createdDmo.ID).Error
 
 		if updateTransactionBargeErr != nil {
@@ -1148,45 +1144,38 @@ func (r *repository) CreateDmo(dmoInput dmo.CreateDmoInput, baseIdNumber string,
 		}
 	}
 
-	if len(dmoInput.TransactionVessel) > 0 {
-		findTransactionsVesselErr := tx.Where("id IN ?", dmoInput.TransactionVessel).Find(&transactionVessel).Error
+	if len(dmoInput.GroupingVessel) > 0 {
+		var transactionGroupVessel []transaction.Transaction
 
-		if findTransactionsVesselErr != nil {
+		var listIdTransactionGroupVessel []uint
+		findTransactionGroupVesselErr := tx.Where("group_vessel_dn_id IN ? AND dmo_id IS NULL", dmoInput.GroupingVessel).Find(&transactionGroupVessel).Error
+
+		if findTransactionGroupVesselErr != nil {
 			tx.Rollback()
-			return createdDmo, findTransactionsVesselErr
+			return createdDmo, findTransactionGroupVesselErr
 		}
 
-		updateTransactionVesselErr := tx.Table("transactions").Where("id IN ?", dmoInput.TransactionVessel).Update("dmo_id", createdDmo.ID).Error
+		for _, v := range transactionGroupVessel {
+			listIdTransactionGroupVessel = append(listIdTransactionGroupVessel, v.ID)
+		}
 
-		if updateTransactionVesselErr != nil {
+		updateTransactionGroupVesselErr := tx.Table("transactions").Where("id IN ?", listIdTransactionGroupVessel).Update("dmo_id", createdDmo.ID).Error
+
+		if updateTransactionGroupVesselErr != nil {
 			tx.Rollback()
-			return createdDmo, updateTransactionVesselErr
+			return createdDmo, updateTransactionGroupVesselErr
 		}
 
 		var dmoVessels []dmovessel.DmoVessel
 
-		if len(dmoInput.VesselAdjustment) > 0 {
-			for _, value := range dmoInput.VesselAdjustment {
-				var vesselDummy dmovessel.DmoVessel
+		if len(dmoInput.GroupingVessel) > 0 {
 
-				stringAdjustment := fmt.Sprintf("%.3f", value.Adjustment)
-				parseAdjustment, _ := strconv.ParseFloat(stringAdjustment, 64)
-
-				stringQuantity := fmt.Sprintf("%.3f", value.Quantity)
-				parseQuantity, _ := strconv.ParseFloat(stringQuantity, 64)
-
-				stringGrandTotalQuantity := fmt.Sprintf("%.3f", value.Quantity+value.Adjustment)
-				parseGrandTotalQuantity, _ := strconv.ParseFloat(stringGrandTotalQuantity, 64)
-
-				vesselDummy.VesselName = value.VesselName
-				vesselDummy.Adjustment = parseAdjustment
-				vesselDummy.Quantity = parseQuantity
-				vesselDummy.DmoId = createdDmo.ID
-				vesselDummy.GrandTotalQuantity = parseGrandTotalQuantity
-				vesselDummy.BlDate = value.BlDate
-				dmoVessels = append(dmoVessels, vesselDummy)
+			for _, v := range dmoInput.GroupingVessel {
+				var dmoVesselDummy dmovessel.DmoVessel
+				dmoVesselDummy.DmoId = createdDmo.ID
+				dmoVesselDummy.GroupingVesselDnId = uint(v)
+				dmoVessels = append(dmoVessels, dmoVesselDummy)
 			}
-
 			createDmoVesselsErr := tx.Create(&dmoVessels).Error
 
 			if createDmoVesselsErr != nil {
@@ -1194,11 +1183,6 @@ func (r *repository) CreateDmo(dmoInput dmo.CreateDmoInput, baseIdNumber string,
 				return createdDmo, createDmoVesselsErr
 			}
 		}
-	}
-
-	if len(transactionBarge) != len(dmoInput.TransactionBarge) && len(transactionVessel) != len(dmoInput.TransactionVessel) {
-		tx.Rollback()
-		return createdDmo, errors.New("please check some of transactions not found")
 	}
 
 	var traderDmo []traderdmo.TraderDmo
@@ -1309,6 +1293,12 @@ func (r *repository) UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocum
 			}
 			if strings.Contains(value["Location"].(string), "berita_acara_pengguna_akhir") {
 				editData["reconciliation_letter_end_user_document_link"] = value["Location"]
+			}
+			if strings.Contains(value["Location"].(string), "recapdmo") {
+				editData["recap_dmo_document_link"] = value["Location"]
+			}
+			if strings.Contains(value["Location"].(string), "detaildmo") {
+				editData["detail_dmo_document_link"] = value["Location"]
 			}
 		}
 	}
@@ -1719,7 +1709,7 @@ func (r *repository) CreateGroupingVesselDN(inputGrouping groupingvesseldn.Input
 	createdGroupingVesselDn.QualityTsAdb = inputGrouping.QualityTsAdb
 	createdGroupingVesselDn.QualityCaloriesAr = inputGrouping.QualityCaloriesAr
 	createdGroupingVesselDn.QualityCaloriesAdb = inputGrouping.QualityCaloriesAdb
-
+	createdGroupingVesselDn.BlNumber = strings.ToUpper(inputGrouping.BlNumber)
 	errCreatedGroupingVesselDn := tx.Create(&createdGroupingVesselDn).Error
 
 	if errCreatedGroupingVesselDn != nil {
@@ -1807,6 +1797,7 @@ func (r *repository) EditGroupingVesselDn(id int, editGrouping groupingvesseldn.
 
 	editGrouping.CowNumber = strings.ToUpper(editGrouping.CowNumber)
 	editGrouping.CoaNumber = strings.ToUpper(editGrouping.CoaNumber)
+	editGrouping.BlNumber = strings.ToUpper(editGrouping.BlNumber)
 	editGroupingVesselDn, errorMarshal := json.Marshal(editGrouping)
 
 	if errorMarshal != nil {
@@ -2014,6 +2005,9 @@ func (r *repository) CreateGroupingVesselLN(inputGrouping groupingvesselln.Input
 	createdGroupingVesselLn.QualityCaloriesAr = inputGrouping.QualityCaloriesAr
 	createdGroupingVesselLn.QualityCaloriesAdb = inputGrouping.QualityCaloriesAdb
 	createdGroupingVesselLn.NettQualityCaloriesAr = inputGrouping.NettQualityCaloriesAr
+	createdGroupingVesselLn.BlDate = inputGrouping.BlDate
+	createdGroupingVesselLn.BlNumber = strings.ToUpper(inputGrouping.BlNumber)
+	createdGroupingVesselLn.UnloadingPortLocation = inputGrouping.UnloadingPortLocation
 
 	errCreatedGroupingVesselLn := tx.Create(&createdGroupingVesselLn).Error
 
@@ -2108,6 +2102,7 @@ func (r *repository) EditGroupingVesselLn(id int, editGrouping groupingvesselln.
 	editGrouping.NavyImoNumber = strings.ToUpper(editGrouping.NavyImoNumber)
 	editGrouping.CowNumber = strings.ToUpper(editGrouping.CowNumber)
 	editGrouping.CoaNumber = strings.ToUpper(editGrouping.CoaNumber)
+	editGrouping.BlNumber = strings.ToUpper(editGrouping.BlNumber)
 	editGroupingVesselLn, errorMarshal := json.Marshal(editGrouping)
 
 	if errorMarshal != nil {
@@ -2443,4 +2438,87 @@ func (r *repository) UpdateMinerbaLn(id int, listTransactions []int, userId uint
 
 	tx.Commit()
 	return updatedMinerbaLn, nil
+}
+
+func (r *repository) DeleteMinerbaLn(idMinerbaLn int, userId uint) (bool, error) {
+
+	tx := r.db.Begin()
+	var minerbaLn minerbaln.MinerbaLn
+
+	findMinerbaLnErr := tx.Where("id = ?", idMinerbaLn).First(&minerbaLn).Error
+
+	if findMinerbaLnErr != nil {
+		tx.Rollback()
+		return false, findMinerbaLnErr
+	}
+
+	errDelete := tx.Unscoped().Where("id = ?", idMinerbaLn).Delete(&minerbaLn).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+		return false, errDelete
+	}
+
+	var history History
+
+	history.Status = fmt.Sprintf("Deleted Minerba LN Report with id number %s and id %v", *minerbaLn.IdNumber, minerbaLn.ID)
+	history.UserId = userId
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return false, createHistoryErr
+	}
+
+	tx.Commit()
+	return true, nil
+}
+
+func (r *repository) UpdateDocumentMinerbaLn(id int, documentLink minerbaln.InputUpdateDocumentMinerbaLn, userId uint) (minerbaln.MinerbaLn, error) {
+	tx := r.db.Begin()
+	var minerbaLn minerbaln.MinerbaLn
+
+	errFind := tx.Where("id = ?", id).First(&minerbaLn).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return minerbaLn, errFind
+	}
+
+	editData := make(map[string]interface{})
+
+	for _, value := range documentLink.Data {
+		if value["Location"] != nil {
+			if strings.Contains(value["Location"].(string), "sp3meln") {
+				editData["sp3_meln_document_link"] = value["Location"]
+			}
+		}
+	}
+
+	errEdit := tx.Model(&minerbaLn).Updates(editData).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return minerbaLn, errEdit
+	}
+
+	var history History
+
+	history.MinerbaLnId = &minerbaLn.ID
+	history.UserId = userId
+	history.Status = fmt.Sprintf("Update upload document minerba ln with id = %v", minerbaLn.ID)
+
+	dataInput, _ := json.Marshal(documentLink)
+	history.AfterData = dataInput
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return minerbaLn, createHistoryErr
+	}
+
+	tx.Commit()
+	return minerbaLn, nil
 }

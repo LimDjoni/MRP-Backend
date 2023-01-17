@@ -2,6 +2,7 @@ package groupingvesseldn
 
 type InputGroupingVesselDn struct {
 	ListTransactions      []uint   `json:"list_transactions" validate:"required,min=1"`
+	BlNumber              string   `json:"bl_number"`
 	VesselName            string   `json:"vessel_name" validate:"required"`
 	Quantity              float64  `json:"quantity"`
 	Adjustment            float64  `json:"adjustment"`
@@ -31,6 +32,7 @@ type InputGroupingVesselDn struct {
 
 type InputEditGroupingVesselDn struct {
 	VesselName            string   `json:"vessel_name" validate:"required"`
+	BlNumber              string   `json:"bl_number"`
 	Quantity              float64  `json:"quantity"`
 	Adjustment            float64  `json:"adjustment"`
 	GrandTotalQuantity    float64  `json:"grand_total_quantity"`

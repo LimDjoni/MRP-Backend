@@ -2,8 +2,10 @@ package transaction
 
 import (
 	"ajebackend/model/dmo"
+	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/minerba"
+	"ajebackend/model/minerbaln"
 	"ajebackend/model/production"
 	"errors"
 	"fmt"
@@ -38,9 +40,13 @@ type Repository interface {
 	GetDetailDmo(id int) (DetailDmo, error)
 	CheckDataUnique(inputTrans DataTransactionInput) (bool, bool, bool, bool)
 	GetReport(year int) (ReportRecapOutput, ReportDetailOutput, error)
+	GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, error)
 	GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, error)
 	ListDataLnWithoutGroup() ([]Transaction, error)
 	ListDataLNWithoutMinerba() ([]Transaction, error)
+	GetDetailMinerbaLn(id int) (DetailMinerbaLn, error)
+	CheckDataLnAndMinerbaLnUpdate(listData []int, idMinerba int) ([]Transaction, error)
+	CheckDataLnAndMinerbaLn(listData []int) (bool, error)
 }
 
 type repository struct {
@@ -863,6 +869,33 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 	return reportRecap, reportDetail, nil
 }
 
+// Grouping Vessel Dn
+func (r *repository) GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, error) {
+
+	var detailGroupingVesselDn DetailGroupingVesselDn
+
+	var groupingVesselDn groupingvesseldn.GroupingVesselDn
+	var transactions []Transaction
+
+	findGroupingVesselDnErr := r.db.Where("id = ?", id).First(&groupingVesselDn).Error
+
+	if findGroupingVesselDnErr != nil {
+		return detailGroupingVesselDn, findGroupingVesselDnErr
+	}
+
+	detailGroupingVesselDn.Detail = groupingVesselDn
+
+	transactionFindErr := r.db.Order("id desc").Where("grouping_vessel_dn_id = ?", id).Find(&transactions).Error
+
+	if transactionFindErr != nil {
+		return detailGroupingVesselDn, transactionFindErr
+	}
+
+	detailGroupingVesselDn.ListTransactions = transactions
+
+	return detailGroupingVesselDn, nil
+}
+
 // Grouping Vessel Ln
 func (r *repository) GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, error) {
 
@@ -910,4 +943,89 @@ func (r *repository) ListDataLNWithoutMinerba() ([]Transaction, error) {
 	errFind := r.db.Order("id desc").Where("minerba_ln_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND is_finance_check = ?", "LN", false, false, true).Find(&listDataLnWithoutMinerba).Error
 
 	return listDataLnWithoutMinerba, errFind
+}
+
+func (r *repository) GetDetailMinerbaLn(id int) (DetailMinerbaLn, error) {
+
+	var detailMinerbaLn DetailMinerbaLn
+
+	var minerbaLn minerbaln.MinerbaLn
+	var transactions []Transaction
+
+	minerbaLnFindErr := r.db.Where("id = ?", id).First(&minerbaLn).Error
+
+	if minerbaLnFindErr != nil {
+		return detailMinerbaLn, minerbaLnFindErr
+	}
+
+	detailMinerbaLn.Detail = minerbaLn
+
+	transactionFindErr := r.db.Order("id desc").Where("minerba_id = ?", id).Find(&transactions).Error
+
+	if transactionFindErr != nil {
+		return detailMinerbaLn, transactionFindErr
+	}
+
+	detailMinerbaLn.List = transactions
+	return detailMinerbaLn, nil
+}
+
+func (r *repository) CheckDataLnAndMinerbaLnUpdate(listData []int, idMinerba int) ([]Transaction, error) {
+	var listLnValid []Transaction
+
+	errFindValid := r.db.Where("id IN ?", listData).Find(&listLnValid).Error
+
+	if errFindValid != nil {
+		return listLnValid, errFindValid
+	}
+
+	if len(listData) != len(listLnValid) {
+		return listLnValid, errors.New("please check there is transaction not found")
+	}
+
+	var listLn []Transaction
+
+	errFind := r.db.Where("id IN ?", listData).Find(&listLn).Error
+
+	if errFind != nil {
+		return listLn, errFind
+	}
+
+	uintIdMinerba := uint(idMinerba)
+
+	for _, v := range listLn {
+		if v.MinerbaId != nil && *v.MinerbaId != uintIdMinerba {
+			return listLn, errors.New("please check there is transaction already in report")
+		}
+	}
+
+	return listLn, nil
+}
+
+func (r *repository) CheckDataLnAndMinerbaLn(listData []int) (bool, error) {
+	var listLnValid []Transaction
+
+	errFindValid := r.db.Where("id IN ?", listData).Find(&listLnValid).Error
+
+	if errFindValid != nil {
+		return false, errFindValid
+	}
+
+	if len(listData) != len(listLnValid) {
+		return false, errors.New("please check there is transaction not found")
+	}
+
+	var listLn []Transaction
+
+	errFind := r.db.Where("minerba_ln_id is NULL AND id IN ?", listData).Find(&listLn).Error
+
+	if errFind != nil {
+		return false, errFind
+	}
+
+	if len(listLn) != len(listData) {
+		return false, errors.New("please check there is transaction already in report")
+	}
+
+	return true, nil
 }

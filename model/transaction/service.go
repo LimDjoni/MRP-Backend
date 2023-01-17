@@ -28,7 +28,12 @@ type Service interface {
 	RequestCreateDmo(reqInput InputRequestCreateUploadDmo) (map[string]interface{}, error)
 	RequestCreateCustomDmo(dataDmo dmo.Dmo, traderEndUser trader.Trader, reconciliationLetter *multipart.FileHeader, authorization string) (map[string]interface{}, error)
 	GetReport(year int) (ReportRecapOutput, ReportDetailOutput, error)
+	GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, error)
 	GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, error)
+	GetDetailMinerbaLn(id int) (DetailMinerbaLn, error)
+	ListDataLNWithoutMinerba() ([]Transaction, error)
+	CheckDataLnAndMinerbaLnUpdate(listData []int, idMinerba int) ([]Transaction, error)
+	CheckDataLnAndMinerbaLn(listData []int) (bool, error)
 }
 
 type service struct {
@@ -223,8 +228,38 @@ func (s *service) GetReport(year int) (ReportRecapOutput, ReportDetailOutput, er
 	return reportRecap, reportDetail, reportErr
 }
 
+func (s *service) GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, error) {
+	detailGroupingVesselDn, detailGroupingVesselDnErr := s.repository.GetDetailGroupingVesselDn(id)
+
+	return detailGroupingVesselDn, detailGroupingVesselDnErr
+}
+
 func (s *service) GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, error) {
 	detailGroupingVesselLn, detailGroupingVesselLnErr := s.repository.GetDetailGroupingVesselLn(id)
 
 	return detailGroupingVesselLn, detailGroupingVesselLnErr
+}
+
+func (s *service) GetDetailMinerbaLn(id int) (DetailMinerbaLn, error) {
+	detailMinerbaLn, detailMinerbaLnErr := s.repository.GetDetailMinerbaLn(id)
+
+	return detailMinerbaLn, detailMinerbaLnErr
+}
+
+func (s *service) ListDataLNWithoutMinerba() ([]Transaction, error) {
+	listDataLNWithoutMinerba, listDataLNWithoutMinerbaErr := s.repository.ListDataLNWithoutMinerba()
+
+	return listDataLNWithoutMinerba, listDataLNWithoutMinerbaErr
+}
+
+func (s *service) CheckDataLnAndMinerbaLnUpdate(listData []int, idMinerba int) ([]Transaction, error) {
+	checkData, checkDataErr := s.repository.CheckDataLnAndMinerbaLnUpdate(listData, idMinerba)
+
+	return checkData, checkDataErr
+}
+
+func (s *service) CheckDataLnAndMinerbaLn(listData []int) (bool, error) {
+	checkData, checkDataErr := s.repository.CheckDataLnAndMinerbaLn(listData)
+
+	return checkData, checkDataErr
 }

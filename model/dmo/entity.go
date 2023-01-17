@@ -33,4 +33,6 @@ type Dmo struct {
 	IsReconciliationLetterEndUserDownloaded       bool    `json:"is_reconciliation_letter_end_user_downloaded"`
 	IsReconciliationLetterEndUserSigned           bool    `json:"is_reconciliation_letter_end_user_signed"`
 	SignedReconciliationLetterEndUserDocumentLink *string `json:"signed_reconciliation_letter_end_user_document_link"`
+	RecapDmoDocumentLink                          *string `json:"recap_dmo_document_link"`
+	DetailDmoDocumentLink                         *string `json:"detail_dmo_document_link"`
 }

@@ -10,6 +10,7 @@ type GroupingVesselDn struct {
 	gorm.Model
 	IdNumber              *string                 `json:"id_number" gorm:"UNIQUE"`
 	BlDate                *string                 `json:"bl_date" gorm:"type:DATE"`
+	BlNumber              string                  `json:"bl_number"`
 	SalesSystem           string                  `json:"sales_system"`
 	VesselName            string                  `json:"vessel_name"`
 	Quantity              float64                 `json:"quantity"`
