@@ -90,7 +90,37 @@ func (s *service) RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (m
 	var res map[string]interface{}
 	baseURL := helper.GetEnvWithKey("BASE_JOB_URL")
 
-	urlPost := baseURL + "/create/minerba"
+	urlPost := baseURL + "/create/minerba/dn"
+	body, bodyErr := json.Marshal(reqInput)
+
+	if bodyErr != nil {
+		return res, bodyErr
+	}
+	var payload = bytes.NewBufferString(string(body))
+
+	req, doReqErr := http.NewRequest("POST", urlPost, payload)
+
+	if req != nil {
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+	}
+	client := &http.Client{}
+	resp, doReqErr := client.Do(req)
+
+	if doReqErr != nil {
+		return res, doReqErr
+	}
+
+	json.NewDecoder(resp.Body).Decode(&res)
+
+	return res, doReqErr
+}
+
+func (s *service) RequestCreateExcelLn(reqInput InputRequestCreateExcelMinerba) (map[string]interface{}, error) {
+	var res map[string]interface{}
+	baseURL := helper.GetEnvWithKey("BASE_JOB_URL")
+
+	urlPost := baseURL + "/create/minerba/ln"
 	body, bodyErr := json.Marshal(reqInput)
 
 	if bodyErr != nil {

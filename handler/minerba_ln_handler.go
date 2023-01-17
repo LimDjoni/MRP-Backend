@@ -768,3 +768,63 @@ func (h *minerbaLnHandler) UpdateDocumentMinerbaLn(c *fiber.Ctx) error {
 
 	return c.Status(200).JSON(updateMinerbaLn)
 }
+
+func (h *minerbaLnHandler) RequestCreateExcelMinerbaLn(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	id := c.Params("id")
+
+	idInt, err := strconv.Atoi(id)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "record not found",
+		})
+	}
+
+	header := c.GetReqHeaders()
+
+	detailMinerbaLn, detailMinerbaLnErr := h.transactionService.GetDetailMinerbaLn(idInt)
+
+	if detailMinerbaLnErr != nil {
+		status := 400
+
+		if detailMinerbaLnErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"error": detailMinerbaLnErr.Error(),
+		})
+	}
+
+	var inputRequestCreateExcel transaction.InputRequestCreateExcelMinerba
+	inputRequestCreateExcel.Authorization = header["Authorization"]
+	inputRequestCreateExcel.MinerbaId = idInt
+	inputRequestCreateExcel.MinerbaNumber = *detailMinerbaLn.Detail.IdNumber
+	inputRequestCreateExcel.MinerbaPeriod = detailMinerbaLn.Detail.Period
+	inputRequestCreateExcel.Transactions = detailMinerbaLn.List
+
+	hitJob, hitJobErr := h.transactionService.RequestCreateExcelLn(inputRequestCreateExcel)
+
+	if hitJobErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": hitJobErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(hitJob)
+}
