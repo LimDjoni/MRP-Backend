@@ -96,6 +96,7 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 	} else {
 		createdTransaction.Seller = inputTransactionDN.Seller
 	}
+	createdTransaction.DestinationCountry = inputTransactionDN.DestinationCountry
 	createdTransaction.ShippingDate = inputTransactionDN.ShippingDate
 	createdTransaction.Quantity = inputTransactionDN.Quantity
 	createdTransaction.TugboatName = inputTransactionDN.TugboatName
@@ -470,6 +471,7 @@ func (r *repository) CreateTransactionLN(inputTransactionLN transaction.DataTran
 	} else {
 		createdTransactionLn.Seller = inputTransactionLN.Seller
 	}
+	createdTransactionLn.DestinationCountry = inputTransactionLN.DestinationCountry
 	createdTransactionLn.ShippingDate = inputTransactionLN.ShippingDate
 	createdTransactionLn.Quantity = inputTransactionLN.Quantity
 	createdTransactionLn.TugboatName = inputTransactionLN.TugboatName
@@ -624,6 +626,7 @@ func (r *repository) UpdateTransactionLN(id int, inputTransactionLN transaction.
 	} else {
 		updateTransaction.Seller = inputTransactionLN.Seller
 	}
+	updateTransaction.DestinationCountry = inputTransactionLN.DestinationCountry
 	updateTransaction.ShippingDate = inputTransactionLN.ShippingDate
 	updateTransaction.Quantity = inputTransactionLN.Quantity
 	updateTransaction.TugboatName = inputTransactionLN.TugboatName

@@ -93,6 +93,7 @@ type Transaction struct {
 	IsFinanceCheck                 bool                               `json:"is_finance_check"`
 	IsCoaFinish                    bool                               `json:"is_coa_finish"`
 	IsRoyaltyFinalFinish           bool                               `json:"is_royalty_final_finish"`
+	DestinationCountry             string                             `json:"destination_country"`
 	MinerbaLnId                    *uint                              `json:"minerba_ln_id"`
 	MinerbaLn                      *minerbaln.MinerbaLn               `json:"minerba_ln" gorm:"constraint:OnDelete:SET NULL;"`
 	GroupingVesselLnId             *uint                              `json:"grouping_vessel_ln_id"`

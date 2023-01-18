@@ -73,6 +73,7 @@ type DataTransactionInput struct {
 	IsRoyaltyFinalFinish        bool    `json:"is_royalty_final_finish"`
 	DestinationName             string  `json:"destination_name" validate:"required"`
 	DestinationId               uint    `json:"destination_id"`
+	DestinationCountry          string  `json:"destination_country"`
 }
 
 type SortAndFilter struct {
