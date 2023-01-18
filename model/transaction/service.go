@@ -35,6 +35,7 @@ type Service interface {
 	ListDataLNWithoutMinerba() ([]Transaction, error)
 	CheckDataLnAndMinerbaLnUpdate(listData []int, idMinerba int) ([]Transaction, error)
 	CheckDataLnAndMinerbaLn(listData []int) (bool, error)
+	GetDataReportDmo(id uint) (ListTransactionDmoBackgroundJob, error)
 }
 
 type service struct {
@@ -207,7 +208,7 @@ func (s *service) RequestCreateDmo(reqInput InputRequestCreateUploadDmo) (map[st
 	return res, doReqErr
 }
 
-func (s *service) RequestCreateCustomDmo(dataDmo dmo.Dmo, traderEndUser trader.Trader, reconciliationLetter *multipart.FileHeader, authorization string) (map[string]interface{}, error) {
+func (s *service) RequestCreateCustomDmo(dataDmo dmo.Dmo, traderEndUser trader.Trader, reconciliationLetter *multipart.FileHeader, authorization string, reqInputCreateUploadDmo InputRequestCreateUploadDmo) (map[string]interface{}, error) {
 	var res map[string]interface{}
 	baseURL := helper.GetEnvWithKey("BASE_JOB_URL")
 	var (
@@ -231,6 +232,10 @@ func (s *service) RequestCreateCustomDmo(dataDmo dmo.Dmo, traderEndUser trader.T
 	partReconciliationLetter, _ := w.CreateFormFile("reconciliation_letter", reconciliationLetter.Filename)
 	reconciliationLetterByteContainer, _ := ioutil.ReadAll(reconciliationLetterContent)
 	partReconciliationLetter.Write(reconciliationLetterByteContainer)
+
+	reqInputCreateUploadDmoMarshal, _ := json.Marshal(reqInputCreateUploadDmo)
+	partDataTransaction, _ := w.CreateFormField("data_transaction")
+	partDataTransaction.Write(reqInputCreateUploadDmoMarshal)
 
 	w.Close()
 	urlPost := baseURL + "/upload/dmo/custom"
@@ -293,4 +298,10 @@ func (s *service) CheckDataLnAndMinerbaLn(listData []int) (bool, error) {
 	checkData, checkDataErr := s.repository.CheckDataLnAndMinerbaLn(listData)
 
 	return checkData, checkDataErr
+}
+
+func (s *service) GetDataReportDmo(id uint) (ListTransactionDmoBackgroundJob, error) {
+	getDataReportDmo, getDataReportDmoErr := s.repository.GetDataReportDmo(id)
+
+	return getDataReportDmo, getDataReportDmoErr
 }

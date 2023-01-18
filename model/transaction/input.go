@@ -2,7 +2,7 @@ package transaction
 
 import (
 	"ajebackend/model/dmo"
-	"ajebackend/model/dmovessel"
+	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/trader"
 )
 
@@ -96,14 +96,15 @@ type InputRequestCreateExcelMinerba struct {
 }
 
 type InputRequestCreateUploadDmo struct {
-	Authorization          string                `json:"authorization"`
-	BastNumber             string                `json:"bast_number"`
-	DataDmo                dmo.Dmo               `json:"data_dmo"`
-	DataTransactions       []Transaction         `json:"data_transactions"`
-	DataTransactionsVessel []Transaction         `json:"data_transactions_vessel"`
-	Trader                 []trader.Trader       `json:"trader"`
-	TraderEndUser          trader.Trader         `json:"trader_end_user"`
-	DataVessel             []dmovessel.DmoVessel `json:"data_vessel"`
+	Authorization                      string                              `json:"authorization"`
+	BastNumber                         string                              `json:"bast_number"`
+	DataDmo                            dmo.Dmo                             `json:"data_dmo"`
+	Trader                             []trader.Trader                     `json:"trader"`
+	TraderEndUser                      trader.Trader                       `json:"trader_end_user"`
+	ListTransactionBarge               []Transaction                       `json:"list_transaction_barge"`
+	ListTransactionBargeGroupingVessel []Transaction                       `json:"list_transaction_barge_grouping_vessel"`
+	ListGroupingVesselFobBarge         []groupingvesseldn.GroupingVesselDn `json:"list_grouping_vessel_fob_barge"`
+	ListGroupingVesselFobVessel        []groupingvesseldn.GroupingVesselDn `json:"list_grouping_vessel_fob_vessel"`
 }
 
 type InputRequestGetReport struct {

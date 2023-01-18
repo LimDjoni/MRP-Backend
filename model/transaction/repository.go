@@ -2,6 +2,7 @@ package transaction
 
 import (
 	"ajebackend/model/dmo"
+	"ajebackend/model/dmovessel"
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/minerba"
@@ -47,6 +48,7 @@ type Repository interface {
 	GetDetailMinerbaLn(id int) (DetailMinerbaLn, error)
 	CheckDataLnAndMinerbaLnUpdate(listData []int, idMinerba int) ([]Transaction, error)
 	CheckDataLnAndMinerbaLn(listData []int) (bool, error)
+	GetDataReportDmo(id uint) (ListTransactionDmoBackgroundJob, error)
 }
 
 type repository struct {
@@ -370,6 +372,63 @@ func (r *repository) GetDetailDmo(id int) (DetailDmo, error) {
 
 	detailDmo.List = transactions
 	return detailDmo, nil
+}
+
+func (r *repository) GetDataReportDmo(id uint) (ListTransactionDmoBackgroundJob, error) {
+	var listTransactionDmoBackgroundJob ListTransactionDmoBackgroundJob
+
+	var transactionBarge []Transaction
+	var transactionBargeGroupingVessel []Transaction
+	var groupingVesselFobBarge []groupingvesseldn.GroupingVesselDn
+	var groupingVesselFobVessel []groupingvesseldn.GroupingVesselDn
+
+	errFindTransactionBarge := r.db.Where("dmo_id = ? AND grouping_vesssel_dn_id is NULL", id).Find(&transactionBarge).Error
+
+	if errFindTransactionBarge != nil {
+		return listTransactionDmoBackgroundJob, errFindTransactionBarge
+	}
+
+	listTransactionDmoBackgroundJob.ListTransactionBarge = transactionBarge
+
+	errFindTransactionBargeGroupingVessel := r.db.Where("dmo_id = ? AND grouping_vessel_dn_id is NOT NULL", id).Find(&transactionBargeGroupingVessel).Error
+
+	if errFindTransactionBargeGroupingVessel != nil {
+		return listTransactionDmoBackgroundJob, errFindTransactionBargeGroupingVessel
+	}
+
+	listTransactionDmoBackgroundJob.ListTransactionBargeGroupingVessel = transactionBargeGroupingVessel
+
+	var dmoVessel []dmovessel.DmoVessel
+
+	errFindDmoVessel := r.db.Where("dmo_id = ?", id).Find(&dmoVessel).Error
+
+	if errFindDmoVessel != nil {
+		return listTransactionDmoBackgroundJob, errFindDmoVessel
+	}
+
+	var groupingVesselId []uint
+
+	for _, v := range dmoVessel {
+		groupingVesselId = append(groupingVesselId, v.ID)
+	}
+
+	errFindGroupingVesselFobBarge := r.db.Where("id in ? AND sales_system = ?", groupingVesselId, "Barge").Find(&groupingVesselFobBarge).Error
+
+	if errFindGroupingVesselFobBarge != nil {
+		return listTransactionDmoBackgroundJob, errFindGroupingVesselFobBarge
+	}
+
+	listTransactionDmoBackgroundJob.ListGroupingVesselFobBarge = groupingVesselFobBarge
+
+	errFindGroupingVesselFobVessel := r.db.Where("id in ? AND sales_system = ?", groupingVesselId, "Vessel").Find(&groupingVesselFobVessel).Error
+
+	if errFindGroupingVesselFobVessel != nil {
+		return listTransactionDmoBackgroundJob, errFindGroupingVesselFobVessel
+	}
+
+	listTransactionDmoBackgroundJob.ListGroupingVesselFobVessel = groupingVesselFobVessel
+
+	return listTransactionDmoBackgroundJob, nil
 }
 
 // Report

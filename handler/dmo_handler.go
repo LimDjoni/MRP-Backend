@@ -351,25 +351,29 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	if !inputCreateDmo.IsDocumentCustom {
-		var reqInputCreateUploadDmo transaction.InputRequestCreateUploadDmo
+	listTransactionDmo, listTransactionDmoErr := h.transactionService.GetDataReportDmo(createDmo.ID)
+	var reqInputCreateUploadDmo transaction.InputRequestCreateUploadDmo
 
-		reqInputCreateUploadDmo.Authorization = header["Authorization"]
-		reqInputCreateUploadDmo.BastNumber = fmt.Sprintf("%s/BAST/AJE/%s", splitPeriod[1], helper.CreateIdNumber(int(createDmo.ID)))
-		reqInputCreateUploadDmo.DataDmo = createDmo
-		reqInputCreateUploadDmo.DataTransactions = dataTransactions
-		reqInputCreateUploadDmo.Trader = list
-		reqInputCreateUploadDmo.TraderEndUser = endUser
-		reqInputCreateUploadDmo.DataVessel = listDmoVessel
-		reqInputCreateUploadDmo.DataTransactionsVessel = dataTransactionsVessel
+	reqInputCreateUploadDmo.Authorization = header["Authorization"]
+	reqInputCreateUploadDmo.BastNumber = fmt.Sprintf("%s/BAST/AJE/%s", splitPeriod[1], helper.CreateIdNumber(int(createDmo.ID)))
+	reqInputCreateUploadDmo.DataDmo = createDmo
+	reqInputCreateUploadDmo.Trader = list
+	reqInputCreateUploadDmo.TraderEndUser = endUser
+	reqInputCreateUploadDmo.ListTransactionBarge = listTransactionDmo.ListTransactionBarge
+	reqInputCreateUploadDmo.ListTransactionBargeGroupingVessel = listTransactionDmo.ListTransactionBargeGroupingVessel
+	reqInputCreateUploadDmo.ListGroupingVesselFobBarge = listTransactionDmo.ListGroupingVesselFobBarge
+	reqInputCreateUploadDmo.ListGroupingVesselFobVessel = listTransactionDmo.ListGroupingVesselFobVessel
+
+	if !inputCreateDmo.IsDocumentCustom {
+
 		_, requestJobDmoErr := h.transactionService.RequestCreateDmo(reqInputCreateUploadDmo)
 
 		if requestJobDmoErr != nil {
 			inputMap := make(map[string]interface{})
 			inputMap["user_id"] = claims["id"]
 			inputMap["dmo_period"] = inputCreateDmo.Period
-			inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-			inputMap["list_dn_vessel"] = inputCreateDmo.GroupingVessel
+			inputMap["list_transaction_barge"] = inputCreateDmo.TransactionBarge
+			inputMap["list_grouping_vessel"] = inputCreateDmo.GroupingVessel
 			inputMap["input"] = inputCreateDmo
 			inputMap["input_job"] = reqInputCreateUploadDmo
 			inputJson, _ := json.Marshal(inputMap)
@@ -401,9 +405,28 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 			})
 		}
 		reconciliationLetterFile := formPart.File["reconciliation_letter"][0]
-		_, reqJobDocumentCustomErr := h.transactionService.RequestCreateCustomDmo(createDmo, endUser, reconciliationLetterFile, header["Authorization"])
+		_, reqJobDocumentCustomErr := h.transactionService.RequestCreateCustomDmo(createDmo, endUser, reconciliationLetterFile, header["Authorization"], reqInputCreateUploadDmo)
 
 		if reqJobDocumentCustomErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["user_id"] = claims["id"]
+			inputMap["dmo_period"] = inputCreateDmo.Period
+			inputMap["list_transaction_barge"] = inputCreateDmo.TransactionBarge
+			inputMap["list_grouping_vessel"] = inputCreateDmo.GroupingVessel
+			inputMap["input"] = inputCreateDmo
+			inputMap["input_job"] = reqInputCreateUploadDmo
+			inputJson, _ := json.Marshal(inputMap)
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error": reqJobDocumentCustomErr.Error(),
+			})
+
+			createdErrLog := logs.Logs{
+				Input:   inputJson,
+				Message: messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
 			return c.Status(400).JSON(fiber.Map{
 				"message": "dmo created but job failed", "error": reqJobDocumentCustomErr.Error(),
 			})

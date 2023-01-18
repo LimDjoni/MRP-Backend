@@ -137,3 +137,10 @@ type ListDataDnForGroupingVessel struct {
 	ListDataDnBargeWithVessel []Transaction `json:"list_data_dn_barge_with_vessel"`
 	ListDataDnVessel          []Transaction `json:"list_data_dn_vessel"`
 }
+
+type ListTransactionDmoBackgroundJob struct {
+	ListTransactionBarge               []Transaction                       `json:"list_transaction_barge"`
+	ListTransactionBargeGroupingVessel []Transaction                       `json:"list_transaction_barge_grouping_vessel"`
+	ListGroupingVesselFobBarge         []groupingvesseldn.GroupingVesselDn `json:"list_grouping_vessel_fob_barge"`
+	ListGroupingVesselFobVessel        []groupingvesseldn.GroupingVesselDn `json:"list_grouping_vessel_fob_vessel"`
+}
