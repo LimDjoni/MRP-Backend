@@ -4,6 +4,7 @@ import (
 	"ajebackend/model/dmo"
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
+	"ajebackend/model/insw"
 	"ajebackend/model/minerba"
 	"ajebackend/model/minerbaln"
 	"ajebackend/model/production"
@@ -42,6 +43,8 @@ type Service interface {
 	UpdateMinerbaLn(id int, listTransactions []int, userId uint) (minerbaln.MinerbaLn, error)
 	DeleteMinerbaLn(idMinerbaLn int, userId uint) (bool, error)
 	UpdateDocumentMinerbaLn(id int, documentLink minerbaln.InputUpdateDocumentMinerbaLn, userId uint) (minerbaln.MinerbaLn, error)
+	CreateInsw(groupingVesselId []int, month string, year int, baseIdNumber string, userId uint) (insw.Insw, error)
+	DeleteInsw(idInsw int, userId uint) (bool, error)
 }
 
 type service struct {
@@ -236,4 +239,16 @@ func (s *service) UpdateDocumentMinerbaLn(id int, documentLink minerbaln.InputUp
 	uploadMinerbaLn, uploadMinerbaLnErr := s.repository.UpdateDocumentMinerbaLn(id, documentLink, userId)
 
 	return uploadMinerbaLn, uploadMinerbaLnErr
+}
+
+func (s *service) CreateInsw(groupingVesselId []int, month string, year int, baseIdNumber string, userId uint) (insw.Insw, error) {
+	createInsw, createInswErr := s.repository.CreateInsw(groupingVesselId, month, year, baseIdNumber, userId)
+
+	return createInsw, createInswErr
+}
+
+func (s *service) DeleteInsw(idInsw int, userId uint) (bool, error) {
+	deleteInsw, deleteInswErr := s.repository.DeleteInsw(idInsw, userId)
+
+	return deleteInsw, deleteInswErr
 }

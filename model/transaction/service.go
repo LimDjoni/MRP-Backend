@@ -20,6 +20,7 @@ type Service interface {
 	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) ([]Transaction, error)
 	GetDetailMinerba(id int) (DetailMinerba, error)
 	RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (map[string]interface{}, error)
+	RequestCreateExcelLn(reqInput InputRequestCreateExcelMinerba) (map[string]interface{}, error)
 	ListDataDNBargeWithoutVessel() ([]Transaction, error)
 	ListDataDNBargeWithVessel() ([]Transaction, error)
 	ListDataDNVessel() ([]Transaction, error)

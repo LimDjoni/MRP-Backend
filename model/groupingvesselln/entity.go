@@ -67,5 +67,5 @@ type GroupingVesselLn struct {
 	BlMvDocumentLink          string     `json:"bl_mv_document_link"`
 	IsCoaFinish               bool       `json:"is_coa_finish"`
 	InswId                    *uint      `json:"insw_id"`
-	Insw                      *insw.Insw `json:"insw"`
+	Insw                      *insw.Insw `json:"insw" gorm:"constraint:OnDelete:SET NULL;"`
 }

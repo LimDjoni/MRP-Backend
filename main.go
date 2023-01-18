@@ -108,6 +108,12 @@ func main() {
 		fmt.Println(errPeriod.Error())
 	}
 
+	errLongMonth := validate.RegisterValidation("LongMonth", validatorfunc.CheckEnum)
+
+	if errLongMonth != nil {
+		fmt.Println(errLongMonth.Error())
+	}
+
 	app := fiber.New()
 
 	app.Use(cors.New(cors.Config{
@@ -166,4 +172,5 @@ func Setup(db *gorm.DB, validate *validator.Validate, route fiber.Router) {
 	routing2.ReportRouting(db, route, validate)
 	routing2.GroupingVesselLnRouting(db, route, validate)
 	routing2.MasterRouting(db, route, validate)
+	routing2.InswRouting(db, route, validate)
 }

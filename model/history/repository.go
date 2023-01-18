@@ -6,6 +6,7 @@ import (
 	"ajebackend/model/dmovessel"
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
+	"ajebackend/model/insw"
 	"ajebackend/model/minerba"
 	"ajebackend/model/minerbaln"
 	"ajebackend/model/production"
@@ -55,6 +56,8 @@ type Repository interface {
 	UpdateMinerbaLn(id int, listTransactions []int, userId uint) (minerbaln.MinerbaLn, error)
 	DeleteMinerbaLn(idMinerbaLn int, userId uint) (bool, error)
 	UpdateDocumentMinerbaLn(id int, documentLink minerbaln.InputUpdateDocumentMinerbaLn, userId uint) (minerbaln.MinerbaLn, error)
+	CreateInsw(groupingVesselId []int, month string, year int, baseIdNumber string, userId uint) (insw.Insw, error)
+	DeleteInsw(idInsw int, userId uint) (bool, error)
 }
 
 type repository struct {
@@ -2521,4 +2524,110 @@ func (r *repository) UpdateDocumentMinerbaLn(id int, documentLink minerbaln.Inpu
 
 	tx.Commit()
 	return minerbaLn, nil
+}
+
+// INSW
+
+func (r *repository) CreateInsw(groupingVesselId []int, month string, year int, baseIdNumber string, userId uint) (insw.Insw, error) {
+	tx := r.db.Begin()
+	var createInsw insw.Insw
+
+	var checkInsw insw.Insw
+
+	findInswErr := tx.Where("month = ? AND year = ?", month, year).First(&checkInsw).Error
+
+	if findInswErr == nil {
+		tx.Rollback()
+		return createInsw, errors.New("Laporan INSW sudah pernah dibuat")
+	}
+
+	var checkGroupingVessel []groupingvesselln.GroupingVesselLn
+
+	findGroupingVesselErr := tx.Where("id in ? AND insw_id is NULL", groupingVesselId).Find(&checkGroupingVessel).Error
+
+	if findGroupingVesselErr != nil {
+		tx.Rollback()
+		return createInsw, findGroupingVesselErr
+	}
+
+	if len(checkGroupingVessel) != len(groupingVesselId) {
+		tx.Rollback()
+		return createInsw, errors.New("Grouping Vessel is already on report or not found")
+	}
+
+	createInsw.Month = month
+	createInsw.Year = year
+
+	createInswErr := tx.Create(&createInsw).Error
+
+	if createInswErr != nil {
+		tx.Rollback()
+		return createInsw, createInswErr
+	}
+
+	idNumber := baseIdNumber + "-" + helper.CreateIdNumber(int(createInsw.ID))
+
+	updateInswErr := tx.Model(&createInsw).Update("id_number", idNumber).Error
+
+	if updateInswErr != nil {
+		tx.Rollback()
+		return createInsw, updateInswErr
+	}
+
+	updateGroupingVesselLnErr := tx.Table("grouping_vessel_lns").Where("id IN ?", groupingVesselId).Update("insw_id", createInsw.ID).Error
+
+	if updateGroupingVesselLnErr != nil {
+		tx.Rollback()
+		return createInsw, updateGroupingVesselLnErr
+	}
+
+	var history History
+
+	history.InswId = &createInsw.ID
+	history.Status = "Created Insw Report"
+	history.UserId = userId
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return createInsw, createHistoryErr
+	}
+
+	tx.Commit()
+	return createInsw, nil
+}
+
+func (r *repository) DeleteInsw(idInsw int, userId uint) (bool, error) {
+	tx := r.db.Begin()
+	var inswData insw.Insw
+
+	findInswErr := tx.Where("id = ?", idInsw).First(&inswData).Error
+
+	if findInswErr != nil {
+		tx.Rollback()
+		return false, findInswErr
+	}
+
+	errDelete := tx.Unscoped().Where("id = ?", idInsw).Delete(&inswData).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+		return false, errDelete
+	}
+
+	var history History
+
+	history.Status = fmt.Sprintf("Deleted INSW Report with id number %s and id %v", *inswData.IdNumber, inswData.ID)
+	history.UserId = userId
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return false, createHistoryErr
+	}
+
+	tx.Commit()
+	return true, nil
 }

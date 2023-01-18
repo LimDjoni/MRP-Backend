@@ -1,6 +1,7 @@
 package groupingvesselln
 
 import (
+	"ajebackend/model/insw"
 	"fmt"
 
 	"gorm.io/gorm"
@@ -9,6 +10,8 @@ import (
 
 type Repository interface {
 	ListGroupingVesselLn(page int, sortFilter SortFilterGroupingVesselLn) (Pagination, error)
+	ListGroupingVesselLnWithoutInsw() ([]GroupingVesselLn, error)
+	DetailInsw(id int) (DetailInsw, error)
 }
 
 type repository struct {
@@ -59,4 +62,41 @@ func (r *repository) ListGroupingVesselLn(page int, sortFilter SortFilterGroupin
 	pagination.Data = listGroupingVesselLn
 
 	return pagination, nil
+}
+
+func (r *repository) ListGroupingVesselLnWithoutInsw() ([]GroupingVesselLn, error) {
+	var listGroupingVesselLn []GroupingVesselLn
+
+	errFind := r.db.Where("insw_id is NULL").Find(&listGroupingVesselLn).Error
+
+	if errFind != nil {
+		return listGroupingVesselLn, errFind
+	}
+
+	return listGroupingVesselLn, nil
+}
+
+func (r *repository) DetailInsw(id int) (DetailInsw, error) {
+	var detailInsw DetailInsw
+
+	var inswData insw.Insw
+	errFindInsw := r.db.Where("id = ?", id).First(&inswData).Error
+
+	if errFindInsw != nil {
+		return detailInsw, errFindInsw
+	}
+
+	detailInsw.Detail = inswData
+
+	var listGroupingVessel []GroupingVesselLn
+
+	errFindListGroupingVessel := r.db.Where("insw_id = ?", id).Find(&listGroupingVessel).Error
+
+	if errFindListGroupingVessel != nil {
+		return detailInsw, errFindListGroupingVessel
+	}
+
+	detailInsw.ListGroupingVesselLn = listGroupingVessel
+
+	return detailInsw, nil
 }

@@ -960,7 +960,7 @@ func (r *repository) GetDetailMinerbaLn(id int) (DetailMinerbaLn, error) {
 
 	detailMinerbaLn.Detail = minerbaLn
 
-	transactionFindErr := r.db.Order("id desc").Where("minerba_id = ?", id).Find(&transactions).Error
+	transactionFindErr := r.db.Order("id desc").Where("minerba_ln_id = ?", id).Find(&transactions).Error
 
 	if transactionFindErr != nil {
 		return detailMinerbaLn, transactionFindErr
