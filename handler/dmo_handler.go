@@ -190,7 +190,6 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	}
 
 	var dataTransactions []transaction.Transaction
-	var dataTransactionsVessel []transaction.Transaction
 	if len(inputCreateDmo.TransactionBarge) > 0 {
 		checkDmoBarge, checkDmoBargeErr := h.transactionService.CheckDataDnAndDmo(inputCreateDmo.TransactionBarge)
 
@@ -199,7 +198,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 			inputMap["user_id"] = claims["id"]
 			inputMap["dmo_period"] = inputCreateDmo.Period
 			inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-			inputMap["list_dn_vessel"] = inputCreateDmo.GroupingVessel
+			inputMap["list_group_vessel"] = inputCreateDmo.GroupingVessel
 			inputMap["input"] = inputCreateDmo
 
 			inputJson, _ := json.Marshal(inputMap)
@@ -231,14 +230,14 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	}
 
 	if len(inputCreateDmo.GroupingVessel) > 0 {
-		checkDmoVessel, checkDmoVesselErr := h.transactionService.CheckDataDnAndDmo(inputCreateDmo.GroupingVessel)
+		_, checkDmoVesselErr := h.transactionService.CheckGroupingVesselAndDmo(inputCreateDmo.GroupingVessel)
 
 		if checkDmoVesselErr != nil {
 			inputMap := make(map[string]interface{})
 			inputMap["user_id"] = claims["id"]
 			inputMap["dmo_period"] = inputCreateDmo.Period
 			inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-			inputMap["list_dn_vessel"] = inputCreateDmo.GroupingVessel
+			inputMap["list_group_vessel"] = inputCreateDmo.GroupingVessel
 			inputMap["input"] = inputCreateDmo
 			inputJson, _ := json.Marshal(inputMap)
 			messageJson, _ := json.Marshal(map[string]interface{}{
@@ -259,13 +258,10 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 			}
 
 			return c.Status(status).JSON(fiber.Map{
-				"error": "transaction vessel " + checkDmoVesselErr.Error(),
+				"error": "grouping vessel " + checkDmoVesselErr.Error(),
 			})
 		}
 
-		for _, v := range checkDmoVessel {
-			dataTransactionsVessel = append(dataTransactionsVessel, v)
-		}
 	}
 
 	splitPeriod := strings.Split(inputCreateDmo.Period, " ")
@@ -278,7 +274,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["dmo_period"] = inputCreateDmo.Period
 		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-		inputMap["list_dn_vessel"] = inputCreateDmo.GroupingVessel
+		inputMap["list_group_vessel"] = inputCreateDmo.GroupingVessel
 		inputMap["input"] = inputCreateDmo
 		inputJson, _ := json.Marshal(inputMap)
 		messageJson, _ := json.Marshal(map[string]interface{}{
@@ -304,7 +300,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["dmo_period"] = inputCreateDmo.Period
 		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-		inputMap["list_dn_vessel"] = inputCreateDmo.GroupingVessel
+		inputMap["list_group_vessel"] = inputCreateDmo.GroupingVessel
 		inputMap["input"] = inputCreateDmo
 		inputJson, _ := json.Marshal(inputMap)
 		messageJson, _ := json.Marshal(map[string]interface{}{
@@ -324,18 +320,18 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	listDmoVessel, listDmoVesselErr := h.dmoVesselService.GetDataDmoVessel(createDmo.ID)
+	listTransactionDmo, listTransactionDmoErr := h.transactionService.GetDataReportDmo(createDmo.ID)
 
-	if listDmoVesselErr != nil {
+	if listTransactionDmoErr != nil {
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
 		inputMap["dmo_period"] = inputCreateDmo.Period
 		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-		inputMap["list_dn_vessel"] = inputCreateDmo.GroupingVessel
+		inputMap["list_group_vessel"] = inputCreateDmo.GroupingVessel
 		inputMap["input"] = inputCreateDmo
 		inputJson, _ := json.Marshal(inputMap)
 		messageJson, _ := json.Marshal(map[string]interface{}{
-			"error": listDmoVesselErr.Error(),
+			"error": listTransactionDmoErr.Error(),
 		})
 
 		createdErrLog := logs.Logs{
@@ -346,12 +342,11 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		h.logService.CreateLogs(createdErrLog)
 
 		return c.Status(400).JSON(fiber.Map{
-			"message": "Dmo already has been created, but get list dmo vessel failed",
-			"error":   listDmoVesselErr.Error(),
+			"message": "Dmo already has been created, but get list transaction failed",
+			"error":   listTransactionDmoErr.Error(),
 		})
 	}
 
-	listTransactionDmo, listTransactionDmoErr := h.transactionService.GetDataReportDmo(createDmo.ID)
 	var reqInputCreateUploadDmo transaction.InputRequestCreateUploadDmo
 
 	reqInputCreateUploadDmo.Authorization = header["Authorization"]

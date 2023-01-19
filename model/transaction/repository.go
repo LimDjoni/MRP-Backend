@@ -38,6 +38,7 @@ type Repository interface {
 	ListDataDNBargeWithVessel() ([]Transaction, error)
 	ListDataDNVessel() ([]Transaction, error)
 	CheckDataDnAndDmo(listData []int) ([]Transaction, error)
+	CheckGroupingVesselAndDmo(listData []int) ([]dmovessel.DmoVessel, error)
 	GetDetailDmo(id int) (DetailDmo, error)
 	CheckDataUnique(inputTrans DataTransactionInput) (bool, bool, bool, bool)
 	GetReport(year int) (ReportRecapOutput, ReportDetailOutput, error)
@@ -349,6 +350,18 @@ func (r *repository) CheckDataDnAndDmo(listData []int) ([]Transaction, error) {
 	return listDn, nil
 }
 
+func (r *repository) CheckGroupingVesselAndDmo(listData []int) ([]dmovessel.DmoVessel, error) {
+	var listGroupingVessel []dmovessel.DmoVessel
+
+	errFind := r.db.Where("grouping_vessel_dn_id in ?", listData).Find(&listGroupingVessel).Error
+
+	if len(listGroupingVessel) > 0 {
+		return listGroupingVessel, errors.New("please check grouping vessel already in report")
+	}
+
+	return listGroupingVessel, errFind
+}
+
 func (r *repository) GetDetailDmo(id int) (DetailDmo, error) {
 
 	var detailDmo DetailDmo
@@ -382,7 +395,7 @@ func (r *repository) GetDataReportDmo(id uint) (ListTransactionDmoBackgroundJob,
 	var groupingVesselFobBarge []groupingvesseldn.GroupingVesselDn
 	var groupingVesselFobVessel []groupingvesseldn.GroupingVesselDn
 
-	errFindTransactionBarge := r.db.Where("dmo_id = ? AND grouping_vesssel_dn_id is NULL", id).Find(&transactionBarge).Error
+	errFindTransactionBarge := r.db.Preload(clause.Associations).Where("dmo_id = ? AND grouping_vessel_dn_id is NULL", id).Order("shipping_date desc").Find(&transactionBarge).Error
 
 	if errFindTransactionBarge != nil {
 		return listTransactionDmoBackgroundJob, errFindTransactionBarge
@@ -390,7 +403,7 @@ func (r *repository) GetDataReportDmo(id uint) (ListTransactionDmoBackgroundJob,
 
 	listTransactionDmoBackgroundJob.ListTransactionBarge = transactionBarge
 
-	errFindTransactionBargeGroupingVessel := r.db.Where("dmo_id = ? AND grouping_vessel_dn_id is NOT NULL", id).Find(&transactionBargeGroupingVessel).Error
+	errFindTransactionBargeGroupingVessel := r.db.Preload(clause.Associations).Where("dmo_id = ? AND grouping_vessel_dn_id is NOT NULL AND sales_system LIKE '%Barge'", id).Order("shipping_date desc").Find(&transactionBargeGroupingVessel).Error
 
 	if errFindTransactionBargeGroupingVessel != nil {
 		return listTransactionDmoBackgroundJob, errFindTransactionBargeGroupingVessel
@@ -400,7 +413,7 @@ func (r *repository) GetDataReportDmo(id uint) (ListTransactionDmoBackgroundJob,
 
 	var dmoVessel []dmovessel.DmoVessel
 
-	errFindDmoVessel := r.db.Where("dmo_id = ?", id).Find(&dmoVessel).Error
+	errFindDmoVessel := r.db.Preload(clause.Associations).Where("dmo_id = ?", id).Find(&dmoVessel).Error
 
 	if errFindDmoVessel != nil {
 		return listTransactionDmoBackgroundJob, errFindDmoVessel
@@ -409,18 +422,19 @@ func (r *repository) GetDataReportDmo(id uint) (ListTransactionDmoBackgroundJob,
 	var groupingVesselId []uint
 
 	for _, v := range dmoVessel {
-		groupingVesselId = append(groupingVesselId, v.ID)
+		groupingVesselId = append(groupingVesselId, v.GroupingVesselDnId)
 	}
 
-	errFindGroupingVesselFobBarge := r.db.Where("id in ? AND sales_system = ?", groupingVesselId, "Barge").Find(&groupingVesselFobBarge).Error
+	errFindGroupingVesselFobBarge := r.db.Preload(clause.Associations).Where("id in ? AND sales_system = ?", groupingVesselId, "Barge").Order("bl_date desc").Find(&groupingVesselFobBarge).Error
 
 	if errFindGroupingVesselFobBarge != nil {
 		return listTransactionDmoBackgroundJob, errFindGroupingVesselFobBarge
 	}
 
+	fmt.Println(groupingVesselFobBarge)
 	listTransactionDmoBackgroundJob.ListGroupingVesselFobBarge = groupingVesselFobBarge
 
-	errFindGroupingVesselFobVessel := r.db.Where("id in ? AND sales_system = ?", groupingVesselId, "Vessel").Find(&groupingVesselFobVessel).Error
+	errFindGroupingVesselFobVessel := r.db.Preload(clause.Associations).Where("id in ? AND sales_system = ?", groupingVesselId, "Vessel").Order("bl_date desc").Find(&groupingVesselFobVessel).Error
 
 	if errFindGroupingVesselFobVessel != nil {
 		return listTransactionDmoBackgroundJob, errFindGroupingVesselFobVessel
@@ -428,6 +442,7 @@ func (r *repository) GetDataReportDmo(id uint) (ListTransactionDmoBackgroundJob,
 
 	listTransactionDmoBackgroundJob.ListGroupingVesselFobVessel = groupingVesselFobVessel
 
+	fmt.Println(groupingVesselFobVessel)
 	return listTransactionDmoBackgroundJob, nil
 }
 

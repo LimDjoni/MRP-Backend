@@ -1154,7 +1154,7 @@ func (r *repository) CreateDmo(dmoInput dmo.CreateDmoInput, baseIdNumber string,
 		var transactionGroupVessel []transaction.Transaction
 
 		var listIdTransactionGroupVessel []uint
-		findTransactionGroupVesselErr := tx.Where("group_vessel_dn_id IN ? AND dmo_id IS NULL", dmoInput.GroupingVessel).Find(&transactionGroupVessel).Error
+		findTransactionGroupVesselErr := tx.Where("grouping_vessel_dn_id IN ? AND dmo_id IS NULL", dmoInput.GroupingVessel).Find(&transactionGroupVessel).Error
 
 		if findTransactionGroupVesselErr != nil {
 			tx.Rollback()
@@ -1689,7 +1689,8 @@ func (r *repository) CreateGroupingVesselDN(inputGrouping groupingvesseldn.Input
 	createdGroupingVesselDn.SalesSystem = inputGrouping.SalesSystem
 	createdGroupingVesselDn.DestinationId = inputGrouping.DestinationId
 	createdGroupingVesselDn.DestinationCountry = inputGrouping.DestinationCountry
-	createdGroupingVesselDn.UnloadingPortLocation = inputGrouping.UnloadingPortLocation
+	createdGroupingVesselDn.DmoDestinationPort = inputGrouping.DmoDestinationPort
+	createdGroupingVesselDn.BuyerName = inputGrouping.BuyerName
 	createdGroupingVesselDn.CowDate = inputGrouping.CowDate
 	if inputGrouping.CowNumber != "" {
 		cowUpper := strings.ToUpper(inputGrouping.CowNumber)
@@ -2013,7 +2014,7 @@ func (r *repository) CreateGroupingVesselLN(inputGrouping groupingvesselln.Input
 	createdGroupingVesselLn.NettQualityCaloriesAr = inputGrouping.NettQualityCaloriesAr
 	createdGroupingVesselLn.BlDate = inputGrouping.BlDate
 	createdGroupingVesselLn.BlNumber = strings.ToUpper(inputGrouping.BlNumber)
-	createdGroupingVesselLn.UnloadingPortLocation = inputGrouping.UnloadingPortLocation
+	createdGroupingVesselLn.DmoDestinationPort = inputGrouping.DmoDestinationPort
 
 	errCreatedGroupingVesselLn := tx.Create(&createdGroupingVesselLn).Error
 

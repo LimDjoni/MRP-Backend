@@ -3,6 +3,7 @@ package transaction
 import (
 	"ajebackend/helper"
 	"ajebackend/model/dmo"
+	"ajebackend/model/dmovessel"
 	"ajebackend/model/trader"
 	"bytes"
 	"encoding/json"
@@ -25,9 +26,10 @@ type Service interface {
 	ListDataDNBargeWithVessel() ([]Transaction, error)
 	ListDataDNVessel() ([]Transaction, error)
 	CheckDataDnAndDmo(listData []int) ([]Transaction, error)
+	CheckGroupingVesselAndDmo(listData []int) ([]dmovessel.DmoVessel, error)
 	GetDetailDmo(id int) (DetailDmo, error)
 	RequestCreateDmo(reqInput InputRequestCreateUploadDmo) (map[string]interface{}, error)
-	RequestCreateCustomDmo(dataDmo dmo.Dmo, traderEndUser trader.Trader, reconciliationLetter *multipart.FileHeader, authorization string) (map[string]interface{}, error)
+	RequestCreateCustomDmo(dataDmo dmo.Dmo, traderEndUser trader.Trader, reconciliationLetter *multipart.FileHeader, authorization string, reqInputCreateUploadDmo InputRequestCreateUploadDmo) (map[string]interface{}, error)
 	GetReport(year int) (ReportRecapOutput, ReportDetailOutput, error)
 	GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, error)
 	GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, error)
@@ -170,6 +172,12 @@ func (s *service) CheckDataDnAndDmo(listData []int) ([]Transaction, error) {
 	checkData, checkDataErr := s.repository.CheckDataDnAndDmo(listData)
 
 	return checkData, checkDataErr
+}
+
+func (s *service) CheckGroupingVesselAndDmo(listData []int) ([]dmovessel.DmoVessel, error) {
+	checkGrouping, checkGroupingErr := s.repository.CheckGroupingVesselAndDmo(listData)
+
+	return checkGrouping, checkGroupingErr
 }
 
 func (s *service) GetDetailDmo(id int) (DetailDmo, error) {

@@ -51,7 +51,7 @@ type InputGroupingVesselLn struct {
 	IsCoaFinish               bool    `json:"is_coa_finish"`
 	BlDate                    *string `json:"bl_date" validate:"omitempty,DateValidation"`
 	BlNumber                  string  `json:"bl_number"`
-	UnloadingPortLocation     string  `json:"unloading_port_location"`
+	DmoDestinationPort        string  `json:"dmo_destination_port"`
 }
 
 type InputEditGroupingVesselLn struct {
@@ -104,7 +104,7 @@ type InputEditGroupingVesselLn struct {
 	IsCoaFinish               bool    `json:"is_coa_finish"`
 	BlDate                    *string `json:"bl_date" validate:"omitempty,DateValidation"`
 	BlNumber                  string  `json:"bl_number"`
-	UnloadingPortLocation     string  `json:"unloading_port_location"`
+	DmoDestinationPort        string  `json:"dmo_destination_port"`
 }
 
 type SortFilterGroupingVesselLn struct {
