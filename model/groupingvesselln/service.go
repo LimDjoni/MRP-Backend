@@ -2,7 +2,7 @@ package groupingvesselln
 
 type Service interface {
 	ListGroupingVesselLn(page int, sortFilter SortFilterGroupingVesselLn) (Pagination, error)
-	ListGroupingVesselLnWithoutInsw() ([]GroupingVesselLn, error)
+	ListGroupingVesselLnWithPeriod(month string, year int) ([]GroupingVesselLn, error)
 	DetailInsw(id int) (DetailInsw, error)
 }
 
@@ -20,8 +20,8 @@ func (s *service) ListGroupingVesselLn(page int, sortFilter SortFilterGroupingVe
 	return listGroupingVesselLn, listGroupingVesselLnErr
 }
 
-func (s *service) ListGroupingVesselLnWithoutInsw() ([]GroupingVesselLn, error) {
-	listGroupingVesselLnWithoutInsw, listGroupingVesselLnWithoutInswErr := s.repository.ListGroupingVesselLnWithoutInsw()
+func (s *service) ListGroupingVesselLnWithPeriod(month string, year int) ([]GroupingVesselLn, error) {
+	listGroupingVesselLnWithoutInsw, listGroupingVesselLnWithoutInswErr := s.repository.ListGroupingVesselLnWithPeriod(month, year)
 
 	return listGroupingVesselLnWithoutInsw, listGroupingVesselLnWithoutInswErr
 }

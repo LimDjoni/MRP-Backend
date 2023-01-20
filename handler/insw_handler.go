@@ -78,7 +78,6 @@ func (h *inswHandler) CreateInsw(c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["insw_month"] = inputCreateInsw.Month
 		inputMap["insw_year"] = inputCreateInsw.Year
-		inputMap["list_grouping_vessel_ln"] = inputCreateInsw.ListGroupingVesselId
 		inputMap["input"] = inputCreateInsw
 		inputJson, _ := json.Marshal(inputMap)
 		messageJson, _ := json.Marshal(map[string]interface{}{
@@ -98,14 +97,13 @@ func (h *inswHandler) CreateInsw(c *fiber.Ctx) error {
 	}
 
 	baseIdNumber := fmt.Sprintf("INSW-%s-%v", helper.MonthLongToNumberString(inputCreateInsw.Month), inputCreateInsw.Year)
-	createInsw, createInswErr := h.historyService.CreateInsw(inputCreateInsw.ListGroupingVesselId, inputCreateInsw.Month, inputCreateInsw.Year, baseIdNumber, uint(claims["id"].(float64)))
+	createInsw, createInswErr := h.historyService.CreateInsw(inputCreateInsw.Month, inputCreateInsw.Year, baseIdNumber, uint(claims["id"].(float64)))
 
 	if createInswErr != nil {
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
 		inputMap["insw_month"] = inputCreateInsw.Month
 		inputMap["insw_year"] = inputCreateInsw.Year
-		inputMap["list_grouping_vessel_ln"] = inputCreateInsw.ListGroupingVesselId
 		inputMap["input"] = inputCreateInsw
 		inputJson, _ := json.Marshal(inputMap)
 		messageJson, _ := json.Marshal(map[string]interface{}{
@@ -127,7 +125,7 @@ func (h *inswHandler) CreateInsw(c *fiber.Ctx) error {
 	return c.Status(201).JSON(createInsw)
 }
 
-func (h *inswHandler) ListGroupingVesselWithoutInsw(c *fiber.Ctx) error {
+func (h *inswHandler) ListGroupingVesselLnWithPeriod(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	responseUnauthorized := map[string]interface{}{
@@ -144,15 +142,34 @@ func (h *inswHandler) ListGroupingVesselWithoutInsw(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	listGroupingVesselWithoutInsw, listGroupingVesselWithoutInswErr := h.groupingVesselLnService.ListGroupingVesselLnWithoutInsw()
+	inputCreateInsw := new(insw.InputCreateInsw)
 
-	if listGroupingVesselWithoutInswErr != nil {
+	// Binds the request body to the Person struct
+	if err := c.BodyParser(inputCreateInsw); err != nil {
 		return c.Status(400).JSON(fiber.Map{
-			"error": listGroupingVesselWithoutInswErr.Error(),
+			"error": err.Error(),
 		})
 	}
 
-	return c.Status(200).JSON(listGroupingVesselWithoutInsw)
+	errors := h.v.Struct(*inputCreateInsw)
+
+	if errors != nil {
+		dataErrors := validatorfunc.ValidateStruct(errors)
+
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": dataErrors,
+		})
+	}
+
+	listGroupingVesselLnWithPeriod, listGroupingVesselLnWithPeriodErr := h.groupingVesselLnService.ListGroupingVesselLnWithPeriod(inputCreateInsw.Month, inputCreateInsw.Year)
+
+	if listGroupingVesselLnWithPeriodErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": listGroupingVesselLnWithPeriodErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(listGroupingVesselLnWithPeriod)
 }
 
 func (h *inswHandler) DetailInsw(c *fiber.Ctx) error {

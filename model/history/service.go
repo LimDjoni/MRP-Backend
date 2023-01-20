@@ -43,8 +43,9 @@ type Service interface {
 	UpdateMinerbaLn(id int, listTransactions []int, userId uint) (minerbaln.MinerbaLn, error)
 	DeleteMinerbaLn(idMinerbaLn int, userId uint) (bool, error)
 	UpdateDocumentMinerbaLn(id int, documentLink minerbaln.InputUpdateDocumentMinerbaLn, userId uint) (minerbaln.MinerbaLn, error)
-	CreateInsw(groupingVesselId []int, month string, year int, baseIdNumber string, userId uint) (insw.Insw, error)
+	CreateInsw(month string, year int, baseIdNumber string, userId uint) (insw.Insw, error)
 	DeleteInsw(idInsw int, userId uint) (bool, error)
+	UpdateDocumentInsw(id int, documentLink insw.InputUpdateDocumentInsw, userId uint) (insw.Insw, error)
 }
 
 type service struct {
@@ -241,8 +242,8 @@ func (s *service) UpdateDocumentMinerbaLn(id int, documentLink minerbaln.InputUp
 	return uploadMinerbaLn, uploadMinerbaLnErr
 }
 
-func (s *service) CreateInsw(groupingVesselId []int, month string, year int, baseIdNumber string, userId uint) (insw.Insw, error) {
-	createInsw, createInswErr := s.repository.CreateInsw(groupingVesselId, month, year, baseIdNumber, userId)
+func (s *service) CreateInsw(month string, year int, baseIdNumber string, userId uint) (insw.Insw, error) {
+	createInsw, createInswErr := s.repository.CreateInsw(month, year, baseIdNumber, userId)
 
 	return createInsw, createInswErr
 }
@@ -251,4 +252,10 @@ func (s *service) DeleteInsw(idInsw int, userId uint) (bool, error) {
 	deleteInsw, deleteInswErr := s.repository.DeleteInsw(idInsw, userId)
 
 	return deleteInsw, deleteInswErr
+}
+
+func (s *service) UpdateDocumentInsw(id int, documentLink insw.InputUpdateDocumentInsw, userId uint) (insw.Insw, error) {
+	updateDocumentInsw, updateDocumentInswErr := s.repository.UpdateDocumentInsw(id, documentLink, userId)
+
+	return updateDocumentInsw, updateDocumentInswErr
 }

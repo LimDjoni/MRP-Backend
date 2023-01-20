@@ -431,7 +431,6 @@ func (r *repository) GetDataReportDmo(id uint) (ListTransactionDmoBackgroundJob,
 		return listTransactionDmoBackgroundJob, errFindGroupingVesselFobBarge
 	}
 
-	fmt.Println(groupingVesselFobBarge)
 	listTransactionDmoBackgroundJob.ListGroupingVesselFobBarge = groupingVesselFobBarge
 
 	errFindGroupingVesselFobVessel := r.db.Preload(clause.Associations).Where("id in ? AND sales_system = ?", groupingVesselId, "Vessel").Order("bl_date desc").Find(&groupingVesselFobVessel).Error
@@ -442,7 +441,6 @@ func (r *repository) GetDataReportDmo(id uint) (ListTransactionDmoBackgroundJob,
 
 	listTransactionDmoBackgroundJob.ListGroupingVesselFobVessel = groupingVesselFobVessel
 
-	fmt.Println(groupingVesselFobVessel)
 	return listTransactionDmoBackgroundJob, nil
 }
 

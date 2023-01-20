@@ -1,8 +1,11 @@
 package groupingvesselln
 
 import (
+	"ajebackend/helper"
 	"ajebackend/model/insw"
+	"errors"
 	"fmt"
+	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -10,7 +13,7 @@ import (
 
 type Repository interface {
 	ListGroupingVesselLn(page int, sortFilter SortFilterGroupingVesselLn) (Pagination, error)
-	ListGroupingVesselLnWithoutInsw() ([]GroupingVesselLn, error)
+	ListGroupingVesselLnWithPeriod(month string, year int) ([]GroupingVesselLn, error)
 	DetailInsw(id int) (DetailInsw, error)
 }
 
@@ -64,10 +67,21 @@ func (r *repository) ListGroupingVesselLn(page int, sortFilter SortFilterGroupin
 	return pagination, nil
 }
 
-func (r *repository) ListGroupingVesselLnWithoutInsw() ([]GroupingVesselLn, error) {
+func (r *repository) ListGroupingVesselLnWithPeriod(month string, year int) ([]GroupingVesselLn, error) {
 	var listGroupingVesselLn []GroupingVesselLn
+	var checkInsw insw.Insw
 
-	errFind := r.db.Where("insw_id is NULL").Find(&listGroupingVesselLn).Error
+	errFindInsw := r.db.Where("month = ? AND year = ?", month, year).First(&checkInsw).Error
+
+	if errFindInsw == nil {
+		return listGroupingVesselLn, errors.New("Laporan INSW sudah pernah dibuat")
+	}
+
+	firstOfMonth := time.Date(year, time.Month(helper.MonthLongToNumber(month)), 1, 0, 0, 0, 0, time.Local)
+
+	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+
+	errFind := r.db.Where("peb_register_date >= ? AND peb_register_date <= ? AND insw_id is NULL", firstOfMonth, lastOfMonth).Find(&listGroupingVesselLn).Error
 
 	if errFind != nil {
 		return listGroupingVesselLn, errFind

@@ -1,5 +1,7 @@
 package groupingvesselln
 
+import "ajebackend/model/insw"
+
 type InputGroupingVesselLn struct {
 	ListTransactions          []uint  `json:"list_transactions" validate:"required,min=1"`
 	VesselName                string  `json:"vessel_name" validate:"required"`
@@ -112,4 +114,10 @@ type SortFilterGroupingVesselLn struct {
 	Sort       string
 	Quantity   float64
 	VesselName string
+}
+
+type InputRequestCreateUploadDmoInsw struct {
+	Authorization    string           `json:"authorization"`
+	Insw             insw.Insw        `json:"insw"`
+	GroupingVesselLn GroupingVesselLn `json:"grouping_vessel"`
 }

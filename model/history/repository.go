@@ -56,8 +56,9 @@ type Repository interface {
 	UpdateMinerbaLn(id int, listTransactions []int, userId uint) (minerbaln.MinerbaLn, error)
 	DeleteMinerbaLn(idMinerbaLn int, userId uint) (bool, error)
 	UpdateDocumentMinerbaLn(id int, documentLink minerbaln.InputUpdateDocumentMinerbaLn, userId uint) (minerbaln.MinerbaLn, error)
-	CreateInsw(groupingVesselId []int, month string, year int, baseIdNumber string, userId uint) (insw.Insw, error)
+	CreateInsw(month string, year int, baseIdNumber string, userId uint) (insw.Insw, error)
 	DeleteInsw(idInsw int, userId uint) (bool, error)
+	UpdateDocumentInsw(id int, documentLink insw.InputUpdateDocumentInsw, userId uint) (insw.Insw, error)
 }
 
 type repository struct {
@@ -2532,7 +2533,7 @@ func (r *repository) UpdateDocumentMinerbaLn(id int, documentLink minerbaln.Inpu
 
 // INSW
 
-func (r *repository) CreateInsw(groupingVesselId []int, month string, year int, baseIdNumber string, userId uint) (insw.Insw, error) {
+func (r *repository) CreateInsw(month string, year int, baseIdNumber string, userId uint) (insw.Insw, error) {
 	tx := r.db.Begin()
 	var createInsw insw.Insw
 
@@ -2545,18 +2546,23 @@ func (r *repository) CreateInsw(groupingVesselId []int, month string, year int, 
 		return createInsw, errors.New("Laporan INSW sudah pernah dibuat")
 	}
 
-	var checkGroupingVessel []groupingvesselln.GroupingVesselLn
+	firstOfMonth := time.Date(year, time.Month(helper.MonthLongToNumber(month)), 1, 0, 0, 0, 0, time.Local)
 
-	findGroupingVesselErr := tx.Where("id in ? AND insw_id is NULL", groupingVesselId).Find(&checkGroupingVessel).Error
+	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+
+	var findGroupingVessel []groupingvesselln.GroupingVesselLn
+
+	findGroupingVesselErr := tx.Where("peb_register_date >= ? AND peb_register_date <= ? AND insw_id is NULL", firstOfMonth, lastOfMonth).Find(&findGroupingVessel).Error
 
 	if findGroupingVesselErr != nil {
 		tx.Rollback()
 		return createInsw, findGroupingVesselErr
 	}
 
-	if len(checkGroupingVessel) != len(groupingVesselId) {
-		tx.Rollback()
-		return createInsw, errors.New("Grouping Vessel is already on report or not found")
+	var idGroupingVessel []uint
+
+	for _, v := range findGroupingVessel {
+		idGroupingVessel = append(idGroupingVessel, v.ID)
 	}
 
 	createInsw.Month = month
@@ -2578,7 +2584,7 @@ func (r *repository) CreateInsw(groupingVesselId []int, month string, year int, 
 		return createInsw, updateInswErr
 	}
 
-	updateGroupingVesselLnErr := tx.Table("grouping_vessel_lns").Where("id IN ?", groupingVesselId).Update("insw_id", createInsw.ID).Error
+	updateGroupingVesselLnErr := tx.Table("grouping_vessel_lns").Where("id IN ?", idGroupingVessel).Update("insw_id", createInsw.ID).Error
 
 	if updateGroupingVesselLnErr != nil {
 		tx.Rollback()
@@ -2634,4 +2640,52 @@ func (r *repository) DeleteInsw(idInsw int, userId uint) (bool, error) {
 
 	tx.Commit()
 	return true, nil
+}
+
+func (r *repository) UpdateDocumentInsw(id int, documentLink insw.InputUpdateDocumentInsw, userId uint) (insw.Insw, error) {
+	tx := r.db.Begin()
+	var insw insw.Insw
+
+	errFind := tx.Where("id = ?", id).First(&insw).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return insw, errFind
+	}
+
+	editData := make(map[string]interface{})
+
+	for _, value := range documentLink.Data {
+		if value["Location"] != nil {
+			if strings.Contains(value["Location"].(string), "insw") {
+				editData["insw_document_link"] = value["Location"]
+			}
+		}
+	}
+
+	errEdit := tx.Model(&insw).Updates(editData).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return insw, errEdit
+	}
+
+	var history History
+
+	history.InswId = &insw.ID
+	history.UserId = userId
+	history.Status = fmt.Sprintf("Update upload document insw with id = %v", insw.ID)
+
+	dataInput, _ := json.Marshal(documentLink)
+	history.AfterData = dataInput
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return insw, createHistoryErr
+	}
+
+	tx.Commit()
+	return insw, nil
 }
