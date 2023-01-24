@@ -308,7 +308,7 @@ func (h *inswHandler) DeleteInsw(c *fiber.Ctx) error {
 			}
 
 			return c.Status(status).JSON(fiber.Map{
-				"message": "failed to delete minerba ln aws",
+				"message": "failed to delete insw ln aws",
 				"error":   deleteAwsErr.Error(),
 			})
 		}
@@ -350,4 +350,208 @@ func (h *inswHandler) DeleteInsw(c *fiber.Ctx) error {
 	return c.Status(200).JSON(fiber.Map{
 		"message": "success delete insw",
 	})
+}
+
+func (h *inswHandler) UpdateDocumentInsw(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	inputUpdateInsw := new(insw.InputUpdateDocumentInsw)
+
+	// Binds the request body to the Person struct
+	if err := c.BodyParser(inputUpdateInsw); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error":   err.Error(),
+			"message": "failed to update insw",
+		})
+	}
+
+	errors := h.v.Struct(*inputUpdateInsw)
+
+	id := c.Params("id")
+
+	idInt, err := strconv.Atoi(id)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"message": "failed to update insw",
+			"error":   "record not found",
+		})
+	}
+
+	if errors != nil {
+		dataErrors := validatorfunc.ValidateStruct(errors)
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["input"] = inputUpdateInsw
+		inputMap["insw_id"] = idInt
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"errors": dataErrors,
+		})
+
+		inswId := uint(idInt)
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+			InswId:  &inswId,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": dataErrors,
+		})
+	}
+
+	detailInsw, detailInswErr := h.groupingVesselLnService.DetailInsw(idInt)
+
+	if detailInswErr != nil {
+		status := 400
+
+		if detailInswErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"error": detailInswErr.Error(),
+		})
+	}
+
+	updateInsw, updateInswErr := h.historyService.UpdateDocumentInsw(idInt, *inputUpdateInsw, uint(claims["id"].(float64)))
+
+	if updateInswErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["input"] = inputUpdateInsw
+		inputMap["insw_id"] = idInt
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": updateInswErr.Error(),
+		})
+
+		inswId := uint(idInt)
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+			InswId:  &inswId,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		status := 400
+		if updateInswErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"error":   updateInswErr.Error(),
+			"message": "failed to update insw",
+		})
+	}
+
+	var inputNotification notification.InputNotification
+	inputNotification.Type = "insw"
+	inputNotification.Status = "membuat"
+	inputNotification.Period = fmt.Sprintf("%v %v", detailInsw.Detail.Month, detailInsw.Detail.Year)
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
+
+	if createdNotificationErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["input"] = inputUpdateInsw
+		inputMap["insw_id"] = idInt
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": createdNotificationErr.Error(),
+		})
+		inswId := uint(idInt)
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+			InswId:  &inswId,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error":   createdNotificationErr.Error(),
+			"message": "failed to create notification update insw",
+		})
+	}
+
+	return c.Status(200).JSON(updateInsw)
+}
+
+func (h *inswHandler) RequestCreateExcelInsw(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	id := c.Params("id")
+
+	idInt, err := strconv.Atoi(id)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "record not found",
+		})
+	}
+
+	header := c.GetReqHeaders()
+
+	detailInsw, detailInswErr := h.groupingVesselLnService.DetailInsw(idInt)
+
+	if detailInswErr != nil {
+		status := 400
+
+		if detailInswErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"error": detailInswErr.Error(),
+		})
+	}
+
+	var inputRequestCreateExcel groupingvesselln.InputRequestCreateUploadInsw
+	inputRequestCreateExcel.Authorization = header["Authorization"]
+	inputRequestCreateExcel.Insw = detailInsw.Detail
+	inputRequestCreateExcel.GroupingVesselLn = detailInsw.ListGroupingVesselLn
+
+	hitJob, hitJobErr := h.groupingVesselLnService.RequestCreateExcelInsw(inputRequestCreateExcel)
+
+	if hitJobErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": hitJobErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(hitJob)
 }

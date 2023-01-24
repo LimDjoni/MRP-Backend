@@ -31,6 +31,7 @@ type GroupingVesselLn struct {
 	ExportValue               float64    `json:"export_value"`
 	Currency                  string     `json:"currency"`
 	LoadingPort               string     `json:"loading_port"`
+	CodeOfLoadingPort         string     `json:"code_of_loading_port"`
 	SkaCooNumber              string     `json:"ska_coo_number"`
 	SkaCooDate                *string    `json:"ska_coo_date" gorm:"type:DATE"`
 	DestinationCountry        string     `json:"destination_country"`

@@ -1985,6 +1985,7 @@ func (r *repository) CreateGroupingVesselLN(inputGrouping groupingvesselln.Input
 	createdGroupingVesselLn.ExportValue = inputGrouping.ExportValue
 	createdGroupingVesselLn.Currency = inputGrouping.Currency
 	createdGroupingVesselLn.LoadingPort = inputGrouping.LoadingPort
+	createdGroupingVesselLn.CodeOfLoadingPort = inputGrouping.CodeOfLoadingPort
 	createdGroupingVesselLn.SkaCooNumber = strings.ToUpper(inputGrouping.SkaCooNumber)
 	createdGroupingVesselLn.SkaCooDate = inputGrouping.SkaCooDate
 	createdGroupingVesselLn.DestinationCountry = inputGrouping.DestinationCountry

@@ -54,4 +54,6 @@ func InswRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	inswRouting.Post("/preview", inswHandler.ListGroupingVesselLnWithPeriod)
 	inswRouting.Get("/detail/:id", inswHandler.DetailInsw)
 	inswRouting.Delete("/delete/:id", inswHandler.DeleteInsw)
+	inswRouting.Put("/update/document/:id", inswHandler.UpdateDocumentInsw)
+	inswRouting.Post("/create/excel/:id", inswHandler.RequestCreateExcelInsw)
 }
