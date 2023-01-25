@@ -56,14 +56,6 @@ func GroupingVesselLnRouting(db *gorm.DB, app fiber.Router, validate *validator.
 		},
 	}))
 
-	// LN
-	groupingVesselRouting.Post("/create/ln", groupingVesselLnHandler.CreateGroupingVesselLn)
-	groupingVesselRouting.Get("/detail/ln/:id", groupingVesselLnHandler.GetDetailGroupingVesselLn)
-	groupingVesselRouting.Put("/update/ln/:id", groupingVesselLnHandler.EditGroupingVesselLn)
-	groupingVesselRouting.Put("/update/document/ln/:id/:type", groupingVesselLnHandler.UploadDocumentGroupingVesselLn)
-	groupingVesselRouting.Delete("/delete/ln/:id", groupingVesselLnHandler.DeleteGroupingVesselLn)
-	groupingVesselRouting.Get("/list/ln", groupingVesselLnHandler.ListGroupingVesselLn)
-
 	// DN
 	groupingVesselRouting.Get("/list/dn", groupingVesselDnHandler.ListGroupingVesselDn)
 	groupingVesselRouting.Post("/create/dn", groupingVesselDnHandler.CreateGroupingVesselDn)
@@ -71,4 +63,12 @@ func GroupingVesselLnRouting(db *gorm.DB, app fiber.Router, validate *validator.
 	groupingVesselRouting.Put("/update/document/dn/:id/:type", groupingVesselDnHandler.UploadDocumentGroupingVesselDn)
 	groupingVesselRouting.Delete("/delete/dn/:id", groupingVesselDnHandler.DeleteGroupingVesselDn)
 	groupingVesselRouting.Get("/detail/dn/:id", groupingVesselDnHandler.GetDetailGroupingVesselDn)
+
+	// LN
+	groupingVesselRouting.Post("/create/ln", groupingVesselLnHandler.CreateGroupingVesselLn)
+	groupingVesselRouting.Get("/detail/ln/:id", groupingVesselLnHandler.GetDetailGroupingVesselLn)
+	groupingVesselRouting.Put("/update/ln/:id", groupingVesselLnHandler.EditGroupingVesselLn)
+	groupingVesselRouting.Put("/update/document/ln/:id/:type", groupingVesselLnHandler.UploadDocumentGroupingVesselLn)
+	groupingVesselRouting.Delete("/delete/ln/:id", groupingVesselLnHandler.DeleteGroupingVesselLn)
+	groupingVesselRouting.Get("/list/ln", groupingVesselLnHandler.ListGroupingVesselLn)
 }

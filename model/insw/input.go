@@ -8,3 +8,10 @@ type InputCreateInsw struct {
 type InputUpdateDocumentInsw struct {
 	Data []map[string]interface{} `json:"data"`
 }
+
+type SortFilterInsw struct {
+	SortMonth string
+	SortYear  string
+	Month     string
+	Year      string
+}

@@ -266,7 +266,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 
 	splitPeriod := strings.Split(inputCreateDmo.Period, " ")
 
-	baseIdNumber := fmt.Sprintf("SR-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
+	baseIdNumber := fmt.Sprintf("LDO-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
 	createDmo, createDmoErr := h.historyService.CreateDmo(*inputCreateDmo, baseIdNumber, uint(claims["id"].(float64)))
 
 	if createDmoErr != nil {
@@ -530,7 +530,7 @@ func (h *dmoHandler) DetailDmo(c *fiber.Ctx) error {
 	return c.Status(200).JSON(detailDmo)
 }
 
-func (h *dmoHandler) ListDataDNBargeWithoutVessel(c *fiber.Ctx) error {
+func (h *dmoHandler) ListTransactionForDmo(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	responseUnauthorized := map[string]interface{}{
@@ -547,15 +547,28 @@ func (h *dmoHandler) ListDataDNBargeWithoutVessel(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	listDataDNWithoutDmo, listDataDNWithoutDmoErr := h.transactionService.ListDataDNBargeWithoutVessel()
+	var listTransactionForDmo transaction.ChooseTransactionDmo
 
-	if listDataDNWithoutDmoErr != nil {
+	listBarge, listBargeErr := h.transactionService.ListDataDNBargeWithoutVessel()
+
+	if listBargeErr != nil {
 		return c.Status(400).JSON(fiber.Map{
-			"error": listDataDNWithoutDmoErr.Error(),
+			"error": listBargeErr.Error(),
 		})
 	}
 
-	return c.Status(200).JSON(listDataDNWithoutDmo)
+	listTransactionForDmo.BargeTransaction = listBarge
+
+	listGroupingVessel, listGroupingVesselErr := h.dmoVesselService.ListGroupingVesselWithoutDmo()
+
+	if listGroupingVesselErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": listGroupingVesselErr.Error(),
+		})
+	}
+
+	listTransactionForDmo.GroupingVesselTransaction = listGroupingVessel
+	return c.Status(200).JSON(listTransactionForDmo)
 }
 
 func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
@@ -601,14 +614,28 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	if findDmo.Detail.IsBastDocumentSigned != false || findDmo.Detail.IsReconciliationLetterSigned != false || findDmo.Detail.IsStatementLetterSigned != false {
+	if findDmo.Detail.IsBastDocumentSigned != false || findDmo.Detail.IsReconciliationLetterSigned != false || findDmo.Detail.IsStatementLetterSigned != false || findDmo.Detail.IsReconciliationLetterEndUserSigned != false {
 		return c.Status(400).JSON(fiber.Map{
 			"message": "failed to delete dmo",
 			"error":   "document dmo is already signed",
 		})
 	}
 
-	fileName := fmt.Sprintf("SR/%s/", *findDmo.Detail.IdNumber)
+	documentLink := *findDmo.Detail.ReconciliationLetterDocumentLink
+
+	documentLinkSplit := strings.Split(documentLink, "/")
+
+	fileName := ""
+	for i, v := range documentLinkSplit {
+		if i == 3 {
+			fileName += v + "/"
+		}
+
+		if i == 4 {
+			fileName += v
+		}
+	}
+
 	_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
 
 	if deleteAwsErr != nil {
@@ -1050,7 +1077,7 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 	var fileName string
 
 	idNumber := *dataDmo.IdNumber
-	fileName = "SR/"
+	fileName = "LDO/"
 	fileName += idNumber
 
 	file, errFormFile := c.FormFile("document")

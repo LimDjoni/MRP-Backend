@@ -5,6 +5,7 @@ import (
 	"ajebackend/helper"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/history"
+	"ajebackend/model/insw"
 	"ajebackend/model/logs"
 	"ajebackend/model/notificationuser"
 	"ajebackend/model/transaction"
@@ -35,7 +36,10 @@ func InswRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	notificationUserRepository := notificationuser.NewRepository(db)
 	notificationUserService := notificationuser.NewService(notificationUserRepository)
 
-	inswHandler := handler.NewInswHandler(transactionService, userService, historyService, validate, logService, groupingVesselLnService, notificationUserService)
+	inswRepository := insw.NewRepository(db)
+	inswService := insw.NewService(inswRepository)
+
+	inswHandler := handler.NewInswHandler(transactionService, userService, historyService, validate, logService, groupingVesselLnService, notificationUserService, inswService)
 
 	inswRouting := app.Group("/insw")
 
@@ -50,6 +54,7 @@ func InswRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 		},
 	}))
 
+	inswRouting.Get("/list", inswHandler.ListInsw)
 	inswRouting.Post("/create", inswHandler.CreateInsw)
 	inswRouting.Post("/preview", inswHandler.ListGroupingVesselLnWithPeriod)
 	inswRouting.Get("/detail/:id", inswHandler.DetailInsw)

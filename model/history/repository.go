@@ -190,7 +190,7 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 		return createdTransaction, createTransactionErr
 	}
 
-	idNumber := createIdNumber("DN", createdTransaction.ID)
+	idNumber := createIdNumber("TDN", createdTransaction.ID)
 
 	updateTransactionsErr := tx.Model(&createdTransaction).Update("id_number", idNumber).Error
 
@@ -563,7 +563,7 @@ func (r *repository) CreateTransactionLN(inputTransactionLN transaction.DataTran
 		return createdTransactionLn, createTransactionErr
 	}
 
-	idNumber := createIdNumber("LN", createdTransactionLn.ID)
+	idNumber := createIdNumber("TLN", createdTransactionLn.ID)
 
 	updateTransactionsErr := tx.Model(&createdTransactionLn).Update("id_number", idNumber).Error
 

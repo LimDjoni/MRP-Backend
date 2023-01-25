@@ -434,7 +434,7 @@ func (h *groupingVesselDnHandler) DeleteGroupingVesselDn(c *fiber.Ctx) error {
 
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{
-			"message": "failed to delete minerba",
+			"message": "failed to delete grouping vessel dn",
 			"error":   "record not found",
 		})
 	}

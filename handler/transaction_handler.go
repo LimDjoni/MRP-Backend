@@ -319,8 +319,46 @@ func (h *transactionHandler) DeleteTransaction(c *fiber.Ctx) error {
 		})
 	}
 
+	documentLink := findTransaction.SkbDocumentLink
+
 	if findTransaction.SkbDocumentLink != "" || findTransaction.SkabDocumentLink != "" || findTransaction.BLDocumentLink != "" || findTransaction.RoyaltiProvisionDocumentLink != "" || findTransaction.RoyaltiFinalDocumentLink != "" || findTransaction.COWDocumentLink != "" || findTransaction.COADocumentLink != "" || findTransaction.InvoiceAndContractDocumentLink != "" || findTransaction.LHVDocumentLink != "" {
-		fileName := fmt.Sprintf("%s/%s/", typeTransaction, *findTransaction.IdNumber)
+		if findTransaction.SkabDocumentLink != "" && documentLink == "" {
+			documentLink = findTransaction.SkabDocumentLink
+		}
+		if findTransaction.BLDocumentLink != "" && documentLink == "" {
+			documentLink = findTransaction.BLDocumentLink
+		}
+		if findTransaction.RoyaltiProvisionDocumentLink != "" && documentLink == "" {
+			documentLink = findTransaction.RoyaltiProvisionDocumentLink
+		}
+		if findTransaction.RoyaltiFinalDocumentLink != "" && documentLink == "" {
+			documentLink = findTransaction.RoyaltiFinalDocumentLink
+		}
+		if findTransaction.COWDocumentLink != "" && documentLink == "" {
+			documentLink = findTransaction.COWDocumentLink
+		}
+		if findTransaction.COADocumentLink != "" && documentLink == "" {
+			documentLink = findTransaction.COADocumentLink
+		}
+		if findTransaction.InvoiceAndContractDocumentLink != "" && documentLink == "" {
+			documentLink = findTransaction.InvoiceAndContractDocumentLink
+		}
+		if findTransaction.LHVDocumentLink != "" && documentLink == "" {
+			documentLink = findTransaction.LHVDocumentLink
+		}
+
+		documentLinkSplit := strings.Split(documentLink, "/")
+
+		fileName := ""
+		for i, v := range documentLinkSplit {
+			if i == 3 {
+				fileName += v + "/"
+			}
+
+			if i == 4 {
+				fileName += v
+			}
+		}
 		_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
 
 		if deleteAwsErr != nil {

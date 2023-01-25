@@ -84,6 +84,7 @@ func main() {
 		seeding.UpdateTransactionsRoyalty(db)
 		seeding.SeedingTraderAndCompanyData(db)
 		seeding.SeedingDestination(db)
+		seeding.UpdateNaming(db)
 		fmt.Println(errMigrate)
 	}
 

@@ -68,7 +68,7 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 
 	dmoRouting.Post("/create", dmoHandler.CreateDmo)
 	dmoRouting.Get("/list", dmoHandler.ListDmo)
-	dmoRouting.Get("/list/transaction", dmoHandler.ListDataDNBargeWithoutVessel)
+	dmoRouting.Get("/list/transaction", dmoHandler.ListTransactionForDmo)
 	dmoRouting.Get("/detail/:id", dmoHandler.DetailDmo)
 	dmoRouting.Delete("/delete/:id", dmoHandler.DeleteDmo)
 	dmoRouting.Put("/update/document/:id", dmoHandler.UpdateDocumentDmo)

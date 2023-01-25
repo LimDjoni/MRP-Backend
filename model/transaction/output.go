@@ -119,8 +119,8 @@ type ReportRecapOutput struct {
 }
 
 type ChooseTransactionDmo struct {
-	BargeTransaction  []Transaction `json:"barge_transaction"`
-	VesselTransaction []Transaction `json:"vessel_transaction"`
+	BargeTransaction          []Transaction                       `json:"barge_transaction"`
+	GroupingVesselTransaction []groupingvesseldn.GroupingVesselDn `json:"grouping_vessel_transaction"`
 }
 
 type DetailGroupingVesselDn struct {

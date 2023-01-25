@@ -30,9 +30,10 @@ type inswHandler struct {
 	logService              logs.Service
 	groupingVesselLnService groupingvesselln.Service
 	notificationUserService notificationuser.Service
+	inswService             insw.Service
 }
 
-func NewInswHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, v *validator.Validate, logService logs.Service, groupingVesselLnService groupingvesselln.Service, notificationUserService notificationuser.Service) *inswHandler {
+func NewInswHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, v *validator.Validate, logService logs.Service, groupingVesselLnService groupingvesselln.Service, notificationUserService notificationuser.Service, inswService insw.Service) *inswHandler {
 	return &inswHandler{
 		transactionService,
 		userService,
@@ -41,6 +42,7 @@ func NewInswHandler(transactionService transaction.Service, userService user.Ser
 		logService,
 		groupingVesselLnService,
 		notificationUserService,
+		inswService,
 	}
 }
 
@@ -279,7 +281,7 @@ func (h *inswHandler) DeleteInsw(c *fiber.Ctx) error {
 	}
 
 	if detailInsw.Detail.InswDocumentLink != "" {
-		fileName := fmt.Sprintf("INSW/%s/", *detailInsw.Detail.IdNumber)
+		fileName := fmt.Sprintf("LIW/%s/", *detailInsw.Detail.IdNumber)
 		_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
 
 		if deleteAwsErr != nil {
@@ -554,4 +556,53 @@ func (h *inswHandler) RequestCreateExcelInsw(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(hitJob)
+}
+
+func (h *inswHandler) ListInsw(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	page := c.Query("page")
+
+	pageNumber, err := strconv.Atoi(page)
+
+	if err != nil && page != "" {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	if page == "" {
+		pageNumber = 1
+	}
+
+	var filterInsw insw.SortFilterInsw
+
+	filterInsw.SortMonth = c.Query("sort_month")
+	filterInsw.SortYear = c.Query("sort_year")
+	filterInsw.Month = c.Query("month")
+	filterInsw.Year = c.Query("year")
+
+	listInsw, listInswErr := h.inswService.ListInsw(pageNumber, filterInsw)
+
+	if listInswErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": listInswErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(listInsw)
 }
