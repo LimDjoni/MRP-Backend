@@ -1,8 +1,8 @@
 package seeding
 
 import (
-	"ajebackend/model/company"
-	"ajebackend/model/trader"
+	"ajebackend/model/master/company"
+	"ajebackend/model/master/trader"
 	"fmt"
 
 	"gorm.io/gorm"

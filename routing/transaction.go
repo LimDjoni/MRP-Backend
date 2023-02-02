@@ -3,9 +3,9 @@ package routing
 import (
 	"ajebackend/handler"
 	"ajebackend/helper"
-	"ajebackend/model/destination"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
+	"ajebackend/model/master/destination"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 

@@ -1,7 +1,7 @@
 package traderdmo
 
 import (
-	"ajebackend/model/trader"
+	"ajebackend/model/master/trader"
 )
 
 type Service interface {

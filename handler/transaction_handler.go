@@ -2,9 +2,9 @@ package handler
 
 import (
 	"ajebackend/model/awshelper"
-	"ajebackend/model/destination"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
+	"ajebackend/model/master/destination"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 	"ajebackend/validatorfunc"
@@ -124,7 +124,7 @@ func (h *transactionHandler) CreateTransactionDN(c *fiber.Ctx) error {
 		})
 	}
 
-	transactionInput.DestinationId = findDestination.ID
+	transactionInput.DestinationId = &findDestination.ID
 	createdTransaction, createdTransactionErr := h.historyService.CreateTransactionDN(*transactionInput, uint(claims["id"].(float64)))
 
 	if createdTransactionErr != nil {
@@ -177,9 +177,9 @@ func (h *transactionHandler) ListData(c *fiber.Ctx) error {
 		sortAndFilter.Quantity = quantity
 	}
 
-	sortAndFilter.TugboatName = c.Query("tugboat_name")
-	sortAndFilter.BargeName = c.Query("barge_name")
-	sortAndFilter.VesselName = c.Query("vessel_name")
+	sortAndFilter.TugboatId = c.Query("tugboat_id")
+	sortAndFilter.BargeId = c.Query("barge_id")
+	sortAndFilter.VesselId = c.Query("vessel_id")
 	sortAndFilter.ShippingFrom = c.Query("shipping_from")
 	sortAndFilter.ShippingTo = c.Query("shipping_to")
 	sortAndFilter.VerificationFilter = c.Query("verification_filter")
@@ -444,7 +444,7 @@ func (h *transactionHandler) UpdateTransactionDN(c *fiber.Ctx) error {
 		})
 	}
 
-	transactionInput.DestinationId = findDestination.ID
+	transactionInput.DestinationId = &findDestination.ID
 	updateTransaction, updateTransactionErr := h.historyService.UpdateTransactionDN(idInt, *transactionInput, uint(claims["id"].(float64)))
 
 	if updateTransactionErr != nil {

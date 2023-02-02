@@ -3,14 +3,14 @@ package handler
 import (
 	"ajebackend/helper"
 	"ajebackend/model/awshelper"
-	"ajebackend/model/company"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
+	"ajebackend/model/master/company"
+	"ajebackend/model/master/trader"
 	"ajebackend/model/notification"
 	"ajebackend/model/notificationuser"
-	"ajebackend/model/trader"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
@@ -266,7 +266,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 
 	splitPeriod := strings.Split(inputCreateDmo.Period, " ")
 
-	baseIdNumber := fmt.Sprintf("LDO-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
+	baseIdNumber := fmt.Sprintf("LBU-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
 	createDmo, createDmoErr := h.historyService.CreateDmo(*inputCreateDmo, baseIdNumber, uint(claims["id"].(float64)))
 
 	if createDmoErr != nil {
@@ -360,7 +360,6 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	reqInputCreateUploadDmo.ListGroupingVesselFobVessel = listTransactionDmo.ListGroupingVesselFobVessel
 
 	if !inputCreateDmo.IsDocumentCustom {
-
 		_, requestJobDmoErr := h.transactionService.RequestCreateDmo(reqInputCreateUploadDmo)
 
 		if requestJobDmoErr != nil {
@@ -400,6 +399,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 			})
 		}
 		reconciliationLetterFile := formPart.File["reconciliation_letter"][0]
+
 		_, reqJobDocumentCustomErr := h.transactionService.RequestCreateCustomDmo(createDmo, endUser, reconciliationLetterFile, header["Authorization"], reqInputCreateUploadDmo)
 
 		if reqJobDocumentCustomErr != nil {
@@ -621,45 +621,47 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	documentLink := *findDmo.Detail.ReconciliationLetterDocumentLink
+	documentLink := findDmo.Detail.ReconciliationLetterDocumentLink
 
-	documentLinkSplit := strings.Split(documentLink, "/")
+	if documentLink != nil {
+		documentLinkSplit := strings.Split(*documentLink, "/")
 
-	fileName := ""
-	for i, v := range documentLinkSplit {
-		if i == 3 {
-			fileName += v + "/"
+		fileName := ""
+		for i, v := range documentLinkSplit {
+			if i == 3 {
+				fileName += v + "/"
+			}
+
+			if i == 4 {
+				fileName += v
+			}
 		}
 
-		if i == 4 {
-			fileName += v
+		_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
+
+		if deleteAwsErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["user_id"] = claims["id"]
+			inputMap["dmo_id"] = idInt
+
+			inputJson, _ := json.Marshal(inputMap)
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error":     deleteAwsErr.Error(),
+				"id_number": findDmo.Detail.IdNumber,
+			})
+
+			createdErrLog := logs.Logs{
+				Input:   inputJson,
+				Message: messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			return c.Status(400).JSON(fiber.Map{
+				"message": "failed to delete dmo aws",
+				"error":   deleteAwsErr.Error(),
+			})
 		}
-	}
-
-	_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
-
-	if deleteAwsErr != nil {
-		inputMap := make(map[string]interface{})
-		inputMap["user_id"] = claims["id"]
-		inputMap["dmo_id"] = idInt
-
-		inputJson, _ := json.Marshal(inputMap)
-		messageJson, _ := json.Marshal(map[string]interface{}{
-			"error":     deleteAwsErr.Error(),
-			"id_number": findDmo.Detail.IdNumber,
-		})
-
-		createdErrLog := logs.Logs{
-			Input:   inputJson,
-			Message: messageJson,
-		}
-
-		h.logService.CreateLogs(createdErrLog)
-
-		return c.Status(400).JSON(fiber.Map{
-			"message": "failed to delete dmo aws",
-			"error":   deleteAwsErr.Error(),
-		})
 	}
 
 	endUserDmo, _ := h.traderDmoService.GetTraderEndUserDmo(idInt)
@@ -1077,7 +1079,7 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 	var fileName string
 
 	idNumber := *dataDmo.IdNumber
-	fileName = "LDO/"
+	fileName = "LBU/"
 	fileName += idNumber
 
 	file, errFormFile := c.FormFile("document")

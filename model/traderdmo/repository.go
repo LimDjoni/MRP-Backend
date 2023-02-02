@@ -1,7 +1,8 @@
 package traderdmo
 
 import (
-	"ajebackend/model/trader"
+	"ajebackend/model/master/trader"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

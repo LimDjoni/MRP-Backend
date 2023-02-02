@@ -39,7 +39,7 @@ func (r *repository) CreateCompany(inputCompany InputCreateUpdateCompany) (Compa
 	createdCompany.Province = inputCompany.Province
 	createdCompany.PhoneNumber = inputCompany.PhoneNumber
 	createdCompany.FaxNumber = inputCompany.FaxNumber
-	createdCompany.IndustryType = inputCompany.IndustryType
+	createdCompany.IndustryTypeId = inputCompany.IndustryTypeId
 
 	errCreate := r.db.Create(&createdCompany).Error
 

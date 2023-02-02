@@ -2,10 +2,10 @@ package handler
 
 import (
 	"ajebackend/model/awshelper"
-	"ajebackend/model/destination"
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
+	"ajebackend/model/master/destination"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 	"ajebackend/validatorfunc"
@@ -215,7 +215,7 @@ func (h *groupingVesselDnHandler) EditGroupingVesselDn(c *fiber.Ctx) error {
 		})
 	}
 
-	editGroupingVesselDnInput.DestinationId = findDestination.ID
+	editGroupingVesselDnInput.DestinationId = &findDestination.ID
 
 	editGroupingVesselDn, editGroupingVesselDnErr := h.historyService.EditGroupingVesselDn(idInt, *editGroupingVesselDnInput, uint(claims["id"].(float64)))
 
@@ -278,7 +278,7 @@ func (h *groupingVesselDnHandler) UploadDocumentGroupingVesselDn(c *fiber.Ctx) e
 
 	switch documentType {
 	case "coa_cow",
-		"bl_mv":
+		"bl_mv", "skab":
 	default:
 		return c.Status(400).JSON(fiber.Map{
 			"error":   "document type not found",
@@ -516,4 +516,38 @@ func (h *groupingVesselDnHandler) DeleteGroupingVesselDn(c *fiber.Ctx) error {
 	return c.Status(200).JSON(fiber.Map{
 		"message": "success delete grouping vessel dn",
 	})
+}
+
+func (h *groupingVesselDnHandler) ListDnWithoutGroup(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	listDnWithoutGroup, listDnWithoutGroupErr := h.transactionService.ListDataDnWithoutGroup()
+
+	if listDnWithoutGroupErr != nil {
+
+		status := 400
+
+		if listDnWithoutGroupErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"error": listDnWithoutGroupErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(listDnWithoutGroup)
 }

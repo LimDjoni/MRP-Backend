@@ -1,9 +1,9 @@
 package handler
 
 import (
-	"ajebackend/model/company"
 	"ajebackend/model/logs"
-	"ajebackend/model/trader"
+	"ajebackend/model/master/company"
+	"ajebackend/model/master/trader"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/user"
 	"ajebackend/validatorfunc"

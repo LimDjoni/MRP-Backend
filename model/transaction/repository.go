@@ -43,6 +43,7 @@ type Repository interface {
 	CheckDataUnique(inputTrans DataTransactionInput) (bool, bool, bool, bool)
 	GetReport(year int) (ReportRecapOutput, ReportDetailOutput, error)
 	GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, error)
+	ListDataDnWithoutGroup() (ListTransactionNotHaveGroupingVessel, error)
 	GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, error)
 	ListDataLnWithoutGroup() ([]Transaction, error)
 	ListDataLNWithoutMinerba() ([]Transaction, error)
@@ -75,16 +76,16 @@ func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionTyp
 
 	queryFilter := fmt.Sprintf("transaction_type = '%s' ", strings.ToUpper(transactionType))
 
-	if sortFilter.TugboatName != "" {
-		queryFilter = queryFilter + " AND tugboat_name = '" + sortFilter.TugboatName + "'"
+	if sortFilter.TugboatId != "" {
+		queryFilter = queryFilter + " AND tugboat_id = " + sortFilter.TugboatId
 	}
 
-	if sortFilter.BargeName != "" {
-		queryFilter = queryFilter + " AND barge_name = '" + sortFilter.BargeName + "'"
+	if sortFilter.BargeId != "" {
+		queryFilter = queryFilter + " AND barge_id = " + sortFilter.BargeId
 	}
 
-	if sortFilter.VesselName != "" {
-		queryFilter = queryFilter + " AND vessel_name = '" + sortFilter.VesselName + "'"
+	if sortFilter.VesselId != "" {
+		queryFilter = queryFilter + " AND vessel_id = " + sortFilter.VesselId
 	}
 
 	if sortFilter.ShippingFrom != "" {
@@ -968,6 +969,28 @@ func (r *repository) GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, 
 	return detailGroupingVesselDn, nil
 }
 
+func (r *repository) ListDataDnWithoutGroup() (ListTransactionNotHaveGroupingVessel, error) {
+	var listGroup ListTransactionNotHaveGroupingVessel
+	var transactionBarge []Transaction
+	var transactionVessel []Transaction
+
+	findTransactionBargeErr := r.db.Order("id desc").Where("transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND grouping_vessel_dn_id is NULL AND sales_system LIKE '%Barge' AND vessel_name NOT LIKE ''", "DN", false, false).Find(&transactionBarge).Error
+
+	if findTransactionBargeErr != nil {
+		return listGroup, findTransactionBargeErr
+	}
+
+	findTransactionVesselErr := r.db.Order("id desc").Where("transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND grouping_vessel_dn_id is NULL AND sales_system LIKE '%Vessel' AND vessel_name NOT LIKE ''", "DN", false, false).Find(&transactionVessel).Error
+
+	if findTransactionVesselErr != nil {
+		return listGroup, findTransactionVesselErr
+	}
+	listGroup.TransactionBarge = transactionBarge
+	listGroup.TransactionVessel = transactionVessel
+
+	return listGroup, nil
+}
+
 // Grouping Vessel Ln
 func (r *repository) GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, error) {
 
@@ -998,7 +1021,7 @@ func (r *repository) GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, 
 func (r *repository) ListDataLnWithoutGroup() ([]Transaction, error) {
 	var listDataLnWithoutGrouping []Transaction
 
-	errListDataLnWithoutGrouping := r.db.Order("id desc").Where("transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND is_finance_check = ? AND grouping_vessel_ln_id is NULL", "LN", false, false, true).Find(&listDataLnWithoutGrouping).Error
+	errListDataLnWithoutGrouping := r.db.Order("id desc").Where("transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND grouping_vessel_ln_id is NULL", "LN", false, false).Find(&listDataLnWithoutGrouping).Error
 
 	if errListDataLnWithoutGrouping != nil {
 		return listDataLnWithoutGrouping, errListDataLnWithoutGrouping

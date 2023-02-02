@@ -7,12 +7,14 @@ import (
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/insw"
+	"ajebackend/model/master/currency"
+	"ajebackend/model/master/iupopk"
+	"ajebackend/model/master/vessel"
 	"ajebackend/model/minerba"
 	"ajebackend/model/minerbaln"
 	"ajebackend/model/production"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
-	"ajebackend/model/vessel"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -90,25 +92,37 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 
 	tx := r.db.Begin()
 
+	var iup iupopk.Iupopk
+
+	iupErr := tx.Where("name = ? ", "PT Angsana Jaya Energi").First(&iup).Error
+
+	if iupErr != nil {
+		tx.Rollback()
+		return createdTransaction, iupErr
+	}
+
+	var curr currency.Currency
+
+	currencyErr := tx.Where("code = ?", "IDR").First(&curr).Error
+
+	if currencyErr != nil {
+		tx.Rollback()
+		return createdTransaction, currencyErr
+	}
+
 	createdTransaction.DmoId = nil
 	createdTransaction.TransactionType = "DN"
-	if inputTransactionDN.Seller == "" {
-		createdTransaction.Seller = "PT Angsana Jaya Energi"
-	} else {
-		createdTransaction.Seller = inputTransactionDN.Seller
-	}
-	createdTransaction.DestinationCountry = inputTransactionDN.DestinationCountry
+	createdTransaction.SellerId = &iup.ID
+	createdTransaction.DestinationCountryId = inputTransactionDN.DestinationCountryId
 	createdTransaction.ShippingDate = inputTransactionDN.ShippingDate
 	createdTransaction.Quantity = inputTransactionDN.Quantity
-	createdTransaction.TugboatName = inputTransactionDN.TugboatName
-	createdTransaction.BargeName = inputTransactionDN.BargeName
-	createdTransaction.VesselName = inputTransactionDN.VesselName
-	createdTransaction.CustomerName = inputTransactionDN.CustomerName
-	createdTransaction.LoadingPortName = inputTransactionDN.LoadingPortName
-	createdTransaction.LoadingPortLocation = inputTransactionDN.LoadingPortLocation
-	createdTransaction.UnloadingPortName = inputTransactionDN.UnloadingPortName
-	createdTransaction.UnloadingPortLocation = inputTransactionDN.UnloadingPortLocation
-	createdTransaction.DmoDestinationPort = inputTransactionDN.DmoDestinationPort
+	createdTransaction.TugboatId = inputTransactionDN.TugboatId
+	createdTransaction.BargeId = inputTransactionDN.BargeId
+	createdTransaction.VesselId = inputTransactionDN.VesselId
+	createdTransaction.CustomerId = inputTransactionDN.CustomerId
+	createdTransaction.LoadingPortId = inputTransactionDN.LoadingPortId
+	createdTransaction.UnloadingPortId = inputTransactionDN.UnloadingPortId
+	createdTransaction.DmoDestinationPortId = inputTransactionDN.DmoDestinationPortId
 	createdTransaction.SkbDate = inputTransactionDN.SkbDate
 	createdTransaction.SkbNumber = strings.ToUpper(inputTransactionDN.SkbNumber)
 	createdTransaction.SkabDate = inputTransactionDN.SkabDate
@@ -117,10 +131,7 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 	createdTransaction.BillOfLadingNumber = strings.ToUpper(inputTransactionDN.BillOfLadingNumber)
 	createdTransaction.RoyaltyRate = inputTransactionDN.RoyaltyRate
 	createdTransaction.DpRoyaltyPrice = inputTransactionDN.DpRoyaltyPrice
-	createdTransaction.DpRoyaltyCurrency = strings.ToUpper(inputTransactionDN.DpRoyaltyCurrency)
-	if inputTransactionDN.DpRoyaltyCurrency == "" {
-		createdTransaction.DpRoyaltyCurrency = "IDR"
-	}
+	createdTransaction.DpRoyaltyCurrencyId = &curr.ID
 	createdTransaction.DpRoyaltyDate = inputTransactionDN.DpRoyaltyDate
 	if inputTransactionDN.DpRoyaltyNtpn != nil {
 		dpNtpn := strings.ToUpper(*inputTransactionDN.DpRoyaltyNtpn)
@@ -134,11 +145,7 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 
 	createdTransaction.DpRoyaltyTotal = inputTransactionDN.DpRoyaltyTotal
 	createdTransaction.PaymentDpRoyaltyPrice = inputTransactionDN.PaymentDpRoyaltyPrice
-	createdTransaction.PaymentDpRoyaltyCurrency = strings.ToUpper(inputTransactionDN.PaymentDpRoyaltyCurrency)
-	if inputTransactionDN.PaymentDpRoyaltyCurrency == "" {
-		createdTransaction.PaymentDpRoyaltyCurrency = "IDR"
-	}
-
+	createdTransaction.PaymentDpRoyaltyCurrencyId = &curr.ID
 	createdTransaction.PaymentDpRoyaltyDate = inputTransactionDN.PaymentDpRoyaltyDate
 	if inputTransactionDN.PaymentDpRoyaltyNtpn != nil {
 		paymentDpNtpn := strings.ToUpper(*inputTransactionDN.PaymentDpRoyaltyNtpn)
@@ -153,7 +160,7 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 	createdTransaction.PaymentDpRoyaltyTotal = inputTransactionDN.PaymentDpRoyaltyTotal
 	createdTransaction.LhvDate = inputTransactionDN.LhvDate
 	createdTransaction.LhvNumber = strings.ToUpper(inputTransactionDN.LhvNumber)
-	createdTransaction.SurveyorName = inputTransactionDN.SurveyorName
+	createdTransaction.SurveyorId = inputTransactionDN.SurveyorId
 	createdTransaction.CowDate = inputTransactionDN.CowDate
 	createdTransaction.CowNumber = strings.ToUpper(inputTransactionDN.CowNumber)
 	createdTransaction.CoaDate = inputTransactionDN.CoaDate
@@ -169,20 +176,17 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 	createdTransaction.QualityCaloriesAr = inputTransactionDN.QualityCaloriesAr
 	createdTransaction.QualityCaloriesAdb = inputTransactionDN.QualityCaloriesAdb
 	createdTransaction.BargingDistance = inputTransactionDN.BargingDistance
-	createdTransaction.SalesSystem = inputTransactionDN.SalesSystem
+	createdTransaction.SalesSystemId = inputTransactionDN.SalesSystemId
 	createdTransaction.InvoiceDate = inputTransactionDN.InvoiceDate
 	createdTransaction.InvoiceNumber = strings.ToUpper(inputTransactionDN.InvoiceNumber)
 	createdTransaction.InvoicePriceUnit = inputTransactionDN.InvoicePriceUnit
 	createdTransaction.InvoicePriceTotal = inputTransactionDN.InvoicePriceTotal
-	createdTransaction.DmoReconciliationLetter = inputTransactionDN.DmoReconciliationLetter
 	createdTransaction.ContractDate = inputTransactionDN.ContractDate
 	createdTransaction.ContractNumber = strings.ToUpper(inputTransactionDN.ContractNumber)
-	createdTransaction.DmoBuyerName = inputTransactionDN.DmoBuyerName
-	createdTransaction.DmoIndustryType = inputTransactionDN.DmoIndustryType
-	createdTransaction.DmoCategory = strings.ToUpper(inputTransactionDN.DmoCategory)
+	createdTransaction.DmoBuyerId = inputTransactionDN.DmoBuyerId
 	createdTransaction.IsCoaFinish = inputTransactionDN.IsCoaFinish
 	createdTransaction.IsRoyaltyFinalFinish = inputTransactionDN.IsRoyaltyFinalFinish
-	createdTransaction.DestinationId = &inputTransactionDN.DestinationId
+	createdTransaction.DestinationId = inputTransactionDN.DestinationId
 	createTransactionErr := tx.Create(&createdTransaction).Error
 
 	if createTransactionErr != nil {
@@ -268,55 +272,14 @@ func (r *repository) UpdateTransactionDN(idTransaction int, inputEditTransaction
 		tx.Rollback()
 		return transaction, errorBeforeDataJsonMarshal
 	}
-
-	inputEditTransactionDN.Seller = inputEditTransactionDN.Seller
-	inputEditTransactionDN.TugboatName = inputEditTransactionDN.TugboatName
-	inputEditTransactionDN.BargeName = inputEditTransactionDN.BargeName
-	inputEditTransactionDN.VesselName = inputEditTransactionDN.VesselName
-	inputEditTransactionDN.CustomerName = inputEditTransactionDN.CustomerName
-	inputEditTransactionDN.LoadingPortName = inputEditTransactionDN.LoadingPortName
-	inputEditTransactionDN.LoadingPortLocation = inputEditTransactionDN.LoadingPortLocation
-	inputEditTransactionDN.UnloadingPortName = inputEditTransactionDN.UnloadingPortName
-	inputEditTransactionDN.UnloadingPortLocation = inputEditTransactionDN.UnloadingPortLocation
-	inputEditTransactionDN.DmoDestinationPort = inputEditTransactionDN.DmoDestinationPort
 	inputEditTransactionDN.SkbNumber = strings.ToUpper(inputEditTransactionDN.SkbNumber)
 	inputEditTransactionDN.SkabNumber = strings.ToUpper(inputEditTransactionDN.SkabNumber)
 	inputEditTransactionDN.BillOfLadingNumber = strings.ToUpper(inputEditTransactionDN.BillOfLadingNumber)
-	inputEditTransactionDN.DpRoyaltyCurrency = strings.ToUpper(inputEditTransactionDN.DpRoyaltyCurrency)
-	if inputEditTransactionDN.DpRoyaltyNtpn != nil {
-		dpNtpn := strings.ToUpper(*inputEditTransactionDN.DpRoyaltyNtpn)
-		inputEditTransactionDN.DpRoyaltyNtpn = &dpNtpn
-	}
-
-	if inputEditTransactionDN.DpRoyaltyBillingCode != nil {
-		dpBillingCode := strings.ToUpper(*inputEditTransactionDN.DpRoyaltyBillingCode)
-		inputEditTransactionDN.DpRoyaltyBillingCode = &dpBillingCode
-	}
-
-	inputEditTransactionDN.PaymentDpRoyaltyCurrency = strings.ToUpper(inputEditTransactionDN.PaymentDpRoyaltyCurrency)
-	inputEditTransactionDN.PaymentDpRoyaltyCurrency = strings.ToUpper(inputEditTransactionDN.PaymentDpRoyaltyCurrency)
-
-	if inputEditTransactionDN.PaymentDpRoyaltyNtpn != nil {
-		paymentDpNtpn := strings.ToUpper(*inputEditTransactionDN.PaymentDpRoyaltyNtpn)
-		inputEditTransactionDN.PaymentDpRoyaltyNtpn = &paymentDpNtpn
-	}
-
-	if inputEditTransactionDN.PaymentDpRoyaltyBillingCode != nil {
-		paymentDpBillingCode := strings.ToUpper(*inputEditTransactionDN.PaymentDpRoyaltyBillingCode)
-		inputEditTransactionDN.PaymentDpRoyaltyBillingCode = &paymentDpBillingCode
-	}
-
 	inputEditTransactionDN.LhvNumber = strings.ToUpper(inputEditTransactionDN.LhvNumber)
-	inputEditTransactionDN.SurveyorName = inputEditTransactionDN.SurveyorName
 	inputEditTransactionDN.CowNumber = strings.ToUpper(inputEditTransactionDN.CowNumber)
 	inputEditTransactionDN.CoaNumber = strings.ToUpper(inputEditTransactionDN.CoaNumber)
-	inputEditTransactionDN.SalesSystem = inputEditTransactionDN.SalesSystem
 	inputEditTransactionDN.InvoiceNumber = strings.ToUpper(inputEditTransactionDN.InvoiceNumber)
 	inputEditTransactionDN.ContractNumber = strings.ToUpper(inputEditTransactionDN.ContractNumber)
-	inputEditTransactionDN.DmoBuyerName = inputEditTransactionDN.DmoBuyerName
-	inputEditTransactionDN.DmoIndustryType = inputEditTransactionDN.DmoIndustryType
-	inputEditTransactionDN.DmoCategory = strings.ToUpper(inputEditTransactionDN.DmoCategory)
-	inputEditTransactionDN.DestinationId = inputEditTransactionDN.DestinationId
 	dataInput, errorMarshal := json.Marshal(inputEditTransactionDN)
 
 	if errorMarshal != nil {
@@ -332,8 +295,6 @@ func (r *repository) UpdateTransactionDN(idTransaction int, inputEditTransaction
 		tx.Rollback()
 		return transaction, errorUnmarshal
 	}
-
-	delete(dataInputMapString, "destination_name")
 
 	updateErr := tx.Model(&transaction).Updates(dataInputMapString).Error
 
@@ -466,24 +427,34 @@ func (r *repository) CreateTransactionLN(inputTransactionLN transaction.DataTran
 
 	tx := r.db.Begin()
 
-	createdTransactionLn.TransactionType = "LN"
-	if inputTransactionLN.Seller == "" {
-		createdTransactionLn.Seller = "PT Angsana Jaya Energi"
-	} else {
-		createdTransactionLn.Seller = inputTransactionLN.Seller
+	var iup iupopk.Iupopk
+
+	iupErr := tx.Where("name = ? ", "PT Angsana Jaya Energi").First(&iup).Error
+
+	if iupErr != nil {
+		tx.Rollback()
+		return createdTransactionLn, iupErr
 	}
-	createdTransactionLn.DestinationCountry = inputTransactionLN.DestinationCountry
+
+	var curr currency.Currency
+
+	currencyErr := tx.Where("code = ?", "IDR").First(&curr).Error
+
+	if currencyErr != nil {
+		tx.Rollback()
+		return createdTransactionLn, currencyErr
+	}
+	createdTransactionLn.TransactionType = "LN"
+	createdTransactionLn.SellerId = &iup.ID
+	createdTransactionLn.DestinationCountryId = inputTransactionLN.DestinationCountryId
 	createdTransactionLn.ShippingDate = inputTransactionLN.ShippingDate
-	createdTransactionLn.Quantity = inputTransactionLN.Quantity
-	createdTransactionLn.TugboatName = inputTransactionLN.TugboatName
-	createdTransactionLn.BargeName = inputTransactionLN.BargeName
-	createdTransactionLn.VesselName = inputTransactionLN.VesselName
-	createdTransactionLn.CustomerName = inputTransactionLN.CustomerName
-	createdTransactionLn.LoadingPortName = inputTransactionLN.LoadingPortName
-	createdTransactionLn.LoadingPortLocation = inputTransactionLN.LoadingPortLocation
-	createdTransactionLn.UnloadingPortName = inputTransactionLN.UnloadingPortName
-	createdTransactionLn.UnloadingPortLocation = inputTransactionLN.UnloadingPortLocation
-	createdTransactionLn.DmoDestinationPort = inputTransactionLN.DmoDestinationPort
+	createdTransactionLn.TugboatId = inputTransactionLN.TugboatId
+	createdTransactionLn.BargeId = inputTransactionLN.BargeId
+	createdTransactionLn.VesselId = inputTransactionLN.VesselId
+	createdTransactionLn.CustomerId = inputTransactionLN.CustomerId
+	createdTransactionLn.LoadingPortId = inputTransactionLN.LoadingPortId
+	createdTransactionLn.UnloadingPortId = inputTransactionLN.UnloadingPortId
+	createdTransactionLn.DmoDestinationPortId = inputTransactionLN.DmoDestinationPortId
 	createdTransactionLn.SkbDate = inputTransactionLN.SkbDate
 	createdTransactionLn.SkbNumber = strings.ToUpper(inputTransactionLN.SkbNumber)
 	createdTransactionLn.SkabDate = inputTransactionLN.SkabDate
@@ -492,10 +463,7 @@ func (r *repository) CreateTransactionLN(inputTransactionLN transaction.DataTran
 	createdTransactionLn.BillOfLadingNumber = strings.ToUpper(inputTransactionLN.BillOfLadingNumber)
 	createdTransactionLn.RoyaltyRate = inputTransactionLN.RoyaltyRate
 	createdTransactionLn.DpRoyaltyPrice = inputTransactionLN.DpRoyaltyPrice
-	createdTransactionLn.DpRoyaltyCurrency = strings.ToUpper(inputTransactionLN.DpRoyaltyCurrency)
-	if inputTransactionLN.DpRoyaltyCurrency == "" {
-		createdTransactionLn.DpRoyaltyCurrency = "USD"
-	}
+	createdTransactionLn.DpRoyaltyCurrencyId = &curr.ID
 	createdTransactionLn.DpRoyaltyDate = inputTransactionLN.DpRoyaltyDate
 	if inputTransactionLN.DpRoyaltyNtpn != nil {
 		dpNtpn := strings.ToUpper(*inputTransactionLN.DpRoyaltyNtpn)
@@ -509,10 +477,7 @@ func (r *repository) CreateTransactionLN(inputTransactionLN transaction.DataTran
 
 	createdTransactionLn.DpRoyaltyTotal = inputTransactionLN.DpRoyaltyTotal
 	createdTransactionLn.PaymentDpRoyaltyPrice = inputTransactionLN.PaymentDpRoyaltyPrice
-	createdTransactionLn.PaymentDpRoyaltyCurrency = strings.ToUpper(inputTransactionLN.PaymentDpRoyaltyCurrency)
-	if inputTransactionLN.PaymentDpRoyaltyCurrency == "" {
-		createdTransactionLn.PaymentDpRoyaltyCurrency = "USD"
-	}
+	createdTransactionLn.PaymentDpRoyaltyCurrencyId = &curr.ID
 
 	createdTransactionLn.PaymentDpRoyaltyDate = inputTransactionLN.PaymentDpRoyaltyDate
 	if inputTransactionLN.PaymentDpRoyaltyNtpn != nil {
@@ -528,7 +493,7 @@ func (r *repository) CreateTransactionLN(inputTransactionLN transaction.DataTran
 	createdTransactionLn.PaymentDpRoyaltyTotal = inputTransactionLN.PaymentDpRoyaltyTotal
 	createdTransactionLn.LhvDate = inputTransactionLN.LhvDate
 	createdTransactionLn.LhvNumber = strings.ToUpper(inputTransactionLN.LhvNumber)
-	createdTransactionLn.SurveyorName = inputTransactionLN.SurveyorName
+	createdTransactionLn.SurveyorId = inputTransactionLN.SurveyorId
 	createdTransactionLn.CowDate = inputTransactionLN.CowDate
 	createdTransactionLn.CowNumber = strings.ToUpper(inputTransactionLN.CowNumber)
 	createdTransactionLn.CoaDate = inputTransactionLN.CoaDate
@@ -544,17 +509,14 @@ func (r *repository) CreateTransactionLN(inputTransactionLN transaction.DataTran
 	createdTransactionLn.QualityCaloriesAr = inputTransactionLN.QualityCaloriesAr
 	createdTransactionLn.QualityCaloriesAdb = inputTransactionLN.QualityCaloriesAdb
 	createdTransactionLn.BargingDistance = inputTransactionLN.BargingDistance
-	createdTransactionLn.SalesSystem = inputTransactionLN.SalesSystem
+	createdTransactionLn.SalesSystemId = inputTransactionLN.SalesSystemId
 	createdTransactionLn.InvoiceDate = inputTransactionLN.InvoiceDate
 	createdTransactionLn.InvoiceNumber = strings.ToUpper(inputTransactionLN.InvoiceNumber)
 	createdTransactionLn.InvoicePriceUnit = inputTransactionLN.InvoicePriceUnit
 	createdTransactionLn.InvoicePriceTotal = inputTransactionLN.InvoicePriceTotal
-	createdTransactionLn.DmoReconciliationLetter = inputTransactionLN.DmoReconciliationLetter
 	createdTransactionLn.ContractDate = inputTransactionLN.ContractDate
 	createdTransactionLn.ContractNumber = strings.ToUpper(inputTransactionLN.ContractNumber)
-	createdTransactionLn.DmoBuyerName = inputTransactionLN.DmoBuyerName
-	createdTransactionLn.DmoIndustryType = inputTransactionLN.DmoIndustryType
-	createdTransactionLn.DmoCategory = strings.ToUpper(inputTransactionLN.DmoCategory)
+	createdTransactionLn.DmoBuyerId = inputTransactionLN.DmoBuyerId
 
 	createTransactionErr := tx.Create(&createdTransactionLn).Error
 
@@ -604,7 +566,6 @@ func (r *repository) CreateTransactionLN(inputTransactionLN transaction.DataTran
 
 func (r *repository) UpdateTransactionLN(id int, inputTransactionLN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error) {
 	var updatedTransactionLn transaction.Transaction
-	var updateTransaction transaction.DataTransactionInput
 
 	tx := r.db.Begin()
 
@@ -622,98 +583,15 @@ func (r *repository) UpdateTransactionLN(id int, inputTransactionLN transaction.
 		return updatedTransactionLn, errorBeforeDataJsonMarshal
 	}
 
-	if inputTransactionLN.Seller == "" {
-		updateTransaction.Seller = "PT Angsana Jaya Energi"
-	} else {
-		updateTransaction.Seller = inputTransactionLN.Seller
-	}
-	updateTransaction.DestinationCountry = inputTransactionLN.DestinationCountry
-	updateTransaction.ShippingDate = inputTransactionLN.ShippingDate
-	updateTransaction.Quantity = inputTransactionLN.Quantity
-	updateTransaction.TugboatName = inputTransactionLN.TugboatName
-	updateTransaction.BargeName = inputTransactionLN.BargeName
-	updateTransaction.VesselName = inputTransactionLN.VesselName
-	updateTransaction.CustomerName = inputTransactionLN.CustomerName
-	updateTransaction.LoadingPortName = inputTransactionLN.LoadingPortName
-	updateTransaction.LoadingPortLocation = inputTransactionLN.LoadingPortLocation
-	updateTransaction.UnloadingPortName = inputTransactionLN.UnloadingPortName
-	updateTransaction.UnloadingPortLocation = inputTransactionLN.UnloadingPortLocation
-	updateTransaction.DmoDestinationPort = inputTransactionLN.DmoDestinationPort
-	updateTransaction.SkbDate = inputTransactionLN.SkbDate
-	updateTransaction.SkbNumber = strings.ToUpper(inputTransactionLN.SkbNumber)
-	updateTransaction.SkabDate = inputTransactionLN.SkabDate
-	updateTransaction.SkabNumber = strings.ToUpper(inputTransactionLN.SkabNumber)
-	updateTransaction.BillOfLadingDate = inputTransactionLN.BillOfLadingDate
-	updateTransaction.BillOfLadingNumber = strings.ToUpper(inputTransactionLN.BillOfLadingNumber)
-	updateTransaction.RoyaltyRate = inputTransactionLN.RoyaltyRate
-	updateTransaction.DpRoyaltyPrice = inputTransactionLN.DpRoyaltyPrice
-	updateTransaction.DpRoyaltyCurrency = strings.ToUpper(inputTransactionLN.DpRoyaltyCurrency)
-	if inputTransactionLN.DpRoyaltyCurrency == "" {
-		updateTransaction.DpRoyaltyCurrency = "USD"
-	}
-	updateTransaction.DpRoyaltyDate = inputTransactionLN.DpRoyaltyDate
-	if inputTransactionLN.DpRoyaltyNtpn != nil {
-		dpNtpn := strings.ToUpper(*inputTransactionLN.DpRoyaltyNtpn)
-		updateTransaction.DpRoyaltyNtpn = &dpNtpn
-	}
-
-	if inputTransactionLN.DpRoyaltyBillingCode != nil {
-		dpBillingCode := strings.ToUpper(*inputTransactionLN.DpRoyaltyBillingCode)
-		updateTransaction.DpRoyaltyBillingCode = &dpBillingCode
-	}
-
-	updateTransaction.DpRoyaltyTotal = inputTransactionLN.DpRoyaltyTotal
-	updateTransaction.PaymentDpRoyaltyPrice = inputTransactionLN.PaymentDpRoyaltyPrice
-	updateTransaction.PaymentDpRoyaltyCurrency = strings.ToUpper(inputTransactionLN.PaymentDpRoyaltyCurrency)
-	if inputTransactionLN.PaymentDpRoyaltyCurrency == "" {
-		updateTransaction.PaymentDpRoyaltyCurrency = "USD"
-	}
-
-	updateTransaction.PaymentDpRoyaltyDate = inputTransactionLN.PaymentDpRoyaltyDate
-	if inputTransactionLN.PaymentDpRoyaltyNtpn != nil {
-		paymentDpNtpn := strings.ToUpper(*inputTransactionLN.PaymentDpRoyaltyNtpn)
-		updateTransaction.PaymentDpRoyaltyNtpn = &paymentDpNtpn
-	}
-
-	if inputTransactionLN.PaymentDpRoyaltyBillingCode != nil {
-		paymentDpBillingCode := strings.ToUpper(*inputTransactionLN.PaymentDpRoyaltyBillingCode)
-		updateTransaction.PaymentDpRoyaltyBillingCode = &paymentDpBillingCode
-	}
-
-	updateTransaction.PaymentDpRoyaltyTotal = inputTransactionLN.PaymentDpRoyaltyTotal
-	updateTransaction.LhvDate = inputTransactionLN.LhvDate
-	updateTransaction.LhvNumber = strings.ToUpper(inputTransactionLN.LhvNumber)
-	updateTransaction.SurveyorName = inputTransactionLN.SurveyorName
-	updateTransaction.CowDate = inputTransactionLN.CowDate
-	updateTransaction.CowNumber = strings.ToUpper(inputTransactionLN.CowNumber)
-	updateTransaction.CoaDate = inputTransactionLN.CoaDate
-	updateTransaction.CoaNumber = strings.ToUpper(inputTransactionLN.CoaNumber)
-	updateTransaction.QualityTmAr = inputTransactionLN.QualityTmAr
-	updateTransaction.QualityImAdb = inputTransactionLN.QualityImAdb
-	updateTransaction.QualityAshAr = inputTransactionLN.QualityAshAr
-	updateTransaction.QualityAshAdb = inputTransactionLN.QualityAshAdb
-	updateTransaction.QualityVmAdb = inputTransactionLN.QualityVmAdb
-	updateTransaction.QualityFcAdb = inputTransactionLN.QualityFcAdb
-	updateTransaction.QualityTsAr = inputTransactionLN.QualityTsAr
-	updateTransaction.QualityTsAdb = inputTransactionLN.QualityTsAdb
-	updateTransaction.QualityCaloriesAr = inputTransactionLN.QualityCaloriesAr
-	updateTransaction.QualityCaloriesAdb = inputTransactionLN.QualityCaloriesAdb
-	updateTransaction.BargingDistance = inputTransactionLN.BargingDistance
-	updateTransaction.SalesSystem = inputTransactionLN.SalesSystem
-	updateTransaction.InvoiceDate = inputTransactionLN.InvoiceDate
-	updateTransaction.InvoiceNumber = strings.ToUpper(inputTransactionLN.InvoiceNumber)
-	updateTransaction.InvoicePriceUnit = inputTransactionLN.InvoicePriceUnit
-	updateTransaction.InvoicePriceTotal = inputTransactionLN.InvoicePriceTotal
-	updateTransaction.DmoReconciliationLetter = inputTransactionLN.DmoReconciliationLetter
-	updateTransaction.ContractDate = inputTransactionLN.ContractDate
-	updateTransaction.ContractNumber = strings.ToUpper(inputTransactionLN.ContractNumber)
-	updateTransaction.DmoBuyerName = inputTransactionLN.DmoBuyerName
-	updateTransaction.DmoIndustryType = inputTransactionLN.DmoIndustryType
-	updateTransaction.DmoCategory = strings.ToUpper(inputTransactionLN.DmoCategory)
-	updateTransaction.IsFinanceCheck = inputTransactionLN.IsFinanceCheck
-	updateTransaction.IsNotClaim = inputTransactionLN.IsNotClaim
-
-	editTransaction, errorMarshal := json.Marshal(updateTransaction)
+	inputTransactionLN.SkbNumber = strings.ToUpper(inputTransactionLN.SkbNumber)
+	inputTransactionLN.SkabNumber = strings.ToUpper(inputTransactionLN.SkabNumber)
+	inputTransactionLN.BillOfLadingNumber = strings.ToUpper(inputTransactionLN.BillOfLadingNumber)
+	inputTransactionLN.LhvNumber = strings.ToUpper(inputTransactionLN.LhvNumber)
+	inputTransactionLN.CowNumber = strings.ToUpper(inputTransactionLN.CowNumber)
+	inputTransactionLN.CoaNumber = strings.ToUpper(inputTransactionLN.CoaNumber)
+	inputTransactionLN.InvoiceNumber = strings.ToUpper(inputTransactionLN.InvoiceNumber)
+	inputTransactionLN.ContractNumber = strings.ToUpper(inputTransactionLN.ContractNumber)
+	editTransaction, errorMarshal := json.Marshal(inputTransactionLN)
 
 	if errorMarshal != nil {
 		tx.Rollback()
@@ -1640,6 +1518,8 @@ func (r *repository) DeleteProduction(productionId int, userId uint) (bool, erro
 		return false, findDeletedProductionErr
 	}
 
+	beforeData, _ := json.Marshal(deletedProduction)
+
 	errDelete := tx.Unscoped().Where("id = ?", productionId).Delete(&deletedProduction).Error
 
 	if errDelete != nil {
@@ -1651,6 +1531,7 @@ func (r *repository) DeleteProduction(productionId int, userId uint) (bool, erro
 
 	history.Status = fmt.Sprintf("Deleted Production with id %v", deletedProduction.ID)
 	history.UserId = userId
+	history.BeforeData = beforeData
 
 	createHistoryErr := tx.Create(&history).Error
 
@@ -1669,7 +1550,7 @@ func (r *repository) CreateGroupingVesselDN(inputGrouping groupingvesseldn.Input
 	var transactions []transaction.Transaction
 	tx := r.db.Begin()
 
-	findTransactionsErr := tx.Where("id IN ? AND dmo_id is NULL AND transaction_type = ? AND grouping_vessel_dn_id is NULL AND is_migration = ? AND is_not_claim = ? AND is_finance_check = ?", inputGrouping.ListTransactions, "DN", false, false, true).Find(&transactions).Error
+	findTransactionsErr := tx.Where("id IN ? AND dmo_id is NULL AND transaction_type = ? AND grouping_vessel_dn_id is NULL AND is_migration = ? AND is_not_claim = ?", inputGrouping.ListTransactions, "DN", false, false).Find(&transactions).Error
 
 	if findTransactionsErr != nil {
 		tx.Rollback()
@@ -1690,8 +1571,12 @@ func (r *repository) CreateGroupingVesselDN(inputGrouping groupingvesseldn.Input
 	createdGroupingVesselDn.SalesSystem = inputGrouping.SalesSystem
 	createdGroupingVesselDn.DestinationId = inputGrouping.DestinationId
 	createdGroupingVesselDn.DestinationCountry = inputGrouping.DestinationCountry
+	createdGroupingVesselDn.DestinationCountrysId = inputGrouping.DestinationCountrysId
+
 	createdGroupingVesselDn.DmoDestinationPort = inputGrouping.DmoDestinationPort
+	createdGroupingVesselDn.DmoDestinationPortId = inputGrouping.DmoDestinationPortId
 	createdGroupingVesselDn.BuyerName = inputGrouping.BuyerName
+	createdGroupingVesselDn.BuyerId = inputGrouping.BuyerId
 	createdGroupingVesselDn.CowDate = inputGrouping.CowDate
 	if inputGrouping.CowNumber != "" {
 		cowUpper := strings.ToUpper(inputGrouping.CowNumber)
@@ -1706,6 +1591,14 @@ func (r *repository) CreateGroupingVesselDN(inputGrouping groupingvesseldn.Input
 		createdGroupingVesselDn.CoaNumber = &coaUpper
 	} else {
 		createdGroupingVesselDn.CoaNumber = nil
+	}
+	createdGroupingVesselDn.SkabDate = inputGrouping.SkabDate
+
+	if inputGrouping.SkabNumber != "" {
+		coaUpper := strings.ToUpper(inputGrouping.SkabNumber)
+		createdGroupingVesselDn.SkabNumber = &coaUpper
+	} else {
+		createdGroupingVesselDn.SkabNumber = nil
 	}
 	createdGroupingVesselDn.QualityTmAr = inputGrouping.QualityTmAr
 	createdGroupingVesselDn.QualityImAdb = inputGrouping.QualityImAdb
@@ -1738,6 +1631,10 @@ func (r *repository) CreateGroupingVesselDN(inputGrouping groupingvesseldn.Input
 
 	updateTransactions["vessel_name"] = inputGrouping.VesselName
 	updateTransactions["grouping_vessel_dn_id"] = createdGroupingVesselDn.ID
+	updateTransactions["dmo_buyer_id"] = inputGrouping.BuyerId
+	updateTransactions["dmo_destination_ports_id"] = inputGrouping.DmoDestinationPortId
+	updateTransactions["destination_countries_id"] = inputGrouping.DestinationCountrysId
+	updateTransactions["destination_id"] = inputGrouping.DestinationId
 
 	errUpdateTransactions := tx.Table("transactions").Where("id IN ?", inputGrouping.ListTransactions).Updates(updateTransactions).Error
 
@@ -1775,28 +1672,37 @@ func (r *repository) EditGroupingVesselDn(id int, editGrouping groupingvesseldn.
 		return updatedGroupingVesselDn, errFind
 	}
 
-	if updatedGroupingVesselDn.VesselName != editGrouping.VesselName {
-		var transactions []transaction.Transaction
-		var listIdTransaction []uint
-		errFindTransaction := tx.Where("grouping_vessel_dn_id = ?", id).Find(&transactions).Error
+	var transactions []transaction.Transaction
+	var listIdTransaction []uint
+	errFindTransaction := tx.Where("grouping_vessel_dn_id = ?", id).Find(&transactions).Error
 
-		if errFindTransaction != nil {
-			return updatedGroupingVesselDn, errFindTransaction
-		}
-
-		for _, trans := range transactions {
-			listIdTransaction = append(listIdTransaction, trans.ID)
-		}
-
-		errUpdateTransaction := tx.Table("transactions").Where("id IN ?", listIdTransaction).Update("vessel_name", editGrouping.VesselName).Error
-
-		if errUpdateTransaction != nil {
-			tx.Rollback()
-			return updatedGroupingVesselDn, errUpdateTransaction
-		}
+	if errFindTransaction != nil {
+		return updatedGroupingVesselDn, errFindTransaction
 	}
 
-	beforeData, errorBeforeDataJsonMarshal := json.Marshal(updatedGroupingVesselDn)
+	for _, trans := range transactions {
+		listIdTransaction = append(listIdTransaction, trans.ID)
+	}
+
+	beforeData := make(map[string]interface{})
+	beforeData["grouping_vessel"] = updatedGroupingVesselDn
+	beforeData["transactions"] = transactions
+	beforeDataJson, errorBeforeDataJsonMarshal := json.Marshal(beforeData)
+
+	updateTransactions := make(map[string]interface{})
+
+	updateTransactions["vessel_name"] = editGrouping.VesselName
+	updateTransactions["dmo_buyer_id"] = editGrouping.BuyerId
+	updateTransactions["dmo_destination_ports_id"] = editGrouping.DmoDestinationPortId
+	updateTransactions["destination_countries_id"] = editGrouping.DestinationCountrysId
+	updateTransactions["destination_id"] = editGrouping.DestinationId
+
+	errUpdateTransaction := tx.Table("transactions").Where("id IN ?", listIdTransaction).Updates(updateTransactions).Error
+
+	if errUpdateTransaction != nil {
+		tx.Rollback()
+		return updatedGroupingVesselDn, errUpdateTransaction
+	}
 
 	if errorBeforeDataJsonMarshal != nil {
 		tx.Rollback()
@@ -1806,6 +1712,7 @@ func (r *repository) EditGroupingVesselDn(id int, editGrouping groupingvesseldn.
 	editGrouping.CowNumber = strings.ToUpper(editGrouping.CowNumber)
 	editGrouping.CoaNumber = strings.ToUpper(editGrouping.CoaNumber)
 	editGrouping.BlNumber = strings.ToUpper(editGrouping.BlNumber)
+	editGrouping.SkabNumber = strings.ToUpper(editGrouping.SkabNumber)
 	editGroupingVesselDn, errorMarshal := json.Marshal(editGrouping)
 
 	if errorMarshal != nil {
@@ -1831,7 +1738,10 @@ func (r *repository) EditGroupingVesselDn(id int, editGrouping groupingvesseldn.
 		return updatedGroupingVesselDn, updateGroupingVesselErr
 	}
 
-	afterData, errorAfterDataJsonMarshal := json.Marshal(updatedGroupingVesselDn)
+	afterData := make(map[string]interface{})
+	afterData["grouping_vessel"] = updatedGroupingVesselDn
+	afterData["transactions"] = transactions
+	afterDataJson, errorAfterDataJsonMarshal := json.Marshal(afterData)
 
 	if errorBeforeDataJsonMarshal != nil {
 		tx.Rollback()
@@ -1843,8 +1753,8 @@ func (r *repository) EditGroupingVesselDn(id int, editGrouping groupingvesseldn.
 	history.GroupingVesselDnId = &updatedGroupingVesselDn.ID
 	history.Status = "Updated Grouping Vessel DN"
 	history.UserId = userId
-	history.BeforeData = beforeData
-	history.AfterData = afterData
+	history.BeforeData = beforeDataJson
+	history.AfterData = afterDataJson
 
 	createHistoryErr := tx.Create(&history).Error
 
@@ -1917,6 +1827,11 @@ func (r *repository) UploadDocumentGroupingVesselDn(id uint, urlS3 string, userI
 			isReupload = true
 		}
 		editData["bl_mv_document_link"] = urlS3
+	case "skab":
+		if uploadedGroupingVesselDn.SkabDocumentLink != nil {
+			isReupload = true
+		}
+		editData["skab_document_link"] = urlS3
 	}
 
 	errEdit := tx.Model(&uploadedGroupingVesselDn).Updates(editData).Error
@@ -1954,7 +1869,7 @@ func (r *repository) CreateGroupingVesselLN(inputGrouping groupingvesselln.Input
 	var transactions []transaction.Transaction
 	tx := r.db.Begin()
 
-	findTransactionsErr := tx.Where("id IN ? AND transaction_type = ? AND grouping_vessel_ln_id is NULL AND is_migration = ? AND is_not_claim = ? AND is_finance_check = ?", inputGrouping.ListTransactions, "LN", false, false, true).Find(&transactions).Error
+	findTransactionsErr := tx.Where("id IN ? AND transaction_type = ? AND grouping_vessel_ln_id is NULL AND is_migration = ? AND is_not_claim = ?", inputGrouping.ListTransactions, "LN", false, false).Find(&transactions).Error
 
 	if findTransactionsErr != nil {
 		tx.Rollback()
@@ -2016,7 +1931,6 @@ func (r *repository) CreateGroupingVesselLN(inputGrouping groupingvesselln.Input
 	createdGroupingVesselLn.NettQualityCaloriesAr = inputGrouping.NettQualityCaloriesAr
 	createdGroupingVesselLn.BlDate = inputGrouping.BlDate
 	createdGroupingVesselLn.BlNumber = strings.ToUpper(inputGrouping.BlNumber)
-	createdGroupingVesselLn.DmoDestinationPort = inputGrouping.DmoDestinationPort
 
 	errCreatedGroupingVesselLn := tx.Create(&createdGroupingVesselLn).Error
 

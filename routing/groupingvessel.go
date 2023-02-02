@@ -3,11 +3,11 @@ package routing
 import (
 	"ajebackend/handler"
 	"ajebackend/helper"
-	"ajebackend/model/destination"
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
+	"ajebackend/model/master/destination"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 
@@ -63,6 +63,7 @@ func GroupingVesselLnRouting(db *gorm.DB, app fiber.Router, validate *validator.
 	groupingVesselRouting.Put("/update/document/dn/:id/:type", groupingVesselDnHandler.UploadDocumentGroupingVesselDn)
 	groupingVesselRouting.Delete("/delete/dn/:id", groupingVesselDnHandler.DeleteGroupingVesselDn)
 	groupingVesselRouting.Get("/detail/dn/:id", groupingVesselDnHandler.GetDetailGroupingVesselDn)
+	groupingVesselRouting.Get("/list/dn/transaction", groupingVesselDnHandler.ListDnWithoutGroup)
 
 	// LN
 	groupingVesselRouting.Post("/create/ln", groupingVesselLnHandler.CreateGroupingVesselLn)
@@ -71,4 +72,5 @@ func GroupingVesselLnRouting(db *gorm.DB, app fiber.Router, validate *validator.
 	groupingVesselRouting.Put("/update/document/ln/:id/:type", groupingVesselLnHandler.UploadDocumentGroupingVesselLn)
 	groupingVesselRouting.Delete("/delete/ln/:id", groupingVesselLnHandler.DeleteGroupingVesselLn)
 	groupingVesselRouting.Get("/list/ln", groupingVesselLnHandler.ListGroupingVesselLn)
+	groupingVesselRouting.Get("/list/ln/transaction", groupingVesselLnHandler.ListLnWithoutGroup)
 }

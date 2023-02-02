@@ -4,7 +4,7 @@ import (
 	"ajebackend/helper"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
-	"ajebackend/model/trader"
+	"ajebackend/model/master/trader"
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
@@ -32,7 +32,9 @@ type Service interface {
 	RequestCreateCustomDmo(dataDmo dmo.Dmo, traderEndUser trader.Trader, reconciliationLetter *multipart.FileHeader, authorization string, reqInputCreateUploadDmo InputRequestCreateUploadDmo) (map[string]interface{}, error)
 	GetReport(year int) (ReportRecapOutput, ReportDetailOutput, error)
 	GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, error)
+	ListDataDnWithoutGroup() (ListTransactionNotHaveGroupingVessel, error)
 	GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, error)
+	ListDataLnWithoutGroup() ([]Transaction, error)
 	GetDetailMinerbaLn(id int) (DetailMinerbaLn, error)
 	ListDataLNWithoutMinerba() ([]Transaction, error)
 	CheckDataLnAndMinerbaLnUpdate(listData []int, idMinerba int) ([]Transaction, error)
@@ -278,10 +280,22 @@ func (s *service) GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, err
 	return detailGroupingVesselDn, detailGroupingVesselDnErr
 }
 
+func (s *service) ListDataDnWithoutGroup() (ListTransactionNotHaveGroupingVessel, error) {
+	listWithoutGroup, listWithoutGroupErr := s.repository.ListDataDnWithoutGroup()
+
+	return listWithoutGroup, listWithoutGroupErr
+}
+
 func (s *service) GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, error) {
 	detailGroupingVesselLn, detailGroupingVesselLnErr := s.repository.GetDetailGroupingVesselLn(id)
 
 	return detailGroupingVesselLn, detailGroupingVesselLnErr
+}
+
+func (s *service) ListDataLnWithoutGroup() ([]Transaction, error) {
+	listWithoutGroup, listWithoutGroupErr := s.repository.ListDataLnWithoutGroup()
+
+	return listWithoutGroup, listWithoutGroupErr
 }
 
 func (s *service) GetDetailMinerbaLn(id int) (DetailMinerbaLn, error) {

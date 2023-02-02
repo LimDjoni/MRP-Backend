@@ -144,3 +144,8 @@ type ListTransactionDmoBackgroundJob struct {
 	ListGroupingVesselFobBarge         []groupingvesseldn.GroupingVesselDn `json:"list_grouping_vessel_fob_barge"`
 	ListGroupingVesselFobVessel        []groupingvesseldn.GroupingVesselDn `json:"list_grouping_vessel_fob_vessel"`
 }
+
+type ListTransactionNotHaveGroupingVessel struct {
+	TransactionBarge  []Transaction `json:"transaction_barge"`
+	TransactionVessel []Transaction `json:"transaction_vessel"`
+}

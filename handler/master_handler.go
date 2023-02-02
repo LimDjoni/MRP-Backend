@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"ajebackend/model/destination"
+	"ajebackend/model/master/destination"
 	"ajebackend/model/user"
 	"reflect"
 

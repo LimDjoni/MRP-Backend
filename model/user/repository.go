@@ -3,8 +3,9 @@ package user
 import (
 	"ajebackend/helper"
 	"errors"
-	"gorm.io/gorm"
 	"strings"
+
+	"gorm.io/gorm"
 )
 
 type Repository interface {
@@ -45,9 +46,10 @@ func (r *repository) LoginUser(input LoginUserInput) (TokenUser, error) {
 	var email User
 
 	dataUser := map[string]interface{}{
-		"id": 0,
+		"id":       0,
 		"username": "",
-		"email": "",
+		"email":    "",
+		"role":     "",
 	}
 	usernameErr := r.db.Where("username = ?", input.Data).First(&username).Error
 
@@ -61,6 +63,7 @@ func (r *repository) LoginUser(input LoginUserInput) (TokenUser, error) {
 		dataUser["username"] = email.Username
 		dataUser["email"] = email.Email
 		dataUser["id"] = email.ID
+		dataUser["role"] = email.Role
 		isValidPassword = helper.CheckPassword(input.Password, email.Password)
 	}
 
@@ -68,6 +71,7 @@ func (r *repository) LoginUser(input LoginUserInput) (TokenUser, error) {
 		dataUser["username"] = username.Username
 		dataUser["email"] = username.Email
 		dataUser["id"] = username.ID
+		dataUser["role"] = username.Role
 		isValidPassword = helper.CheckPassword(input.Password, username.Password)
 	}
 
@@ -84,6 +88,7 @@ func (r *repository) LoginUser(input LoginUserInput) (TokenUser, error) {
 	tokenUser.Token = token
 	tokenUser.Username = dataUser["username"].(string)
 	tokenUser.Email = dataUser["email"].(string)
+	tokenUser.Role = dataUser["role"].(string)
 	if tokenErr != nil {
 		return tokenUser, errors.New("invalid Email / Username / Password")
 	}

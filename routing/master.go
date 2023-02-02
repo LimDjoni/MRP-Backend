@@ -3,7 +3,7 @@ package routing
 import (
 	"ajebackend/handler"
 	"ajebackend/helper"
-	"ajebackend/model/destination"
+	"ajebackend/model/master/destination"
 	"ajebackend/model/user"
 
 	"github.com/go-playground/validator/v10"

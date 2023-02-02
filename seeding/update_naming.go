@@ -18,6 +18,6 @@ func UpdateNaming(db *gorm.DB) {
 
 	db.Raw("UPDATE minerbas SET id_number = REPLACE(id_number, 'LM', 'LSD') WHERE id_number LIKE 'LM%'").Scan(&minerbas)
 
-	db.Raw("UPDATE dmos SET id_number = REPLACE(id_number, 'SR', 'LDO') WHERE id_number LIKE 'SR%'").Scan(&dmos)
+	db.Raw("UPDATE dmos SET id_number = REPLACE(id_number, 'LDO', 'LBU') WHERE id_number LIKE 'LDO%'").Scan(&dmos)
 	return
 }

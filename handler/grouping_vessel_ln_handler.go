@@ -504,3 +504,39 @@ func (h *groupingVesselLnHandler) ListGroupingVesselLn(c *fiber.Ctx) error {
 
 	return c.Status(200).JSON(listGroupingVesselLn)
 }
+
+func (h *groupingVesselLnHandler) ListLnWithoutGroup(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	listLnWithoutGroup, listLnWithoutGroupErr := h.transactionService.ListDataLnWithoutGroup()
+
+	if listLnWithoutGroupErr != nil {
+
+		status := 400
+
+		if listLnWithoutGroupErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"error": listLnWithoutGroupErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"transactions": listLnWithoutGroup,
+	})
+}
