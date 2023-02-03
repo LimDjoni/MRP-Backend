@@ -320,7 +320,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	listTransactionDmo, listTransactionDmoErr := h.transactionService.GetDataReportDmo(createDmo.ID)
+	listTransactionDmo, listTransactionDmoErr := h.transactionService.GetDataDmo(createDmo.ID)
 
 	if listTransactionDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -355,9 +355,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	reqInputCreateUploadDmo.Trader = list
 	reqInputCreateUploadDmo.TraderEndUser = endUser
 	reqInputCreateUploadDmo.ListTransactionBarge = listTransactionDmo.ListTransactionBarge
-	reqInputCreateUploadDmo.ListTransactionBargeGroupingVessel = listTransactionDmo.ListTransactionBargeGroupingVessel
-	reqInputCreateUploadDmo.ListGroupingVesselFobBarge = listTransactionDmo.ListGroupingVesselFobBarge
-	reqInputCreateUploadDmo.ListGroupingVesselFobVessel = listTransactionDmo.ListGroupingVesselFobVessel
+	reqInputCreateUploadDmo.ListGroupingVessel = listTransactionDmo.ListGroupingVessel
 
 	if !inputCreateDmo.IsDocumentCustom {
 		_, requestJobDmoErr := h.transactionService.RequestCreateDmo(reqInputCreateUploadDmo)

@@ -8,6 +8,7 @@ import (
 	"ajebackend/model/minerba"
 	"ajebackend/model/minerbaln"
 	"ajebackend/model/production"
+	"ajebackend/model/reportdmo"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 
@@ -36,6 +37,8 @@ type History struct {
 	MinerbaLn          *minerbaln.MinerbaLn              `json:"minerba_ln" gorm:"constraint:OnDelete:CASCADE;"`
 	InswId             *uint                             `json:"insw_id"`
 	Insw               *insw.Insw                        `json:"insw" gorm:"constraint:OnDelete:CASCADE;"`
+	ReportDmoId        *uint                             `json:"report_dmo_id"`
+	ReportDmo          *reportdmo.ReportDmo              `json:"report_dmo" gorm:"constraint:OnDelete:CASCADE;"`
 	BeforeData         datatypes.JSON                    `json:"before_data"`
 	AfterData          datatypes.JSON                    `json:"after_data"`
 }

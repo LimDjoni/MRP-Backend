@@ -39,7 +39,7 @@ type Service interface {
 	ListDataLNWithoutMinerba() ([]Transaction, error)
 	CheckDataLnAndMinerbaLnUpdate(listData []int, idMinerba int) ([]Transaction, error)
 	CheckDataLnAndMinerbaLn(listData []int) (bool, error)
-	GetDataReportDmo(id uint) (ListTransactionDmoBackgroundJob, error)
+	GetDataDmo(id uint) (ListTransactionDmoBackgroundJob, error)
 }
 
 type service struct {
@@ -322,8 +322,38 @@ func (s *service) CheckDataLnAndMinerbaLn(listData []int) (bool, error) {
 	return checkData, checkDataErr
 }
 
-func (s *service) GetDataReportDmo(id uint) (ListTransactionDmoBackgroundJob, error) {
-	getDataReportDmo, getDataReportDmoErr := s.repository.GetDataReportDmo(id)
+func (s *service) GetDataDmo(id uint) (ListTransactionDmoBackgroundJob, error) {
+	getDataReportDmo, getDataReportDmoErr := s.repository.GetDataDmo(id)
 
 	return getDataReportDmo, getDataReportDmoErr
+}
+
+func (s *service) RequestCreateReportDmo(input InputRequestCreateReportDmo) (map[string]interface{}, error) {
+	var res map[string]interface{}
+	baseURL := helper.GetEnvWithKey("BASE_JOB_URL")
+
+	urlPost := baseURL + "/create/dmo/report"
+	body, bodyErr := json.Marshal(input)
+
+	if bodyErr != nil {
+		return res, bodyErr
+	}
+	var payload = bytes.NewBufferString(string(body))
+
+	req, doReqErr := http.NewRequest("POST", urlPost, payload)
+
+	if req != nil {
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+	}
+	client := &http.Client{}
+	resp, doReqErr := client.Do(req)
+
+	if doReqErr != nil {
+		return res, doReqErr
+	}
+
+	json.NewDecoder(resp.Body).Decode(&res)
+
+	return res, doReqErr
 }

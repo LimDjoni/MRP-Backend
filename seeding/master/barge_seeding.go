@@ -157,7 +157,7 @@ func SeedingBarge(db *gorm.DB) {
 
 	if err != nil {
 		tx.Rollback()
-		fmt.Println("Failed Seeding Tugboat")
+		fmt.Println("Failed Seeding Barge")
 		return
 	}
 

@@ -9,10 +9,13 @@ import (
 	"ajebackend/model/insw"
 	"ajebackend/model/master/currency"
 	"ajebackend/model/master/iupopk"
+	"ajebackend/model/master/navycompany"
+	"ajebackend/model/master/navyship"
 	"ajebackend/model/master/vessel"
 	"ajebackend/model/minerba"
 	"ajebackend/model/minerbaln"
 	"ajebackend/model/production"
+	"ajebackend/model/reportdmo"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
 	"encoding/json"
@@ -61,6 +64,8 @@ type Repository interface {
 	CreateInsw(month string, year int, baseIdNumber string, userId uint) (insw.Insw, error)
 	DeleteInsw(idInsw int, userId uint) (bool, error)
 	UpdateDocumentInsw(id int, documentLink insw.InputUpdateDocumentInsw, userId uint) (insw.Insw, error)
+	CreateReportDmo(input reportdmo.InputCreateReportDmo, baseIdNumber string, userId uint) (reportdmo.ReportDmo, error)
+	UpdateDocumentReportDmo(id int, documentLink reportdmo.InputUpdateDocumentReportDmo, userId uint) (reportdmo.ReportDmo, error)
 }
 
 type repository struct {
@@ -291,6 +296,8 @@ func (r *repository) UpdateTransactionDN(idTransaction int, inputEditTransaction
 
 	errorUnmarshal := json.Unmarshal(dataInput, &dataInputMapString)
 
+	delete(dataInputMapString, "vessel_name")
+
 	if errorUnmarshal != nil {
 		tx.Rollback()
 		return transaction, errorUnmarshal
@@ -444,13 +451,28 @@ func (r *repository) CreateTransactionLN(inputTransactionLN transaction.DataTran
 		tx.Rollback()
 		return createdTransactionLn, currencyErr
 	}
+	var createVesselMaster vessel.Vessel
+	if inputTransactionLN.VesselName != "" {
+
+		createVesselMaster.Name = inputTransactionLN.VesselName
+
+		errCreateVesselMaster := tx.FirstOrCreate(&createVesselMaster, createVesselMaster).Error
+
+		if errCreateVesselMaster != nil {
+			tx.Rollback()
+			return createdTransactionLn, errCreateVesselMaster
+		}
+	} else {
+		return createdTransactionLn, errors.New("vessel name is required")
+	}
+
 	createdTransactionLn.TransactionType = "LN"
 	createdTransactionLn.SellerId = &iup.ID
 	createdTransactionLn.DestinationCountryId = inputTransactionLN.DestinationCountryId
 	createdTransactionLn.ShippingDate = inputTransactionLN.ShippingDate
 	createdTransactionLn.TugboatId = inputTransactionLN.TugboatId
 	createdTransactionLn.BargeId = inputTransactionLN.BargeId
-	createdTransactionLn.VesselId = inputTransactionLN.VesselId
+	createdTransactionLn.VesselId = &createVesselMaster.ID
 	createdTransactionLn.CustomerId = inputTransactionLN.CustomerId
 	createdTransactionLn.LoadingPortId = inputTransactionLN.LoadingPortId
 	createdTransactionLn.UnloadingPortId = inputTransactionLN.UnloadingPortId
@@ -534,19 +556,6 @@ func (r *repository) CreateTransactionLN(inputTransactionLN transaction.DataTran
 		return createdTransactionLn, updateTransactionsErr
 	}
 
-	if inputTransactionLN.VesselName != "" {
-		var createVesselMaster vessel.Vessel
-
-		createVesselMaster.Name = inputTransactionLN.VesselName
-
-		errCreateVesselMaster := tx.FirstOrCreate(&createVesselMaster, createVesselMaster).Error
-
-		if errCreateVesselMaster != nil {
-			tx.Rollback()
-			return createdTransactionLn, errCreateVesselMaster
-		}
-	}
-
 	var history History
 
 	history.TransactionId = &createdTransactionLn.ID
@@ -602,6 +611,7 @@ func (r *repository) UpdateTransactionLN(id int, inputTransactionLN transaction.
 
 	errorUnmarshalTransaction := json.Unmarshal(editTransaction, &editTransactionInput)
 
+	delete(editTransactionInput, "vessel_name")
 	if errorUnmarshalTransaction != nil {
 		tx.Rollback()
 		return updatedTransactionLn, errorUnmarshalTransaction
@@ -895,6 +905,7 @@ func (r *repository) UpdateDocumentMinerba(id int, documentLink minerba.InputUpd
 	history.Status = fmt.Sprintf("Update upload document minerba with id = %v", minerba.ID)
 
 	dataInput, _ := json.Marshal(documentLink)
+
 	history.AfterData = dataInput
 
 	createHistoryErr := tx.Create(&history).Error
@@ -1562,7 +1573,7 @@ func (r *repository) CreateGroupingVesselDN(inputGrouping groupingvesseldn.Input
 		return createdGroupingVesselDn, errors.New("please check some of transactions not found or already created in another group or not validate")
 	}
 
-	createdGroupingVesselDn.VesselName = inputGrouping.VesselName
+	createdGroupingVesselDn.VesselId = inputGrouping.VesselId
 	createdGroupingVesselDn.Quantity = inputGrouping.Quantity
 	createdGroupingVesselDn.Adjustment = inputGrouping.Adjustment
 	createdGroupingVesselDn.GrandTotalQuantity = inputGrouping.GrandTotalQuantity
@@ -1570,12 +1581,8 @@ func (r *repository) CreateGroupingVesselDN(inputGrouping groupingvesseldn.Input
 	createdGroupingVesselDn.IsCoaFinish = inputGrouping.IsCoaFinish
 	createdGroupingVesselDn.SalesSystem = inputGrouping.SalesSystem
 	createdGroupingVesselDn.DestinationId = inputGrouping.DestinationId
-	createdGroupingVesselDn.DestinationCountry = inputGrouping.DestinationCountry
-	createdGroupingVesselDn.DestinationCountrysId = inputGrouping.DestinationCountrysId
-
-	createdGroupingVesselDn.DmoDestinationPort = inputGrouping.DmoDestinationPort
+	createdGroupingVesselDn.DestinationCountryId = inputGrouping.DestinationCountryId
 	createdGroupingVesselDn.DmoDestinationPortId = inputGrouping.DmoDestinationPortId
-	createdGroupingVesselDn.BuyerName = inputGrouping.BuyerName
 	createdGroupingVesselDn.BuyerId = inputGrouping.BuyerId
 	createdGroupingVesselDn.CowDate = inputGrouping.CowDate
 	if inputGrouping.CowNumber != "" {
@@ -1627,13 +1634,18 @@ func (r *repository) CreateGroupingVesselDN(inputGrouping groupingvesseldn.Input
 		return createdGroupingVesselDn, updatedGroupingVesselDnErr
 	}
 
+	beforeData := make(map[string]interface{})
+	beforeData["transactions"] = transactions
+
+	beforeDataJson, _ := json.Marshal(beforeData)
+
 	updateTransactions := make(map[string]interface{})
 
-	updateTransactions["vessel_name"] = inputGrouping.VesselName
+	updateTransactions["vessel_id"] = inputGrouping.VesselId
 	updateTransactions["grouping_vessel_dn_id"] = createdGroupingVesselDn.ID
 	updateTransactions["dmo_buyer_id"] = inputGrouping.BuyerId
 	updateTransactions["dmo_destination_ports_id"] = inputGrouping.DmoDestinationPortId
-	updateTransactions["destination_countries_id"] = inputGrouping.DestinationCountrysId
+	updateTransactions["destination_countries_id"] = inputGrouping.DestinationCountryId
 	updateTransactions["destination_id"] = inputGrouping.DestinationId
 
 	errUpdateTransactions := tx.Table("transactions").Where("id IN ?", inputGrouping.ListTransactions).Updates(updateTransactions).Error
@@ -1643,11 +1655,16 @@ func (r *repository) CreateGroupingVesselDN(inputGrouping groupingvesseldn.Input
 		return createdGroupingVesselDn, errUpdateTransactions
 	}
 
+	afterData := make(map[string]interface{})
+	afterData["transactions"] = transactions
+	afterDataJson, _ := json.Marshal(afterData)
 	var history History
 
 	history.GroupingVesselDnId = &createdGroupingVesselDn.ID
 	history.Status = "Created Grouping Vessel DN"
 	history.UserId = userId
+	history.BeforeData = beforeDataJson
+	history.AfterData = afterDataJson
 
 	createHistoryErr := tx.Create(&history).Error
 
@@ -1691,10 +1708,10 @@ func (r *repository) EditGroupingVesselDn(id int, editGrouping groupingvesseldn.
 
 	updateTransactions := make(map[string]interface{})
 
-	updateTransactions["vessel_name"] = editGrouping.VesselName
+	updateTransactions["vessel_id"] = editGrouping.VesselId
 	updateTransactions["dmo_buyer_id"] = editGrouping.BuyerId
-	updateTransactions["dmo_destination_ports_id"] = editGrouping.DmoDestinationPortId
-	updateTransactions["destination_countries_id"] = editGrouping.DestinationCountrysId
+	updateTransactions["dmo_destination_port_id"] = editGrouping.DmoDestinationPortId
+	updateTransactions["destination_country_id"] = editGrouping.DestinationCountryId
 	updateTransactions["destination_id"] = editGrouping.DestinationId
 
 	errUpdateTransaction := tx.Table("transactions").Where("id IN ?", listIdTransaction).Updates(updateTransactions).Error
@@ -1728,8 +1745,6 @@ func (r *repository) EditGroupingVesselDn(id int, editGrouping groupingvesseldn.
 		tx.Rollback()
 		return updatedGroupingVesselDn, errorUnmarshalGroupingVesselLn
 	}
-
-	delete(editGroupingVesselDnInput, "destination")
 
 	updateGroupingVesselErr := tx.Model(&updatedGroupingVesselDn).Updates(editGroupingVesselDnInput).Error
 
@@ -1880,37 +1895,67 @@ func (r *repository) CreateGroupingVesselLN(inputGrouping groupingvesselln.Input
 		tx.Rollback()
 		return createdGroupingVesselLn, errors.New("please check some of transactions not found or already created in another group or not validate")
 	}
+	var createNavyCompanyMaster navycompany.NavyCompany
 
-	createdGroupingVesselLn.VesselName = inputGrouping.VesselName
+	if inputGrouping.NavyCompanyName != "" {
+
+		createNavyCompanyMaster.Name = inputGrouping.NavyCompanyName
+
+		errCreateNavyCompanyMaster := tx.FirstOrCreate(&createNavyCompanyMaster, createNavyCompanyMaster).Error
+
+		if errCreateNavyCompanyMaster != nil {
+			tx.Rollback()
+			return createdGroupingVesselLn, errCreateNavyCompanyMaster
+		}
+	}
+
+	var createNavyShipMaster navyship.NavyShip
+
+	if inputGrouping.NavyShipName != "" {
+
+		createNavyShipMaster.Name = inputGrouping.NavyCompanyName
+
+		errCreateNavyShipMaster := tx.FirstOrCreate(&createNavyShipMaster, createNavyShipMaster).Error
+
+		if errCreateNavyShipMaster != nil {
+			tx.Rollback()
+			return createdGroupingVesselLn, errCreateNavyShipMaster
+		}
+	}
+
+	createdGroupingVesselLn.VesselId = inputGrouping.VesselId
 	createdGroupingVesselLn.Quantity = inputGrouping.Quantity
 	createdGroupingVesselLn.Adjustment = inputGrouping.Adjustment
 	createdGroupingVesselLn.GrandTotalQuantity = inputGrouping.GrandTotalQuantity
-	createdGroupingVesselLn.DescriptionOfDocumentType = inputGrouping.DescriptionOfDocumentType
-	createdGroupingVesselLn.CodeOfDocumentType = inputGrouping.CodeOfDocumentType
+	createdGroupingVesselLn.DocumentTypeId = inputGrouping.DocumentTypeId
 	createdGroupingVesselLn.AjuNumber = strings.ToUpper(inputGrouping.AjuNumber)
 	createdGroupingVesselLn.PebRegisterNumber = strings.ToUpper(inputGrouping.PebRegisterNumber)
 	createdGroupingVesselLn.PebRegisterDate = inputGrouping.PebRegisterDate
-	createdGroupingVesselLn.DescriptionOfPabeanOffice = inputGrouping.DescriptionOfPabeanOffice
-	createdGroupingVesselLn.CodeOfPabeanOffice = inputGrouping.CodeOfPabeanOffice
+	createdGroupingVesselLn.PabeanOfficeId = inputGrouping.PabeanOfficeId
 	createdGroupingVesselLn.SeriesPebGoods = inputGrouping.SeriesPebGoods
 	createdGroupingVesselLn.DescriptionOfGoods = inputGrouping.DescriptionOfGoods
 	createdGroupingVesselLn.TarifPosHs = strings.ToUpper(inputGrouping.TarifPosHs)
 	createdGroupingVesselLn.PebQuantity = inputGrouping.PebQuantity
-	createdGroupingVesselLn.PebUnit = inputGrouping.PebUnit
+	createdGroupingVesselLn.PebUnitId = inputGrouping.PebUnitId
 	createdGroupingVesselLn.ExportValue = inputGrouping.ExportValue
-	createdGroupingVesselLn.Currency = inputGrouping.Currency
-	createdGroupingVesselLn.LoadingPort = inputGrouping.LoadingPort
-	createdGroupingVesselLn.CodeOfLoadingPort = inputGrouping.CodeOfLoadingPort
+	createdGroupingVesselLn.CurrencyId = inputGrouping.CurrencyId
+	createdGroupingVesselLn.LoadingPortId = inputGrouping.LoadingPortId
 	createdGroupingVesselLn.SkaCooNumber = strings.ToUpper(inputGrouping.SkaCooNumber)
 	createdGroupingVesselLn.SkaCooDate = inputGrouping.SkaCooDate
-	createdGroupingVesselLn.DestinationCountry = inputGrouping.DestinationCountry
-	createdGroupingVesselLn.CodeOfDestinationCountry = inputGrouping.CodeOfDestinationCountry
+	createdGroupingVesselLn.DestinationCountryId = inputGrouping.DestinationCountryId
 	createdGroupingVesselLn.LsExportNumber = strings.ToUpper(inputGrouping.LsExportNumber)
 	createdGroupingVesselLn.LsExportDate = inputGrouping.LsExportDate
-	createdGroupingVesselLn.InsuranceCompanyName = inputGrouping.InsuranceCompanyName
+	createdGroupingVesselLn.InsuranceCompanyId = inputGrouping.InsuranceCompanyId
 	createdGroupingVesselLn.PolisNumber = strings.ToUpper(inputGrouping.PolisNumber)
-	createdGroupingVesselLn.NavyCompanyName = inputGrouping.NavyCompanyName
-	createdGroupingVesselLn.NavyShipName = inputGrouping.NavyShipName
+
+	if createNavyCompanyMaster.ID != 0 {
+		createdGroupingVesselLn.NavyCompanyId = &createNavyCompanyMaster.ID
+	}
+
+	if createNavyShipMaster.ID != 0 {
+		createdGroupingVesselLn.NavyShipId = &createNavyShipMaster.ID
+	}
+
 	createdGroupingVesselLn.NavyImoNumber = strings.ToUpper(inputGrouping.NavyImoNumber)
 	createdGroupingVesselLn.Deadweight = inputGrouping.Deadweight
 	createdGroupingVesselLn.IsCoaFinish = inputGrouping.IsCoaFinish
@@ -1948,9 +1993,14 @@ func (r *repository) CreateGroupingVesselLN(inputGrouping groupingvesselln.Input
 		return createdGroupingVesselLn, updatedGroupingVesselLnErr
 	}
 
+	beforeData := make(map[string]interface{})
+	beforeData["transactions"] = transactions
+
+	beforeDataJson, _ := json.Marshal(beforeData)
+
 	updateTransactions := make(map[string]interface{})
 
-	updateTransactions["vessel_name"] = inputGrouping.VesselName
+	updateTransactions["vessel_id"] = inputGrouping.VesselId
 	updateTransactions["grouping_vessel_ln_id"] = createdGroupingVesselLn.ID
 
 	errUpdateTransactions := tx.Table("transactions").Where("id IN ?", inputGrouping.ListTransactions).Updates(updateTransactions).Error
@@ -1960,11 +2010,16 @@ func (r *repository) CreateGroupingVesselLN(inputGrouping groupingvesselln.Input
 		return createdGroupingVesselLn, errUpdateTransactions
 	}
 
+	afterData := make(map[string]interface{})
+	afterData["transactions"] = transactions
+	afterDataJson, _ := json.Marshal(afterData)
 	var history History
 
 	history.GroupingVesselLnId = &createdGroupingVesselLn.ID
 	history.Status = "Created Grouping Vessel LN"
 	history.UserId = userId
+	history.AfterData = afterDataJson
+	history.BeforeData = beforeDataJson
 
 	createHistoryErr := tx.Create(&history).Error
 
@@ -1988,8 +2043,11 @@ func (r *repository) EditGroupingVesselLn(id int, editGrouping groupingvesselln.
 		tx.Rollback()
 		return updatedGroupingVesselLn, errFind
 	}
+	beforeData := make(map[string]interface{})
+	afterData := make(map[string]interface{})
+	beforeData["grouping_vessel_ln"] = updatedGroupingVesselLn
 
-	if updatedGroupingVesselLn.VesselName != editGrouping.VesselName {
+	if updatedGroupingVesselLn.VesselId != editGrouping.VesselId {
 		var transactions []transaction.Transaction
 		var listIdTransaction []uint
 		errFindTransaction := tx.Where("grouping_vessel_ln_id = ?", id).Find(&transactions).Error
@@ -1998,19 +2056,22 @@ func (r *repository) EditGroupingVesselLn(id int, editGrouping groupingvesselln.
 			return updatedGroupingVesselLn, errFindTransaction
 		}
 
+		beforeData["transactions"] = transactions
 		for _, trans := range transactions {
 			listIdTransaction = append(listIdTransaction, trans.ID)
 		}
 
-		errUpdateTransaction := tx.Table("transactions").Where("id IN ?", listIdTransaction).Update("vessel_name", editGrouping.VesselName).Error
+		errUpdateTransaction := tx.Table("transactions").Where("id IN ?", listIdTransaction).Update("vessel_id", editGrouping.VesselId).Error
 
 		if errUpdateTransaction != nil {
 			tx.Rollback()
 			return updatedGroupingVesselLn, errUpdateTransaction
 		}
+
+		afterData["transactions"] = transactions
 	}
 
-	beforeData, errorBeforeDataJsonMarshal := json.Marshal(updatedGroupingVesselLn)
+	beforeDataJson, errorBeforeDataJsonMarshal := json.Marshal(beforeData)
 
 	if errorBeforeDataJsonMarshal != nil {
 		tx.Rollback()
@@ -2049,7 +2110,8 @@ func (r *repository) EditGroupingVesselLn(id int, editGrouping groupingvesselln.
 		return updatedGroupingVesselLn, updateGroupingVesselErr
 	}
 
-	afterData, errorAfterDataJsonMarshal := json.Marshal(updatedGroupingVesselLn)
+	afterData["grouping_vessel_ln"] = updatedGroupingVesselLn
+	afterDataJson, errorAfterDataJsonMarshal := json.Marshal(afterData)
 
 	if errorBeforeDataJsonMarshal != nil {
 		tx.Rollback()
@@ -2061,8 +2123,8 @@ func (r *repository) EditGroupingVesselLn(id int, editGrouping groupingvesselln.
 	history.GroupingVesselLnId = &updatedGroupingVesselLn.ID
 	history.Status = "Updated Grouping Vessel LN"
 	history.UserId = userId
-	history.BeforeData = beforeData
-	history.AfterData = afterData
+	history.BeforeData = beforeDataJson
+	history.AfterData = afterDataJson
 
 	createHistoryErr := tx.Create(&history).Error
 
@@ -2603,4 +2665,188 @@ func (r *repository) UpdateDocumentInsw(id int, documentLink insw.InputUpdateDoc
 
 	tx.Commit()
 	return insw, nil
+}
+
+// Report Dmo
+
+func (r *repository) CreateReportDmo(input reportdmo.InputCreateReportDmo, baseIdNumber string, userId uint) (reportdmo.ReportDmo, error) {
+	var createdReportDmo reportdmo.ReportDmo
+
+	tx := r.db.Begin()
+	var transactionBarge []transaction.Transaction
+	var groupingVessel []groupingvesseldn.GroupingVesselDn
+
+	createdReportDmo.Period = input.Period
+
+	if len(input.Transactions) > 0 {
+		var bargeQuantity float64
+		findTransactionBargeErr := tx.Where("id IN ? AND report_dmo_id IS NULL AND is_finance_check = ? AND transaction_type = ?", input.Transactions, true, "DN").Find(&transactionBarge).Error
+
+		if findTransactionBargeErr != nil {
+			tx.Rollback()
+			return createdReportDmo, findTransactionBargeErr
+		}
+
+		if len(transactionBarge) != len(input.Transactions) {
+			tx.Rollback()
+			return createdReportDmo, errors.New("Ada transaksi yang sudah digunakan")
+		}
+
+		for _, v := range transactionBarge {
+			bargeQuantity += v.Quantity
+		}
+
+		createdReportDmo.Quantity = bargeQuantity
+	}
+
+	if len(input.GroupingVessels) > 0 {
+		var vesselQuantity float64
+
+		findCheckDmoGroupingErr := tx.Where("grouping_vessel_dn_id IN ? AND sales_system = ? AND report_dmo_id IS NULL", input.GroupingVessels, "Vessel").Find(&groupingVessel).Error
+
+		if findCheckDmoGroupingErr != nil {
+			tx.Rollback()
+			return createdReportDmo, findCheckDmoGroupingErr
+		}
+
+		if len(groupingVessel) != len(input.GroupingVessels) {
+			tx.Rollback()
+			return createdReportDmo, errors.New("please check grouping vessel is already used")
+		}
+
+		for _, v := range groupingVessel {
+			vesselQuantity += v.Quantity
+		}
+
+		createdReportDmo.Quantity += vesselQuantity
+	}
+
+	if len(transactionBarge) != len(input.Transactions) && len(groupingVessel) != len(input.GroupingVessels) {
+		tx.Rollback()
+		return createdReportDmo, errors.New("please check some of transactions not found")
+	}
+
+	createReportDmoErr := tx.Create(&createdReportDmo).Error
+
+	if createReportDmoErr != nil {
+		tx.Rollback()
+		return createdReportDmo, createReportDmoErr
+	}
+
+	idNumber := baseIdNumber + "-" + helper.CreateIdNumber(int(createdReportDmo.ID))
+
+	updateDmoErr := tx.Model(&createdReportDmo).Update("id_number", idNumber).Error
+
+	if updateDmoErr != nil {
+		tx.Rollback()
+		return createdReportDmo, updateDmoErr
+	}
+
+	if len(input.Transactions) > 0 {
+		updateTransactionBargeErr := tx.Table("transactions").Where("id IN ?", input.Transactions).Update("report_dmo_id", createdReportDmo.ID).Error
+
+		if updateTransactionBargeErr != nil {
+			tx.Rollback()
+			return createdReportDmo, updateTransactionBargeErr
+		}
+	}
+
+	if len(input.GroupingVessels) > 0 {
+
+		updateGroupVesselErr := tx.Table("grouping_vessel_dns").Where("id IN ?", input.GroupingVessels).Update("report_dmo_id", createdReportDmo.ID).Error
+
+		if updateGroupVesselErr != nil {
+			tx.Rollback()
+			return createdReportDmo, updateGroupVesselErr
+		}
+
+		var transactionGroupVessel []transaction.Transaction
+
+		var listIdTransactionGroupVessel []uint
+		findTransactionGroupVesselErr := tx.Where("grouping_vessel_dn_id IN ? AND report_dmo_id IS NULL", input.GroupingVessels).Find(&transactionGroupVessel).Error
+
+		if findTransactionGroupVesselErr != nil {
+			tx.Rollback()
+			return createdReportDmo, findTransactionGroupVesselErr
+		}
+
+		for _, v := range transactionGroupVessel {
+			listIdTransactionGroupVessel = append(listIdTransactionGroupVessel, v.ID)
+		}
+
+		updateTransactionGroupVesselErr := tx.Table("transactions").Where("id IN ?", listIdTransactionGroupVessel).Update("report_dmo_id", createdReportDmo.ID).Error
+
+		if updateTransactionGroupVesselErr != nil {
+			tx.Rollback()
+			return createdReportDmo, updateTransactionGroupVesselErr
+		}
+	}
+
+	var history History
+
+	history.ReportDmoId = &createdReportDmo.ID
+	history.Status = "Created Report Dmo"
+	history.UserId = userId
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return createdReportDmo, createHistoryErr
+	}
+
+	tx.Commit()
+	return createdReportDmo, nil
+}
+
+func (r *repository) UpdateDocumentReportDmo(id int, documentLink reportdmo.InputUpdateDocumentReportDmo, userId uint) (reportdmo.ReportDmo, error) {
+	tx := r.db.Begin()
+	var reportDmo reportdmo.ReportDmo
+
+	errFind := tx.Where("id = ?", id).First(&reportDmo).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return reportDmo, errFind
+	}
+
+	editData := make(map[string]interface{})
+
+	for _, value := range documentLink.Data {
+		if value["Location"] != nil {
+			if strings.Contains(value["Location"].(string), "recapdmo") {
+				editData["recap_dmo_document_link"] = value["Location"]
+			}
+			if strings.Contains(value["Location"].(string), "detaildmo") {
+				editData["detail_dmo_document_link"] = value["Location"]
+			}
+		}
+	}
+
+	errEdit := tx.Model(&reportDmo).Updates(editData).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return reportDmo, errEdit
+	}
+
+	var history History
+
+	history.ReportDmoId = &reportDmo.ID
+	history.UserId = userId
+	history.Status = fmt.Sprintf("Update upload document report dmo with id = %v", reportDmo.ID)
+
+	dataInput, _ := json.Marshal(documentLink)
+
+	history.AfterData = dataInput
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return reportDmo, createHistoryErr
+	}
+
+	tx.Commit()
+	return reportDmo, nil
 }

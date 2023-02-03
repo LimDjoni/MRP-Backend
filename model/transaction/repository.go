@@ -5,9 +5,11 @@ import (
 	"ajebackend/model/dmovessel"
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
+	"ajebackend/model/master/salessystem"
 	"ajebackend/model/minerba"
 	"ajebackend/model/minerbaln"
 	"ajebackend/model/production"
+	"ajebackend/model/reportdmo"
 	"errors"
 	"fmt"
 	"strconv"
@@ -40,6 +42,8 @@ type Repository interface {
 	CheckDataDnAndDmo(listData []int) ([]Transaction, error)
 	CheckGroupingVesselAndDmo(listData []int) ([]dmovessel.DmoVessel, error)
 	GetDetailDmo(id int) (DetailDmo, error)
+	GetDataDmo(id uint) (ListTransactionDmoBackgroundJob, error)
+	GetDetailReportDmo(id int) (DetailReportDmo, error)
 	CheckDataUnique(inputTrans DataTransactionInput) (bool, bool, bool, bool)
 	GetReport(year int) (ReportRecapOutput, ReportDetailOutput, error)
 	GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, error)
@@ -50,7 +54,6 @@ type Repository interface {
 	GetDetailMinerbaLn(id int) (DetailMinerbaLn, error)
 	CheckDataLnAndMinerbaLnUpdate(listData []int, idMinerba int) ([]Transaction, error)
 	CheckDataLnAndMinerbaLn(listData []int) (bool, error)
-	GetDataReportDmo(id uint) (ListTransactionDmoBackgroundJob, error)
 }
 
 type repository struct {
@@ -290,7 +293,20 @@ func (r *repository) GetDetailMinerba(id int) (DetailMinerba, error) {
 func (r *repository) ListDataDNBargeWithoutVessel() ([]Transaction, error) {
 	var listDataDnBargeDmo []Transaction
 
-	errFindBarge := r.db.Order("id desc").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_name = ? AND is_finance_check = ? AND sales_system LIKE '%BARGE' AND grouping_vessel_dn_id is NULL", "DN", false, false, "", true).Find(&listDataDnBargeDmo).Error
+	var salesSystem []salessystem.SalesSystem
+	var salesSystemId []uint
+
+	errFindSalesSystem := r.db.Where("name ILIKE '%Barge'").Find(&salesSystem).Error
+
+	if errFindSalesSystem != nil {
+		return listDataDnBargeDmo, errFindSalesSystem
+	}
+
+	for _, v := range salesSystem {
+		salesSystemId = append(salesSystemId, v.ID)
+	}
+
+	errFindBarge := r.db.Order("id desc").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_name = ? AND is_finance_check = ? AND sales_system IN ? AND grouping_vessel_dn_id is NULL", "DN", false, false, "", true, salesSystemId).Find(&listDataDnBargeDmo).Error
 
 	if errFindBarge != nil {
 		return listDataDnBargeDmo, errFindBarge
@@ -302,7 +318,20 @@ func (r *repository) ListDataDNBargeWithoutVessel() ([]Transaction, error) {
 func (r *repository) ListDataDNBargeWithVessel() ([]Transaction, error) {
 	var listDataDnBargeDmo []Transaction
 
-	errFindBarge := r.db.Order("id desc").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_name NOT LIKE '' AND is_finance_check = ? AND sales_system LIKE '%BARGE' AND grouping_vessel_dn_id is NULL", "DN", false, false, true).Find(&listDataDnBargeDmo).Error
+	var salesSystem []salessystem.SalesSystem
+	var salesSystemId []uint
+
+	errFindSalesSystem := r.db.Where("name ILIKE '%Barge'").Find(&salesSystem).Error
+
+	if errFindSalesSystem != nil {
+		return listDataDnBargeDmo, errFindSalesSystem
+	}
+
+	for _, v := range salesSystem {
+		salesSystemId = append(salesSystemId, v.ID)
+	}
+
+	errFindBarge := r.db.Order("id desc").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_name NOT LIKE '' AND is_finance_check = ? AND sales_system IN ? AND grouping_vessel_dn_id is NULL", "DN", false, false, true, salesSystemId).Find(&listDataDnBargeDmo).Error
 
 	if errFindBarge != nil {
 		return listDataDnBargeDmo, errFindBarge
@@ -314,7 +343,20 @@ func (r *repository) ListDataDNBargeWithVessel() ([]Transaction, error) {
 func (r *repository) ListDataDNVessel() ([]Transaction, error) {
 	var listDataDnVessel []Transaction
 
-	errFindBarge := r.db.Order("id desc").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_name = ? AND is_finance_check = ? AND sales_system LIKE '%VESSEL' AND grouping_vessel_dn_id is NULL", "DN", false, false, "", true).Find(&listDataDnVessel).Error
+	var salesSystem []salessystem.SalesSystem
+	var salesSystemId []uint
+
+	errFindSalesSystem := r.db.Where("name ILIKE '%Vessel'").Find(&salesSystem).Error
+
+	if errFindSalesSystem != nil {
+		return listDataDnVessel, errFindSalesSystem
+	}
+
+	for _, v := range salesSystem {
+		salesSystemId = append(salesSystemId, v.ID)
+	}
+
+	errFindBarge := r.db.Order("id desc").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_name = ? AND is_finance_check = ? AND sales_system IN ? AND grouping_vessel_dn_id is NULL", "DN", false, false, "", true, salesSystemId).Find(&listDataDnVessel).Error
 
 	if errFindBarge != nil {
 		return listDataDnVessel, errFindBarge
@@ -388,13 +430,11 @@ func (r *repository) GetDetailDmo(id int) (DetailDmo, error) {
 	return detailDmo, nil
 }
 
-func (r *repository) GetDataReportDmo(id uint) (ListTransactionDmoBackgroundJob, error) {
+func (r *repository) GetDataDmo(id uint) (ListTransactionDmoBackgroundJob, error) {
 	var listTransactionDmoBackgroundJob ListTransactionDmoBackgroundJob
 
 	var transactionBarge []Transaction
-	var transactionBargeGroupingVessel []Transaction
-	var groupingVesselFobBarge []groupingvesseldn.GroupingVesselDn
-	var groupingVesselFobVessel []groupingvesseldn.GroupingVesselDn
+	var groupingVessel []groupingvesseldn.GroupingVesselDn
 
 	errFindTransactionBarge := r.db.Preload(clause.Associations).Where("dmo_id = ? AND grouping_vessel_dn_id is NULL", id).Order("shipping_date desc").Find(&transactionBarge).Error
 
@@ -403,14 +443,6 @@ func (r *repository) GetDataReportDmo(id uint) (ListTransactionDmoBackgroundJob,
 	}
 
 	listTransactionDmoBackgroundJob.ListTransactionBarge = transactionBarge
-
-	errFindTransactionBargeGroupingVessel := r.db.Preload(clause.Associations).Where("dmo_id = ? AND grouping_vessel_dn_id is NOT NULL AND sales_system LIKE '%Barge'", id).Order("shipping_date desc").Find(&transactionBargeGroupingVessel).Error
-
-	if errFindTransactionBargeGroupingVessel != nil {
-		return listTransactionDmoBackgroundJob, errFindTransactionBargeGroupingVessel
-	}
-
-	listTransactionDmoBackgroundJob.ListTransactionBargeGroupingVessel = transactionBargeGroupingVessel
 
 	var dmoVessel []dmovessel.DmoVessel
 
@@ -426,23 +458,60 @@ func (r *repository) GetDataReportDmo(id uint) (ListTransactionDmoBackgroundJob,
 		groupingVesselId = append(groupingVesselId, v.GroupingVesselDnId)
 	}
 
-	errFindGroupingVesselFobBarge := r.db.Preload(clause.Associations).Where("id in ? AND sales_system = ?", groupingVesselId, "Barge").Order("bl_date desc").Find(&groupingVesselFobBarge).Error
+	errFindGroupingVessel := r.db.Preload(clause.Associations).Where("id in ?", groupingVesselId).Order("bl_date desc").Find(&groupingVessel).Error
 
-	if errFindGroupingVesselFobBarge != nil {
-		return listTransactionDmoBackgroundJob, errFindGroupingVesselFobBarge
+	if errFindGroupingVessel != nil {
+		return listTransactionDmoBackgroundJob, errFindGroupingVessel
 	}
 
-	listTransactionDmoBackgroundJob.ListGroupingVesselFobBarge = groupingVesselFobBarge
-
-	errFindGroupingVesselFobVessel := r.db.Preload(clause.Associations).Where("id in ? AND sales_system = ?", groupingVesselId, "Vessel").Order("bl_date desc").Find(&groupingVesselFobVessel).Error
-
-	if errFindGroupingVesselFobVessel != nil {
-		return listTransactionDmoBackgroundJob, errFindGroupingVesselFobVessel
-	}
-
-	listTransactionDmoBackgroundJob.ListGroupingVesselFobVessel = groupingVesselFobVessel
+	listTransactionDmoBackgroundJob.ListGroupingVessel = groupingVessel
 
 	return listTransactionDmoBackgroundJob, nil
+}
+
+func (r *repository) GetDetailReportDmo(id int) (DetailReportDmo, error) {
+	var detailReportDmo DetailReportDmo
+
+	var reportDmoData reportdmo.ReportDmo
+	var transactions []Transaction
+	var groupingVesselDn []groupingvesseldn.GroupingVesselDn
+
+	var salesSystem []salessystem.SalesSystem
+	var salesSystemId []uint
+
+	errFindSalesSystem := r.db.Where("name ILIKE '%Barge'").Find(&salesSystem).Error
+
+	if errFindSalesSystem != nil {
+		return detailReportDmo, errFindSalesSystem
+	}
+
+	for _, v := range salesSystem {
+		salesSystemId = append(salesSystemId, v.ID)
+	}
+
+	errFindTransactions := r.db.Where("report_dmo_id = ? AND sales_system IN ?", id, salesSystemId).Find(&transactions).Error
+
+	if errFindTransactions != nil {
+		return detailReportDmo, errFindTransactions
+	}
+
+	errFindGroupingVessel := r.db.Where("report_dmo_id = ?", id).Find(&groupingVesselDn).Error
+
+	if errFindGroupingVessel != nil {
+		return detailReportDmo, errFindGroupingVessel
+	}
+
+	errFindReportDmo := r.db.Where("id = ?", id).First(&reportDmoData).Error
+
+	if errFindReportDmo != nil {
+		return detailReportDmo, errFindReportDmo
+	}
+
+	detailReportDmo.Detail = reportDmoData
+	detailReportDmo.Transactions = transactions
+	detailReportDmo.GroupingVessels = groupingVesselDn
+
+	return detailReportDmo, nil
 }
 
 // Report
@@ -463,7 +532,7 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 
 	queryFilter := "transaction_type = DN" + "minerba_id IS NOT NULL AND shipping_date >= '" + startFilter + "' AND shipping_date <= '" + endFilter + "'"
 	queryFilterProduction := "production_date >= '" + startFilter + "' AND production_date <= '" + endFilter + "'"
-	errFind := r.db.Where(queryFilter).Order("id ASC").Find(&listTransactions).Error
+	errFind := r.db.Preload("Company.IndustryType").Where(queryFilter).Order("id ASC").Find(&listTransactions).Error
 	errFindProduction := r.db.Where(queryFilterProduction).Order("id ASC").Find(&listProduction).Error
 
 	if errFind != nil {
@@ -516,10 +585,10 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 			}
 		}
 
-		if v.DmoCategory == "ELECTRICITY" {
+		if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 			reportRecap.ElectricityTotal += v.Quantity
 			reportRecap.Total += v.Quantity
-		} else if v.DmoCategory == "NON ELECTRICITY" {
+		} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
 			reportRecap.NonElectricityTotal += v.Quantity
 			reportRecap.Total += v.Quantity
 		}
@@ -527,290 +596,290 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 		if v.IsNotClaim == false {
 			switch int(month) {
 			case 1:
-				if v.DmoCategory == "ELECTRICITY" {
-					if _, ok := reportDetail.Electricity.January[v.DmoBuyerName]; ok {
-						reportDetail.Electricity.January[v.DmoBuyerName] += v.Quantity
+				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.January[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.Electricity.January[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
-						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.Electricity.January[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.January[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
-				} else if v.DmoCategory == "NON ELECTRICITY" {
-					if _, ok := reportDetail.Electricity.January[v.DmoBuyerName]; ok {
-						reportDetail.NonElectricity.January[v.DmoBuyerName] += v.Quantity
+				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.January[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.NonElectricity.January[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.NonElectricity.January[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.January[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					}
 				}
 			case 2:
-				if v.DmoCategory == "ELECTRICITY" {
-					if _, ok := reportDetail.Electricity.February[v.DmoBuyerName]; ok {
-						reportDetail.Electricity.February[v.DmoBuyerName] += v.Quantity
+				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.February[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.Electricity.February[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
-						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.Electricity.February[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.February[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
-				} else if v.DmoCategory == "NON ELECTRICITY" {
-					if _, ok := reportDetail.NonElectricity.February[v.DmoBuyerName]; ok {
-						reportDetail.NonElectricity.February[v.DmoBuyerName] += v.Quantity
+				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
+					if _, ok := reportDetail.NonElectricity.February[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.NonElectricity.February[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.NonElectricity.February[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.February[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					}
 				}
 			case 3:
-				if v.DmoCategory == "ELECTRICITY" {
-					if _, ok := reportDetail.Electricity.March[v.DmoBuyerName]; ok {
-						reportDetail.Electricity.March[v.DmoBuyerName] += v.Quantity
+				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.March[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.Electricity.March[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
-						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.Electricity.March[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.March[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
-				} else if v.DmoCategory == "NON ELECTRICITY" {
-					if _, ok := reportDetail.NonElectricity.March[v.DmoBuyerName]; ok {
-						reportDetail.NonElectricity.March[v.DmoBuyerName] += v.Quantity
+				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
+					if _, ok := reportDetail.NonElectricity.March[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.NonElectricity.March[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.NonElectricity.March[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.March[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					}
 				}
 			case 4:
-				if v.DmoCategory == "ELECTRICITY" {
-					if _, ok := reportDetail.Electricity.April[v.DmoBuyerName]; ok {
-						reportDetail.Electricity.April[v.DmoBuyerName] += v.Quantity
+				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.April[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.Electricity.April[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
-						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.Electricity.April[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.April[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
-				} else if v.DmoCategory == "NON ELECTRICITY" {
-					if _, ok := reportDetail.NonElectricity.April[v.DmoBuyerName]; ok {
-						reportDetail.NonElectricity.April[v.DmoBuyerName] += v.Quantity
+				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
+					if _, ok := reportDetail.NonElectricity.April[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.NonElectricity.April[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.NonElectricity.April[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.April[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					}
 				}
 			case 5:
-				if v.DmoCategory == "ELECTRICITY" {
-					if _, ok := reportDetail.Electricity.May[v.DmoBuyerName]; ok {
-						reportDetail.Electricity.May[v.DmoBuyerName] += v.Quantity
+				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.May[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.Electricity.May[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
-						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.Electricity.May[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.May[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
-				} else if v.DmoCategory == "NON ELECTRICITY" {
-					if _, ok := reportDetail.NonElectricity.May[v.DmoBuyerName]; ok {
-						reportDetail.NonElectricity.May[v.DmoBuyerName] += v.Quantity
+				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
+					if _, ok := reportDetail.NonElectricity.May[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.NonElectricity.May[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.NonElectricity.May[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.May[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					}
 				}
 			case 6:
-				if v.DmoCategory == "ELECTRICITY" {
-					if _, ok := reportDetail.Electricity.June[v.DmoBuyerName]; ok {
-						reportDetail.Electricity.June[v.DmoBuyerName] += v.Quantity
+				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.June[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.Electricity.June[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
-						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.Electricity.June[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.June[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
-				} else if v.DmoCategory == "NON ELECTRICITY" {
-					if _, ok := reportDetail.NonElectricity.June[v.DmoBuyerName]; ok {
-						reportDetail.NonElectricity.June[v.DmoBuyerName] += v.Quantity
+				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
+					if _, ok := reportDetail.NonElectricity.June[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.NonElectricity.June[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.NonElectricity.June[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.June[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					}
 				}
 			case 7:
-				if v.DmoCategory == "ELECTRICITY" {
-					if _, ok := reportDetail.Electricity.July[v.DmoBuyerName]; ok {
-						reportDetail.Electricity.July[v.DmoBuyerName] += v.Quantity
+				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.July[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.Electricity.July[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
-						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.Electricity.July[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.July[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
-				} else if v.DmoCategory == "NON ELECTRICITY" {
-					if _, ok := reportDetail.NonElectricity.July[v.DmoBuyerName]; ok {
-						reportDetail.NonElectricity.July[v.DmoBuyerName] += v.Quantity
+				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
+					if _, ok := reportDetail.NonElectricity.July[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.NonElectricity.July[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.NonElectricity.July[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.July[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					}
 				}
 			case 8:
-				if v.DmoCategory == "ELECTRICITY" {
-					if _, ok := reportDetail.Electricity.August[v.DmoBuyerName]; ok {
-						reportDetail.Electricity.August[v.DmoBuyerName] += v.Quantity
+				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.August[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.Electricity.August[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
-						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.Electricity.August[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.August[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
-				} else if v.DmoCategory == "NON ELECTRICITY" {
-					if _, ok := reportDetail.NonElectricity.August[v.DmoBuyerName]; ok {
-						reportDetail.NonElectricity.August[v.DmoBuyerName] += v.Quantity
+				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
+					if _, ok := reportDetail.NonElectricity.August[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.NonElectricity.August[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.NonElectricity.August[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.August[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					}
 				}
 			case 9:
-				if v.DmoCategory == "ELECTRICITY" {
-					if _, ok := reportDetail.Electricity.September[v.DmoBuyerName]; ok {
-						reportDetail.Electricity.September[v.DmoBuyerName] += v.Quantity
+				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.September[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.Electricity.September[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
-						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.Electricity.September[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.September[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
-				} else if v.DmoCategory == "NON ELECTRICITY" {
-					if _, ok := reportDetail.NonElectricity.September[v.DmoBuyerName]; ok {
-						reportDetail.NonElectricity.September[v.DmoBuyerName] += v.Quantity
+				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
+					if _, ok := reportDetail.NonElectricity.September[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.NonElectricity.September[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.NonElectricity.September[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.September[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					}
 				}
 			case 10:
-				if v.DmoCategory == "ELECTRICITY" {
-					if _, ok := reportDetail.Electricity.October[v.DmoBuyerName]; ok {
-						reportDetail.Electricity.October[v.DmoBuyerName] += v.Quantity
+				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.October[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.Electricity.October[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
-						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.Electricity.October[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.October[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
-				} else if v.DmoCategory == "NON ELECTRICITY" {
-					if _, ok := reportDetail.NonElectricity.October[v.DmoBuyerName]; ok {
-						reportDetail.NonElectricity.October[v.DmoBuyerName] += v.Quantity
+				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
+					if _, ok := reportDetail.NonElectricity.October[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.NonElectricity.October[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.NonElectricity.October[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.October[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					}
 				}
 			case 11:
-				if v.DmoCategory == "ELECTRICITY" {
-					if _, ok := reportDetail.Electricity.November[v.DmoBuyerName]; ok {
-						reportDetail.Electricity.November[v.DmoBuyerName] += v.Quantity
+				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.November[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.Electricity.November[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
-						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.Electricity.November[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.November[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
-				} else if v.DmoCategory == "NON ELECTRICITY" {
-					if _, ok := reportDetail.NonElectricity.November[v.DmoBuyerName]; ok {
-						reportDetail.NonElectricity.November[v.DmoBuyerName] += v.Quantity
+				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
+					if _, ok := reportDetail.NonElectricity.November[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.NonElectricity.November[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
-						reportDetail.NonElectricity.November[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.November[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
-						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
 						}
 					}
 				}
 			case 12:
-				if v.DmoCategory == "ELECTRICITY" {
-					if _, ok := reportDetail.Electricity.December[v.DmoBuyerName]; ok {
-						reportDetail.Electricity.December[v.DmoBuyerName] += v.Quantity
+				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
+					if _, ok := reportDetail.Electricity.December[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.Electricity.December[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					} else {
-						if !helperString(companyElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyerName)
+						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.Electricity.December[v.DmoBuyerName] = v.Quantity
+						reportDetail.Electricity.December[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.Electricity.Total += v.Quantity
 					}
-				} else if v.DmoCategory == "NON ELECTRICITY" {
-					if _, ok := reportDetail.NonElectricity.December[v.DmoBuyerName]; ok {
-						reportDetail.NonElectricity.December[v.DmoBuyerName] += v.Quantity
+				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
+					if _, ok := reportDetail.NonElectricity.December[v.DmoBuyer.CompanyName]; ok {
+						reportDetail.NonElectricity.December[v.DmoBuyer.CompanyName] += v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyerName) && v.DmoBuyerName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyerName)
+						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
+							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
 						}
-						reportDetail.NonElectricity.December[v.DmoBuyerName] = v.Quantity
+						reportDetail.NonElectricity.December[v.DmoBuyer.CompanyName] = v.Quantity
 						reportDetail.NonElectricity.Total += v.Quantity
 					}
 				}
@@ -974,13 +1043,39 @@ func (r *repository) ListDataDnWithoutGroup() (ListTransactionNotHaveGroupingVes
 	var transactionBarge []Transaction
 	var transactionVessel []Transaction
 
-	findTransactionBargeErr := r.db.Order("id desc").Where("transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND grouping_vessel_dn_id is NULL AND sales_system LIKE '%Barge' AND vessel_name NOT LIKE ''", "DN", false, false).Find(&transactionBarge).Error
+	var salesSystemBarge []salessystem.SalesSystem
+	var salesSystemBargeId []uint
+
+	errFindSalesSystemBarge := r.db.Where("name ILIKE '%Barge'").Find(&salesSystemBarge).Error
+
+	if errFindSalesSystemBarge != nil {
+		return listGroup, errFindSalesSystemBarge
+	}
+
+	for _, v := range salesSystemBarge {
+		salesSystemBargeId = append(salesSystemBargeId, v.ID)
+	}
+
+	var salesSystemVessel []salessystem.SalesSystem
+	var salesSystemVesselId []uint
+
+	errFindSalesSystemVessel := r.db.Where("name ILIKE '%Vessel'").Find(&salesSystemVessel).Error
+
+	if errFindSalesSystemVessel != nil {
+		return listGroup, errFindSalesSystemVessel
+	}
+
+	for _, v := range salesSystemVessel {
+		salesSystemVesselId = append(salesSystemVesselId, v.ID)
+	}
+
+	findTransactionBargeErr := r.db.Order("id desc").Where("transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND grouping_vessel_dn_id is NULL AND sales_system IN ? AND vessel_name NOT LIKE ''", "DN", false, false, salesSystemBargeId).Find(&transactionBarge).Error
 
 	if findTransactionBargeErr != nil {
 		return listGroup, findTransactionBargeErr
 	}
 
-	findTransactionVesselErr := r.db.Order("id desc").Where("transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND grouping_vessel_dn_id is NULL AND sales_system LIKE '%Vessel' AND vessel_name NOT LIKE ''", "DN", false, false).Find(&transactionVessel).Error
+	findTransactionVesselErr := r.db.Order("id desc").Where("transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND grouping_vessel_dn_id is NULL AND sales_system IN ? AND vessel_name NOT LIKE ''", "DN", false, false, salesSystemVesselId).Find(&transactionVessel).Error
 
 	if findTransactionVesselErr != nil {
 		return listGroup, findTransactionVesselErr

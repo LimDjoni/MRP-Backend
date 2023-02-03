@@ -49,6 +49,14 @@ func SeedingIndustryType(db *gorm.DB) {
 			Name:     "Pabrik Tekstil",
 			Category: "NON ELECTRICITY",
 		},
+		industrytype.IndustryType{
+			Name:     "Perdagangan Besar Bahan Bakar Padat, Cair, dan Gas dan Produk Ybdi",
+			Category: "NON ELECTRICITY",
+		},
+		industrytype.IndustryType{
+			Name:     "Trader Batubara",
+			Category: "NON ELECTRICITY",
+		},
 	)
 
 	err := tx.Create(&createIndustryType).Error

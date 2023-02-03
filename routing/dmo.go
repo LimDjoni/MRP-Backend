@@ -51,7 +51,12 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	dmoVesselRepository := dmovessel.NewRepository(db)
 	dmoVesselService := dmovessel.NewService(dmoVesselRepository)
 
+	reportDmoRepository := reportdmo.NewRepository(db)
+	reportDmoService := reportdmo.NewService(reportDmoRepository)
+
 	dmoHandler := handler.NewDmoHandler(transactionService, userService, historyService, logService, dmoService, traderService, traderDmoService, notificationUserService, companyService, validate, dmoVesselService)
+
+	reportDmoHandler := handler.NewReportDmoHandler(transactionService, userService, historyService, logService, notificationUserService, validate, reportDmoService)
 
 	dmoRouting := app.Group("/dmo")
 
@@ -76,4 +81,8 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	dmoRouting.Put("/update/document/signed/:id/:type", dmoHandler.UpdateTrueIsSignedDmoDocument)
 	dmoRouting.Put("/update/document/not_signed/:id/:type", dmoHandler.UpdateFalseIsSignedDmoDocument)
 	dmoRouting.Get("/master", dmoHandler.MasterCompanyTrader)
+
+	// Report
+
+	dmoRouting.Post("/create/report", reportDmoHandler.CreateReportDmo)
 }

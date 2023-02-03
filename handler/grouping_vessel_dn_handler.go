@@ -130,16 +130,6 @@ func (h *groupingVesselDnHandler) CreateGroupingVesselDn(c *fiber.Ctx) error {
 		})
 	}
 
-	findDestination, findDestinationErr := h.destinationService.GetDestinationByName(*&groupingVesselDnInput.Destination)
-
-	if findDestinationErr != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "destination not found",
-		})
-	}
-
-	groupingVesselDnInput.DestinationId = findDestination.ID
-
 	createdGroupingVesselDn, createdGroupingVesselDnErr := h.historyService.CreateGroupingVesselDN(*groupingVesselDnInput, uint(claims["id"].(float64)))
 
 	if createdGroupingVesselDnErr != nil {
@@ -206,16 +196,6 @@ func (h *groupingVesselDnHandler) EditGroupingVesselDn(c *fiber.Ctx) error {
 			"error": "record not found",
 		})
 	}
-
-	findDestination, findDestinationErr := h.destinationService.GetDestinationByName(*&editGroupingVesselDnInput.Destination)
-
-	if findDestinationErr != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "destination not found",
-		})
-	}
-
-	editGroupingVesselDnInput.DestinationId = &findDestination.ID
 
 	editGroupingVesselDn, editGroupingVesselDnErr := h.historyService.EditGroupingVesselDn(idInt, *editGroupingVesselDnInput, uint(claims["id"].(float64)))
 

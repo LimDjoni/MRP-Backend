@@ -8,6 +8,7 @@ import (
 	"ajebackend/model/minerba"
 	"ajebackend/model/minerbaln"
 	"ajebackend/model/production"
+	"ajebackend/model/reportdmo"
 	"ajebackend/model/transaction"
 )
 
@@ -46,6 +47,8 @@ type Service interface {
 	CreateInsw(month string, year int, baseIdNumber string, userId uint) (insw.Insw, error)
 	DeleteInsw(idInsw int, userId uint) (bool, error)
 	UpdateDocumentInsw(id int, documentLink insw.InputUpdateDocumentInsw, userId uint) (insw.Insw, error)
+	CreateReportDmo(input reportdmo.InputCreateReportDmo, baseIdNumber string, userId uint) (reportdmo.ReportDmo, error)
+	UpdateDocumentReportDmo(id int, documentLink reportdmo.InputUpdateDocumentReportDmo, userId uint) (reportdmo.ReportDmo, error)
 }
 
 type service struct {
@@ -258,4 +261,16 @@ func (s *service) UpdateDocumentInsw(id int, documentLink insw.InputUpdateDocume
 	updateDocumentInsw, updateDocumentInswErr := s.repository.UpdateDocumentInsw(id, documentLink, userId)
 
 	return updateDocumentInsw, updateDocumentInswErr
+}
+
+func (s *service) CreateReportDmo(input reportdmo.InputCreateReportDmo, baseIdNumber string, userId uint) (reportdmo.ReportDmo, error) {
+	createReportDmo, createReportDmoErr := s.repository.CreateReportDmo(input, baseIdNumber, userId)
+
+	return createReportDmo, createReportDmoErr
+}
+
+func (s *service) UpdateDocumentReportDmo(id int, documentLink reportdmo.InputUpdateDocumentReportDmo, userId uint) (reportdmo.ReportDmo, error) {
+	updateDocumentReportDmo, updateDocumentReportDmoErr := s.repository.UpdateDocumentReportDmo(id, documentLink, userId)
+
+	return updateDocumentReportDmo, updateDocumentReportDmoErr
 }

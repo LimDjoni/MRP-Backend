@@ -17,6 +17,7 @@ import (
 	"ajebackend/model/master/vessel"
 	"ajebackend/model/minerba"
 	"ajebackend/model/minerbaln"
+	"ajebackend/model/reportdmo"
 
 	"gorm.io/gorm"
 )
@@ -122,4 +123,6 @@ type Transaction struct {
 	Destination                    *destination.Destination           `json:"destination"`
 	GroupingVesselDnId             *uint                              `json:"grouping_vessel_dn_id"`
 	GroupingVesselDn               *groupingvesseldn.GroupingVesselDn `json:"grouping_vessel_dn" gorm:"constraint:OnDelete:SET NULL;"`
+	ReportDmoId                    *uint                              `json:"report_dmo_id"`
+	ReportDmo                      *reportdmo.ReportDmo               `json:"report_dmo" gorm:"constraint:OnDelete:SET NULL;"`
 }

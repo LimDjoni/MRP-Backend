@@ -128,12 +128,12 @@ func main() {
 		seedingmaster.SeedingIupopk(db)
 		seedingmaster.SeedingPabeanOffice(db)
 		seedingmaster.SeedingPortInsw(db)
-		seedingmaster.SeedingPortLocation(db)
-		seedingmaster.SeedingPorts(db)
+		seedingmaster.SeedingPortsAndLocation(db)
 		seedingmaster.SeedingSalesSystem(db)
 		seedingmaster.SeedingSurveyor(db)
 		seedingmaster.SeedingTugboat(db)
 		seedingmaster.SeedingUnit(db)
+		seedingmaster.SeedingVessel(db)
 		fmt.Println(errMigrate)
 	}
 

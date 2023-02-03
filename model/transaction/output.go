@@ -6,6 +6,7 @@ import (
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/minerba"
 	"ajebackend/model/minerbaln"
+	"ajebackend/model/reportdmo"
 )
 
 type DetailMinerba struct {
@@ -139,13 +140,17 @@ type ListDataDnForGroupingVessel struct {
 }
 
 type ListTransactionDmoBackgroundJob struct {
-	ListTransactionBarge               []Transaction                       `json:"list_transaction_barge"`
-	ListTransactionBargeGroupingVessel []Transaction                       `json:"list_transaction_barge_grouping_vessel"`
-	ListGroupingVesselFobBarge         []groupingvesseldn.GroupingVesselDn `json:"list_grouping_vessel_fob_barge"`
-	ListGroupingVesselFobVessel        []groupingvesseldn.GroupingVesselDn `json:"list_grouping_vessel_fob_vessel"`
+	ListTransactionBarge []Transaction                       `json:"list_transaction_barge"`
+	ListGroupingVessel   []groupingvesseldn.GroupingVesselDn `json:"list_grouping_vessel"`
 }
 
 type ListTransactionNotHaveGroupingVessel struct {
 	TransactionBarge  []Transaction `json:"transaction_barge"`
 	TransactionVessel []Transaction `json:"transaction_vessel"`
+}
+
+type DetailReportDmo struct {
+	Detail          reportdmo.ReportDmo                 `json:"detail"`
+	Transactions    []Transaction                       `json:"transactions"`
+	GroupingVessels []groupingvesseldn.GroupingVesselDn `json:"grouping_vessels"`
 }

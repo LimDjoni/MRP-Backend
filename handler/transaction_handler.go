@@ -116,15 +116,6 @@ func (h *transactionHandler) CreateTransactionDN(c *fiber.Ctx) error {
 		})
 	}
 
-	findDestination, findDestinationErr := h.destinationService.GetDestinationByName(*&transactionInput.DestinationName)
-
-	if findDestinationErr != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "destination not found",
-		})
-	}
-
-	transactionInput.DestinationId = &findDestination.ID
 	createdTransaction, createdTransactionErr := h.historyService.CreateTransactionDN(*transactionInput, uint(claims["id"].(float64)))
 
 	if createdTransactionErr != nil {
@@ -436,15 +427,6 @@ func (h *transactionHandler) UpdateTransactionDN(c *fiber.Ctx) error {
 		})
 	}
 
-	findDestination, findDestinationErr := h.destinationService.GetDestinationByName(*&transactionInput.DestinationName)
-
-	if findDestinationErr != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "destination not found",
-		})
-	}
-
-	transactionInput.DestinationId = &findDestination.ID
 	updateTransaction, updateTransactionErr := h.historyService.UpdateTransactionDN(idInt, *transactionInput, uint(claims["id"].(float64)))
 
 	if updateTransactionErr != nil {

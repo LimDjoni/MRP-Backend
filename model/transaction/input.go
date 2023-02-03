@@ -4,6 +4,7 @@ import (
 	"ajebackend/model/dmo"
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/master/trader"
+	"ajebackend/model/reportdmo"
 )
 
 type DataTransactionInput struct {
@@ -11,6 +12,7 @@ type DataTransactionInput struct {
 	Quantity                    float64 `json:"quantity"`
 	TugboatId                   *uint   `json:"tugboat_id"`
 	BargeId                     *uint   `json:"barge_id"`
+	VesselName                  string  `json:"vessel_name"`
 	VesselId                    *uint   `json:"vessel_id"`
 	CustomerId                  *uint   `json:"customer_id"`
 	LoadingPortId               *uint   `json:"loading_port_id"`
@@ -64,7 +66,7 @@ type DataTransactionInput struct {
 	IsCoaFinish                 bool    `json:"is_coa_finish"`
 	IsRoyaltyFinalFinish        bool    `json:"is_royalty_final_finish"`
 	DestinationId               *uint   `json:"destination_id"`
-	DestinationCountryId        string  `json:"destination_country_id"`
+	DestinationCountryId        *uint   `json:"destination_country_id"`
 }
 
 type SortAndFilter struct {
@@ -103,4 +105,11 @@ type InputRequestGetReport struct {
 	ProductionPlan                 float64 `json:"production_plan" validate:"required"`
 	PercentageProductionObligation float64 `json:"percentage_production_obligation" validate:"required"`
 	Year                           int     `json:"year"`
+}
+
+type InputRequestCreateReportDmo struct {
+	Authorization   string                              `json:"authorization"`
+	ReportDmo       reportdmo.ReportDmo                 `json:"report_dmo"`
+	Transactions    []Transaction                       `json:"transactions"`
+	GroupingVessels []groupingvesseldn.GroupingVesselDn `json:"grouping_vessels"`
 }
