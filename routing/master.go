@@ -3,7 +3,8 @@ package routing
 import (
 	"ajebackend/handler"
 	"ajebackend/helper"
-	"ajebackend/model/destination"
+	"ajebackend/model/master/allmaster"
+	"ajebackend/model/master/destination"
 	"ajebackend/model/user"
 
 	"github.com/go-playground/validator/v10"
@@ -19,7 +20,10 @@ func MasterRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) 
 	userRepository := user.NewRepository(db)
 	userService := user.NewService(userRepository)
 
-	masterHandler := handler.NewMasterHandler(destinationService, userService)
+	allMasterRepository := allmaster.NewRepository(db)
+	allMasterService := allmaster.NewService(allMasterRepository)
+
+	masterHandler := handler.NewMasterHandler(destinationService, userService, allMasterService)
 
 	masterRouting := app.Group("/master")
 
@@ -34,5 +38,5 @@ func MasterRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) 
 		},
 	}))
 
-	masterRouting.Get("/destination", masterHandler.GetDestination)
+	masterRouting.Get("/global", masterHandler.GetListMaster)
 }

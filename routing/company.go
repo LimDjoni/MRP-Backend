@@ -3,10 +3,11 @@ package routing
 import (
 	"ajebackend/handler"
 	"ajebackend/helper"
-	"ajebackend/model/company"
 	"ajebackend/model/logs"
-	"ajebackend/model/trader"
+	"ajebackend/model/master/company"
+	"ajebackend/model/master/trader"
 	"ajebackend/model/user"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	jwtware "github.com/gofiber/jwt/v3"
@@ -36,7 +37,7 @@ func CompanyRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate)
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
 			return ctx.Status(401).JSON(fiber.Map{
 				"error": "unauthorized",
-				"err": err.Error(),
+				"err":   err.Error(),
 			})
 		},
 	}))

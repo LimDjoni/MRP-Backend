@@ -2,12 +2,21 @@ package transaction
 
 import (
 	"ajebackend/model/dmo"
+	"ajebackend/model/groupingvesseldn"
+	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/minerba"
+	"ajebackend/model/minerbaln"
+	"ajebackend/model/reportdmo"
 )
 
 type DetailMinerba struct {
 	Detail minerba.Minerba `json:"detail"`
 	List   []Transaction   `json:"list"`
+}
+
+type DetailMinerbaLn struct {
+	Detail minerbaln.MinerbaLn `json:"detail"`
+	List   []Transaction       `json:"list"`
 }
 
 type DetailDmo struct {
@@ -111,6 +120,43 @@ type ReportRecapOutput struct {
 }
 
 type ChooseTransactionDmo struct {
-	BargeTransaction  []Transaction `json:"barge_transaction"`
-	VesselTransaction []Transaction `json:"vessel_transaction"`
+	BargeTransaction          []Transaction                       `json:"barge_transaction"`
+	GroupingVesselTransaction []groupingvesseldn.GroupingVesselDn `json:"grouping_vessel_transaction"`
+}
+
+type DetailGroupingVesselDn struct {
+	ListTransactions []Transaction                     `json:"list_transactions"`
+	Detail           groupingvesseldn.GroupingVesselDn `json:"detail"`
+}
+
+type DetailGroupingVesselLn struct {
+	ListTransactions []Transaction                     `json:"list_transactions"`
+	Detail           groupingvesselln.GroupingVesselLn `json:"detail"`
+}
+
+type ListDataDnForGroupingVessel struct {
+	ListDataDnBargeWithVessel []Transaction `json:"list_data_dn_barge_with_vessel"`
+	ListDataDnVessel          []Transaction `json:"list_data_dn_vessel"`
+}
+
+type ListTransactionDmoBackgroundJob struct {
+	ListTransactionBarge          []Transaction                       `json:"list_transaction_barge"`
+	ListTransactionGroupingVessel []Transaction                       `json:"list_transaction_grouping_vessel"`
+	ListGroupingVessel            []groupingvesseldn.GroupingVesselDn `json:"list_grouping_vessel"`
+}
+
+type ListTransactionNotHaveGroupingVessel struct {
+	TransactionBarge  []Transaction `json:"transaction_barge"`
+	TransactionVessel []Transaction `json:"transaction_vessel"`
+}
+
+type DetailReportDmo struct {
+	Detail          reportdmo.ReportDmo                 `json:"detail"`
+	Transactions    []Transaction                       `json:"transactions"`
+	GroupingVessels []groupingvesseldn.GroupingVesselDn `json:"grouping_vessels"`
+}
+
+type ListForCreatingReportDmoOutput struct {
+	Transactions    []Transaction                       `json:"transactions"`
+	GroupingVessels []groupingvesseldn.GroupingVesselDn `json:"grouping_vessels"`
 }

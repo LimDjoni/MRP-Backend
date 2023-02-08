@@ -2,21 +2,44 @@ package main
 
 import (
 	"ajebackend/helper"
-	"ajebackend/model/company"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
+	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/history"
+	"ajebackend/model/insw"
 	"ajebackend/model/logs"
+	"ajebackend/model/master/barge"
+	"ajebackend/model/master/company"
+	"ajebackend/model/master/country"
+	"ajebackend/model/master/currency"
+	"ajebackend/model/master/destination"
+	"ajebackend/model/master/documenttype"
+	"ajebackend/model/master/industrytype"
+	"ajebackend/model/master/insurancecompany"
+	"ajebackend/model/master/iupopk"
+	"ajebackend/model/master/navycompany"
+	"ajebackend/model/master/navyship"
+	"ajebackend/model/master/pabeanoffice"
+	"ajebackend/model/master/portinsw"
+	"ajebackend/model/master/portlocation"
+	"ajebackend/model/master/ports"
+	"ajebackend/model/master/salessystem"
+	"ajebackend/model/master/surveyor"
+	"ajebackend/model/master/trader"
+	"ajebackend/model/master/tugboat"
+	"ajebackend/model/master/unit"
+	"ajebackend/model/master/vessel"
 	"ajebackend/model/minerba"
+	"ajebackend/model/minerbaln"
 	"ajebackend/model/notification"
 	"ajebackend/model/notificationuser"
 	"ajebackend/model/production"
-	"ajebackend/model/trader"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 	routing2 "ajebackend/routing"
 	"ajebackend/seeding"
+	seedingmaster "ajebackend/seeding/master"
 	"ajebackend/validatorfunc"
 	"fmt"
 	"os"
@@ -69,15 +92,58 @@ func main() {
 			&notification.Notification{},
 			&notificationuser.NotificationUser{},
 			&production.Production{},
+			&groupingvesselln.GroupingVesselLn{},
+			&minerbaln.MinerbaLn{},
+			&insw.Insw{},
+			&destination.Destination{},
+			&barge.Barge{},
+			&country.Country{},
+			&currency.Currency{},
+			&documenttype.DocumentType{},
+			&industrytype.IndustryType{},
+			&insurancecompany.InsuranceCompany{},
+			&iupopk.Iupopk{},
+			&navycompany.NavyCompany{},
+			&navyship.NavyShip{},
+			&pabeanoffice.PabeanOffice{},
+			&ports.Port{},
+			&portinsw.PortInsw{},
+			&portlocation.PortLocation{},
+			&salessystem.SalesSystem{},
+			&surveyor.Surveyor{},
+			&unit.Unit{},
+			&vessel.Vessel{},
+			&tugboat.Tugboat{},
 		)
 
 		seeding.UpdateTransactionsRoyalty(db)
 		seeding.SeedingTraderAndCompanyData(db)
 		seeding.SeedingDestination(db)
+		seeding.UpdateNaming(db)
+		seedingmaster.SeedingBarge(db)
+		seedingmaster.SeedingCountry(db)
+		seedingmaster.SeedingCurrency(db)
+		seedingmaster.SeedingDocumentType(db)
+		seedingmaster.SeedingIndustryType(db)
+		seedingmaster.SeedingIupopk(db)
+		seedingmaster.SeedingPabeanOffice(db)
+		seedingmaster.SeedingPortInsw(db)
+		seedingmaster.SeedingPortsAndLocation(db)
+		seedingmaster.SeedingSalesSystem(db)
+		seedingmaster.SeedingSurveyor(db)
+		seedingmaster.SeedingTugboat(db)
+		seedingmaster.SeedingUnit(db)
+		seedingmaster.SeedingVessel(db)
 		fmt.Println(errMigrate)
 	}
 
 	var validate = validator.New()
+
+	errSalesSystem := validate.RegisterValidation("SalesSystemValidation", validatorfunc.CheckEnum)
+
+	if errSalesSystem != nil {
+		fmt.Println(errSalesSystem.Error())
+	}
 
 	// Make Validation for Date
 	errDate := validate.RegisterValidation("DateValidation", validatorfunc.CheckDateString)
@@ -90,6 +156,12 @@ func main() {
 
 	if errPeriod != nil {
 		fmt.Println(errPeriod.Error())
+	}
+
+	errLongMonth := validate.RegisterValidation("LongMonth", validatorfunc.CheckEnum)
+
+	if errLongMonth != nil {
+		fmt.Println(errLongMonth.Error())
 	}
 
 	app := fiber.New()
@@ -148,5 +220,7 @@ func Setup(db *gorm.DB, validate *validator.Validate, route fiber.Router) {
 	routing2.NotificationRouting(db, route, validate)
 	routing2.ProductionRouting(db, route, validate)
 	routing2.ReportRouting(db, route, validate)
+	routing2.GroupingVesselLnRouting(db, route, validate)
 	routing2.MasterRouting(db, route, validate)
+	routing2.InswRouting(db, route, validate)
 }

@@ -3,7 +3,8 @@ package transaction
 import (
 	"ajebackend/helper"
 	"ajebackend/model/dmo"
-	"ajebackend/model/trader"
+	"ajebackend/model/dmovessel"
+	"ajebackend/model/master/trader"
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
@@ -12,20 +13,36 @@ import (
 )
 
 type Service interface {
-	ListDataDN(page int, sortFilter SortAndFilter) (Pagination, error)
-	DetailTransactionDN(id int) (Transaction, error)
+	ListData(page int, sortFilter SortAndFilter, transactionType string) (Pagination, error)
+	DetailTransaction(id int, transactionType string) (Transaction, error)
 	CheckDataUnique(inputTrans DataTransactionInput) (bool, bool, bool, bool)
 	ListDataDNWithoutMinerba() ([]Transaction, error)
 	CheckDataDnAndMinerba(listData []int) (bool, error)
 	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) ([]Transaction, error)
 	GetDetailMinerba(id int) (DetailMinerba, error)
 	RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (map[string]interface{}, error)
-	ListDataDNWithoutDmo() (ChooseTransactionDmo, error)
+	RequestCreateExcelLn(reqInput InputRequestCreateExcelMinerba) (map[string]interface{}, error)
+	ListDataDNBargeWithoutVessel() ([]Transaction, error)
+	ListDataDNBargeWithVessel() ([]Transaction, error)
+	ListDataDNVessel() ([]Transaction, error)
 	CheckDataDnAndDmo(listData []int) ([]Transaction, error)
+	CheckGroupingVesselAndDmo(listData []int) ([]dmovessel.DmoVessel, error)
 	GetDetailDmo(id int) (DetailDmo, error)
 	RequestCreateDmo(reqInput InputRequestCreateUploadDmo) (map[string]interface{}, error)
-	RequestCreateCustomDmo(dataDmo dmo.Dmo, traderEndUser trader.Trader, reconciliationLetter *multipart.FileHeader, authorization string) (map[string]interface{}, error)
+	RequestCreateCustomDmo(dataDmo dmo.Dmo, traderEndUser trader.Trader, reconciliationLetter *multipart.FileHeader, authorization string, reqInputCreateUploadDmo InputRequestCreateUploadDmo) (map[string]interface{}, error)
 	GetReport(year int) (ReportRecapOutput, ReportDetailOutput, error)
+	GetListForReport() (ListForCreatingReportDmoOutput, error)
+	GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, error)
+	ListDataDnWithoutGroup() (ListTransactionNotHaveGroupingVessel, error)
+	GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, error)
+	ListDataLnWithoutGroup() ([]Transaction, error)
+	GetDetailMinerbaLn(id int) (DetailMinerbaLn, error)
+	ListDataLNWithoutMinerba() ([]Transaction, error)
+	CheckDataLnAndMinerbaLnUpdate(listData []int, idMinerba int) ([]Transaction, error)
+	CheckDataLnAndMinerbaLn(listData []int) (bool, error)
+	GetDataDmo(id uint) (ListTransactionDmoBackgroundJob, error)
+	RequestCreateReportDmo(input InputRequestCreateReportDmo) (map[string]interface{}, error)
+	GetDetailReportDmo(id int) (DetailReportDmo, error)
 }
 
 type service struct {
@@ -36,14 +53,14 @@ func NewService(repository Repository) *service {
 	return &service{repository}
 }
 
-func (s *service) ListDataDN(page int, sortFilter SortAndFilter) (Pagination, error) {
-	listDN, listDNErr := s.repository.ListDataDN(page, sortFilter)
+func (s *service) ListData(page int, sortFilter SortAndFilter, transactionType string) (Pagination, error) {
+	listDN, listDNErr := s.repository.ListData(page, sortFilter, transactionType)
 
 	return listDN, listDNErr
 }
 
-func (s *service) DetailTransactionDN(id int) (Transaction, error) {
-	detailTransactionDN, detailTransactionDNErr := s.repository.DetailTransactionDN(id)
+func (s *service) DetailTransaction(id int, transactionType string) (Transaction, error) {
+	detailTransactionDN, detailTransactionDNErr := s.repository.DetailTransaction(id, transactionType)
 
 	return detailTransactionDN, detailTransactionDNErr
 }
@@ -82,7 +99,7 @@ func (s *service) RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (m
 	var res map[string]interface{}
 	baseURL := helper.GetEnvWithKey("BASE_JOB_URL")
 
-	urlPost := baseURL + "/create/minerba"
+	urlPost := baseURL + "/create/minerba/dn"
 	body, bodyErr := json.Marshal(reqInput)
 
 	if bodyErr != nil {
@@ -108,16 +125,64 @@ func (s *service) RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (m
 	return res, doReqErr
 }
 
-func (s *service) ListDataDNWithoutDmo() (ChooseTransactionDmo, error) {
-	listDataDNWithoutDmo, listDataDNWithoutDmoErr := s.repository.ListDataDNWithoutDmo()
+func (s *service) RequestCreateExcelLn(reqInput InputRequestCreateExcelMinerba) (map[string]interface{}, error) {
+	var res map[string]interface{}
+	baseURL := helper.GetEnvWithKey("BASE_JOB_URL")
 
-	return listDataDNWithoutDmo, listDataDNWithoutDmoErr
+	urlPost := baseURL + "/create/minerba/ln"
+	body, bodyErr := json.Marshal(reqInput)
+
+	if bodyErr != nil {
+		return res, bodyErr
+	}
+	var payload = bytes.NewBufferString(string(body))
+
+	req, doReqErr := http.NewRequest("POST", urlPost, payload)
+
+	if req != nil {
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+	}
+	client := &http.Client{}
+	resp, doReqErr := client.Do(req)
+
+	if doReqErr != nil {
+		return res, doReqErr
+	}
+
+	json.NewDecoder(resp.Body).Decode(&res)
+
+	return res, doReqErr
+}
+
+func (s *service) ListDataDNBargeWithoutVessel() ([]Transaction, error) {
+	listDataDNBargeWithoutVessel, listDataDNBargeWithoutVesselErr := s.repository.ListDataDNBargeWithoutVessel()
+
+	return listDataDNBargeWithoutVessel, listDataDNBargeWithoutVesselErr
+}
+
+func (s *service) ListDataDNBargeWithVessel() ([]Transaction, error) {
+	listDataDNBargeWithVessel, listDataDNBargeWithVesselErr := s.repository.ListDataDNBargeWithVessel()
+
+	return listDataDNBargeWithVessel, listDataDNBargeWithVesselErr
+}
+
+func (s *service) ListDataDNVessel() ([]Transaction, error) {
+	listDataDNVessel, listDataDNVesselErr := s.repository.ListDataDNVessel()
+
+	return listDataDNVessel, listDataDNVesselErr
 }
 
 func (s *service) CheckDataDnAndDmo(listData []int) ([]Transaction, error) {
 	checkData, checkDataErr := s.repository.CheckDataDnAndDmo(listData)
 
 	return checkData, checkDataErr
+}
+
+func (s *service) CheckGroupingVesselAndDmo(listData []int) ([]dmovessel.DmoVessel, error) {
+	checkGrouping, checkGroupingErr := s.repository.CheckGroupingVesselAndDmo(listData)
+
+	return checkGrouping, checkGroupingErr
 }
 
 func (s *service) GetDetailDmo(id int) (DetailDmo, error) {
@@ -156,7 +221,7 @@ func (s *service) RequestCreateDmo(reqInput InputRequestCreateUploadDmo) (map[st
 	return res, doReqErr
 }
 
-func (s *service) RequestCreateCustomDmo(dataDmo dmo.Dmo, traderEndUser trader.Trader, reconciliationLetter *multipart.FileHeader, authorization string) (map[string]interface{}, error) {
+func (s *service) RequestCreateCustomDmo(dataDmo dmo.Dmo, traderEndUser trader.Trader, reconciliationLetter *multipart.FileHeader, authorization string, reqInputCreateUploadDmo InputRequestCreateUploadDmo) (map[string]interface{}, error) {
 	var res map[string]interface{}
 	baseURL := helper.GetEnvWithKey("BASE_JOB_URL")
 	var (
@@ -180,6 +245,10 @@ func (s *service) RequestCreateCustomDmo(dataDmo dmo.Dmo, traderEndUser trader.T
 	partReconciliationLetter, _ := w.CreateFormFile("reconciliation_letter", reconciliationLetter.Filename)
 	reconciliationLetterByteContainer, _ := ioutil.ReadAll(reconciliationLetterContent)
 	partReconciliationLetter.Write(reconciliationLetterByteContainer)
+
+	reqInputCreateUploadDmoMarshal, _ := json.Marshal(reqInputCreateUploadDmo)
+	partDataTransaction, _ := w.CreateFormField("data_transaction")
+	partDataTransaction.Write(reqInputCreateUploadDmoMarshal)
 
 	w.Close()
 	urlPost := baseURL + "/upload/dmo/custom"
@@ -206,4 +275,100 @@ func (s *service) GetReport(year int) (ReportRecapOutput, ReportDetailOutput, er
 	reportRecap, reportDetail, reportErr := s.repository.GetReport(year)
 
 	return reportRecap, reportDetail, reportErr
+}
+
+func (s *service) GetListForReport() (ListForCreatingReportDmoOutput, error) {
+	listForReport, listForReportErr := s.repository.GetListForReport()
+
+	return listForReport, listForReportErr
+}
+
+func (s *service) GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, error) {
+	detailGroupingVesselDn, detailGroupingVesselDnErr := s.repository.GetDetailGroupingVesselDn(id)
+
+	return detailGroupingVesselDn, detailGroupingVesselDnErr
+}
+
+func (s *service) ListDataDnWithoutGroup() (ListTransactionNotHaveGroupingVessel, error) {
+	listWithoutGroup, listWithoutGroupErr := s.repository.ListDataDnWithoutGroup()
+
+	return listWithoutGroup, listWithoutGroupErr
+}
+
+func (s *service) GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, error) {
+	detailGroupingVesselLn, detailGroupingVesselLnErr := s.repository.GetDetailGroupingVesselLn(id)
+
+	return detailGroupingVesselLn, detailGroupingVesselLnErr
+}
+
+func (s *service) ListDataLnWithoutGroup() ([]Transaction, error) {
+	listWithoutGroup, listWithoutGroupErr := s.repository.ListDataLnWithoutGroup()
+
+	return listWithoutGroup, listWithoutGroupErr
+}
+
+func (s *service) GetDetailMinerbaLn(id int) (DetailMinerbaLn, error) {
+	detailMinerbaLn, detailMinerbaLnErr := s.repository.GetDetailMinerbaLn(id)
+
+	return detailMinerbaLn, detailMinerbaLnErr
+}
+
+func (s *service) ListDataLNWithoutMinerba() ([]Transaction, error) {
+	listDataLNWithoutMinerba, listDataLNWithoutMinerbaErr := s.repository.ListDataLNWithoutMinerba()
+
+	return listDataLNWithoutMinerba, listDataLNWithoutMinerbaErr
+}
+
+func (s *service) CheckDataLnAndMinerbaLnUpdate(listData []int, idMinerba int) ([]Transaction, error) {
+	checkData, checkDataErr := s.repository.CheckDataLnAndMinerbaLnUpdate(listData, idMinerba)
+
+	return checkData, checkDataErr
+}
+
+func (s *service) CheckDataLnAndMinerbaLn(listData []int) (bool, error) {
+	checkData, checkDataErr := s.repository.CheckDataLnAndMinerbaLn(listData)
+
+	return checkData, checkDataErr
+}
+
+func (s *service) GetDataDmo(id uint) (ListTransactionDmoBackgroundJob, error) {
+	getDataReportDmo, getDataReportDmoErr := s.repository.GetDataDmo(id)
+
+	return getDataReportDmo, getDataReportDmoErr
+}
+
+func (s *service) RequestCreateReportDmo(input InputRequestCreateReportDmo) (map[string]interface{}, error) {
+	var res map[string]interface{}
+	baseURL := helper.GetEnvWithKey("BASE_JOB_URL")
+
+	urlPost := baseURL + "/create/dmo/report"
+	body, bodyErr := json.Marshal(input)
+
+	if bodyErr != nil {
+		return res, bodyErr
+	}
+	var payload = bytes.NewBufferString(string(body))
+
+	req, doReqErr := http.NewRequest("POST", urlPost, payload)
+
+	if req != nil {
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accept", "application/json")
+	}
+	client := &http.Client{}
+	resp, doReqErr := client.Do(req)
+
+	if doReqErr != nil {
+		return res, doReqErr
+	}
+
+	json.NewDecoder(resp.Body).Decode(&res)
+
+	return res, doReqErr
+}
+
+func (s *service) GetDetailReportDmo(id int) (DetailReportDmo, error) {
+	detailReportDmo, detailReportDmoErr := s.repository.GetDetailReportDmo(id)
+
+	return detailReportDmo, detailReportDmoErr
 }

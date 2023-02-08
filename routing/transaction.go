@@ -3,9 +3,9 @@ package routing
 import (
 	"ajebackend/handler"
 	"ajebackend/helper"
-	"ajebackend/model/destination"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
+	"ajebackend/model/master/destination"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 
@@ -47,9 +47,13 @@ func TransactionRouting(db *gorm.DB, app fiber.Router, validate *validator.Valid
 	}))
 
 	transactionRouting.Post("/create/dn", transactionHandler.CreateTransactionDN)
-	transactionRouting.Get("/list/dn", transactionHandler.ListDataDN)
-	transactionRouting.Get("/detail/dn/:id", transactionHandler.DetailTransactionDN)
-	transactionRouting.Delete("/delete/dn/:id", transactionHandler.DeleteTransactionDN)
+	transactionRouting.Post("/create/ln", transactionHandler.CreateTransactionLN)
+
 	transactionRouting.Put("/update/dn/:id", transactionHandler.UpdateTransactionDN)
-	transactionRouting.Put("/update/document/dn/:id/:type", transactionHandler.UpdateDocumentTransactionDN)
+	transactionRouting.Put("/update/ln/:id", transactionHandler.UpdateTransactionLN)
+
+	transactionRouting.Get("/list/:transaction_type", transactionHandler.ListData)
+	transactionRouting.Get("/detail/:transaction_type/:id", transactionHandler.DetailTransaction)
+	transactionRouting.Delete("/delete/:transaction_type/:id", transactionHandler.DeleteTransaction)
+	transactionRouting.Put("/update/document/:transaction_type/:id/:type", transactionHandler.UpdateDocumentTransaction)
 }

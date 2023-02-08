@@ -33,7 +33,7 @@ func (p *Pagination) GetPage() int {
 	return p.Page
 }
 
-func paginateDataDN(value interface{}, pagination *Pagination, db *gorm.DB, queryFilter string) func(db *gorm.DB) *gorm.DB {
+func paginateData(value interface{}, pagination *Pagination, db *gorm.DB, queryFilter string) func(db *gorm.DB) *gorm.DB {
 	var totalRows int64
 	db.Preload(clause.Associations).Where(queryFilter).Model(value).Count(&totalRows)
 

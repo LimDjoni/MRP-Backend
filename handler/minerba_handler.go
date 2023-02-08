@@ -166,7 +166,7 @@ func (h *minerbaHandler) CreateMinerba(c *fiber.Ctx) error {
 
 	splitPeriod := strings.Split(inputCreateMinerba.Period, " ")
 
-	baseIdNumber := fmt.Sprintf("LM-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
+	baseIdNumber := fmt.Sprintf("LSD-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
 	createMinerba, createMinerbaErr := h.historyService.CreateMinerba(inputCreateMinerba.Period, baseIdNumber, inputCreateMinerba.ListDataDn, uint(claims["id"].(float64)))
 
 	if createMinerbaErr != nil {
@@ -432,8 +432,21 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 		})
 	}
 
-	if dataMinerba.RecapDmoDocumentLink != nil || dataMinerba.DetailDmoDocumentLink != nil || dataMinerba.SP3MEDNDocumentLink != nil || dataMinerba.SP3MELNDocumentLink != nil || dataMinerba.INSWExportDocumentLink != nil {
-		fileName := fmt.Sprintf("LM/%s/", *dataMinerba.IdNumber)
+	if dataMinerba.SP3MEDNDocumentLink != nil {
+
+		documentLinkSplit := strings.Split(*dataMinerba.SP3MEDNDocumentLink, "/")
+
+		fileName := ""
+		for i, v := range documentLinkSplit {
+			if i == 3 {
+				fileName += v + "/"
+			}
+
+			if i == 4 {
+				fileName += v
+			}
+		}
+
 		_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
 
 		if deleteAwsErr != nil {
@@ -850,5 +863,4 @@ func (h *minerbaHandler) CheckValidPeriodMinerba(c *fiber.Ctx) error {
 	return c.Status(400).JSON(fiber.Map{
 		"message": "invalid period",
 	})
-
 }

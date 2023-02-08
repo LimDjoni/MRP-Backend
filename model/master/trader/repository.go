@@ -1,7 +1,7 @@
 package trader
 
 import (
-	"ajebackend/model/company"
+	"ajebackend/model/master/company"
 	"encoding/json"
 	"errors"
 	"strings"

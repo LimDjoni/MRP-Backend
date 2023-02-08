@@ -1,25 +1,26 @@
 package handler
 
 import (
-	"ajebackend/model/company"
 	"ajebackend/model/logs"
-	"ajebackend/model/trader"
+	"ajebackend/model/master/company"
+	"ajebackend/model/master/trader"
 	"ajebackend/model/user"
 	"ajebackend/validatorfunc"
 	"encoding/json"
+	"reflect"
+	"strconv"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
-	"reflect"
-	"strconv"
 )
 
 type companyHandler struct {
-	userService user.Service
+	userService    user.Service
 	companyService company.Service
-	traderService trader.Service
-	logsService logs.Service
-	v *validator.Validate
+	traderService  trader.Service
+	logsService    logs.Service
+	v              *validator.Validate
 }
 
 func NewCompanyHandler(userService user.Service, companyService company.Service, traderService trader.Service, logsService logs.Service, v *validator.Validate) *companyHandler {
@@ -39,7 +40,7 @@ func (h *companyHandler) ListCompany(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -69,7 +70,7 @@ func (h *companyHandler) CreateCompany(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -78,7 +79,6 @@ func (h *companyHandler) CreateCompany(c *fiber.Ctx) error {
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
-
 
 	inputCreateCompany := new(company.InputCreateUpdateCompany)
 
@@ -96,14 +96,14 @@ func (h *companyHandler) CreateCompany(c *fiber.Ctx) error {
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
 		inputMap["input"] = inputCreateCompany
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
-			"errors": dataErrors,
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"errors":  dataErrors,
 			"message": "failed to create company",
 		})
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
+			Input:   inputJson,
 			Message: messageJson,
 		}
 
@@ -120,14 +120,14 @@ func (h *companyHandler) CreateCompany(c *fiber.Ctx) error {
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
 		inputMap["input"] = inputCreateCompany
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
-			"errors": createCompanyErr,
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"errors":  createCompanyErr,
 			"message": "failed to create company",
 		})
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
+			Input:   inputJson,
 			Message: messageJson,
 		}
 
@@ -148,7 +148,7 @@ func (h *companyHandler) UpdateCompany(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -194,13 +194,13 @@ func (h *companyHandler) UpdateCompany(c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["company_id"] = id
 
-		inputJson , _ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
 			"error": updateCompanyErr.Error(),
 		})
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
+			Input:   inputJson,
 			Message: messageJson,
 		}
 
@@ -208,13 +208,13 @@ func (h *companyHandler) UpdateCompany(c *fiber.Ctx) error {
 
 		status := 400
 
-		if  updateCompanyErr.Error() == "record not found" {
+		if updateCompanyErr.Error() == "record not found" {
 			status = 404
 		}
 
 		return c.Status(status).JSON(fiber.Map{
 			"message": "failed to update company",
-			"error": updateCompanyErr.Error(),
+			"error":   updateCompanyErr.Error(),
 		})
 	}
 
@@ -228,7 +228,7 @@ func (h *companyHandler) DeleteCompany(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -237,7 +237,6 @@ func (h *companyHandler) DeleteCompany(c *fiber.Ctx) error {
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
-
 
 	id := c.Params("id")
 
@@ -267,7 +266,7 @@ func (h *companyHandler) DeleteCompany(c *fiber.Ctx) error {
 
 	if len(listTrader) > 0 {
 		return c.Status(400).JSON(fiber.Map{
-			"error": "there is trader connected to company",
+			"error":   "there is trader connected to company",
 			"message": "failed to delete company",
 		})
 	}
@@ -279,13 +278,13 @@ func (h *companyHandler) DeleteCompany(c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["company_id"] = idInt
 
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
 			"error": deleteCompanyErr.Error(),
 		})
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
+			Input:   inputJson,
 			Message: messageJson,
 		}
 
@@ -293,13 +292,13 @@ func (h *companyHandler) DeleteCompany(c *fiber.Ctx) error {
 
 		status := 400
 
-		if  deleteCompanyErr.Error() == "record not found" {
+		if deleteCompanyErr.Error() == "record not found" {
 			status = 404
 		}
 
 		return c.Status(status).JSON(fiber.Map{
 			"message": "failed to delete company",
-			"error": deleteCompanyErr.Error(),
+			"error":   deleteCompanyErr.Error(),
 		})
 	}
 
@@ -315,7 +314,7 @@ func (h *companyHandler) DetailCompany(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 

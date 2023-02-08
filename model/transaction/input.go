@@ -2,23 +2,22 @@ package transaction
 
 import (
 	"ajebackend/model/dmo"
-	"ajebackend/model/dmovessel"
-	"ajebackend/model/trader"
+	"ajebackend/model/groupingvesseldn"
+	"ajebackend/model/master/trader"
+	"ajebackend/model/reportdmo"
 )
 
 type DataTransactionInput struct {
 	ShippingDate                *string `json:"shipping_date" validate:"DateValidation"`
 	Quantity                    float64 `json:"quantity"`
-	TugboatName                 string  `json:"tugboat_name"`
-	BargeName                   string  `json:"barge_name"`
+	TugboatId                   *uint   `json:"tugboat_id"`
+	BargeId                     *uint   `json:"barge_id"`
 	VesselName                  string  `json:"vessel_name"`
-	CustomerName                string  `json:"customer_name"`
-	Seller                      string  `json:"seller"`
-	LoadingPortName             string  `json:"loading_port_name"`
-	LoadingPortLocation         string  `json:"loading_port_location"`
-	UnloadingPortName           string  `json:"unloading_port_name"`
-	UnloadingPortLocation       string  `json:"unloading_port_location"`
-	DmoDestinationPort          string  `json:"dmo_destination_port"`
+	VesselId                    *uint   `json:"vessel_id"`
+	CustomerId                  *uint   `json:"customer_id"`
+	LoadingPortId               *uint   `json:"loading_port_id"`
+	UnloadingPortId             *uint   `json:"unloading_port_id"`
+	DmoDestinationPortId        *uint   `json:"dmo_destination_port_id"`
 	SkbDate                     *string `json:"skb_date" validate:"omitempty,DateValidation"`
 	SkbNumber                   string  `json:"skb_number"`
 	SkabDate                    *string `json:"skab_date" validate:"omitempty,DateValidation"`
@@ -26,13 +25,11 @@ type DataTransactionInput struct {
 	BillOfLadingDate            *string `json:"bill_of_lading_date" validate:"omitempty,DateValidation"`
 	BillOfLadingNumber          string  `json:"bill_of_lading_number"`
 	RoyaltyRate                 float64 `json:"royalty_rate"`
-	DpRoyaltyCurrency           string  `json:"dp_royalty_currency"`
 	DpRoyaltyPrice              float64 `json:"dp_royalty_price"`
 	DpRoyaltyDate               *string `json:"dp_royalty_date" validate:"omitempty,DateValidation"`
 	DpRoyaltyNtpn               *string `json:"dp_royalty_ntpn"`
 	DpRoyaltyBillingCode        *string `json:"dp_royalty_billing_code"`
 	DpRoyaltyTotal              float64 `json:"dp_royalty_total"`
-	PaymentDpRoyaltyCurrency    string  `json:"payment_dp_royalty_currency"`
 	PaymentDpRoyaltyPrice       float64 `json:"payment_dp_royalty_price"`
 	PaymentDpRoyaltyDate        *string `json:"payment_dp_royalty_date" validate:"omitempty,DateValidation"`
 	PaymentDpRoyaltyNtpn        *string `json:"payment_dp_royalty_ntpn"`
@@ -40,7 +37,7 @@ type DataTransactionInput struct {
 	PaymentDpRoyaltyTotal       float64 `json:"payment_dp_royalty_total"`
 	LhvDate                     *string `json:"lhv_date" validate:"omitempty,DateValidation"`
 	LhvNumber                   string  `json:"lhv_number"`
-	SurveyorName                string  `json:"surveyor_name"`
+	SurveyorId                  *uint   `json:"surveyor_id"`
 	CowDate                     *string `json:"cow_date" validate:"omitempty,DateValidation"`
 	CowNumber                   string  `json:"cow_number"`
 	CoaDate                     *string `json:"coa_date" validate:"omitempty,DateValidation"`
@@ -56,32 +53,29 @@ type DataTransactionInput struct {
 	QualityCaloriesAr           float64 `json:"quality_calories_ar"`
 	QualityCaloriesAdb          float64 `json:"quality_calories_adb"`
 	BargingDistance             float64 `json:"barging_distance"`
-	SalesSystem                 string  `json:"sales_system"`
+	SalesSystemId               *uint   `json:"sales_system_id"`
 	InvoiceDate                 *string `json:"invoice_date" validate:"omitempty,DateValidation"`
 	InvoiceNumber               string  `json:"invoice_number"`
 	InvoicePriceUnit            float64 `json:"invoice_price_unit"`
 	InvoicePriceTotal           float64 `json:"invoice_price_total"`
-	DmoReconciliationLetter     string  `json:"dmo_reconciliation_letter"`
 	ContractDate                *string `json:"contract_date" validate:"omitempty,DateValidation"`
 	ContractNumber              string  `json:"contract_number"`
-	DmoBuyerName                string  `json:"dmo_buyer_name"`
-	DmoIndustryType             string  `json:"dmo_industry_type"`
-	DmoCategory                 string  `json:"dmo_category"`
+	DmoBuyerId                  *uint   `json:"dmo_buyer_id"`
 	IsNotClaim                  bool    `json:"is_not_claim"`
 	IsFinanceCheck              bool    `json:"is_finance_check"`
 	IsCoaFinish                 bool    `json:"is_coa_finish"`
 	IsRoyaltyFinalFinish        bool    `json:"is_royalty_final_finish"`
-	DestinationName             string  `json:"destination_name" validate:"required"`
-	DestinationId               uint
+	DestinationId               *uint   `json:"destination_id"`
+	DestinationCountryId        *uint   `json:"destination_country_id"`
 }
 
 type SortAndFilter struct {
 	Field              string
 	Sort               string
 	Quantity           float64
-	TugboatName        string
-	BargeName          string
-	VesselName         string
+	TugboatId          string
+	BargeId            string
+	VesselId           string
 	ShippingFrom       string
 	ShippingTo         string
 	VerificationFilter string
@@ -96,18 +90,25 @@ type InputRequestCreateExcelMinerba struct {
 }
 
 type InputRequestCreateUploadDmo struct {
-	Authorization          string                `json:"authorization"`
-	BastNumber             string                `json:"bast_number"`
-	DataDmo                dmo.Dmo               `json:"data_dmo"`
-	DataTransactions       []Transaction         `json:"data_transactions"`
-	DataTransactionsVessel []Transaction         `json:"data_transactions_vessel"`
-	Trader                 []trader.Trader       `json:"trader"`
-	TraderEndUser          trader.Trader         `json:"trader_end_user"`
-	DataVessel             []dmovessel.DmoVessel `json:"data_vessel"`
+	Authorization                 string                              `json:"authorization"`
+	BastNumber                    string                              `json:"bast_number"`
+	DataDmo                       dmo.Dmo                             `json:"data_dmo"`
+	Trader                        []trader.Trader                     `json:"trader"`
+	TraderEndUser                 trader.Trader                       `json:"trader_end_user"`
+	ListTransactionBarge          []Transaction                       `json:"list_transaction_barge"`
+	ListTransactionGroupingVessel []Transaction                       `json:"list_transaction_grouping_vessel"`
+	ListGroupingVessel            []groupingvesseldn.GroupingVesselDn `json:"list_grouping_vessel"`
 }
 
 type InputRequestGetReport struct {
 	ProductionPlan                 float64 `json:"production_plan" validate:"required"`
 	PercentageProductionObligation float64 `json:"percentage_production_obligation" validate:"required"`
 	Year                           int     `json:"year"`
+}
+
+type InputRequestCreateReportDmo struct {
+	Authorization   string                              `json:"authorization"`
+	ReportDmo       reportdmo.ReportDmo                 `json:"report_dmo"`
+	Transactions    []Transaction                       `json:"transactions"`
+	GroupingVessels []groupingvesseldn.GroupingVesselDn `json:"grouping_vessels"`
 }

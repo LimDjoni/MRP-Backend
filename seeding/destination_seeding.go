@@ -1,7 +1,7 @@
 package seeding
 
 import (
-	"ajebackend/model/destination"
+	"ajebackend/model/master/destination"
 	"fmt"
 
 	"gorm.io/gorm"

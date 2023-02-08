@@ -3,13 +3,14 @@ package routing
 import (
 	"ajebackend/handler"
 	"ajebackend/helper"
-	"ajebackend/model/company"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
+	"ajebackend/model/master/company"
+	"ajebackend/model/master/trader"
 	"ajebackend/model/notificationuser"
-	"ajebackend/model/trader"
+	"ajebackend/model/reportdmo"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
@@ -51,7 +52,12 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	dmoVesselRepository := dmovessel.NewRepository(db)
 	dmoVesselService := dmovessel.NewService(dmoVesselRepository)
 
+	reportDmoRepository := reportdmo.NewRepository(db)
+	reportDmoService := reportdmo.NewService(reportDmoRepository)
+
 	dmoHandler := handler.NewDmoHandler(transactionService, userService, historyService, logService, dmoService, traderService, traderDmoService, notificationUserService, companyService, validate, dmoVesselService)
+
+	reportDmoHandler := handler.NewReportDmoHandler(transactionService, userService, historyService, logService, notificationUserService, validate, reportDmoService)
 
 	dmoRouting := app.Group("/dmo")
 
@@ -68,7 +74,7 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 
 	dmoRouting.Post("/create", dmoHandler.CreateDmo)
 	dmoRouting.Get("/list", dmoHandler.ListDmo)
-	dmoRouting.Get("/list/transaction", dmoHandler.ListDataDNWithoutDmo)
+	dmoRouting.Get("/list/transaction", dmoHandler.ListTransactionForDmo)
 	dmoRouting.Get("/detail/:id", dmoHandler.DetailDmo)
 	dmoRouting.Delete("/delete/:id", dmoHandler.DeleteDmo)
 	dmoRouting.Put("/update/document/:id", dmoHandler.UpdateDocumentDmo)
@@ -76,4 +82,16 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	dmoRouting.Put("/update/document/signed/:id/:type", dmoHandler.UpdateTrueIsSignedDmoDocument)
 	dmoRouting.Put("/update/document/not_signed/:id/:type", dmoHandler.UpdateFalseIsSignedDmoDocument)
 	dmoRouting.Get("/master", dmoHandler.MasterCompanyTrader)
+	dmoRouting.Put("/update/:id", dmoHandler.UpdateDmo)
+
+	// Report
+	dmoRouting.Post("/create/report", reportDmoHandler.CreateReportDmo)
+	dmoRouting.Put("/update/report/document/:id", reportDmoHandler.UpdateDocumentReportDmo)
+	dmoRouting.Put("/update/report/:id", reportDmoHandler.UpdateReportDmo)
+	dmoRouting.Delete("/delete/report/:id", reportDmoHandler.DeleteReportDmo)
+	dmoRouting.Post("/create/excel/:id", reportDmoHandler.RequestCreateExcelReportDmo)
+	dmoRouting.Get("/list/report/transaction", reportDmoHandler.GetListForReport)
+	dmoRouting.Post("/validate/report", reportDmoHandler.CheckValidPeriodReportDmo)
+	dmoRouting.Get("/detail/report/:id", reportDmoHandler.DetailReportDmo)
+	dmoRouting.Get("/list/report", reportDmoHandler.ListReportDmo)
 }

@@ -310,7 +310,7 @@ func TestListDataDN(t *testing.T) {
 	}
 }
 
-func TestDetailTransactionDN(t *testing.T) {
+func TestDetailTransaction(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
@@ -1039,7 +1039,7 @@ func TestUpdateTransactionDN(t *testing.T) {
 	}
 }
 
-func TestUpdateDocumentTransactionDN(t *testing.T) {
+func TestUpdateDocumentTransaction(t *testing.T) {
 	openDocumentPdf, errOpenDocumentPdf := os.Open("upload_test/output.pdf")
 	openDocumentPng, errOpenDocumentPng := os.Open("upload_test/output.png")
 
@@ -1228,7 +1228,7 @@ func TestUpdateDocumentTransactionDN(t *testing.T) {
 	}
 }
 
-func TestDeleteTransactionDN(t *testing.T) {
+func TestDeleteTransaction(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
@@ -1852,25 +1852,25 @@ func TestUpdateDocumentMinerba(t *testing.T) {
 
 	bodyString["data"] = []map[string]interface{}{
 		{
-			"Key":      "LM-2022-03-0008/sp3medn.xlsx",
-			"key":      "LM-2022-03-0008/sp3medn.xlsx",
+			"Key":      "LS-2022-03-0008/sp3medn.xlsx",
+			"key":      "LS-2022-03-0008/sp3medn.xlsx",
 			"ETag":     "23acbb2e206c924f5b438162ffa0b425",
 			"Bucket":   "deli-aje",
-			"Location": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/LM-2022-03-0008/sp3medn.xlsx",
+			"Location": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/LS-2022-03-0008/sp3medn.xlsx",
 		},
 		{
-			"Key":      "LM-2022-03-0008/recapdmo.xlsx",
-			"key":      "LM-2022-03-0008/recapdmo.xlsx",
+			"Key":      "LS-2022-03-0008/recapdmo.xlsx",
+			"key":      "LS-2022-03-0008/recapdmo.xlsx",
 			"ETag":     "610288c6357a94aba8d5c4e04ee588e3",
 			"Bucket":   "deli-aje",
-			"Location": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/LM-2022-03-0008/recapdmo.xlsx",
+			"Location": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/LS-2022-03-0008/recapdmo.xlsx",
 		},
 		{
-			"Key":      "LM-2022-03-0008/detaildmo.xlsx",
-			"key":      "LM-2022-03-0008/detaildmo.xlsx",
+			"Key":      "LS-2022-03-0008/detaildmo.xlsx",
+			"key":      "LS-2022-03-0008/detaildmo.xlsx",
 			"ETag":     "fbb861e4a88950eb7d38845219f99f43",
 			"Bucket":   "deli-aje",
-			"Location": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/LM-2022-03-0008/detaildmo.xlsx",
+			"Location": "https://deli-aje.s3.ap-southeast-1.amazonaws.com/LS-2022-03-0008/detaildmo.xlsx",
 		},
 	}
 
@@ -2122,7 +2122,7 @@ func TestListDmo(t *testing.T) {
 	}
 }
 
-func TestListDataDNWithoutDmo(t *testing.T) {
+func TestListDataDNBargeWithoutVessel(t *testing.T) {
 	tests := []struct {
 		expectedError bool
 		expectedCode  int
