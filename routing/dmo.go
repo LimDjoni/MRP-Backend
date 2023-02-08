@@ -10,6 +10,7 @@ import (
 	"ajebackend/model/master/company"
 	"ajebackend/model/master/trader"
 	"ajebackend/model/notificationuser"
+	"ajebackend/model/reportdmo"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
@@ -81,8 +82,16 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	dmoRouting.Put("/update/document/signed/:id/:type", dmoHandler.UpdateTrueIsSignedDmoDocument)
 	dmoRouting.Put("/update/document/not_signed/:id/:type", dmoHandler.UpdateFalseIsSignedDmoDocument)
 	dmoRouting.Get("/master", dmoHandler.MasterCompanyTrader)
+	dmoRouting.Put("/update/:id", dmoHandler.UpdateDmo)
 
 	// Report
-
 	dmoRouting.Post("/create/report", reportDmoHandler.CreateReportDmo)
+	dmoRouting.Put("/update/report/document/:id", reportDmoHandler.UpdateDocumentReportDmo)
+	dmoRouting.Put("/update/report/:id", reportDmoHandler.UpdateReportDmo)
+	dmoRouting.Delete("/delete/report/:id", reportDmoHandler.DeleteReportDmo)
+	dmoRouting.Post("/create/excel/:id", reportDmoHandler.RequestCreateExcelReportDmo)
+	dmoRouting.Get("/list/report/transaction", reportDmoHandler.GetListForReport)
+	dmoRouting.Post("/validate/report", reportDmoHandler.CheckValidPeriodReportDmo)
+	dmoRouting.Get("/detail/report/:id", reportDmoHandler.DetailReportDmo)
+	dmoRouting.Get("/list/report", reportDmoHandler.ListReportDmo)
 }

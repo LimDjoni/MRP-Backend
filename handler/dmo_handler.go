@@ -355,6 +355,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	reqInputCreateUploadDmo.Trader = list
 	reqInputCreateUploadDmo.TraderEndUser = endUser
 	reqInputCreateUploadDmo.ListTransactionBarge = listTransactionDmo.ListTransactionBarge
+	reqInputCreateUploadDmo.ListTransactionGroupingVessel = listTransactionDmo.ListTransactionGroupingVessel
 	reqInputCreateUploadDmo.ListGroupingVessel = listTransactionDmo.ListGroupingVessel
 
 	if !inputCreateDmo.IsDocumentCustom {
@@ -427,6 +428,238 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	}
 
 	return c.Status(201).JSON(createDmo)
+}
+
+func (h *dmoHandler) UpdateDmo(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	id := c.Params("id")
+
+	idInt, err := strconv.Atoi(id)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "record not found",
+		})
+	}
+
+	idDmo := uint(idInt)
+
+	inputUpdateDmo := new(dmo.UpdateDmoInput)
+
+	if err := c.BodyParser(inputUpdateDmo); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	detailDmo, detailDmoErr := h.transactionService.GetDetailDmo(idInt)
+
+	if detailDmoErr != nil {
+		status := 400
+
+		if detailDmoErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"error": detailDmoErr.Error(),
+		})
+	}
+
+	errors := h.v.Struct(*inputUpdateDmo)
+
+	if errors != nil {
+		dataErrors := validatorfunc.ValidateStruct(errors)
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_id"] = idInt
+		inputMap["transaction_barge"] = inputUpdateDmo.TransactionBarge
+		inputMap["grouping_vessel"] = inputUpdateDmo.GroupingVessel
+		inputMap["input"] = inputUpdateDmo
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"errors": dataErrors,
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+			DmoId:   &idDmo,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": dataErrors,
+		})
+	}
+	header := c.GetReqHeaders()
+
+	if len(inputUpdateDmo.GroupingVessel) == 0 && len(inputUpdateDmo.TransactionBarge) == 0 {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "please check there is no grouping vessel and transaction barge",
+		})
+	}
+
+	if len(inputUpdateDmo.Trader) > 0 {
+		_, checkListTraderErr := h.traderService.CheckListTrader(inputUpdateDmo.Trader)
+
+		if checkListTraderErr != nil {
+			return c.Status(404).JSON(fiber.Map{
+				"error": "trader " + checkListTraderErr.Error(),
+			})
+		}
+	}
+
+	_, checkEndUserErr := h.traderService.CheckEndUser(inputUpdateDmo.EndUser)
+
+	if checkEndUserErr != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "trader end user " + checkEndUserErr.Error(),
+		})
+	}
+
+	updateDmo, updateDmoErr := h.historyService.UpdateDmo(*inputUpdateDmo, idInt, uint(claims["id"].(float64)))
+
+	if updateDmoErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_id"] = id
+		inputMap["list_dn_barge"] = inputUpdateDmo.TransactionBarge
+		inputMap["list_group_vessel"] = inputUpdateDmo.GroupingVessel
+		inputMap["input"] = inputUpdateDmo
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": updateDmoErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+			DmoId:   &idDmo,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error": updateDmoErr.Error(),
+		})
+	}
+
+	list, endUser, listTraderDmoErr := h.traderDmoService.TraderListWithDmoId(int(updateDmo.ID))
+
+	if listTraderDmoErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_id"] = id
+		inputMap["list_dn_barge"] = inputUpdateDmo.TransactionBarge
+		inputMap["list_group_vessel"] = inputUpdateDmo.GroupingVessel
+		inputMap["input"] = inputUpdateDmo
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": listTraderDmoErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Dmo already has been created, but get list trader failed",
+			"error":   listTraderDmoErr.Error(),
+		})
+	}
+
+	listTransactionDmo, listTransactionDmoErr := h.transactionService.GetDataDmo(updateDmo.ID)
+
+	if listTransactionDmoErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_id"] = id
+		inputMap["list_dn_barge"] = inputUpdateDmo.TransactionBarge
+		inputMap["list_group_vessel"] = inputUpdateDmo.GroupingVessel
+		inputMap["input"] = inputUpdateDmo
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": listTransactionDmoErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Dmo already has been created, but get list transaction failed",
+			"error":   listTransactionDmoErr.Error(),
+		})
+	}
+
+	splitPeriod := strings.Split(detailDmo.Detail.Period, " ")
+
+	var reqInputCreateUploadDmo transaction.InputRequestCreateUploadDmo
+
+	reqInputCreateUploadDmo.Authorization = header["Authorization"]
+	reqInputCreateUploadDmo.BastNumber = fmt.Sprintf("%s/BAST/AJE/%s", splitPeriod[1], helper.CreateIdNumber(int(updateDmo.ID)))
+	reqInputCreateUploadDmo.DataDmo = updateDmo
+	reqInputCreateUploadDmo.Trader = list
+	reqInputCreateUploadDmo.TraderEndUser = endUser
+	reqInputCreateUploadDmo.ListTransactionBarge = listTransactionDmo.ListTransactionBarge
+	reqInputCreateUploadDmo.ListGroupingVessel = listTransactionDmo.ListGroupingVessel
+	reqInputCreateUploadDmo.ListTransactionGroupingVessel = listTransactionDmo.ListTransactionGroupingVessel
+
+	if !detailDmo.Detail.IsDocumentCustom {
+		_, requestJobDmoErr := h.transactionService.RequestCreateDmo(reqInputCreateUploadDmo)
+
+		if requestJobDmoErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["user_id"] = claims["id"]
+			inputMap["dmo_period"] = detailDmo.Detail.Period
+			inputMap["list_transaction_barge"] = inputUpdateDmo.TransactionBarge
+			inputMap["list_grouping_vessel"] = inputUpdateDmo.GroupingVessel
+			inputMap["input"] = inputUpdateDmo
+			inputMap["input_job"] = reqInputCreateUploadDmo
+			inputJson, _ := json.Marshal(inputMap)
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error": requestJobDmoErr.Error(),
+			})
+
+			createdErrLog := logs.Logs{
+				Input:   inputJson,
+				Message: messageJson,
+				DmoId:   &idDmo,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			return c.Status(400).JSON(fiber.Map{
+				"message": "Dmo already has been updated, but job failed",
+				"error":   requestJobDmoErr.Error(),
+				"dmo":     updateDmo,
+			})
+		}
+	}
+
+	return c.Status(200).JSON(updateDmo)
 }
 
 func (h *dmoHandler) ListDmo(c *fiber.Ctx) error {
@@ -811,12 +1044,6 @@ func (h *dmoHandler) UpdateDocumentDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	if detailDmo.Detail.BASTDocumentLink != nil || detailDmo.Detail.ReconciliationLetterDocumentLink != nil || detailDmo.Detail.StatementLetterDocumentLink != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"error": "document already has been created",
-		})
-	}
-
 	updateDocumentDmo, updateDocumentDmoErr := h.historyService.UpdateDocumentDmo(idInt, *inputUpdateDmo, uint(claims["id"].(float64)))
 
 	if updateDocumentDmoErr != nil {
@@ -906,7 +1133,7 @@ func (h *dmoHandler) UpdateDocumentDmo(c *fiber.Ctx) error {
 
 		return c.Status(400).JSON(fiber.Map{
 			"error":   createdNotificationErr.Error(),
-			"message": "failed to create notification update dmo",
+			"message": "failed to create notification update document dmo",
 		})
 	}
 

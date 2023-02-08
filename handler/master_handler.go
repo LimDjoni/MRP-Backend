@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"ajebackend/model/master/allmaster"
 	"ajebackend/model/master/destination"
 	"ajebackend/model/user"
 	"reflect"
@@ -12,12 +13,14 @@ import (
 type masterHandler struct {
 	destinationService destination.Service
 	userService        user.Service
+	allMasterService   allmaster.Service
 }
 
-func NewMasterHandler(destinationService destination.Service, userService user.Service) *masterHandler {
+func NewMasterHandler(destinationService destination.Service, userService user.Service, allMasterService allmaster.Service) *masterHandler {
 	return &masterHandler{
 		destinationService,
 		userService,
+		allMasterService,
 	}
 }
 
@@ -47,4 +50,32 @@ func (h *masterHandler) GetDestination(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(destinations)
+}
+
+func (h *masterHandler) GetListMaster(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	listMaster, listMasterErr := h.allMasterService.ListMasterData()
+
+	if listMasterErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": listMasterErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(listMaster)
 }

@@ -140,8 +140,9 @@ type ListDataDnForGroupingVessel struct {
 }
 
 type ListTransactionDmoBackgroundJob struct {
-	ListTransactionBarge []Transaction                       `json:"list_transaction_barge"`
-	ListGroupingVessel   []groupingvesseldn.GroupingVesselDn `json:"list_grouping_vessel"`
+	ListTransactionBarge          []Transaction                       `json:"list_transaction_barge"`
+	ListTransactionGroupingVessel []Transaction                       `json:"list_transaction_grouping_vessel"`
+	ListGroupingVessel            []groupingvesseldn.GroupingVesselDn `json:"list_grouping_vessel"`
 }
 
 type ListTransactionNotHaveGroupingVessel struct {
@@ -151,6 +152,11 @@ type ListTransactionNotHaveGroupingVessel struct {
 
 type DetailReportDmo struct {
 	Detail          reportdmo.ReportDmo                 `json:"detail"`
+	Transactions    []Transaction                       `json:"transactions"`
+	GroupingVessels []groupingvesseldn.GroupingVesselDn `json:"grouping_vessels"`
+}
+
+type ListForCreatingReportDmoOutput struct {
 	Transactions    []Transaction                       `json:"transactions"`
 	GroupingVessels []groupingvesseldn.GroupingVesselDn `json:"grouping_vessels"`
 }

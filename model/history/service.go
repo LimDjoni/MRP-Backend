@@ -29,6 +29,7 @@ type Service interface {
 	UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, isReconciliationLetterEndUser bool, id int, userId uint) (dmo.Dmo, error)
 	UpdateTrueIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, isReconciliationLetterEndUser bool, id int, userId uint, location string) (dmo.Dmo, error)
 	UpdateFalseIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, isReconciliationLetterEndUser bool, id int, userId uint) (dmo.Dmo, error)
+	UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId uint) (dmo.Dmo, error)
 	CreateProduction(input production.InputCreateProduction, userId uint) (production.Production, error)
 	UpdateProduction(input production.InputCreateProduction, productionId int, userId uint) (production.Production, error)
 	DeleteProduction(productionId int, userId uint) (bool, error)
@@ -49,6 +50,8 @@ type Service interface {
 	UpdateDocumentInsw(id int, documentLink insw.InputUpdateDocumentInsw, userId uint) (insw.Insw, error)
 	CreateReportDmo(input reportdmo.InputCreateReportDmo, baseIdNumber string, userId uint) (reportdmo.ReportDmo, error)
 	UpdateDocumentReportDmo(id int, documentLink reportdmo.InputUpdateDocumentReportDmo, userId uint) (reportdmo.ReportDmo, error)
+	UpdateTransactionReportDmo(id int, inputUpdate reportdmo.InputUpdateReportDmo, userId uint) (reportdmo.ReportDmo, error)
+	DeleteReportDmo(idReportDmo int, userId uint) (bool, error)
 }
 
 type service struct {
@@ -153,6 +156,12 @@ func (s *service) UpdateFalseIsSignedDmoDocument(isBast bool, isStatementLetter 
 	updateIsSignedDmoDocument, updateIsSignedDmoDocumentErr := s.repository.UpdateFalseIsSignedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, isReconciliationLetterEndUser, id, userId)
 
 	return updateIsSignedDmoDocument, updateIsSignedDmoDocumentErr
+}
+
+func (s *service) UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId uint) (dmo.Dmo, error) {
+	updateDmo, updateDmoErr := s.repository.UpdateDmo(dmoUpdateInput, id, userId)
+
+	return updateDmo, updateDmoErr
 }
 
 func (s *service) CreateProduction(input production.InputCreateProduction, userId uint) (production.Production, error) {
@@ -273,4 +282,16 @@ func (s *service) UpdateDocumentReportDmo(id int, documentLink reportdmo.InputUp
 	updateDocumentReportDmo, updateDocumentReportDmoErr := s.repository.UpdateDocumentReportDmo(id, documentLink, userId)
 
 	return updateDocumentReportDmo, updateDocumentReportDmoErr
+}
+
+func (s *service) UpdateTransactionReportDmo(id int, inputUpdate reportdmo.InputUpdateReportDmo, userId uint) (reportdmo.ReportDmo, error) {
+	updateTransactionReportDmo, updateTransactionReportDmoErr := s.repository.UpdateTransactionReportDmo(id, inputUpdate, userId)
+
+	return updateTransactionReportDmo, updateTransactionReportDmoErr
+}
+
+func (s *service) DeleteReportDmo(idReportDmo int, userId uint) (bool, error) {
+	deleteReportDmo, deleteReportDmoErr := s.repository.DeleteReportDmo(idReportDmo, userId)
+
+	return deleteReportDmo, deleteReportDmoErr
 }

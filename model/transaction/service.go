@@ -31,6 +31,7 @@ type Service interface {
 	RequestCreateDmo(reqInput InputRequestCreateUploadDmo) (map[string]interface{}, error)
 	RequestCreateCustomDmo(dataDmo dmo.Dmo, traderEndUser trader.Trader, reconciliationLetter *multipart.FileHeader, authorization string, reqInputCreateUploadDmo InputRequestCreateUploadDmo) (map[string]interface{}, error)
 	GetReport(year int) (ReportRecapOutput, ReportDetailOutput, error)
+	GetListForReport() (ListForCreatingReportDmoOutput, error)
 	GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, error)
 	ListDataDnWithoutGroup() (ListTransactionNotHaveGroupingVessel, error)
 	GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, error)
@@ -40,6 +41,8 @@ type Service interface {
 	CheckDataLnAndMinerbaLnUpdate(listData []int, idMinerba int) ([]Transaction, error)
 	CheckDataLnAndMinerbaLn(listData []int) (bool, error)
 	GetDataDmo(id uint) (ListTransactionDmoBackgroundJob, error)
+	RequestCreateReportDmo(input InputRequestCreateReportDmo) (map[string]interface{}, error)
+	GetDetailReportDmo(id int) (DetailReportDmo, error)
 }
 
 type service struct {
@@ -274,6 +277,12 @@ func (s *service) GetReport(year int) (ReportRecapOutput, ReportDetailOutput, er
 	return reportRecap, reportDetail, reportErr
 }
 
+func (s *service) GetListForReport() (ListForCreatingReportDmoOutput, error) {
+	listForReport, listForReportErr := s.repository.GetListForReport()
+
+	return listForReport, listForReportErr
+}
+
 func (s *service) GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, error) {
 	detailGroupingVesselDn, detailGroupingVesselDnErr := s.repository.GetDetailGroupingVesselDn(id)
 
@@ -356,4 +365,10 @@ func (s *service) RequestCreateReportDmo(input InputRequestCreateReportDmo) (map
 	json.NewDecoder(resp.Body).Decode(&res)
 
 	return res, doReqErr
+}
+
+func (s *service) GetDetailReportDmo(id int) (DetailReportDmo, error) {
+	detailReportDmo, detailReportDmoErr := s.repository.GetDetailReportDmo(id)
+
+	return detailReportDmo, detailReportDmoErr
 }

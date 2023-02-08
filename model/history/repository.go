@@ -11,6 +11,7 @@ import (
 	"ajebackend/model/master/iupopk"
 	"ajebackend/model/master/navycompany"
 	"ajebackend/model/master/navyship"
+	"ajebackend/model/master/salessystem"
 	"ajebackend/model/master/vessel"
 	"ajebackend/model/minerba"
 	"ajebackend/model/minerbaln"
@@ -46,6 +47,7 @@ type Repository interface {
 	UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, isReconciliationLetterEndUser bool, id int, userId uint) (dmo.Dmo, error)
 	UpdateTrueIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, isReconciliationLetterEndUser bool, id int, userId uint, location string) (dmo.Dmo, error)
 	UpdateFalseIsSignedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, isReconciliationLetterEndUser bool, id int, userId uint) (dmo.Dmo, error)
+	UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId uint) (dmo.Dmo, error)
 	CreateProduction(input production.InputCreateProduction, userId uint) (production.Production, error)
 	UpdateProduction(input production.InputCreateProduction, productionId int, userId uint) (production.Production, error)
 	DeleteProduction(productionId int, userId uint) (bool, error)
@@ -66,6 +68,8 @@ type Repository interface {
 	UpdateDocumentInsw(id int, documentLink insw.InputUpdateDocumentInsw, userId uint) (insw.Insw, error)
 	CreateReportDmo(input reportdmo.InputCreateReportDmo, baseIdNumber string, userId uint) (reportdmo.ReportDmo, error)
 	UpdateDocumentReportDmo(id int, documentLink reportdmo.InputUpdateDocumentReportDmo, userId uint) (reportdmo.ReportDmo, error)
+	UpdateTransactionReportDmo(id int, inputUpdate reportdmo.InputUpdateReportDmo, userId uint) (reportdmo.ReportDmo, error)
+	DeleteReportDmo(idReportDmo int, userId uint) (bool, error)
 }
 
 type repository struct {
@@ -1439,6 +1443,311 @@ func (r *repository) UpdateFalseIsSignedDmoDocument(isBast bool, isStatementLett
 	return dmoUpdate, nil
 }
 
+func (r *repository) UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId uint) (dmo.Dmo, error) {
+	var updatedDmo dmo.Dmo
+	var transactionBarge []transaction.Transaction
+	var groupingVessel []groupingvesseldn.GroupingVesselDn
+
+	barge := false
+	vessel := false
+	tx := r.db.Begin()
+	beforeUpdate := make(map[string]interface{})
+	afterUpdate := make(map[string]interface{})
+	errFind := tx.Where("id = ?", id).First(&updatedDmo).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return updatedDmo, errFind
+	}
+
+	beforeUpdate["dmo"] = updatedDmo
+
+	var transactionBefore []transaction.Transaction
+
+	errFindTransactionBefore := tx.Where("dmo_id = ? AND grouping_vessel_dn_id IS NULL", id).Find(&transactionBefore).Error
+
+	if errFindTransactionBefore != nil {
+		tx.Rollback()
+		return updatedDmo, errFindTransactionBefore
+	}
+
+	beforeUpdate["transaction"] = transactionBefore
+
+	errUpdateTransactionBefore := tx.Table("transactions").Where("dmo_id = ?", id).Update("dmo_id", nil).Error
+
+	if errUpdateTransactionBefore != nil {
+		tx.Rollback()
+		return updatedDmo, errUpdateTransactionBefore
+	}
+
+	var dmoVesselBefore []dmovessel.DmoVessel
+	var groupingVesselIdBefore []uint
+	errFindDmoVessel := tx.Where("dmo_id = ?", id).Find(&dmoVesselBefore).Error
+
+	if errFindDmoVessel != nil {
+		tx.Rollback()
+		return updatedDmo, errFindDmoVessel
+	}
+
+	for _, v := range dmoVesselBefore {
+		groupingVesselIdBefore = append(groupingVesselIdBefore, v.ID)
+	}
+
+	var groupingVesselBefore []groupingvesseldn.GroupingVesselDn
+
+	errFindGroupingVesselBefore := tx.Where("id IN ? ", groupingVesselIdBefore).Find(&groupingVesselBefore).Error
+
+	if errFindGroupingVesselBefore != nil {
+		tx.Rollback()
+		return updatedDmo, errFindGroupingVesselBefore
+	}
+
+	beforeUpdate["grouping_vessel"] = groupingVesselBefore
+
+	errDeleteDmoVessel := tx.Table("dmo_vessels").Unscoped().Delete(&dmoVesselBefore).Error
+
+	if errDeleteDmoVessel != nil {
+		tx.Rollback()
+		return updatedDmo, errDeleteDmoVessel
+	}
+
+	updatedMap := make(map[string]interface{})
+
+	updatedMap["document_date"] = dmoUpdateInput.DocumentDate
+
+	if len(dmoUpdateInput.TransactionBarge) > 0 {
+		var bargeQuantity float64
+		barge = true
+		findTransactionBargeErr := tx.Where("id IN ? AND dmo_id IS NULL", dmoUpdateInput.TransactionBarge).Find(&transactionBarge).Error
+
+		if findTransactionBargeErr != nil {
+			tx.Rollback()
+			return updatedDmo, findTransactionBargeErr
+		}
+
+		if len(transactionBarge) != len(dmoUpdateInput.TransactionBarge) {
+			tx.Rollback()
+			return updatedDmo, errors.New("Ada transaksi yang sudah digunakan")
+		}
+
+		for _, v := range transactionBarge {
+			bargeQuantity += v.Quantity
+		}
+
+		updatedMap["barge_total_quantity"] = bargeQuantity
+		updatedMap["barge_grand_total_quantity"] = bargeQuantity
+	}
+
+	if len(dmoUpdateInput.GroupingVessel) > 0 {
+		var vesselQuantity float64
+		var vesselAdjustment float64
+		var vesselGrandTotalQuantity float64
+		vessel = true
+		var checkDmoGrouping []dmovessel.DmoVessel
+
+		findCheckDmoGroupingErr := tx.Where("grouping_vessel_dn_id IN ?", dmoUpdateInput.GroupingVessel).Find(&checkDmoGrouping).Error
+
+		if findCheckDmoGroupingErr != nil {
+			tx.Rollback()
+			return updatedDmo, findCheckDmoGroupingErr
+		}
+
+		if len(checkDmoGrouping) > 0 {
+			tx.Rollback()
+			return updatedDmo, errors.New("Ada grouping vessel yang sudah digunakan")
+		}
+
+		findGroupingVesselErr := tx.Where("id IN ?", dmoUpdateInput.GroupingVessel).Find(&groupingVessel).Error
+
+		if findGroupingVesselErr != nil {
+			tx.Rollback()
+			return updatedDmo, findGroupingVesselErr
+		}
+
+		for _, v := range groupingVessel {
+			vesselQuantity += v.Quantity
+			vesselAdjustment += v.Adjustment
+			vesselGrandTotalQuantity += v.GrandTotalQuantity
+		}
+
+		updatedMap["vessel_adjustment"] = vesselAdjustment
+		updatedMap["vessel_total_quantity"] = vesselQuantity
+		updatedMap["vessel_grand_total_quantity"] = vesselGrandTotalQuantity
+	}
+
+	if barge && vessel {
+		updatedMap["type"] = "Combination"
+	}
+
+	if barge && !vessel {
+		updatedMap["type"] = "Barge"
+	}
+
+	if !barge && vessel {
+		updatedMap["type"] = "Vessel"
+	}
+
+	updateDmoErr := tx.Model(&updatedDmo).Where("id = ?", id).Updates(updatedMap).Error
+
+	if updateDmoErr != nil {
+		tx.Rollback()
+		return updatedDmo, updateDmoErr
+	}
+
+	afterUpdate["dmo"] = updatedDmo
+
+	if len(dmoUpdateInput.TransactionBarge) > 0 {
+		var transactionAfter []transaction.Transaction
+
+		updateTransactionBargeErr := tx.Table("transactions").Where("id IN ?", dmoUpdateInput.TransactionBarge).Update("dmo_id", updatedDmo.ID).Error
+
+		if updateTransactionBargeErr != nil {
+			tx.Rollback()
+			return updatedDmo, updateTransactionBargeErr
+		}
+
+		errFindTransactionAfter := tx.Where("id IN ?", dmoUpdateInput.TransactionBarge).Find(&transactionAfter).Error
+
+		if errFindTransactionAfter != nil {
+			tx.Rollback()
+			return updatedDmo, errFindTransactionAfter
+		}
+
+		afterUpdate["transaction"] = transactionAfter
+	}
+
+	if len(dmoUpdateInput.GroupingVessel) > 0 {
+		var transactionGroupVessel []transaction.Transaction
+
+		var listIdTransactionGroupVessel []uint
+		findTransactionGroupVesselErr := tx.Where("grouping_vessel_dn_id IN ? AND dmo_id IS NULL", dmoUpdateInput.GroupingVessel).Find(&transactionGroupVessel).Error
+
+		if findTransactionGroupVesselErr != nil {
+			tx.Rollback()
+			return updatedDmo, findTransactionGroupVesselErr
+		}
+
+		for _, v := range transactionGroupVessel {
+			listIdTransactionGroupVessel = append(listIdTransactionGroupVessel, v.ID)
+		}
+
+		updateTransactionGroupVesselErr := tx.Table("transactions").Where("id IN ?", listIdTransactionGroupVessel).Update("dmo_id", updatedDmo.ID).Error
+
+		if updateTransactionGroupVesselErr != nil {
+			tx.Rollback()
+			return updatedDmo, updateTransactionGroupVesselErr
+		}
+
+		var dmoVessels []dmovessel.DmoVessel
+
+		if len(dmoUpdateInput.GroupingVessel) > 0 {
+
+			for _, v := range dmoUpdateInput.GroupingVessel {
+				var dmoVesselDummy dmovessel.DmoVessel
+				dmoVesselDummy.DmoId = updatedDmo.ID
+				dmoVesselDummy.GroupingVesselDnId = uint(v)
+				dmoVessels = append(dmoVessels, dmoVesselDummy)
+			}
+			createDmoVesselsErr := tx.Create(&dmoVessels).Error
+
+			if createDmoVesselsErr != nil {
+				tx.Rollback()
+				return updatedDmo, createDmoVesselsErr
+			}
+		}
+
+		var groupingVesselAfter []groupingvesseldn.GroupingVesselDn
+
+		errFindGroupingVesselAfter := tx.Where("id IN ?", dmoUpdateInput.GroupingVessel).Find(&groupingVesselAfter).Error
+
+		if errFindGroupingVesselAfter != nil {
+			tx.Rollback()
+			return updatedDmo, errFindGroupingVesselAfter
+		}
+
+		afterUpdate["grouping_vessel"] = groupingVesselAfter
+	}
+
+	var traderBefore []traderdmo.TraderDmo
+
+	errFindTraderBefore := tx.Where("dmo_id = ?", id).Find(&traderBefore).Error
+
+	if errFindTraderBefore != nil {
+		tx.Rollback()
+		return updatedDmo, errFindTraderBefore
+	}
+
+	beforeUpdate["trader"] = traderBefore
+
+	errTraderBefore := tx.Table("trader_dmos").Unscoped().Delete(&traderBefore).Error
+
+	if errTraderBefore != nil {
+		tx.Rollback()
+		return updatedDmo, errTraderBefore
+	}
+
+	var traderDmo []traderdmo.TraderDmo
+
+	var lastCount = 0
+	for idx, value := range dmoUpdateInput.Trader {
+		var traderDummy traderdmo.TraderDmo
+
+		traderDummy.DmoId = updatedDmo.ID
+		traderDummy.TraderId = uint(value)
+		traderDummy.Order = idx + 1
+		lastCount = idx + 1
+		traderDmo = append(traderDmo, traderDummy)
+	}
+
+	var traderEndUser traderdmo.TraderDmo
+	traderEndUser.DmoId = updatedDmo.ID
+	traderEndUser.TraderId = uint(dmoUpdateInput.EndUser)
+	traderEndUser.Order = lastCount + 1
+	traderEndUser.IsEndUser = true
+	traderDmo = append(traderDmo, traderEndUser)
+
+	createTraderDmoErr := tx.Create(&traderDmo).Error
+
+	afterUpdate["trader"] = traderDmo
+
+	if createTraderDmoErr != nil {
+		tx.Rollback()
+		return updatedDmo, createTraderDmoErr
+	}
+
+	beforeUpdateJson, errorBeforeDataJsonMarshal := json.Marshal(beforeUpdate)
+
+	if errorBeforeDataJsonMarshal != nil {
+		tx.Rollback()
+		return updatedDmo, errorBeforeDataJsonMarshal
+	}
+
+	afterUpdateJson, errorAfterDataJsonMarshal := json.Marshal(afterUpdate)
+
+	if errorAfterDataJsonMarshal != nil {
+		tx.Rollback()
+		return updatedDmo, errorAfterDataJsonMarshal
+	}
+
+	var history History
+
+	history.DmoId = &updatedDmo.ID
+	history.Status = "Updated Dmo"
+	history.UserId = userId
+	history.BeforeData = beforeUpdateJson
+	history.AfterData = afterUpdateJson
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return updatedDmo, createHistoryErr
+	}
+
+	tx.Commit()
+	return updatedDmo, nil
+}
+
 // Production
 func (r *repository) CreateProduction(input production.InputCreateProduction, userId uint) (production.Production, error) {
 	var createdProduction production.Production
@@ -2702,7 +3011,7 @@ func (r *repository) CreateReportDmo(input reportdmo.InputCreateReportDmo, baseI
 	if len(input.GroupingVessels) > 0 {
 		var vesselQuantity float64
 
-		findCheckDmoGroupingErr := tx.Where("grouping_vessel_dn_id IN ? AND sales_system = ? AND report_dmo_id IS NULL", input.GroupingVessels, "Vessel").Find(&groupingVessel).Error
+		findCheckDmoGroupingErr := tx.Where("id IN ? AND sales_system = ? AND report_dmo_id IS NULL", input.GroupingVessels, "Vessel").Find(&groupingVessel).Error
 
 		if findCheckDmoGroupingErr != nil {
 			tx.Rollback()
@@ -2849,4 +3158,192 @@ func (r *repository) UpdateDocumentReportDmo(id int, documentLink reportdmo.Inpu
 
 	tx.Commit()
 	return reportDmo, nil
+}
+
+func (r *repository) UpdateTransactionReportDmo(id int, inputUpdate reportdmo.InputUpdateReportDmo, userId uint) (reportdmo.ReportDmo, error) {
+	var updateReportDmo reportdmo.ReportDmo
+	var quantityReportDmo float64
+
+	historyBefore := make(map[string]interface{})
+	historyAfter := make(map[string]interface{})
+	tx := r.db.Begin()
+
+	findReportDmoErr := tx.Where("id = ?", id).First(&updateReportDmo).Error
+
+	if findReportDmoErr != nil {
+		return updateReportDmo, findReportDmoErr
+	}
+
+	historyBefore["report_dmo"] = updateReportDmo
+
+	var salesSystem []salessystem.SalesSystem
+	var salesSystemId []uint
+
+	errFindSalesSystem := r.db.Where("name ILIKE '%Barge'").Find(&salesSystem).Error
+
+	if errFindSalesSystem != nil {
+		return updateReportDmo, errFindSalesSystem
+	}
+
+	for _, v := range salesSystem {
+		salesSystemId = append(salesSystemId, v.ID)
+	}
+
+	var beforeTransaction []transaction.Transaction
+	findTransactionBeforeErr := tx.Where("report_dmo_id = ? AND sales_system_id IN ?", id, salesSystemId).Find(&beforeTransaction).Error
+
+	if findTransactionBeforeErr != nil {
+		return updateReportDmo, findTransactionBeforeErr
+	}
+
+	var transactionBefore []uint
+
+	for _, v := range beforeTransaction {
+		transactionBefore = append(transactionBefore, v.ID)
+	}
+
+	historyBefore["transactions"] = beforeTransaction
+
+	var beforeGroupingVesselDn []groupingvesseldn.GroupingVesselDn
+
+	findGroupingVesselDnErr := tx.Where("report_dmo_id = ?", id).Find(&beforeGroupingVesselDn).Error
+
+	if findGroupingVesselDnErr != nil {
+		return updateReportDmo, findGroupingVesselDnErr
+	}
+
+	historyBefore["grouping_vessel_dn"] = beforeGroupingVesselDn
+
+	errUpdReportDmoNull := tx.Model(&beforeTransaction).Where("report_dmo_id = ?", id).Update("report_dmo_id", nil).Error
+
+	if errUpdReportDmoNull != nil {
+		tx.Rollback()
+		return updateReportDmo, errUpdReportDmoNull
+	}
+
+	var transactions []transaction.Transaction
+	findTransactionsErr := tx.Where("id IN ? AND transaction_type = ? AND report_dmo_id is NULL AND is_finance_check = ? AND sales_system_id IN ?", inputUpdate.Transactions, "DN", true, salesSystemId).Find(&transactions).Error
+
+	if findTransactionsErr != nil {
+		tx.Rollback()
+		return updateReportDmo, findTransactionsErr
+	}
+
+	if len(transactions) != len(inputUpdate.Transactions) {
+		tx.Rollback()
+		return updateReportDmo, errors.New("please check some of transactions not found")
+	}
+
+	for _, v := range transactions {
+		quantityReportDmo += v.Quantity
+	}
+
+	listTransactionsErr := tx.Table("transactions").Where("id IN ?", inputUpdate.Transactions).Update("report_dmo_id", id).Error
+
+	if listTransactionsErr != nil {
+		tx.Rollback()
+		return updateReportDmo, listTransactionsErr
+	}
+
+	errUpdGroupingVesselNull := tx.Model(&beforeGroupingVesselDn).Where("report_dmo_id = ?", id).Update("report_dmo_id", nil).Error
+
+	if errUpdGroupingVesselNull != nil {
+		tx.Rollback()
+		return updateReportDmo, errUpdGroupingVesselNull
+	}
+
+	var groupingVesselDn []groupingvesseldn.GroupingVesselDn
+
+	findGroupingVesselErr := tx.Where("id IN ? AND report_dmo_id is NULL", inputUpdate.GroupingVessels).Find(&groupingVesselDn).Error
+
+	if findGroupingVesselErr != nil {
+		tx.Rollback()
+		return updateReportDmo, findGroupingVesselErr
+	}
+
+	groupingVesselErr := tx.Table("grouping_vessel_dns").Where("id IN ?", inputUpdate.GroupingVessels).Update("report_dmo_id", id).Error
+
+	if groupingVesselErr != nil {
+		tx.Rollback()
+		return updateReportDmo, groupingVesselErr
+	}
+
+	for _, v := range groupingVesselDn {
+		quantityReportDmo += v.GrandTotalQuantity
+	}
+
+	errUpdReportDmo := tx.Model(&updateReportDmo).Update("quantity", quantityReportDmo).Error
+
+	if errUpdReportDmo != nil {
+		tx.Rollback()
+		return updateReportDmo, errUpdReportDmo
+	}
+
+	historyAfter["report_dmo"] = updateReportDmo
+	historyAfter["transactions"] = transactions
+	historyAfter["grouping_vessel_dn"] = groupingVesselDn
+
+	var history History
+	beforeData, errorBeforeDataJsonMarshal := json.Marshal(historyBefore)
+	afterData, errorAfterDataJsonMarshal := json.Marshal(historyAfter)
+
+	if errorBeforeDataJsonMarshal != nil {
+		tx.Rollback()
+		return updateReportDmo, errorBeforeDataJsonMarshal
+	}
+
+	if errorAfterDataJsonMarshal != nil {
+		tx.Rollback()
+		return updateReportDmo, errorAfterDataJsonMarshal
+	}
+
+	history.ReportDmoId = &updateReportDmo.ID
+	history.Status = "Updated Report Dmo"
+	history.UserId = userId
+	history.AfterData = afterData
+	history.BeforeData = beforeData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return updateReportDmo, createHistoryErr
+	}
+
+	tx.Commit()
+	return updateReportDmo, nil
+}
+
+func (r *repository) DeleteReportDmo(idReportDmo int, userId uint) (bool, error) {
+
+	tx := r.db.Begin()
+	var reportDmo reportdmo.ReportDmo
+
+	findReportDmo := tx.Where("id = ?", idReportDmo).First(&reportDmo).Error
+
+	if findReportDmo != nil {
+		tx.Rollback()
+		return false, findReportDmo
+	}
+
+	errDelete := tx.Unscoped().Where("id = ?", idReportDmo).Delete(&reportDmo).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+		return false, errDelete
+	}
+
+	var history History
+
+	history.Status = fmt.Sprintf("Deleted Report Dmo with id number %s and id %v", *reportDmo.IdNumber, reportDmo.ID)
+	history.UserId = userId
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return false, createHistoryErr
+	}
+
+	tx.Commit()
+	return true, nil
 }

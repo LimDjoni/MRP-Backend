@@ -46,6 +46,7 @@ type Repository interface {
 	GetDetailReportDmo(id int) (DetailReportDmo, error)
 	CheckDataUnique(inputTrans DataTransactionInput) (bool, bool, bool, bool)
 	GetReport(year int) (ReportRecapOutput, ReportDetailOutput, error)
+	GetListForReport() (ListForCreatingReportDmoOutput, error)
 	GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, error)
 	ListDataDnWithoutGroup() (ListTransactionNotHaveGroupingVessel, error)
 	GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, error)
@@ -434,6 +435,7 @@ func (r *repository) GetDataDmo(id uint) (ListTransactionDmoBackgroundJob, error
 	var listTransactionDmoBackgroundJob ListTransactionDmoBackgroundJob
 
 	var transactionBarge []Transaction
+	var transactionGroupingVessel []Transaction
 	var groupingVessel []groupingvesseldn.GroupingVesselDn
 
 	errFindTransactionBarge := r.db.Preload(clause.Associations).Where("dmo_id = ? AND grouping_vessel_dn_id is NULL", id).Order("shipping_date desc").Find(&transactionBarge).Error
@@ -443,6 +445,14 @@ func (r *repository) GetDataDmo(id uint) (ListTransactionDmoBackgroundJob, error
 	}
 
 	listTransactionDmoBackgroundJob.ListTransactionBarge = transactionBarge
+
+	errFindTransactionGroupingVessel := r.db.Preload(clause.Associations).Where("dmo_id = ? AND grouping_vessel_dn_id IS NOT NULL", id).Order("shipping_date desc").Find(&transactionGroupingVessel).Error
+
+	if errFindTransactionGroupingVessel != nil {
+		return listTransactionDmoBackgroundJob, errFindTransactionGroupingVessel
+	}
+
+	listTransactionDmoBackgroundJob.ListTransactionGroupingVessel = transactionGroupingVessel
 
 	var dmoVessel []dmovessel.DmoVessel
 
@@ -489,13 +499,13 @@ func (r *repository) GetDetailReportDmo(id int) (DetailReportDmo, error) {
 		salesSystemId = append(salesSystemId, v.ID)
 	}
 
-	errFindTransactions := r.db.Where("report_dmo_id = ? AND sales_system IN ?", id, salesSystemId).Find(&transactions).Error
+	errFindTransactions := r.db.Preload(clause.Associations).Where("report_dmo_id = ? AND sales_system_id IN ?", id, salesSystemId).Find(&transactions).Error
 
 	if errFindTransactions != nil {
 		return detailReportDmo, errFindTransactions
 	}
 
-	errFindGroupingVessel := r.db.Where("report_dmo_id = ?", id).Find(&groupingVesselDn).Error
+	errFindGroupingVessel := r.db.Preload(clause.Associations).Where("report_dmo_id = ?", id).Find(&groupingVesselDn).Error
 
 	if errFindGroupingVessel != nil {
 		return detailReportDmo, errFindGroupingVessel
@@ -1009,6 +1019,44 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 	reportRecap.FulfillmentOfProductionRealization = fmt.Sprintf("%.2f%%", reportRecap.Total/productionReality*100)
 	reportRecap.RateCalories = fmt.Sprintf("%v - %v GAR", caloriesMinimum, caloriesMaximum)
 	return reportRecap, reportDetail, nil
+}
+
+func (r *repository) GetListForReport() (ListForCreatingReportDmoOutput, error) {
+	var list ListForCreatingReportDmoOutput
+
+	var transactions []Transaction
+
+	var groupingVessel []groupingvesseldn.GroupingVesselDn
+
+	var salesSystemBarge []salessystem.SalesSystem
+	var salesSystemBargeId []uint
+
+	errFindSalesSystemBarge := r.db.Where("name ILIKE '%Barge'").Find(&salesSystemBarge).Error
+
+	if errFindSalesSystemBarge != nil {
+		return list, errFindSalesSystemBarge
+	}
+
+	for _, v := range salesSystemBarge {
+		salesSystemBargeId = append(salesSystemBargeId, v.ID)
+	}
+
+	errFindTransaction := r.db.Preload(clause.Associations).Where("report_dmo_id IS NULL AND sales_system_id IN ?", salesSystemBargeId).Find(&transactions).Error
+
+	if errFindTransaction != nil {
+		return list, errFindTransaction
+	}
+
+	errFindGroupingVessel := r.db.Preload(clause.Associations).Where("report_dmo_id IS NULL AND sales_system = ?", "Vessel").Find(&groupingVessel).Error
+
+	if errFindGroupingVessel != nil {
+		return list, errFindGroupingVessel
+	}
+
+	list.Transactions = transactions
+	list.GroupingVessels = groupingVessel
+
+	return list, nil
 }
 
 // Grouping Vessel Dn
