@@ -140,7 +140,7 @@ func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionTyp
 func (r *repository) DetailTransaction(id int, transactionType string) (Transaction, error) {
 	var transaction Transaction
 
-	errFind := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Where("id = ? AND transaction_type = ?", id, transactionType).First(&transaction).Error
+	errFind := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("id = ? AND transaction_type = ?", id, transactionType).First(&transaction).Error
 
 	return transaction, errFind
 }
