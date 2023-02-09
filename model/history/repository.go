@@ -615,6 +615,21 @@ func (r *repository) UpdateTransactionLN(id int, inputTransactionLN transaction.
 
 	errorUnmarshalTransaction := json.Unmarshal(editTransaction, &editTransactionInput)
 
+	if inputTransactionLN.VesselName != "" {
+		var createVesselMaster vessel.Vessel
+
+		createVesselMaster.Name = inputTransactionLN.VesselName
+
+		errCreateVesselMaster := tx.FirstOrCreate(&createVesselMaster, createVesselMaster).Error
+
+		if errCreateVesselMaster != nil {
+			tx.Rollback()
+			return updatedTransactionLn, errCreateVesselMaster
+		}
+
+		editTransactionInput["vessel_id"] = createVesselMaster.ID
+	}
+
 	delete(editTransactionInput, "vessel_name")
 	if errorUnmarshalTransaction != nil {
 		tx.Rollback()
@@ -633,19 +648,6 @@ func (r *repository) UpdateTransactionLN(id int, inputTransactionLN transaction.
 	if errorBeforeDataJsonMarshal != nil {
 		tx.Rollback()
 		return updatedTransactionLn, errorAfterDataJsonMarshal
-	}
-
-	if inputTransactionLN.VesselName != "" {
-		var createVesselMaster vessel.Vessel
-
-		createVesselMaster.Name = inputTransactionLN.VesselName
-
-		errCreateVesselMaster := tx.FirstOrCreate(&createVesselMaster, createVesselMaster).Error
-
-		if errCreateVesselMaster != nil {
-			tx.Rollback()
-			return updatedTransactionLn, errCreateVesselMaster
-		}
 	}
 
 	var history History
