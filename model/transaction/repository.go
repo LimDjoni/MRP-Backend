@@ -1067,7 +1067,7 @@ func (r *repository) GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, 
 	var groupingVesselDn groupingvesseldn.GroupingVesselDn
 	var transactions []Transaction
 
-	findGroupingVesselDnErr := r.db.Where("id = ?", id).First(&groupingVesselDn).Error
+	findGroupingVesselDnErr := r.db.Preload(clause.Associations).Where("id = ?", id).First(&groupingVesselDn).Error
 
 	if findGroupingVesselDnErr != nil {
 		return detailGroupingVesselDn, findGroupingVesselDnErr
@@ -1075,7 +1075,7 @@ func (r *repository) GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, 
 
 	detailGroupingVesselDn.Detail = groupingVesselDn
 
-	transactionFindErr := r.db.Order("id desc").Where("grouping_vessel_dn_id = ?", id).Find(&transactions).Error
+	transactionFindErr := r.db.Order("id desc").Preload(clause.Associations).Where("grouping_vessel_dn_id = ?", id).Find(&transactions).Error
 
 	if transactionFindErr != nil {
 		return detailGroupingVesselDn, transactionFindErr
@@ -1142,7 +1142,7 @@ func (r *repository) GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, 
 	var groupingVesselLn groupingvesselln.GroupingVesselLn
 	var transactions []Transaction
 
-	findGroupingVesselLnErr := r.db.Where("id = ?", id).First(&groupingVesselLn).Error
+	findGroupingVesselLnErr := r.db.Preload(clause.Associations).Where("id = ?", id).First(&groupingVesselLn).Error
 
 	if findGroupingVesselLnErr != nil {
 		return detailGroupingVesselLn, findGroupingVesselLnErr
@@ -1150,7 +1150,7 @@ func (r *repository) GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, 
 
 	detailGroupingVesselLn.Detail = groupingVesselLn
 
-	transactionFindErr := r.db.Order("id desc").Where("grouping_vessel_ln_id = ?", id).Find(&transactions).Error
+	transactionFindErr := r.db.Order("id desc").Preload(clause.Associations).Where("grouping_vessel_ln_id = ?", id).Find(&transactions).Error
 
 	if transactionFindErr != nil {
 		return detailGroupingVesselLn, transactionFindErr
