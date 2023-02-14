@@ -158,7 +158,7 @@ func main() {
 		fmt.Println(errPeriod.Error())
 	}
 
-	errLongMonth := validate.RegisterValidation("LongMonth", validatorfunc.CheckEnum)
+	errLongMonth := validate.RegisterValidation("ShortMonth", validatorfunc.CheckEnum)
 
 	if errLongMonth != nil {
 		fmt.Println(errLongMonth.Error())

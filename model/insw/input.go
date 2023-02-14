@@ -1,7 +1,7 @@
 package insw
 
 type InputCreateInsw struct {
-	Month string `json:"month" validate:"required,LongMonth=January_February_March_April_May_June_July_August_September_October_November_December"`
+	Month string `json:"month" validate:"required,ShortMonth=Jan_Feb_Mar_Apr_May_Jun_Jul_Aug_Sep_Oct_Nov_Dec"`
 	Year  int    `json:"year" validate:"required"`
 }
 
