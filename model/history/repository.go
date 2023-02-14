@@ -472,6 +472,7 @@ func (r *repository) CreateTransactionLN(inputTransactionLN transaction.DataTran
 
 	createdTransactionLn.TransactionType = "LN"
 	createdTransactionLn.SellerId = &iup.ID
+	createdTransactionLn.Quantity = inputTransactionLN.Quantity
 	createdTransactionLn.DestinationCountryId = inputTransactionLN.DestinationCountryId
 	createdTransactionLn.ShippingDate = inputTransactionLN.ShippingDate
 	createdTransactionLn.TugboatId = inputTransactionLN.TugboatId
