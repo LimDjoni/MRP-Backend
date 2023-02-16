@@ -1957,7 +1957,7 @@ func (r *repository) CreateGroupingVesselDN(inputGrouping groupingvesseldn.Input
 	updateTransactions["grouping_vessel_dn_id"] = createdGroupingVesselDn.ID
 	updateTransactions["dmo_buyer_id"] = inputGrouping.BuyerId
 	updateTransactions["dmo_destination_ports_id"] = inputGrouping.DmoDestinationPortId
-	updateTransactions["destination_countries_id"] = inputGrouping.DestinationCountryId
+	updateTransactions["destination_country_id"] = inputGrouping.DestinationCountryId
 	updateTransactions["destination_id"] = inputGrouping.DestinationId
 
 	errUpdateTransactions := tx.Table("transactions").Where("id IN ?", inputGrouping.ListTransactions).Updates(updateTransactions).Error
