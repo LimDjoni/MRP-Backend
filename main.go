@@ -125,6 +125,7 @@ func main() {
 		seedingmaster.SeedingCurrency(db)
 		seedingmaster.SeedingDocumentType(db)
 		seedingmaster.SeedingIndustryType(db)
+		seedingmaster.SeedingInsuranceCompany(db)
 		seedingmaster.SeedingIupopk(db)
 		seedingmaster.SeedingPabeanOffice(db)
 		seedingmaster.SeedingPortInsw(db)
