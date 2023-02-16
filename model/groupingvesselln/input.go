@@ -23,7 +23,7 @@ type InputGroupingVesselLn struct {
 	LoadingPortId         *uint   `json:"loading_port_id"`
 	SkaCooNumber          string  `json:"ska_coo_number"`
 	SkaCooDate            *string `json:"ska_coo_date" validate:"omitempty,DateValidation"`
-	DestinationCountryId  *uint   `json:"destination_country_ud"`
+	DestinationCountryId  *uint   `json:"destination_country_id"`
 	LsExportNumber        string  `json:"ls_export_number"`
 	LsExportDate          *string `json:"ls_export_date" validate:"omitempty,DateValidation"`
 	InsuranceCompanyId    *uint   `json:"insurance_company_id"`
@@ -72,7 +72,7 @@ type InputEditGroupingVesselLn struct {
 	LoadingPortId         *uint   `json:"loading_port_id"`
 	SkaCooNumber          string  `json:"ska_coo_number"`
 	SkaCooDate            *string `json:"ska_coo_date" validate:"omitempty,DateValidation"`
-	DestinationCountryId  *uint   `json:"destination_country_ud"`
+	DestinationCountryId  *uint   `json:"destination_country_id"`
 	LsExportNumber        string  `json:"ls_export_number"`
 	LsExportDate          *string `json:"ls_export_date" validate:"omitempty,DateValidation"`
 	InsuranceCompanyId    *uint   `json:"insurance_company_id"`

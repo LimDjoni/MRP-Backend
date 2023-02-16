@@ -2225,7 +2225,7 @@ func (r *repository) CreateGroupingVesselLN(inputGrouping groupingvesselln.Input
 
 	if inputGrouping.NavyShipName != "" {
 
-		createNavyShipMaster.Name = inputGrouping.NavyCompanyName
+		createNavyShipMaster.Name = inputGrouping.NavyShipName
 
 		errCreateNavyShipMaster := tx.FirstOrCreate(&createNavyShipMaster, createNavyShipMaster).Error
 
@@ -2359,6 +2359,34 @@ func (r *repository) EditGroupingVesselLn(id int, editGrouping groupingvesselln.
 	afterData := make(map[string]interface{})
 	beforeData["grouping_vessel_ln"] = updatedGroupingVesselLn
 
+	var createNavyCompanyMaster navycompany.NavyCompany
+
+	if editGrouping.NavyCompanyName != "" {
+
+		createNavyCompanyMaster.Name = editGrouping.NavyCompanyName
+
+		errCreateNavyCompanyMaster := tx.FirstOrCreate(&createNavyCompanyMaster, createNavyCompanyMaster).Error
+
+		if errCreateNavyCompanyMaster != nil {
+			tx.Rollback()
+			return updatedGroupingVesselLn, errCreateNavyCompanyMaster
+		}
+	}
+
+	var createNavyShipMaster navyship.NavyShip
+
+	if editGrouping.NavyShipName != "" {
+
+		createNavyShipMaster.Name = editGrouping.NavyShipName
+
+		errCreateNavyShipMaster := tx.FirstOrCreate(&createNavyShipMaster, createNavyShipMaster).Error
+
+		if errCreateNavyShipMaster != nil {
+			tx.Rollback()
+			return updatedGroupingVesselLn, errCreateNavyShipMaster
+		}
+	}
+
 	if updatedGroupingVesselLn.VesselId != editGrouping.VesselId {
 		var transactions []transaction.Transaction
 		var listIdTransaction []uint
@@ -2413,6 +2441,13 @@ func (r *repository) EditGroupingVesselLn(id int, editGrouping groupingvesselln.
 	if errorUnmarshalGroupingVesselLn != nil {
 		tx.Rollback()
 		return updatedGroupingVesselLn, errorUnmarshalGroupingVesselLn
+	}
+	if createNavyCompanyMaster.ID != 0 {
+		editGroupingVesselLnInput["navy_company_id"] = createNavyCompanyMaster.ID
+	}
+
+	if createNavyShipMaster.ID != 0 {
+		editGroupingVesselLnInput["navy_ship_id"] = createNavyShipMaster.ID
 	}
 
 	updateGroupingVesselErr := tx.Model(&updatedGroupingVesselLn).Updates(editGroupingVesselLnInput).Error
