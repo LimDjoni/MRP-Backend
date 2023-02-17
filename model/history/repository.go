@@ -2450,6 +2450,9 @@ func (r *repository) EditGroupingVesselLn(id int, editGrouping groupingvesselln.
 		editGroupingVesselLnInput["navy_ship_id"] = createNavyShipMaster.ID
 	}
 
+	delete(editGroupingVesselLnInput, "navy_company_name")
+	delete(editGroupingVesselLnInput, "navy_ship_name")
+
 	updateGroupingVesselErr := tx.Model(&updatedGroupingVesselLn).Updates(editGroupingVesselLnInput).Error
 
 	if updateGroupingVesselErr != nil {
