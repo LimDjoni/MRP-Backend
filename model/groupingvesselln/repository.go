@@ -51,10 +51,10 @@ func (r *repository) ListGroupingVesselLn(page int, sortFilter SortFilterGroupin
 		}
 	}
 
-	errFind := r.db.Preload(clause.Associations).Where(queryFilter).Order(querySort).Scopes(paginateData(listGroupingVesselLn, &pagination, r.db, queryFilter)).Find(&listGroupingVesselLn).Error
+	errFind := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Where(queryFilter).Order(querySort).Scopes(paginateData(listGroupingVesselLn, &pagination, r.db, queryFilter)).Find(&listGroupingVesselLn).Error
 
 	if errFind != nil {
-		errWithoutOrder := r.db.Preload(clause.Associations).Where(queryFilter).Order(querySort).Scopes(paginateData(listGroupingVesselLn, &pagination, r.db, queryFilter)).Find(&listGroupingVesselLn).Error
+		errWithoutOrder := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Where(queryFilter).Order(querySort).Scopes(paginateData(listGroupingVesselLn, &pagination, r.db, queryFilter)).Find(&listGroupingVesselLn).Error
 
 		if errWithoutOrder != nil {
 			pagination.Data = listGroupingVesselLn
@@ -81,7 +81,7 @@ func (r *repository) ListGroupingVesselLnWithPeriod(month string, year int) ([]G
 
 	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
 
-	errFind := r.db.Where("peb_register_date >= ? AND peb_register_date <= ? AND insw_id is NULL", firstOfMonth, lastOfMonth).Find(&listGroupingVesselLn).Error
+	errFind := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Where("peb_register_date >= ? AND peb_register_date <= ? AND insw_id is NULL", firstOfMonth, lastOfMonth).Find(&listGroupingVesselLn).Error
 
 	if errFind != nil {
 		return listGroupingVesselLn, errFind
@@ -104,7 +104,7 @@ func (r *repository) DetailInsw(id int) (DetailInsw, error) {
 
 	var listGroupingVessel []GroupingVesselLn
 
-	errFindListGroupingVessel := r.db.Where("insw_id = ?", id).Find(&listGroupingVessel).Error
+	errFindListGroupingVessel := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Where("insw_id = ?", id).Find(&listGroupingVessel).Error
 
 	if errFindListGroupingVessel != nil {
 		return detailInsw, errFindListGroupingVessel
