@@ -81,7 +81,7 @@ func (r *repository) ListGroupingVesselLnWithPeriod(month string, year int) ([]G
 
 	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
 
-	errFind := r.db.Where("peb_register_date >= ? AND peb_register_date <= ? AND insw_id is NULL", firstOfMonth, lastOfMonth).Find(&listGroupingVesselLn).Error
+	errFind := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Where("peb_register_date >= ? AND peb_register_date <= ? AND insw_id is NULL", firstOfMonth, lastOfMonth).Find(&listGroupingVesselLn).Error
 
 	if errFind != nil {
 		return listGroupingVesselLn, errFind
