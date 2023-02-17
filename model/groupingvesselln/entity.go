@@ -11,6 +11,7 @@ import (
 	"ajebackend/model/master/pabeanoffice"
 	"ajebackend/model/master/portinsw"
 	"ajebackend/model/master/unit"
+	"ajebackend/model/master/vessel"
 
 	"gorm.io/gorm"
 )
@@ -21,6 +22,7 @@ type GroupingVesselLn struct {
 	BlDate                *string                            `json:"bl_date" gorm:"type:DATE"`
 	BlNumber              string                             `json:"bl_number"`
 	VesselId              *uint                              `json:"vessel_id"`
+	Vessel                *vessel.Vessel                     `json:"vessel"`
 	Quantity              float64                            `json:"quantity"`
 	Adjustment            float64                            `json:"adjustment"`
 	GrandTotalQuantity    float64                            `json:"grand_total_quantity"`

@@ -11,7 +11,7 @@ type InputGroupingVesselLn struct {
 	DocumentTypeId        *uint   `json:"document_type_id"`
 	AjuNumber             string  `json:"aju_number"`
 	PebRegisterNumber     string  `json:"peb_register_number"`
-	PebRegisterDate       *string `json:"peb_register_date" gorm:"type:DATE" validate:"omitempty,DateValidation"`
+	PebRegisterDate       *string `json:"peb_register_date" validate:"omitempty,DateValidation"`
 	PabeanOfficeId        *uint   `json:"pabean_office_id"`
 	SeriesPebGoods        string  `json:"series_peb_goods"`
 	DescriptionOfGoods    string  `json:"description_of_goods"`
@@ -22,10 +22,10 @@ type InputGroupingVesselLn struct {
 	CurrencyId            *uint   `json:"currency_id"`
 	LoadingPortId         *uint   `json:"loading_port_id"`
 	SkaCooNumber          string  `json:"ska_coo_number"`
-	SkaCooDate            *string `json:"ska_coo_date" gorm:"type:DATE" validate:"omitempty,DateValidation"`
-	DestinationCountryId  *uint   `json:"destination_country_ud"`
+	SkaCooDate            *string `json:"ska_coo_date" validate:"omitempty,DateValidation"`
+	DestinationCountryId  *uint   `json:"destination_country_id"`
 	LsExportNumber        string  `json:"ls_export_number"`
-	LsExportDate          *string `json:"ls_export_date" gorm:"type:DATE" validate:"omitempty,DateValidation"`
+	LsExportDate          *string `json:"ls_export_date" validate:"omitempty,DateValidation"`
 	InsuranceCompanyId    *uint   `json:"insurance_company_id"`
 	PolisNumber           string  `json:"polis_number"`
 	NavyCompanyName       string  `json:"navy_company_name"`
@@ -48,7 +48,7 @@ type InputGroupingVesselLn struct {
 	QualityCaloriesAdb    float64 `json:"quality_calories_adb"`
 	NettQualityCaloriesAr float64 `json:"nett_quality_calories_ar"`
 	IsCoaFinish           bool    `json:"is_coa_finish"`
-	BlDate                *string `json:"bl_date" validate:"omitempty,DateValidation"`
+	BlDate                *string `json:"bl_date" validate:"DateValidation"`
 	BlNumber              string  `json:"bl_number"`
 }
 
@@ -60,7 +60,7 @@ type InputEditGroupingVesselLn struct {
 	DocumentTypeId        *uint   `json:"document_type_id"`
 	AjuNumber             string  `json:"aju_number"`
 	PebRegisterNumber     string  `json:"peb_register_number"`
-	PebRegisterDate       *string `json:"peb_register_date" gorm:"type:DATE" validate:"omitempty,DateValidation"`
+	PebRegisterDate       *string `json:"peb_register_date" validate:"omitempty,DateValidation"`
 	PabeanOfficeId        *uint   `json:"pabean_office_id"`
 	SeriesPebGoods        string  `json:"series_peb_goods"`
 	DescriptionOfGoods    string  `json:"description_of_goods"`
@@ -71,10 +71,10 @@ type InputEditGroupingVesselLn struct {
 	CurrencyId            *uint   `json:"currency_id"`
 	LoadingPortId         *uint   `json:"loading_port_id"`
 	SkaCooNumber          string  `json:"ska_coo_number"`
-	SkaCooDate            *string `json:"ska_coo_date" gorm:"type:DATE" validate:"omitempty,DateValidation"`
-	DestinationCountryId  *uint   `json:"destination_country_ud"`
+	SkaCooDate            *string `json:"ska_coo_date" validate:"omitempty,DateValidation"`
+	DestinationCountryId  *uint   `json:"destination_country_id"`
 	LsExportNumber        string  `json:"ls_export_number"`
-	LsExportDate          *string `json:"ls_export_date" gorm:"type:DATE" validate:"omitempty,DateValidation"`
+	LsExportDate          *string `json:"ls_export_date" validate:"omitempty,DateValidation"`
 	InsuranceCompanyId    *uint   `json:"insurance_company_id"`
 	PolisNumber           string  `json:"polis_number"`
 	NavyCompanyName       string  `json:"navy_company_name"`
@@ -97,7 +97,7 @@ type InputEditGroupingVesselLn struct {
 	QualityCaloriesAdb    float64 `json:"quality_calories_adb"`
 	NettQualityCaloriesAr float64 `json:"nett_quality_calories_ar"`
 	IsCoaFinish           bool    `json:"is_coa_finish"`
-	BlDate                *string `json:"bl_date" validate:"omitempty,DateValidation"`
+	BlDate                *string `json:"bl_date" validate:"DateValidation"`
 	BlNumber              string  `json:"bl_number"`
 }
 
