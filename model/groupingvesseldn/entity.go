@@ -44,7 +44,6 @@ type GroupingVesselDn struct {
 	DestinationCountry   *country.Country         `json:"destination_country"`
 	DmoDestinationPortId *uint                    `json:"dmo_destination_port_id"`
 	DmoDestinationPort   *ports.Port              `json:"dmo_destination_port"`
-	BuyerName            string                   `json:"buyer_name"`
 	BuyerId              *uint                    `json:"buyer_id"`
 	Buyer                *company.Company         `json:"buyer"`
 	BlMvDocumentLink     *string                  `json:"bl_mv_document_link"`

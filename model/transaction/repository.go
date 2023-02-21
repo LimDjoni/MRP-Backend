@@ -1041,7 +1041,7 @@ func (r *repository) GetListForReport() (ListForCreatingReportDmoOutput, error) 
 		salesSystemBargeId = append(salesSystemBargeId, v.ID)
 	}
 
-	errFindTransaction := r.db.Preload(clause.Associations).Where("report_dmo_id IS NULL AND sales_system_id IN ?", salesSystemBargeId).Find(&transactions).Error
+	errFindTransaction := r.db.Preload(clause.Associations).Where("report_dmo_id IS NULL AND sales_system_id IN ? AND is_finance_check = ? AND transaction_type = ?", salesSystemBargeId, true, "DN").Find(&transactions).Error
 
 	if errFindTransaction != nil {
 		return list, errFindTransaction

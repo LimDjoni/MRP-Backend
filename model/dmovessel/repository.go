@@ -50,7 +50,7 @@ func (r *repository) ListGroupingVesselWithoutDmo() ([]groupingvesseldn.Grouping
 		listIdGroupingVessel = append(listIdGroupingVessel, 0)
 	}
 
-	findListGroupingWithoutDmoErr := r.db.Where("id NOT IN ?", listIdGroupingVessel).Find(&listGroupingVesselWithoutDmo).Error
+	findListGroupingWithoutDmoErr := r.db.Preload(clause.Associations).Where("id NOT IN ?", listIdGroupingVessel).Find(&listGroupingVesselWithoutDmo).Error
 
 	if findListGroupingWithoutDmoErr != nil {
 		return listGroupingVesselWithoutDmo, findListGroupingWithoutDmoErr
