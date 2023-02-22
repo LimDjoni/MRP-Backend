@@ -75,13 +75,19 @@ func (r *repository) GetListReportDmoAll(page int, filterDmo FilterAndSortDmo) (
 		}
 	}
 
-	errFind := r.db.Where(queryFilter).Order(sortFilter).Scopes(paginateDmo(listReportDmo, &pagination, r.db, queryFilter)).Find(&listReportDmo).Error
+	var listDmo []map[string]interface{}
+
+	errFind := r.db.Where(queryFilter).Order(sortFilter).Scopes(paginateDmo(listReportDmo, &pagination, r.db, queryFilter)).Raw(`select a.*, d.company_name from  dmos a
+LEFT JOIN trader_dmos b on a.id = b.dmo_id
+LEFT JOIN traders c on b.trader_id = c.id
+LEFT JOIN companies d on c.company_id = d.id
+Where b.is_end_user = TRUE`).Scan(&listDmo).Error
 
 	if errFind != nil {
 		return pagination, errFind
 	}
 
-	pagination.Data = listReportDmo
+	pagination.Data = listDmo
 
 	return pagination, nil
 }
