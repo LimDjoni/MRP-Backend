@@ -2,7 +2,7 @@ package helper
 
 func MonthLongToNumber(month string) int {
 	var staticMonth []string
-	staticMonth = append(staticMonth, "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
+	staticMonth = append(staticMonth, "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 	var number int
 	for i, value := range staticMonth {
 		if value == month {
