@@ -4,6 +4,7 @@ import (
 	"ajebackend/model/dmo"
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
+	"ajebackend/model/master/trader"
 	"ajebackend/model/minerba"
 	"ajebackend/model/minerbaln"
 	"ajebackend/model/reportdmo"
@@ -20,8 +21,11 @@ type DetailMinerbaLn struct {
 }
 
 type DetailDmo struct {
-	Detail dmo.Dmo       `json:"detail"`
-	List   []Transaction `json:"list"`
+	Detail          dmo.Dmo                             `json:"detail"`
+	Transactions    []Transaction                       `json:"transactions"`
+	GroupingVessels []groupingvesseldn.GroupingVesselDn `json:"grouping_vessels"`
+	Trader          []trader.Trader                     `json:"trader"`
+	EndUser         trader.Trader                       `json:"end_user"`
 }
 
 type ErrorResponseUnique struct {
