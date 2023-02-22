@@ -515,24 +515,6 @@ func (h *dmoHandler) UpdateDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	if len(inputUpdateDmo.Trader) > 0 {
-		_, checkListTraderErr := h.traderService.CheckListTrader(inputUpdateDmo.Trader)
-
-		if checkListTraderErr != nil {
-			return c.Status(404).JSON(fiber.Map{
-				"error": "trader " + checkListTraderErr.Error(),
-			})
-		}
-	}
-
-	_, checkEndUserErr := h.traderService.CheckEndUser(inputUpdateDmo.EndUser)
-
-	if checkEndUserErr != nil {
-		return c.Status(404).JSON(fiber.Map{
-			"error": "trader end user " + checkEndUserErr.Error(),
-		})
-	}
-
 	updateDmo, updateDmoErr := h.historyService.UpdateDmo(*inputUpdateDmo, idInt, uint(claims["id"].(float64)))
 
 	if updateDmoErr != nil {

@@ -1507,7 +1507,7 @@ func (r *repository) UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId
 
 	beforeUpdate["grouping_vessel"] = groupingVesselBefore
 
-	errDeleteDmoVessel := tx.Table("dmo_vessels").Unscoped().Delete(&dmoVesselBefore).Error
+	errDeleteDmoVessel := tx.Table("dmo_vessels").Unscoped().Where("dmo_id = ?", id).Delete(&dmoVesselBefore).Error
 
 	if errDeleteDmoVessel != nil {
 		tx.Rollback()
