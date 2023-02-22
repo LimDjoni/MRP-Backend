@@ -18,11 +18,8 @@ type CreateDmoInput struct {
 }
 
 type UpdateDmoInput struct {
-	DocumentDate     string `form:"document_date" json:"document_date" validate:"DateValidation"`
-	TransactionBarge []int  `form:"transaction_barge" json:"transaction_barge"`
-	GroupingVessel   []int  `form:"grouping_vessel" json:"grouping_vessel"`
-	Trader           []int  `form:"trader" json:"trader"`
-	EndUser          int    `form:"end_user" json:"end_user" validate:"required"`
+	TransactionBarge []int `form:"transaction_barge" json:"transaction_barge"`
+	GroupingVessel   []int `form:"grouping_vessel" json:"grouping_vessel"`
 }
 
 type InputUpdateDocumentDmo struct {

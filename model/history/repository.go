@@ -1516,8 +1516,6 @@ func (r *repository) UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId
 
 	updatedMap := make(map[string]interface{})
 
-	updatedMap["document_date"] = dmoUpdateInput.DocumentDate
-
 	if len(dmoUpdateInput.TransactionBarge) > 0 {
 		var bargeQuantity float64
 		barge = true
@@ -1669,53 +1667,6 @@ func (r *repository) UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId
 		}
 
 		afterUpdate["grouping_vessel"] = groupingVesselAfter
-	}
-
-	var traderBefore []traderdmo.TraderDmo
-
-	errFindTraderBefore := tx.Where("dmo_id = ?", id).Find(&traderBefore).Error
-
-	if errFindTraderBefore != nil {
-		tx.Rollback()
-		return updatedDmo, errFindTraderBefore
-	}
-
-	beforeUpdate["trader"] = traderBefore
-
-	errTraderBefore := tx.Table("trader_dmos").Unscoped().Delete(&traderBefore).Error
-
-	if errTraderBefore != nil {
-		tx.Rollback()
-		return updatedDmo, errTraderBefore
-	}
-
-	var traderDmo []traderdmo.TraderDmo
-
-	var lastCount = 0
-	for idx, value := range dmoUpdateInput.Trader {
-		var traderDummy traderdmo.TraderDmo
-
-		traderDummy.DmoId = updatedDmo.ID
-		traderDummy.TraderId = uint(value)
-		traderDummy.Order = idx + 1
-		lastCount = idx + 1
-		traderDmo = append(traderDmo, traderDummy)
-	}
-
-	var traderEndUser traderdmo.TraderDmo
-	traderEndUser.DmoId = updatedDmo.ID
-	traderEndUser.TraderId = uint(dmoUpdateInput.EndUser)
-	traderEndUser.Order = lastCount + 1
-	traderEndUser.IsEndUser = true
-	traderDmo = append(traderDmo, traderEndUser)
-
-	createTraderDmoErr := tx.Create(&traderDmo).Error
-
-	afterUpdate["trader"] = traderDmo
-
-	if createTraderDmoErr != nil {
-		tx.Rollback()
-		return updatedDmo, createTraderDmoErr
 	}
 
 	beforeUpdateJson, errorBeforeDataJsonMarshal := json.Marshal(beforeUpdate)

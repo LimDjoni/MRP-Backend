@@ -6,10 +6,12 @@ import (
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/master/salessystem"
+	"ajebackend/model/master/trader"
 	"ajebackend/model/minerba"
 	"ajebackend/model/minerbaln"
 	"ajebackend/model/production"
 	"ajebackend/model/reportdmo"
+	"ajebackend/model/traderdmo"
 	"errors"
 	"fmt"
 	"strconv"
@@ -412,6 +414,7 @@ func (r *repository) GetDetailDmo(id int) (DetailDmo, error) {
 
 	var dmoData dmo.Dmo
 	var transactions []Transaction
+	var groupingVessel []groupingvesseldn.GroupingVesselDn
 
 	dmoFindErr := r.db.Where("id = ?", id).First(&dmoData).Error
 
@@ -421,13 +424,49 @@ func (r *repository) GetDetailDmo(id int) (DetailDmo, error) {
 
 	detailDmo.Detail = dmoData
 
-	transactionFindErr := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("dmo_id = ?", id).Find(&transactions).Error
+	transactionFindErr := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("dmo_id = ? and grouping_vessel_dn_id IS NULL", id).Find(&transactions).Error
 
 	if transactionFindErr != nil {
 		return detailDmo, transactionFindErr
 	}
 
-	detailDmo.List = transactions
+	detailDmo.Transactions = transactions
+
+	var dmoVessel []dmovessel.DmoVessel
+
+	dmoVesselFindErr := r.db.Preload(clause.Associations).Preload("GroupingVesselDn.DmoDestinationPort.PortLocation").Where("dmo_id = ?", id).Find(&dmoVessel).Error
+
+	if dmoVesselFindErr != nil {
+		return detailDmo, dmoVesselFindErr
+	}
+
+	for _, v := range dmoVessel {
+		groupingVessel = append(groupingVessel, v.GroupingVesselDn)
+	}
+
+	detailDmo.GroupingVessels = groupingVessel
+
+	var traderData []trader.Trader
+	var endUser trader.Trader
+	var traderDmo []traderdmo.TraderDmo
+	traderDmoFindErr := r.db.Order(`"order" asc`).Preload(clause.Associations).Preload("Trader.Company.IndustryType").Where("dmo_id = ?", id).Find(&traderDmo).Error
+
+	if traderDmoFindErr != nil {
+		return detailDmo, traderDmoFindErr
+	}
+
+	for _, v := range traderDmo {
+		if v.IsEndUser {
+			endUser = v.Trader
+		} else {
+			traderData = append(traderData, v.Trader)
+		}
+	}
+
+	detailDmo.Trader = traderData
+
+	detailDmo.EndUser = endUser
+
 	return detailDmo, nil
 }
 
