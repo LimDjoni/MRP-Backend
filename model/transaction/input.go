@@ -76,8 +76,8 @@ type SortAndFilter struct {
 	TugboatId          string
 	BargeId            string
 	VesselId           string
-	ShippingFrom       string
-	ShippingTo         string
+	ShippingStart      string
+	ShippingEnd        string
 	VerificationFilter string
 }
 

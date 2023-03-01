@@ -45,26 +45,34 @@ func (r *repository) GetListReportDmoAll(page int, filterDmo FilterAndSortDmo) (
 			sortFilter = "to_date(a.period,'Mon Year') " + filterDmo.Sort
 		}
 
-		if strings.ToLower(filterDmo.Field) == "quantity" {
-			sortFilter = "a.vessel_total_quantity + a.barge_total_quantity " + filterDmo.Sort
-		}
-
 		if strings.ToLower(filterDmo.Field) == "grand_total_quantity" {
 			sortFilter = "a.vessel_grand_total_quantity + a.barge_grand_total_quantity " + filterDmo.Sort
 		}
-	}
 
-	if filterDmo.CreatedStart != "" {
-		queryFilter = " AND a.created_at >= '" + filterDmo.CreatedStart + "'"
-	}
-
-	if filterDmo.CreatedEnd != "" {
-		queryFilter = " AND a.created_at <= '" + filterDmo.CreatedEnd + "T23:59:59'"
+		if strings.ToLower(filterDmo.Field) == "buyer_id" {
+			sortFilter = "d.company_name " + filterDmo.Sort
+		}
 	}
 
 	if filterDmo.Quantity != 0 {
 		quantity := fmt.Sprintf("%v", filterDmo.Quantity)
-		queryFilter = " AND cast(a.vessel_grand_total_quantity + a.barge_grand_total_quantity AS TEXT) LIKE '%" + quantity + "%'"
+		queryFilter += " AND cast(a.vessel_grand_total_quantity + a.barge_grand_total_quantity AS TEXT) LIKE '%" + quantity + "%'"
+	}
+
+	if filterDmo.Month != "" && filterDmo.Year != "" {
+		queryFilter = queryFilter + " AND a.period = '" + filterDmo.Month + " " + filterDmo.Year + "'"
+	}
+
+	if filterDmo.Month != "" && filterDmo.Year == "" {
+		queryFilter = queryFilter + " AND a.period LIKE '" + filterDmo.Month + "%'"
+	}
+
+	if filterDmo.Month == "" && filterDmo.Year != "" {
+		queryFilter = queryFilter + " AND a.period LIKE '%" + filterDmo.Year + "'"
+	}
+
+	if filterDmo.BuyerId != "" {
+		queryFilter = queryFilter + " AND d.id = " + filterDmo.BuyerId
 	}
 
 	var listDmo []map[string]interface{}

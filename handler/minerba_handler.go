@@ -698,8 +698,10 @@ func (h *minerbaHandler) ListMinerba(c *fiber.Ctx) error {
 		filterMinerba.Quantity = quantity
 	}
 
-	filterMinerba.CreatedStart = c.Query("created_start")
-	filterMinerba.CreatedEnd = c.Query("created_end")
+	filterMinerba.UpdatedStart = c.Query("updated_start")
+	filterMinerba.UpdatedEnd = c.Query("updated_end")
+	filterMinerba.Month = c.Query("month")
+	filterMinerba.Year = c.Query("year")
 	filterMinerba.Field = c.Query("field")
 	filterMinerba.Sort = c.Query("sort")
 

@@ -15,10 +15,12 @@ type InputUpdateDocumentMinerbaLn struct {
 
 type FilterAndSortMinerbaLn struct {
 	Quantity     float64 `json:"quantity"`
-	CreatedStart string  `json:"created_start"`
-	CreatedEnd   string  `json:"created_end"`
+	UpdatedStart string  `json:"updated_start"`
+	UpdatedEnd   string  `json:"updated_end"`
 	Field        string  `json:"field"`
 	Sort         string  `json:"sort"`
+	Month        string  `json:"month"`
+	Year         string  `json:"year"`
 }
 
 type CheckMinerbaLnPeriod struct {

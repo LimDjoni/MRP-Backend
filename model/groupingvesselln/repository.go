@@ -43,11 +43,27 @@ func (r *repository) ListGroupingVesselLn(page int, sortFilter SortFilterGroupin
 		queryFilter = queryFilter + "cast(grand_total_quantity AS TEXT) LIKE '%" + quantity + "%'"
 	}
 
-	if sortFilter.VesselName != "" {
+	if sortFilter.VesselId != "" {
 		if queryFilter != "" {
-			queryFilter += "AND vessel_name LIKE '%" + sortFilter.VesselName + "%'"
+			queryFilter += "AND vessel_id = " + sortFilter.VesselId
 		} else {
-			queryFilter = "vessel_name LIKE '%" + sortFilter.VesselName + "%'"
+			queryFilter = "vessel_id = " + sortFilter.VesselId
+		}
+	}
+
+	if sortFilter.BlDateStart != "" {
+		if queryFilter != "" {
+			queryFilter += "AND bl_date >= '" + sortFilter.BlDateStart + "'"
+		} else {
+			queryFilter = "bl_date >= '" + sortFilter.BlDateStart + "'"
+		}
+	}
+
+	if sortFilter.BlDateEnd != "" {
+		if queryFilter != "" {
+			queryFilter += "AND bl_date <= '" + sortFilter.BlDateEnd + "T23:59:59'"
+		} else {
+			queryFilter = "bl_date <= '" + sortFilter.BlDateEnd + "T23:59:59'"
 		}
 	}
 

@@ -518,8 +518,10 @@ func (h *minerbaLnHandler) ListMinerbaLn(c *fiber.Ctx) error {
 		filterMinerbaLn.Quantity = quantity
 	}
 
-	filterMinerbaLn.CreatedStart = c.Query("created_start")
-	filterMinerbaLn.CreatedEnd = c.Query("created_end")
+	filterMinerbaLn.UpdatedStart = c.Query("updated_start")
+	filterMinerbaLn.UpdatedEnd = c.Query("updated_end")
+	filterMinerbaLn.Month = c.Query("month")
+	filterMinerbaLn.Year = c.Query("year")
 	filterMinerbaLn.Field = c.Query("field")
 	filterMinerbaLn.Sort = c.Query("sort")
 

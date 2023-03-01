@@ -684,8 +684,9 @@ func (h *dmoHandler) ListDmo(c *fiber.Ctx) error {
 		filterDmo.Quantity = quantity
 	}
 
-	filterDmo.CreatedStart = c.Query("created_start")
-	filterDmo.CreatedEnd = c.Query("created_end")
+	filterDmo.Month = c.Query("month")
+	filterDmo.Year = c.Query("year")
+	filterDmo.BuyerId = c.Query("buyer_id")
 	filterDmo.Field = c.Query("field")
 	filterDmo.Sort = c.Query("sort")
 

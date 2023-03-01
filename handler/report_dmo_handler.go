@@ -761,8 +761,10 @@ func (h *reportDmoHandler) ListReportDmo(c *fiber.Ctx) error {
 		filterReportDmo.Quantity = quantity
 	}
 
-	filterReportDmo.CreatedStart = c.Query("created_start")
-	filterReportDmo.CreatedEnd = c.Query("created_end")
+	filterReportDmo.UpdatedStart = c.Query("updated_start")
+	filterReportDmo.UpdatedEnd = c.Query("updated_end")
+	filterReportDmo.Month = c.Query("month")
+	filterReportDmo.Year = c.Query("year")
 	filterReportDmo.Field = c.Query("field")
 	filterReportDmo.Sort = c.Query("sort")
 

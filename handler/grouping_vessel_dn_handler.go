@@ -63,6 +63,8 @@ func (h *groupingVesselDnHandler) ListGroupingVesselDn(c *fiber.Ctx) error {
 	page := c.Query("page")
 	sortAndFilter.Field = c.Query("field")
 	sortAndFilter.Sort = c.Query("sort")
+	sortAndFilter.BlDateStart = c.Query("bl_date_start")
+	sortAndFilter.BlDateEnd = c.Query("bl_date_end")
 
 	quantity, errParsing := strconv.ParseFloat(c.Query("quantity"), 64)
 	if errParsing != nil {
@@ -71,7 +73,7 @@ func (h *groupingVesselDnHandler) ListGroupingVesselDn(c *fiber.Ctx) error {
 		sortAndFilter.Quantity = quantity
 	}
 
-	sortAndFilter.VesselName = c.Query("vessel_name")
+	sortAndFilter.VesselId = c.Query("vessel_id")
 
 	pageNumber, err := strconv.Atoi(page)
 
