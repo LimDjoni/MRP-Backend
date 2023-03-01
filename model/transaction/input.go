@@ -18,6 +18,7 @@ type DataTransactionInput struct {
 	LoadingPortId               *uint   `json:"loading_port_id"`
 	UnloadingPortId             *uint   `json:"unloading_port_id"`
 	DmoDestinationPortId        *uint   `json:"dmo_destination_port_id"`
+	DmoDestinationPortLnName    string  `json:"dmo_destination_port_ln_name"`
 	SkbDate                     *string `json:"skb_date" validate:"omitempty,DateValidation"`
 	SkbNumber                   string  `json:"skb_number"`
 	SkabDate                    *string `json:"skab_date" validate:"omitempty,DateValidation"`

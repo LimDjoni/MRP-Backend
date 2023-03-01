@@ -10,8 +10,8 @@ type InputUpdateDocumentInsw struct {
 }
 
 type SortFilterInsw struct {
-	SortMonth string
-	SortYear  string
-	Month     string
-	Year      string
+	Field string
+	Sort  string
+	Month string
+	Year  string
 }

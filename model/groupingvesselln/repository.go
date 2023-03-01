@@ -35,7 +35,14 @@ func (r *repository) ListGroupingVesselLn(page int, sortFilter SortFilterGroupin
 	queryFilter := ""
 
 	if sortFilter.Field != "" && sortFilter.Sort != "" {
-		querySort = fmt.Sprintf("%s %s", sortFilter.Field, sortFilter.Sort)
+
+		if sortFilter.Field == "vessel_id" {
+			querySort = "vessels.name " + sortFilter.Sort
+		}
+
+		if querySort == "id desc" {
+			querySort = fmt.Sprintf("%s %s", sortFilter.Field, sortFilter.Sort)
+		}
 	}
 
 	if sortFilter.Quantity != 0 {
@@ -67,7 +74,7 @@ func (r *repository) ListGroupingVesselLn(page int, sortFilter SortFilterGroupin
 		}
 	}
 
-	errFind := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Where(queryFilter).Order(querySort).Scopes(paginateData(listGroupingVesselLn, &pagination, r.db, queryFilter)).Find(&listGroupingVesselLn).Error
+	errFind := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Select("grouping_vessel_lns.*").Joins("LEFT JOIN vessels vessels on grouping_vessel_lns.vessel_id = vessels.id").Where(queryFilter).Order(querySort).Scopes(paginateData(listGroupingVesselLn, &pagination, r.db, queryFilter)).Find(&listGroupingVesselLn).Error
 
 	if errFind != nil {
 		errWithoutOrder := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Where(queryFilter).Order(querySort).Scopes(paginateData(listGroupingVesselLn, &pagination, r.db, queryFilter)).Find(&listGroupingVesselLn).Error

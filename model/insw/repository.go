@@ -25,16 +25,8 @@ func (r *repository) ListInsw(page int, sortFilter SortFilterInsw) (Pagination, 
 	sortString := "id desc"
 	queryFilter := ""
 
-	if sortFilter.SortMonth != "" {
-		sortString = "to_date(month,'Month') " + sortFilter.SortMonth
-	}
-
-	if sortFilter.SortYear != "" {
-		if sortString == "id desc" {
-			sortString = "year " + sortFilter.SortYear
-		} else {
-			sortString += ", year " + sortFilter.SortYear
-		}
+	if sortFilter.Field != "" && sortFilter.Sort != "" {
+		sortString = "to_date(month,'Mon') " + sortFilter.Sort + " , year " + sortFilter.Sort
 	}
 
 	if sortFilter.Month != "" {

@@ -591,8 +591,8 @@ func (h *inswHandler) ListInsw(c *fiber.Ctx) error {
 
 	var filterInsw insw.SortFilterInsw
 
-	filterInsw.SortMonth = c.Query("sort_month")
-	filterInsw.SortYear = c.Query("sort_year")
+	filterInsw.Field = c.Query("field")
+	filterInsw.Sort = c.Query("sort")
 	filterInsw.Month = c.Query("month")
 	filterInsw.Year = c.Query("year")
 
