@@ -46,15 +46,15 @@ func (r *repository) GetListReportMinerbaLnAll(page int, filterMinerbaLn FilterA
 		}
 	}
 
-	if filterMinerbaLn.CreatedStart != "" {
-		queryFilter = queryFilter + "created_at >= '" + filterMinerbaLn.CreatedStart + "'"
+	if filterMinerbaLn.UpdatedStart != "" {
+		queryFilter = queryFilter + "updated_at >= '" + filterMinerbaLn.UpdatedStart + "'"
 	}
 
-	if filterMinerbaLn.CreatedEnd != "" {
+	if filterMinerbaLn.UpdatedEnd != "" {
 		if queryFilter != "" {
-			queryFilter = queryFilter + " AND created_at <= '" + filterMinerbaLn.CreatedEnd + "T23:59:59'"
+			queryFilter = queryFilter + " AND updated_at <= '" + filterMinerbaLn.UpdatedEnd + "T23:59:59'"
 		} else {
-			queryFilter = "created_at <= '" + filterMinerbaLn.CreatedEnd + "T23:59:59'"
+			queryFilter = "updated_at <= '" + filterMinerbaLn.UpdatedEnd + "T23:59:59'"
 		}
 	}
 
@@ -64,6 +64,30 @@ func (r *repository) GetListReportMinerbaLnAll(page int, filterMinerbaLn FilterA
 			queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" + quantity + "%'"
 		} else {
 			queryFilter = "cast(quantity AS TEXT) LIKE '%" + quantity + "%'"
+		}
+	}
+
+	if filterMinerbaLn.Month != "" && filterMinerbaLn.Year != "" {
+		if queryFilter != "" {
+			queryFilter = queryFilter + " AND period = '" + filterMinerbaLn.Month + " " + filterMinerbaLn.Year + "'"
+		} else {
+			queryFilter = "period = '" + filterMinerbaLn.Month + " " + filterMinerbaLn.Year + "'"
+		}
+	}
+
+	if filterMinerbaLn.Month != "" && filterMinerbaLn.Year == "" {
+		if queryFilter != "" {
+			queryFilter = queryFilter + " AND period LIKE '" + filterMinerbaLn.Month + "%'"
+		} else {
+			queryFilter = "period LIKE '" + filterMinerbaLn.Month + "%'"
+		}
+	}
+
+	if filterMinerbaLn.Month == "" && filterMinerbaLn.Year != "" {
+		if queryFilter != "" {
+			queryFilter = queryFilter + " AND period LIKE '%" + filterMinerbaLn.Year + "'"
+		} else {
+			queryFilter = "period LIKE '%" + filterMinerbaLn.Year + "'"
 		}
 	}
 

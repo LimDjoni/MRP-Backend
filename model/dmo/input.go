@@ -27,9 +27,10 @@ type InputUpdateDocumentDmo struct {
 }
 
 type FilterAndSortDmo struct {
-	Quantity     float64 `json:"quantity"`
-	CreatedStart string  `json:"created_start"`
-	CreatedEnd   string  `json:"created_end"`
-	Field        string  `json:"field"`
-	Sort         string  `json:"sort"`
+	Quantity float64 `json:"quantity"`
+	BuyerId  string  `json:"buyer_id"`
+	Month    string  `json:"month"`
+	Year     string  `json:"year"`
+	Field    string  `json:"field"`
+	Sort     string  `json:"sort"`
 }

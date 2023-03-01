@@ -17,8 +17,10 @@ type InputUpdateDocumentReportDmo struct {
 
 type FilterAndSortReportDmo struct {
 	Quantity     float64 `json:"quantity"`
-	CreatedStart string  `json:"created_start"`
-	CreatedEnd   string  `json:"created_end"`
+	UpdatedStart string  `json:"updated_start"`
+	UpdatedEnd   string  `json:"updated_end"`
+	Month        string  `json:"month"`
+	Year         string  `json:"year"`
 	Field        string  `json:"field"`
 	Sort         string  `json:"sort"`
 }

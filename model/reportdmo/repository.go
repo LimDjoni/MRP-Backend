@@ -43,17 +43,49 @@ func (r *repository) GetListReportDmoAll(page int, filterReportDmo FilterAndSort
 		if strings.ToLower(filterReportDmo.Field) == "period" {
 			sortFilter = "to_date(period,'Mon Year') " + filterReportDmo.Sort
 		}
+
+		if strings.ToLower(filterReportDmo.Field) == "quantity" {
+			sortFilter = "quantity " + filterReportDmo.Sort
+		}
+
+		if strings.ToLower(filterReportDmo.Field) == "UpdatedAt" {
+			sortFilter = "updated_at " + filterReportDmo.Sort
+		}
 	}
 
-	if filterReportDmo.CreatedStart != "" {
-		queryFilter = queryFilter + "created_at >= '" + filterReportDmo.CreatedStart + "'"
+	if filterReportDmo.UpdatedStart != "" {
+		queryFilter = queryFilter + "updated_at >= '" + filterReportDmo.UpdatedStart + "'"
 	}
 
-	if filterReportDmo.CreatedEnd != "" {
+	if filterReportDmo.UpdatedEnd != "" {
 		if queryFilter != "" {
-			queryFilter = queryFilter + " AND created_at <= '" + filterReportDmo.CreatedEnd + "T23:59:59'"
+			queryFilter = queryFilter + " AND updated_at <= '" + filterReportDmo.UpdatedEnd + "T23:59:59'"
 		} else {
-			queryFilter = "created_at <= '" + filterReportDmo.CreatedEnd + "T23:59:59'"
+			queryFilter = "updated_at <= '" + filterReportDmo.UpdatedEnd + "T23:59:59'"
+		}
+	}
+
+	if filterReportDmo.Month != "" && filterReportDmo.Year != "" {
+		if queryFilter != "" {
+			queryFilter = queryFilter + " AND period = '" + filterReportDmo.Month + " " + filterReportDmo.Year + "'"
+		} else {
+			queryFilter = "period = '" + filterReportDmo.Month + " " + filterReportDmo.Year + "'"
+		}
+	}
+
+	if filterReportDmo.Month != "" && filterReportDmo.Year == "" {
+		if queryFilter != "" {
+			queryFilter = queryFilter + " AND period LIKE '" + filterReportDmo.Month + "%'"
+		} else {
+			queryFilter = "period LIKE '" + filterReportDmo.Month + "%'"
+		}
+	}
+
+	if filterReportDmo.Month == "" && filterReportDmo.Year != "" {
+		if queryFilter != "" {
+			queryFilter = queryFilter + " AND period LIKE '%" + filterReportDmo.Year + "'"
+		} else {
+			queryFilter = "period LIKE '%" + filterReportDmo.Year + "'"
 		}
 	}
 

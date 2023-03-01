@@ -74,11 +74,11 @@ func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionTyp
 	var pagination Pagination
 	pagination.Limit = 7
 	pagination.Page = page
-	defaultSort := "id desc"
-	sortString := fmt.Sprintf("%s %s", sortFilter.Field, sortFilter.Sort)
-	if sortFilter.Field == "" || sortFilter.Sort == "" {
-		sortString = defaultSort
-	}
+	// defaultSort := "id desc"
+	// sortString := fmt.Sprintf("%s %s", sortFilter.Field, sortFilter.Sort)
+	// if sortFilter.Field == "" || sortFilter.Sort == "" {
+	// 	sortString = defaultSort
+	// }
 
 	queryFilter := fmt.Sprintf("transaction_type = '%s' ", strings.ToUpper(transactionType))
 
@@ -94,12 +94,12 @@ func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionTyp
 		queryFilter = queryFilter + " AND vessel_id = " + sortFilter.VesselId
 	}
 
-	if sortFilter.ShippingFrom != "" {
-		queryFilter = queryFilter + " AND shipping_date >= '" + sortFilter.ShippingFrom + "'"
+	if sortFilter.ShippingStart != "" {
+		queryFilter = queryFilter + " AND shipping_date >= '" + sortFilter.ShippingStart + "'"
 	}
 
-	if sortFilter.ShippingTo != "" {
-		queryFilter = queryFilter + " AND shipping_date <= '" + sortFilter.ShippingTo + "T23:59:59'"
+	if sortFilter.ShippingEnd != "" {
+		queryFilter = queryFilter + " AND shipping_date <= '" + sortFilter.ShippingEnd + "T23:59:59'"
 	}
 
 	if sortFilter.Quantity != 0 {
@@ -123,10 +123,14 @@ func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionTyp
 		queryFilter = queryFilter + " AND is_finance_check = TRUE AND is_coa_finish = TRUE AND is_royalty_final_finish = TRUE"
 	}
 
-	errFind := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where(queryFilter).Order(sortString).Scopes(paginateData(transactions, &pagination, r.db, queryFilter)).Find(&transactions).Error
+	// r.db.Table("transactions").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Select("transactions.*").Joins("LEFT JOIN tugboats on transactions.tugboat_id = tugboats.id").Order("tugboats.name asc").Where(queryFilter).Scopes(paginateData(transactions, &pagination, r.db, queryFilter)).Find(&transactions).Error
+
+	// r.db.Table("transactions").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Select("transactions.*").Joins("LEFT JOIN tugboats on transactions.tugboat_id = tugboats.id").Order("tugboats.name asc").Where(queryFilter).Scopes(paginateData(transactions, &pagination, r.db, queryFilter)).Find(&transactions).Error
+
+	errFind := r.db.Table("transactions").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where(queryFilter).Scopes(paginateData(transactions, &pagination, r.db, queryFilter)).Find(&transactions).Error
 
 	if errFind != nil {
-		errWithoutOrder := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where(queryFilter).Order(defaultSort).Scopes(paginateData(transactions, &pagination, r.db, queryFilter)).Find(&transactions).Error
+		errWithoutOrder := r.db.Table("transactions").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where(queryFilter).Scopes(paginateData(transactions, &pagination, r.db, queryFilter)).Find(&transactions).Error
 
 		if errWithoutOrder != nil {
 			pagination.Data = transactions

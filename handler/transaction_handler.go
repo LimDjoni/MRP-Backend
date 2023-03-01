@@ -171,8 +171,8 @@ func (h *transactionHandler) ListData(c *fiber.Ctx) error {
 	sortAndFilter.TugboatId = c.Query("tugboat_id")
 	sortAndFilter.BargeId = c.Query("barge_id")
 	sortAndFilter.VesselId = c.Query("vessel_id")
-	sortAndFilter.ShippingFrom = c.Query("shipping_from")
-	sortAndFilter.ShippingTo = c.Query("shipping_to")
+	sortAndFilter.ShippingStart = c.Query("shipping_start")
+	sortAndFilter.ShippingEnd = c.Query("shipping_end")
 	sortAndFilter.VerificationFilter = c.Query("verification_filter")
 
 	pageNumber, err := strconv.Atoi(page)

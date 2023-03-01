@@ -102,10 +102,12 @@ type InputEditGroupingVesselLn struct {
 }
 
 type SortFilterGroupingVesselLn struct {
-	Field      string
-	Sort       string
-	Quantity   float64
-	VesselName string
+	Field       string
+	Sort        string
+	Quantity    float64
+	VesselId    string
+	BlDateStart string
+	BlDateEnd   string
 }
 
 type InputRequestCreateUploadInsw struct {
