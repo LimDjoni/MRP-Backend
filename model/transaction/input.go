@@ -73,7 +73,7 @@ type DataTransactionInput struct {
 type SortAndFilter struct {
 	Field              string
 	Sort               string
-	Quantity           float64
+	Quantity           string
 	TugboatId          string
 	BargeId            string
 	VesselId           string

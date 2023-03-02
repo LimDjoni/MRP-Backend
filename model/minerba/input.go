@@ -14,13 +14,13 @@ type InputUpdateDocumentMinerba struct {
 }
 
 type FilterAndSortMinerba struct {
-	Quantity     float64 `json:"quantity"`
-	UpdatedStart string  `json:"updated_start"`
-	UpdatedEnd   string  `json:"updated_end"`
-	Field        string  `json:"field"`
-	Sort         string  `json:"sort"`
-	Month        string  `json:"month"`
-	Year         string  `json:"year"`
+	Quantity     string `json:"quantity"`
+	UpdatedStart string `json:"updated_start"`
+	UpdatedEnd   string `json:"updated_end"`
+	Field        string `json:"field"`
+	Sort         string `json:"sort"`
+	Month        string `json:"month"`
+	Year         string `json:"year"`
 }
 
 type CheckMinerbaPeriod struct {

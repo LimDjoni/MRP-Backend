@@ -104,7 +104,7 @@ type InputEditGroupingVesselLn struct {
 type SortFilterGroupingVesselLn struct {
 	Field       string
 	Sort        string
-	Quantity    float64
+	Quantity    string
 	VesselId    string
 	BlDateStart string
 	BlDateEnd   string

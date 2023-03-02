@@ -160,14 +160,7 @@ func (h *transactionHandler) ListData(c *fiber.Ctx) error {
 	page := c.Query("page")
 	sortAndFilter.Field = c.Query("field")
 	sortAndFilter.Sort = c.Query("sort")
-
-	quantity, errParsing := strconv.ParseFloat(c.Query("quantity"), 64)
-	if errParsing != nil {
-		sortAndFilter.Quantity = 0
-	} else {
-		sortAndFilter.Quantity = quantity
-	}
-
+	sortAndFilter.Quantity = c.Query("quantity")
 	sortAndFilter.TugboatId = c.Query("tugboat_id")
 	sortAndFilter.BargeId = c.Query("barge_id")
 	sortAndFilter.VesselId = c.Query("vessel_id")
