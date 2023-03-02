@@ -128,9 +128,8 @@ func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionTyp
 		queryFilter = queryFilter + " AND shipping_date <= '" + sortFilter.ShippingEnd + "T23:59:59'"
 	}
 
-	if sortFilter.Quantity != 0 {
-		quantity := fmt.Sprintf("%v", sortFilter.Quantity)
-		queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" + quantity + "%'"
+	if sortFilter.Quantity != "" {
+		queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" + sortFilter.Quantity + "%'"
 	}
 
 	if sortFilter.VerificationFilter == "Belum diverifikasi" {

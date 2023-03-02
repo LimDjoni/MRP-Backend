@@ -1,8 +1,6 @@
 package production
 
 import (
-	"fmt"
-
 	"gorm.io/gorm"
 )
 
@@ -44,12 +42,11 @@ func (r *repository) GetListProduction(page int, filter FilterListProduction) (P
 		}
 	}
 
-	if filter.Quantity != 0 {
-		quantity := fmt.Sprintf("%v", filter.Quantity)
+	if filter.Quantity != "" {
 		if queryFilter != "" {
-			queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" + quantity + "%'"
+			queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" + filter.Quantity + "%'"
 		} else {
-			queryFilter = "cast(quantity AS TEXT) LIKE '%" + quantity + "%'"
+			queryFilter = "cast(quantity AS TEXT) LIKE '%" + filter.Quantity + "%'"
 		}
 	}
 

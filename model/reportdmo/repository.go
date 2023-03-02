@@ -1,7 +1,6 @@
 package reportdmo
 
 import (
-	"fmt"
 	"strings"
 
 	"gorm.io/gorm"
@@ -89,12 +88,11 @@ func (r *repository) GetListReportDmoAll(page int, filterReportDmo FilterAndSort
 		}
 	}
 
-	if filterReportDmo.Quantity != 0 {
-		quantity := fmt.Sprintf("%v", filterReportDmo.Quantity)
+	if filterReportDmo.Quantity != "" {
 		if queryFilter != "" {
-			queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" + quantity + "%'"
+			queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" + filterReportDmo.Quantity + "%'"
 		} else {
-			queryFilter = "cast(quantity AS TEXT) LIKE '%" + quantity + "%'"
+			queryFilter = "cast(quantity AS TEXT) LIKE '%" + filterReportDmo.Quantity + "%'"
 		}
 	}
 

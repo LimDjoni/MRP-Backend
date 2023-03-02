@@ -754,13 +754,7 @@ func (h *reportDmoHandler) ListReportDmo(c *fiber.Ctx) error {
 
 	var filterReportDmo reportdmo.FilterAndSortReportDmo
 
-	quantity, errParsing := strconv.ParseFloat(c.Query("quantity"), 64)
-	if errParsing != nil {
-		filterReportDmo.Quantity = 0
-	} else {
-		filterReportDmo.Quantity = quantity
-	}
-
+	filterReportDmo.Quantity = c.Query("quantity")
 	filterReportDmo.UpdatedStart = c.Query("updated_start")
 	filterReportDmo.UpdatedEnd = c.Query("updated_end")
 	filterReportDmo.Month = c.Query("month")

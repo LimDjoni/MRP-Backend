@@ -1,14 +1,14 @@
 package production
 
 type InputCreateProduction struct {
-	ProductionDate string `json:"production_date" validate:"required,DateValidation"`
-	Quantity float64 `json:"quantity" validate:"required"`
+	ProductionDate string  `json:"production_date" validate:"required,DateValidation"`
+	Quantity       float64 `json:"quantity" validate:"required"`
 }
 
 type FilterListProduction struct {
 	ProductionDateStart string
-	ProductionDateEnd string
-	Quantity float64
-	Field string
-	Sort string
+	ProductionDateEnd   string
+	Quantity            string
+	Field               string
+	Sort                string
 }

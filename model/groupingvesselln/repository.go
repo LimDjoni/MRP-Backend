@@ -45,9 +45,8 @@ func (r *repository) ListGroupingVesselLn(page int, sortFilter SortFilterGroupin
 		}
 	}
 
-	if sortFilter.Quantity != 0 {
-		quantity := fmt.Sprintf("%v", sortFilter.Quantity)
-		queryFilter = queryFilter + "cast(grand_total_quantity AS TEXT) LIKE '%" + quantity + "%'"
+	if sortFilter.Quantity != "" {
+		queryFilter = queryFilter + "cast(grand_total_quantity AS TEXT) LIKE '%" + sortFilter.Quantity + "%'"
 	}
 
 	if sortFilter.VesselId != "" {

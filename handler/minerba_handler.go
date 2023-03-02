@@ -691,13 +691,7 @@ func (h *minerbaHandler) ListMinerba(c *fiber.Ctx) error {
 
 	var filterMinerba minerba.FilterAndSortMinerba
 
-	quantity, errParsing := strconv.ParseFloat(c.Query("quantity"), 64)
-	if errParsing != nil {
-		filterMinerba.Quantity = 0
-	} else {
-		filterMinerba.Quantity = quantity
-	}
-
+	filterMinerba.Quantity = c.Query("quantity")
 	filterMinerba.UpdatedStart = c.Query("updated_start")
 	filterMinerba.UpdatedEnd = c.Query("updated_end")
 	filterMinerba.Month = c.Query("month")

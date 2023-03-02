@@ -511,13 +511,7 @@ func (h *minerbaLnHandler) ListMinerbaLn(c *fiber.Ctx) error {
 
 	var filterMinerbaLn minerbaln.FilterAndSortMinerbaLn
 
-	quantity, errParsing := strconv.ParseFloat(c.Query("quantity"), 64)
-	if errParsing != nil {
-		filterMinerbaLn.Quantity = 0
-	} else {
-		filterMinerbaLn.Quantity = quantity
-	}
-
+	filterMinerbaLn.Quantity = c.Query("quantity")
 	filterMinerbaLn.UpdatedStart = c.Query("updated_start")
 	filterMinerbaLn.UpdatedEnd = c.Query("updated_end")
 	filterMinerbaLn.Month = c.Query("month")

@@ -58,7 +58,7 @@ func (r *repository) GetListReportMinerbaLnAll(page int, filterMinerbaLn FilterA
 		}
 	}
 
-	if filterMinerbaLn.Quantity != 0 {
+	if filterMinerbaLn.Quantity != "" {
 		quantity := fmt.Sprintf("%v", filterMinerbaLn.Quantity)
 		if queryFilter != "" {
 			queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" + quantity + "%'"

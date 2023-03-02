@@ -1,7 +1,6 @@
 package dmo
 
 import (
-	"fmt"
 	"strings"
 
 	"gorm.io/gorm"
@@ -54,9 +53,8 @@ func (r *repository) GetListReportDmoAll(page int, filterDmo FilterAndSortDmo) (
 		}
 	}
 
-	if filterDmo.Quantity != 0 {
-		quantity := fmt.Sprintf("%v", filterDmo.Quantity)
-		queryFilter += " AND cast(a.vessel_grand_total_quantity + a.barge_grand_total_quantity AS TEXT) LIKE '%" + quantity + "%'"
+	if filterDmo.Quantity != "" {
+		queryFilter += " AND cast(a.vessel_grand_total_quantity + a.barge_grand_total_quantity AS TEXT) LIKE '%" + filterDmo.Quantity + "%'"
 	}
 
 	if filterDmo.Month != "" && filterDmo.Year != "" {

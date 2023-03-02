@@ -58,7 +58,8 @@ func (r *repository) GetListReportMinerbaAll(page int, filterMinerba FilterAndSo
 		}
 	}
 
-	if filterMinerba.Quantity != 0 {
+	fmt.Println(filterMinerba.Quantity)
+	if filterMinerba.Quantity != "" {
 		quantity := fmt.Sprintf("%v", filterMinerba.Quantity)
 		if queryFilter != "" {
 			queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" + quantity + "%'"
@@ -90,6 +91,8 @@ func (r *repository) GetListReportMinerbaAll(page int, filterMinerba FilterAndSo
 			queryFilter = "period LIKE '%" + filterMinerba.Year + "'"
 		}
 	}
+
+	fmt.Println(queryFilter)
 
 	errFind := r.db.Where(queryFilter).Order(sortFilter).Scopes(paginateMinerba(listReportMinerba, &pagination, r.db, queryFilter)).Find(&listReportMinerba).Error
 

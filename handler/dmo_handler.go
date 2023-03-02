@@ -677,13 +677,7 @@ func (h *dmoHandler) ListDmo(c *fiber.Ctx) error {
 
 	var filterDmo dmo.FilterAndSortDmo
 
-	quantity, errParsing := strconv.ParseFloat(c.Query("quantity"), 64)
-	if errParsing != nil {
-		filterDmo.Quantity = 0
-	} else {
-		filterDmo.Quantity = quantity
-	}
-
+	filterDmo.Quantity = c.Query("quantity")
 	filterDmo.Month = c.Query("month")
 	filterDmo.Year = c.Query("year")
 	filterDmo.BuyerId = c.Query("buyer_id")
