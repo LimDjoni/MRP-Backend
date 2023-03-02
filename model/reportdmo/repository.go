@@ -48,7 +48,7 @@ func (r *repository) GetListReportDmoAll(page int, filterReportDmo FilterAndSort
 			sortFilter = "quantity " + filterReportDmo.Sort
 		}
 
-		if strings.ToLower(filterReportDmo.Field) == "UpdatedAt" {
+		if strings.ToLower(filterReportDmo.Field) == "updatedat" {
 			sortFilter = "updated_at " + filterReportDmo.Sort
 		}
 	}

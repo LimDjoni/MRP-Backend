@@ -47,7 +47,6 @@ func CreateReportRecap(sheetName string, file *excelize.File, data map[string]ma
 						values["D14"] += 0
 					} else {
 						for _, value := range v {
-							fmt.Println("here")
 							values["B14"] += value
 							values["B2"] += value
 							values["D2"] += value

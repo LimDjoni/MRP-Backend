@@ -102,6 +102,7 @@ func (h *inswHandler) CreateInsw(c *fiber.Ctx) error {
 	createInsw, createInswErr := h.historyService.CreateInsw(inputCreateInsw.Month, inputCreateInsw.Year, baseIdNumber, uint(claims["id"].(float64)))
 
 	if createInswErr != nil {
+		fmt.Println(createInswErr)
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
 		inputMap["insw_month"] = inputCreateInsw.Month
@@ -591,8 +592,8 @@ func (h *inswHandler) ListInsw(c *fiber.Ctx) error {
 
 	var filterInsw insw.SortFilterInsw
 
-	filterInsw.SortMonth = c.Query("sort_month")
-	filterInsw.SortYear = c.Query("sort_year")
+	filterInsw.Field = c.Query("field")
+	filterInsw.Sort = c.Query("sort")
 	filterInsw.Month = c.Query("month")
 	filterInsw.Year = c.Query("year")
 

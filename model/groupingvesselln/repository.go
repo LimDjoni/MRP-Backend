@@ -35,7 +35,14 @@ func (r *repository) ListGroupingVesselLn(page int, sortFilter SortFilterGroupin
 	queryFilter := ""
 
 	if sortFilter.Field != "" && sortFilter.Sort != "" {
-		querySort = fmt.Sprintf("%s %s", sortFilter.Field, sortFilter.Sort)
+
+		if sortFilter.Field == "vessel_id" {
+			querySort = "vessels.name " + sortFilter.Sort
+		}
+
+		if querySort == "id desc" {
+			querySort = fmt.Sprintf("%s %s", sortFilter.Field, sortFilter.Sort)
+		}
 	}
 
 	if sortFilter.Quantity != 0 {
@@ -67,7 +74,7 @@ func (r *repository) ListGroupingVesselLn(page int, sortFilter SortFilterGroupin
 		}
 	}
 
-	errFind := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Where(queryFilter).Order(querySort).Scopes(paginateData(listGroupingVesselLn, &pagination, r.db, queryFilter)).Find(&listGroupingVesselLn).Error
+	errFind := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Select("grouping_vessel_lns.*").Joins("LEFT JOIN vessels vessels on grouping_vessel_lns.vessel_id = vessels.id").Where(queryFilter).Order(querySort).Scopes(paginateData(listGroupingVesselLn, &pagination, r.db, queryFilter)).Find(&listGroupingVesselLn).Error
 
 	if errFind != nil {
 		errWithoutOrder := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Where(queryFilter).Order(querySort).Scopes(paginateData(listGroupingVesselLn, &pagination, r.db, queryFilter)).Find(&listGroupingVesselLn).Error
@@ -97,7 +104,7 @@ func (r *repository) ListGroupingVesselLnWithPeriod(month string, year int) ([]G
 
 	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
 
-	errFind := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Where("peb_register_date >= ? AND peb_register_date <= ? AND insw_id is NULL", firstOfMonth, lastOfMonth).Find(&listGroupingVesselLn).Error
+	errFind := r.db.Preload(clause.Associations).Preload("LoadingPort").Where("peb_register_date >= ? AND peb_register_date <= ? AND insw_id is NULL", firstOfMonth, lastOfMonth).Find(&listGroupingVesselLn).Error
 
 	if errFind != nil {
 		return listGroupingVesselLn, errFind
@@ -120,7 +127,7 @@ func (r *repository) DetailInsw(id int) (DetailInsw, error) {
 
 	var listGroupingVessel []GroupingVesselLn
 
-	errFindListGroupingVessel := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Where("insw_id = ?", id).Find(&listGroupingVessel).Error
+	errFindListGroupingVessel := r.db.Preload(clause.Associations).Where("insw_id = ?", id).Find(&listGroupingVessel).Error
 
 	if errFindListGroupingVessel != nil {
 		return detailInsw, errFindListGroupingVessel

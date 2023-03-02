@@ -122,14 +122,14 @@ func (h *reportHandler) DownloadReport(c *fiber.Ctx) error {
 
 	queryProductionPlanFloat, errProductionPlan := strconv.ParseFloat(queryProductionPlan, 64)
 	if errProductionPlan != nil {
-		fmt.Println(errProductionPlan, 1)
+		fmt.Println(errProductionPlan)
 	}
 
 	queryPercentageProductionObligation := c.Query("percentage_production_obligation")
 
 	queryPercentageProductionObligationFloat, errPercentageProductionObligationFloat := strconv.ParseFloat(queryPercentageProductionObligation, 64)
 	if errPercentageProductionObligationFloat != nil {
-		fmt.Println(errPercentageProductionObligationFloat, 2)
+		fmt.Println(errPercentageProductionObligationFloat)
 	}
 
 	if queryYear == "" {

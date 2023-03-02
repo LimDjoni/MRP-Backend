@@ -125,4 +125,5 @@ type Transaction struct {
 	GroupingVesselDn               *groupingvesseldn.GroupingVesselDn `json:"grouping_vessel_dn" gorm:"constraint:OnDelete:SET NULL;"`
 	ReportDmoId                    *uint                              `json:"report_dmo_id"`
 	ReportDmo                      *reportdmo.ReportDmo               `json:"report_dmo" gorm:"constraint:OnDelete:SET NULL;"`
+	DmoDestinationPortLnName       string                             `json:"dmo_destination_port_ln_name"`
 }

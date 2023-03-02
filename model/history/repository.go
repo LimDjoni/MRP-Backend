@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -124,7 +125,8 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 	createdTransaction.SellerId = &iup.ID
 	createdTransaction.DestinationCountryId = inputTransactionDN.DestinationCountryId
 	createdTransaction.ShippingDate = inputTransactionDN.ShippingDate
-	createdTransaction.Quantity = inputTransactionDN.Quantity
+
+	createdTransaction.Quantity = math.Round(inputTransactionDN.Quantity*1000) / 1000
 	createdTransaction.TugboatId = inputTransactionDN.TugboatId
 	createdTransaction.BargeId = inputTransactionDN.BargeId
 	createdTransaction.VesselId = inputTransactionDN.VesselId
@@ -289,6 +291,7 @@ func (r *repository) UpdateTransactionDN(idTransaction int, inputEditTransaction
 	inputEditTransactionDN.CoaNumber = strings.ToUpper(inputEditTransactionDN.CoaNumber)
 	inputEditTransactionDN.InvoiceNumber = strings.ToUpper(inputEditTransactionDN.InvoiceNumber)
 	inputEditTransactionDN.ContractNumber = strings.ToUpper(inputEditTransactionDN.ContractNumber)
+	inputEditTransactionDN.Quantity = math.Round(inputEditTransactionDN.Quantity*1000) / 1000
 	dataInput, errorMarshal := json.Marshal(inputEditTransactionDN)
 
 	if errorMarshal != nil {
@@ -301,7 +304,7 @@ func (r *repository) UpdateTransactionDN(idTransaction int, inputEditTransaction
 	errorUnmarshal := json.Unmarshal(dataInput, &dataInputMapString)
 
 	delete(dataInputMapString, "vessel_name")
-
+	delete(dataInputMapString, "dmo_destination_port_ln_name")
 	if errorUnmarshal != nil {
 		tx.Rollback()
 		return transaction, errorUnmarshal
@@ -472,7 +475,7 @@ func (r *repository) CreateTransactionLN(inputTransactionLN transaction.DataTran
 
 	createdTransactionLn.TransactionType = "LN"
 	createdTransactionLn.SellerId = &iup.ID
-	createdTransactionLn.Quantity = inputTransactionLN.Quantity
+	createdTransactionLn.Quantity = math.Round(inputTransactionLN.Quantity*1000) / 1000
 	createdTransactionLn.DestinationCountryId = inputTransactionLN.DestinationCountryId
 	createdTransactionLn.ShippingDate = inputTransactionLN.ShippingDate
 	createdTransactionLn.TugboatId = inputTransactionLN.TugboatId
@@ -544,6 +547,7 @@ func (r *repository) CreateTransactionLN(inputTransactionLN transaction.DataTran
 	createdTransactionLn.ContractDate = inputTransactionLN.ContractDate
 	createdTransactionLn.ContractNumber = strings.ToUpper(inputTransactionLN.ContractNumber)
 	createdTransactionLn.DmoBuyerId = inputTransactionLN.DmoBuyerId
+	createdTransactionLn.DmoDestinationPortLnName = inputTransactionLN.DmoDestinationPortLnName
 
 	createTransactionErr := tx.Create(&createdTransactionLn).Error
 
@@ -605,6 +609,8 @@ func (r *repository) UpdateTransactionLN(id int, inputTransactionLN transaction.
 	inputTransactionLN.CoaNumber = strings.ToUpper(inputTransactionLN.CoaNumber)
 	inputTransactionLN.InvoiceNumber = strings.ToUpper(inputTransactionLN.InvoiceNumber)
 	inputTransactionLN.ContractNumber = strings.ToUpper(inputTransactionLN.ContractNumber)
+	inputTransactionLN.Quantity = math.Round(inputTransactionLN.Quantity*1000) / 1000
+
 	editTransaction, errorMarshal := json.Marshal(inputTransactionLN)
 
 	if errorMarshal != nil {
@@ -698,7 +704,7 @@ func (r *repository) CreateMinerba(period string, baseIdNumber string, updateTra
 	stringTempQuantity := fmt.Sprintf("%.3f", tempQuantity)
 	parseTempQuantity, _ := strconv.ParseFloat(stringTempQuantity, 64)
 
-	createdMinerba.Quantity = parseTempQuantity
+	createdMinerba.Quantity = math.Round(parseTempQuantity*1000) / 1000
 
 	errCreateMinerba := tx.Create(&createdMinerba).Error
 
@@ -794,6 +800,8 @@ func (r *repository) UpdateMinerba(id int, updateTransaction []int, userId uint)
 	for _, v := range transactions {
 		quantityMinerba += v.Quantity
 	}
+
+	quantityMinerba = math.Round(quantityMinerba*1000) / 1000
 
 	errUpdateMinerba := tx.Model(&updatedMinerba).Update("quantity", quantityMinerba).Error
 
@@ -959,8 +967,8 @@ func (r *repository) CreateDmo(dmoInput dmo.CreateDmoInput, baseIdNumber string,
 			bargeQuantity += v.Quantity
 		}
 
-		createdDmo.BargeTotalQuantity = bargeQuantity
-		createdDmo.BargeGrandTotalQuantity = bargeQuantity
+		createdDmo.BargeTotalQuantity = math.Round(bargeQuantity*1000) / 1000
+		createdDmo.BargeGrandTotalQuantity = math.Round(bargeQuantity*1000) / 1000
 	}
 
 	if len(dmoInput.GroupingVessel) > 0 {
@@ -995,9 +1003,9 @@ func (r *repository) CreateDmo(dmoInput dmo.CreateDmoInput, baseIdNumber string,
 			vesselGrandTotalQuantity += v.GrandTotalQuantity
 		}
 
-		createdDmo.VesselAdjustment = vesselAdjustment
-		createdDmo.VesselTotalQuantity = vesselQuantity
-		createdDmo.VesselGrandTotalQuantity = vesselGrandTotalQuantity
+		createdDmo.VesselAdjustment = math.Round(vesselAdjustment*1000) / 1000
+		createdDmo.VesselTotalQuantity = math.Round(vesselQuantity*1000) / 1000
+		createdDmo.VesselGrandTotalQuantity = math.Round(vesselGrandTotalQuantity*1000) / 1000
 	}
 
 	if len(transactionBarge) != len(dmoInput.TransactionBarge) && len(groupingVessel) != len(dmoInput.GroupingVessel) {
@@ -1535,8 +1543,8 @@ func (r *repository) UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId
 			bargeQuantity += v.Quantity
 		}
 
-		updatedMap["barge_total_quantity"] = bargeQuantity
-		updatedMap["barge_grand_total_quantity"] = bargeQuantity
+		updatedMap["barge_total_quantity"] = math.Round(bargeQuantity*1000) / 1000
+		updatedMap["barge_grand_total_quantity"] = math.Round(bargeQuantity*1000) / 1000
 	}
 
 	if len(dmoUpdateInput.GroupingVessel) > 0 {
@@ -1571,9 +1579,9 @@ func (r *repository) UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId
 			vesselGrandTotalQuantity += v.GrandTotalQuantity
 		}
 
-		updatedMap["vessel_adjustment"] = vesselAdjustment
-		updatedMap["vessel_total_quantity"] = vesselQuantity
-		updatedMap["vessel_grand_total_quantity"] = vesselGrandTotalQuantity
+		updatedMap["vessel_adjustment"] = math.Round(vesselAdjustment*1000) / 1000
+		updatedMap["vessel_total_quantity"] = math.Round(vesselQuantity*1000) / 1000
+		updatedMap["vessel_grand_total_quantity"] = math.Round(vesselGrandTotalQuantity*1000) / 1000
 	}
 
 	if barge && vessel {
@@ -1707,7 +1715,7 @@ func (r *repository) CreateProduction(input production.InputCreateProduction, us
 	var createdProduction production.Production
 
 	createdProduction.ProductionDate = input.ProductionDate
-	createdProduction.Quantity = input.Quantity
+	createdProduction.Quantity = math.Round(input.Quantity*1000) / 1000
 
 	tx := r.db.Begin()
 
@@ -1751,7 +1759,7 @@ func (r *repository) UpdateProduction(input production.InputCreateProduction, pr
 
 	editData := make(map[string]interface{})
 	editData["production_date"] = input.ProductionDate
-	editData["quantity"] = input.Quantity
+	editData["quantity"] = math.Round(input.Quantity*1000) / 1000
 
 	errUpdateProduction := tx.Model(&updatedProduction).Updates(editData).Error
 
@@ -1837,9 +1845,9 @@ func (r *repository) CreateGroupingVesselDN(inputGrouping groupingvesseldn.Input
 	}
 
 	createdGroupingVesselDn.VesselId = inputGrouping.VesselId
-	createdGroupingVesselDn.Quantity = inputGrouping.Quantity
-	createdGroupingVesselDn.Adjustment = inputGrouping.Adjustment
-	createdGroupingVesselDn.GrandTotalQuantity = inputGrouping.GrandTotalQuantity
+	createdGroupingVesselDn.Quantity = math.Round(inputGrouping.Quantity*1000) / 1000
+	createdGroupingVesselDn.Adjustment = math.Round(inputGrouping.Adjustment*1000) / 1000
+	createdGroupingVesselDn.GrandTotalQuantity = math.Round(inputGrouping.GrandTotalQuantity*1000) / 1000
 	createdGroupingVesselDn.BlDate = inputGrouping.BlDate
 	createdGroupingVesselDn.IsCoaFinish = inputGrouping.IsCoaFinish
 	createdGroupingVesselDn.SalesSystem = inputGrouping.SalesSystem
@@ -2187,9 +2195,9 @@ func (r *repository) CreateGroupingVesselLN(inputGrouping groupingvesselln.Input
 	}
 
 	createdGroupingVesselLn.VesselId = inputGrouping.VesselId
-	createdGroupingVesselLn.Quantity = inputGrouping.Quantity
-	createdGroupingVesselLn.Adjustment = inputGrouping.Adjustment
-	createdGroupingVesselLn.GrandTotalQuantity = inputGrouping.GrandTotalQuantity
+	createdGroupingVesselLn.Quantity = math.Round(inputGrouping.Quantity*1000) / 1000
+	createdGroupingVesselLn.Adjustment = math.Round(inputGrouping.Adjustment*1000) / 1000
+	createdGroupingVesselLn.GrandTotalQuantity = math.Round(inputGrouping.GrandTotalQuantity*1000) / 1000
 	createdGroupingVesselLn.DocumentTypeId = inputGrouping.DocumentTypeId
 	createdGroupingVesselLn.AjuNumber = strings.ToUpper(inputGrouping.AjuNumber)
 	createdGroupingVesselLn.PebRegisterNumber = strings.ToUpper(inputGrouping.PebRegisterNumber)
@@ -2582,7 +2590,7 @@ func (r *repository) CreateMinerbaLn(period string, baseIdNumber string, listTra
 	stringTempQuantity := fmt.Sprintf("%.3f", tempQuantity)
 	parseTempQuantity, _ := strconv.ParseFloat(stringTempQuantity, 64)
 
-	createdMinerbaLn.Quantity = parseTempQuantity
+	createdMinerbaLn.Quantity = math.Round(parseTempQuantity*1000) / 1000
 
 	errCreateMinerbaLn := tx.Create(&createdMinerbaLn).Error
 
@@ -2679,6 +2687,7 @@ func (r *repository) UpdateMinerbaLn(id int, listTransactions []int, userId uint
 		quantityMinerba += v.Quantity
 	}
 
+	quantityMinerba = math.Round(quantityMinerba*1000) / 1000
 	errUpdateMinerba := tx.Model(&updatedMinerbaLn).Update("quantity", quantityMinerba).Error
 
 	if errUpdateMinerba != nil {
@@ -2997,7 +3006,7 @@ func (r *repository) CreateReportDmo(input reportdmo.InputCreateReportDmo, baseI
 			bargeQuantity += v.Quantity
 		}
 
-		createdReportDmo.Quantity = bargeQuantity
+		createdReportDmo.Quantity = math.Round(bargeQuantity*1000) / 1000
 	}
 
 	if len(input.GroupingVessels) > 0 {
@@ -3022,6 +3031,7 @@ func (r *repository) CreateReportDmo(input reportdmo.InputCreateReportDmo, baseI
 		createdReportDmo.Quantity += vesselQuantity
 	}
 
+	createdReportDmo.Quantity = math.Round(createdReportDmo.Quantity*1000) / 1000
 	if len(transactionBarge) != len(input.Transactions) && len(groupingVessel) != len(input.GroupingVessels) {
 		tx.Rollback()
 		return createdReportDmo, errors.New("please check some of transactions not found")
@@ -3264,6 +3274,7 @@ func (r *repository) UpdateTransactionReportDmo(id int, inputUpdate reportdmo.In
 		quantityReportDmo += v.GrandTotalQuantity
 	}
 
+	quantityReportDmo = math.Round(quantityReportDmo*1000) / 1000
 	errUpdReportDmo := tx.Model(&updateReportDmo).Update("quantity", quantityReportDmo).Error
 
 	if errUpdReportDmo != nil {
