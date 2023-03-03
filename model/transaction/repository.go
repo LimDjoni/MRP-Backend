@@ -335,7 +335,7 @@ func (r *repository) ListDataDNBargeWithoutVessel() ([]Transaction, error) {
 		salesSystemId = append(salesSystemId, v.ID)
 	}
 
-	errFindBarge := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_id IS NULL AND is_finance_check = ? AND sales_system_id IN ? AND grouping_vessel_dn_id is NULL", "DN", false, false, true, salesSystemId).Find(&listDataDnBargeDmo).Error
+	errFindBarge := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_id IS NULL AND sales_system_id IN ? AND grouping_vessel_dn_id is NULL", "DN", false, false, salesSystemId).Find(&listDataDnBargeDmo).Error
 
 	if errFindBarge != nil {
 		return listDataDnBargeDmo, errFindBarge
@@ -360,7 +360,7 @@ func (r *repository) ListDataDNBargeWithVessel() ([]Transaction, error) {
 		salesSystemId = append(salesSystemId, v.ID)
 	}
 
-	errFindBarge := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_id IS NOT NULL AND is_finance_check = ? AND sales_system_id IN ? AND grouping_vessel_dn_id is NULL", "DN", false, false, true, salesSystemId).Find(&listDataDnBargeDmo).Error
+	errFindBarge := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_id IS NOT NULL AND sales_system_id IN ? AND grouping_vessel_dn_id is NULL", "DN", false, false, salesSystemId).Find(&listDataDnBargeDmo).Error
 
 	if errFindBarge != nil {
 		return listDataDnBargeDmo, errFindBarge
