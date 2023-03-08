@@ -106,7 +106,7 @@ func (h *minerbaLnHandler) CreateMinerbaLn(c *fiber.Ctx) error {
 
 	splitPeriod := strings.Split(inputCreateMinerbaLn.Period, " ")
 
-	baseIdNumber := fmt.Sprintf("LSL-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
+	baseIdNumber := fmt.Sprintf("LSL-AJE-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1][len(splitPeriod[1])-2:])
 	createMinerbaLn, createMinerbaLnErr := h.historyService.CreateMinerbaLn(inputCreateMinerbaLn.Period, baseIdNumber, inputCreateMinerbaLn.ListDataLn, uint(claims["id"].(float64)))
 
 	if createMinerbaLnErr != nil {
@@ -376,7 +376,27 @@ func (h *minerbaLnHandler) DeleteMinerbaLn(c *fiber.Ctx) error {
 	}
 
 	if dataMinerbaLn.SP3MELNDocumentLink != nil {
-		fileName := fmt.Sprintf("LSL/%s/", *dataMinerbaLn.IdNumber)
+		documentLink := dataMinerbaLn.SP3MELNDocumentLink
+
+		documentLinkSplit := strings.Split(*documentLink, "/")
+
+		fileName := ""
+
+		for i, v := range documentLinkSplit {
+			if i == 3 {
+				fileName += v + "/"
+			}
+
+			if i == 4 {
+				fileName += v + "/"
+			}
+
+			if i == 5 {
+				fileName += v
+			}
+		}
+
+		fmt.Println(fileName)
 		_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
 
 		if deleteAwsErr != nil {

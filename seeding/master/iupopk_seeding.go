@@ -28,6 +28,18 @@ func SeedingIupopk(db *gorm.DB) {
 			FaxNumber:    "",
 			DirectorName: "Richard NM Palar",
 			Position:     "Direktur",
+			Code:         "AJE",
+		},
+		iupopk.Iupopk{
+			Name:         "PT Tantra Mining Development",
+			Address:      "Jalan R. Soeprapto, No. 25, Banjarmasin, Kalimantan Selatan",
+			Province:     "Kalimantan Selatan",
+			Email:        "traffic.operationtmd@gmail.com",
+			PhoneNumber:  "",
+			FaxNumber:    "",
+			DirectorName: "Yansen Andriyan",
+			Position:     "Direktur",
+			Code:         "TMD",
 		},
 	)
 

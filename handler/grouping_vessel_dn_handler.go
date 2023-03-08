@@ -278,7 +278,7 @@ func (h *groupingVesselDnHandler) UploadDocumentGroupingVesselDn(c *fiber.Ctx) e
 		})
 	}
 
-	fileName := fmt.Sprintf("GMD/%v/%v_%s.pdf", *detailGroupingVesselDn.Detail.IdNumber, *detailGroupingVesselDn.Detail.IdNumber, documentType)
+	fileName := fmt.Sprintf("AJE/GMD/%v/%v_%s.pdf", *detailGroupingVesselDn.Detail.IdNumber, *detailGroupingVesselDn.Detail.IdNumber, documentType)
 
 	up, uploadErr := awshelper.UploadDocument(file, fileName)
 
@@ -458,7 +458,7 @@ func (h *groupingVesselDnHandler) DeleteGroupingVesselDn(c *fiber.Ctx) error {
 
 	if detailGroupingVesselDn.Detail.CoaCowDocumentLink != nil ||
 		detailGroupingVesselDn.Detail.BlMvDocumentLink != nil {
-		fileName := fmt.Sprintf("GMD/%s/", *detailGroupingVesselDn.Detail.IdNumber)
+		fileName := fmt.Sprintf("AJE/GMD/%s/", *detailGroupingVesselDn.Detail.IdNumber)
 		_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
 
 		if deleteAwsErr != nil {

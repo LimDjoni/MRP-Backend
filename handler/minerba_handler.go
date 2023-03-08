@@ -166,7 +166,7 @@ func (h *minerbaHandler) CreateMinerba(c *fiber.Ctx) error {
 
 	splitPeriod := strings.Split(inputCreateMinerba.Period, " ")
 
-	baseIdNumber := fmt.Sprintf("LSD-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
+	baseIdNumber := fmt.Sprintf("LSD-AJE-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1][len(splitPeriod[1])-2:])
 	createMinerba, createMinerbaErr := h.historyService.CreateMinerba(inputCreateMinerba.Period, baseIdNumber, inputCreateMinerba.ListDataDn, uint(claims["id"].(float64)))
 
 	if createMinerbaErr != nil {
@@ -443,6 +443,10 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 			}
 
 			if i == 4 {
+				fileName += v + "/"
+			}
+
+			if i == 5 {
 				fileName += v
 			}
 		}

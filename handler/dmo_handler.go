@@ -266,7 +266,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 
 	splitPeriod := strings.Split(inputCreateDmo.Period, " ")
 
-	baseIdNumber := fmt.Sprintf("LBU-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
+	baseIdNumber := fmt.Sprintf("LBU-AJE-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1][len(splitPeriod[1])-2:])
 	createDmo, createDmoErr := h.historyService.CreateDmo(*inputCreateDmo, baseIdNumber, uint(claims["id"].(float64)))
 
 	if createDmoErr != nil {
@@ -839,8 +839,11 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 			if i == 3 {
 				fileName += v + "/"
 			}
-
 			if i == 4 {
+				fileName += v + "/"
+			}
+
+			if i == 5 {
 				fileName += v
 			}
 		}
@@ -1281,7 +1284,7 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 	var fileName string
 
 	idNumber := *dataDmo.IdNumber
-	fileName = "LBU/"
+	fileName = "AJE/LBU/"
 	fileName += idNumber
 
 	file, errFormFile := c.FormFile("document")
@@ -1488,8 +1491,11 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 
 	var fileName string
 
-	fileName = *dataDmo.IdNumber
-
+	fileName = "AJE/LBU/"
+	fileName += *dataDmo.IdNumber
+	fileName += "/"
+	fileName += *dataDmo.IdNumber
+	fileName += "_"
 	typeDocument := c.Params("type")
 
 	if typeDocument != "bast" && typeDocument != "statement_letter" && typeDocument != "reconciliation_letter" && typeDocument != "reconciliation_letter_end_user" {
@@ -1519,22 +1525,22 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 
 	if typeDocument == "bast" {
 		isBast = true
-		fileName += "/signed_bast.pdf"
+		fileName += "signed_bast.pdf"
 	}
 
 	if typeDocument == "statement_letter" {
 		isStatementLetter = true
-		fileName += "/signed_surat_pernyataan.pdf"
+		fileName += "signed_surat_pernyataan.pdf"
 	}
 
 	if typeDocument == "reconciliation_letter" {
 		isReconciliationLetter = true
-		fileName += "/signed_berita_acara.pdf"
+		fileName += "signed_berita_acara.pdf"
 	}
 
 	if typeDocument == "reconciliation_letter_end_user" {
 		isReconciliationLetterEndUser = true
-		fileName += "/signed_berita_acara_pengguna_akhir.pdf"
+		fileName += "signed_berita_acara_pengguna_akhir.pdf"
 	}
 
 	deleteUpload, deleteUploadErr := awshelper.DeleteDocument(fileName)

@@ -5,7 +5,7 @@ import "strconv"
 func CreateIdNumber(number int) string {
 	numberString := strconv.Itoa(number)
 
-	lengthNumberNeededMinimum := 4
+	lengthNumberNeededMinimum := 2
 
 	nowLength := len(numberString)
 
