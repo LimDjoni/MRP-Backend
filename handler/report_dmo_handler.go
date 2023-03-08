@@ -99,7 +99,7 @@ func (h *reportDmoHandler) CreateReportDmo(c *fiber.Ctx) error {
 
 	splitPeriod := strings.Split(inputCreateReportDmo.Period, " ")
 
-	baseIdNumber := fmt.Sprintf("LDO-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
+	baseIdNumber := fmt.Sprintf("LDO-AJE-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1][len(splitPeriod[1])-2:])
 
 	createReportDmo, createReportDmoErr := h.historyService.CreateReportDmo(*inputCreateReportDmo, baseIdNumber, uint(claims["id"].(float64)))
 
@@ -299,7 +299,7 @@ func (h *reportDmoHandler) RequestCreateExcelReportDmo(c *fiber.Ctx) error {
 		if detailReportDmoErr.Error() == "record not found" {
 			status = 404
 		}
-		fmt.Println(detailReportDmoErr)
+
 		return c.Status(status).JSON(fiber.Map{
 
 			"error": detailReportDmoErr.Error(),
@@ -533,7 +533,7 @@ func (h *reportDmoHandler) DeleteReportDmo(c *fiber.Ctx) error {
 
 	if detailReportDmo.Detail.RecapDmoDocumentLink != nil || detailReportDmo.Detail.DetailDmoDocumentLink != nil {
 
-		fileName := fmt.Sprintf("LDO/%s/", *detailReportDmo.Detail.IdNumber)
+		fileName := fmt.Sprintf("AJE/LDO/%s/", *detailReportDmo.Detail.IdNumber)
 
 		_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
 

@@ -14,4 +14,5 @@ type Iupopk struct {
 	FaxNumber    string `json:"fax_number" gorm:"UNIQUE"`
 	DirectorName string `json:"director_name"`
 	Position     string `json:"position"`
+	Code         string `json:"code"`
 }

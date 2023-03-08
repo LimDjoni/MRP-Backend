@@ -90,7 +90,7 @@ func createIdNumber(model string, id uint) string {
 		monthNumber = "0" + monthNumber
 	}
 
-	idNumber := fmt.Sprintf("%s-%v-%v-%v", model, monthNumber, year, helper.CreateIdNumber(int(id)))
+	idNumber := fmt.Sprintf("%s-%v-%v-%v", model, monthNumber, year%1e2, helper.CreateIdNumber(int(id)))
 
 	return idNumber
 }
@@ -205,7 +205,7 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 		return createdTransaction, createTransactionErr
 	}
 
-	idNumber := createIdNumber("TDN", createdTransaction.ID)
+	idNumber := createIdNumber("TDN-AJE", createdTransaction.ID)
 
 	updateTransactionsErr := tx.Model(&createdTransaction).Update("id_number", idNumber).Error
 
@@ -556,7 +556,7 @@ func (r *repository) CreateTransactionLN(inputTransactionLN transaction.DataTran
 		return createdTransactionLn, createTransactionErr
 	}
 
-	idNumber := createIdNumber("TLN", createdTransactionLn.ID)
+	idNumber := createIdNumber("TLN-AJE", createdTransactionLn.ID)
 
 	updateTransactionsErr := tx.Model(&createdTransactionLn).Update("id_number", idNumber).Error
 
@@ -1896,7 +1896,7 @@ func (r *repository) CreateGroupingVesselDN(inputGrouping groupingvesseldn.Input
 		return createdGroupingVesselDn, errCreatedGroupingVesselDn
 	}
 
-	idNumber := createIdNumber("GMD", createdGroupingVesselDn.ID)
+	idNumber := createIdNumber("GMD-AJE", createdGroupingVesselDn.ID)
 
 	updatedGroupingVesselDnErr := tx.Model(&createdGroupingVesselDn).Update("id_number", idNumber).Error
 
@@ -2255,7 +2255,7 @@ func (r *repository) CreateGroupingVesselLN(inputGrouping groupingvesselln.Input
 		return createdGroupingVesselLn, errCreatedGroupingVesselLn
 	}
 
-	idNumber := createIdNumber("GML", createdGroupingVesselLn.ID)
+	idNumber := createIdNumber("GML-AJE", createdGroupingVesselLn.ID)
 
 	updatedGroupingVesselLnErr := tx.Model(&createdGroupingVesselLn).Update("id_number", idNumber).Error
 

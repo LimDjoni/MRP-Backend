@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -98,7 +99,7 @@ func (h *inswHandler) CreateInsw(c *fiber.Ctx) error {
 		})
 	}
 
-	baseIdNumber := fmt.Sprintf("INSW-%s-%v", helper.MonthLongToNumberString(inputCreateInsw.Month), inputCreateInsw.Year)
+	baseIdNumber := fmt.Sprintf("LIW-AJE-%s-%v", helper.MonthLongToNumberString(inputCreateInsw.Month), inputCreateInsw.Year%1e2)
 	createInsw, createInswErr := h.historyService.CreateInsw(inputCreateInsw.Month, inputCreateInsw.Year, baseIdNumber, uint(claims["id"].(float64)))
 
 	if createInswErr != nil {
@@ -278,11 +279,23 @@ func (h *inswHandler) DeleteInsw(c *fiber.Ctx) error {
 	}
 
 	if detailInsw.Detail.InswDocumentLink != "" {
+		documentLinkSplit := strings.Split(detailInsw.Detail.InswDocumentLink, "/")
 
-	}
+		fileName := ""
+		for i, v := range documentLinkSplit {
+			if i == 3 {
+				fileName += v + "/"
+			}
 
-	if detailInsw.Detail.InswDocumentLink != "" {
-		fileName := fmt.Sprintf("LIW/%s/", *detailInsw.Detail.IdNumber)
+			if i == 4 {
+				fileName += v + "/"
+			}
+
+			if i == 5 {
+				fileName += v
+			}
+		}
+
 		_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
 
 		if deleteAwsErr != nil {

@@ -340,6 +340,10 @@ func (h *transactionHandler) DeleteTransaction(c *fiber.Ctx) error {
 			}
 
 			if i == 4 {
+				fileName += v + "/"
+			}
+
+			if i == 5 {
 				fileName += v
 			}
 		}
@@ -520,7 +524,7 @@ func (h *transactionHandler) UpdateDocumentTransaction(c *fiber.Ctx) error {
 		})
 	}
 
-	fileName := fmt.Sprintf("%s/%v/%v_%s.pdf", typeTransaction, *detailTransaction.IdNumber, *detailTransaction.IdNumber, documentType)
+	fileName := fmt.Sprintf("AJE/T%s/%v/%v_%s.pdf", typeTransaction, *detailTransaction.IdNumber, *detailTransaction.IdNumber, documentType)
 
 	up, uploadErr := awshelper.UploadDocument(file, fileName)
 
