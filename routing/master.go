@@ -3,6 +3,7 @@ package routing
 import (
 	"ajebackend/handler"
 	"ajebackend/helper"
+	"ajebackend/model/counter"
 	"ajebackend/model/master/allmaster"
 	"ajebackend/model/master/destination"
 	"ajebackend/model/user"
@@ -23,7 +24,10 @@ func MasterRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) 
 	allMasterRepository := allmaster.NewRepository(db)
 	allMasterService := allmaster.NewService(allMasterRepository)
 
-	masterHandler := handler.NewMasterHandler(destinationService, userService, allMasterService)
+	counterRepository := counter.NewRepository(db)
+	counterService := counter.NewService(counterRepository)
+
+	masterHandler := handler.NewMasterHandler(destinationService, userService, allMasterService, counterService, validate)
 
 	masterRouting := app.Group("/master")
 
@@ -39,4 +43,7 @@ func MasterRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) 
 	}))
 
 	masterRouting.Get("/global", masterHandler.GetListMaster)
+
+	masterRouting.Post("/create/iupopk", masterHandler.CreateIupopk)
+	masterRouting.Put("/update/counter", masterHandler.UpdateCounter)
 }

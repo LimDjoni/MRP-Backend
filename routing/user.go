@@ -4,6 +4,7 @@ import (
 	"ajebackend/handler"
 	"ajebackend/helper"
 	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -14,7 +15,11 @@ import (
 func UserRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	userRepository := user.NewRepository(db)
 	userService := user.NewService(userRepository)
-	userHandler := handler.NewUserHandler(userService, validate)
+
+	userIupopkRepository := useriupopk.NewRepository(db)
+	userIupopkService := useriupopk.NewService(userIupopkRepository)
+
+	userHandler := handler.NewUserHandler(userService, userIupopkService, validate)
 
 	userRouting := app.Group("/user") // /api
 
@@ -35,4 +40,20 @@ func UserRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	}))
 
 	userValidateRouting.Get("/", userHandler.Validate)
+
+	userIupopkRouting := app.Group("/user")
+
+	userIupopkRouting.Use(jwtware.New(jwtware.Config{
+		SigningKey:    []byte(helper.GetEnvWithKey("JWT_SECRET_KEY")),
+		SigningMethod: jwtware.HS256,
+		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
+			return ctx.Status(401).JSON(fiber.Map{
+				"error": "unauthorized",
+				"err":   err.Error(),
+			})
+		},
+	}))
+
+	userIupopkRouting.Post("/create/iupopk/:iupopk_id", userHandler.CreateUserIupopk)
+	userIupopkRouting.Delete("/delete/iupopk/:iupopk_id", userHandler.DeleteUserIupopk)
 }
