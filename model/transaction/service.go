@@ -13,8 +13,8 @@ import (
 )
 
 type Service interface {
-	ListData(page int, sortFilter SortAndFilter, transactionType string) (Pagination, error)
-	DetailTransaction(id int, transactionType string) (Transaction, error)
+	ListData(page int, sortFilter SortAndFilter, transactionType string, iupopId int) (Pagination, error)
+	DetailTransaction(id int, transactionType string, iupopId int) (Transaction, error)
 	CheckDataUnique(inputTrans DataTransactionInput) (bool, bool, bool, bool)
 	ListDataDNWithoutMinerba() ([]Transaction, error)
 	CheckDataDnAndMinerba(listData []int) (bool, error)
@@ -53,14 +53,14 @@ func NewService(repository Repository) *service {
 	return &service{repository}
 }
 
-func (s *service) ListData(page int, sortFilter SortAndFilter, transactionType string) (Pagination, error) {
-	listDN, listDNErr := s.repository.ListData(page, sortFilter, transactionType)
+func (s *service) ListData(page int, sortFilter SortAndFilter, transactionType string, iupopId int) (Pagination, error) {
+	listDN, listDNErr := s.repository.ListData(page, sortFilter, transactionType, iupopId)
 
 	return listDN, listDNErr
 }
 
-func (s *service) DetailTransaction(id int, transactionType string) (Transaction, error) {
-	detailTransactionDN, detailTransactionDNErr := s.repository.DetailTransaction(id, transactionType)
+func (s *service) DetailTransaction(id int, transactionType string, iupopId int) (Transaction, error) {
+	detailTransactionDN, detailTransactionDNErr := s.repository.DetailTransaction(id, transactionType, iupopId)
 
 	return detailTransactionDN, detailTransactionDNErr
 }

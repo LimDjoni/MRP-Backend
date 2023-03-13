@@ -56,6 +56,16 @@ func (h *transactionHandler) CreateTransactionDN(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
 	transactionInput := new(transaction.DataTransactionInput)
 
 	// Binds the request body to the Person struct
@@ -116,7 +126,7 @@ func (h *transactionHandler) CreateTransactionDN(c *fiber.Ctx) error {
 		})
 	}
 
-	createdTransaction, createdTransactionErr := h.historyService.CreateTransactionDN(*transactionInput, uint(claims["id"].(float64)))
+	createdTransaction, createdTransactionErr := h.historyService.CreateTransactionDN(*transactionInput, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createdTransactionErr != nil {
 		inputJson, _ := json.Marshal(transactionInput)
@@ -168,6 +178,15 @@ func (h *transactionHandler) ListData(c *fiber.Ctx) error {
 	sortAndFilter.ShippingEnd = c.Query("shipping_end")
 	sortAndFilter.VerificationFilter = c.Query("verification_filter")
 
+	iupopId := c.Params("iupopk_id")
+
+	intIupopId, iupopErr := strconv.Atoi(iupopId)
+
+	if iupopErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": iupopErr.Error(),
+		})
+	}
 	pageNumber, err := strconv.Atoi(page)
 
 	if err != nil && page != "" {
@@ -180,7 +199,7 @@ func (h *transactionHandler) ListData(c *fiber.Ctx) error {
 	}
 
 	typeTransaction := strings.ToUpper(c.Params("transaction_type"))
-	listDN, listDNErr := h.transactionService.ListData(pageNumber, sortAndFilter, typeTransaction)
+	listDN, listDNErr := h.transactionService.ListData(pageNumber, sortAndFilter, typeTransaction, intIupopId)
 
 	if listDNErr != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -209,16 +228,18 @@ func (h *transactionHandler) DetailTransaction(c *fiber.Ctx) error {
 	}
 
 	id := c.Params("id")
+	iupopId := c.Params("iupopk_id")
 	typeTransaction := strings.ToUpper(c.Params("transaction_type"))
 	idInt, err := strconv.Atoi(id)
+	iupopIdInt, iupopErr := strconv.Atoi(iupopId)
 
-	if err != nil {
+	if err != nil || iupopErr != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"error": "record not found",
 		})
 	}
 
-	detailTransactionDN, detailTransactionDNErr := h.transactionService.DetailTransaction(idInt, typeTransaction)
+	detailTransactionDN, detailTransactionDNErr := h.transactionService.DetailTransaction(idInt, typeTransaction, iupopIdInt)
 
 	if detailTransactionDNErr != nil {
 		return c.Status(404).JSON(fiber.Map{
@@ -247,16 +268,19 @@ func (h *transactionHandler) DeleteTransaction(c *fiber.Ctx) error {
 	}
 
 	id := c.Params("id")
+	iupopId := c.Params("iupopk_id")
+
 	typeTransaction := strings.ToUpper(c.Params("transaction_type"))
 	idInt, err := strconv.Atoi(id)
+	iupopIdInt, iupopErr := strconv.Atoi(iupopId)
 
-	if err != nil {
+	if err != nil || iupopErr != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"error": "record not found",
 		})
 	}
 
-	findTransaction, findTransactionErr := h.transactionService.DetailTransaction(idInt, typeTransaction)
+	findTransaction, findTransactionErr := h.transactionService.DetailTransaction(idInt, typeTransaction, iupopIdInt)
 
 	if findTransactionErr != nil {
 		return c.Status(404).JSON(fiber.Map{
@@ -270,7 +294,7 @@ func (h *transactionHandler) DeleteTransaction(c *fiber.Ctx) error {
 		})
 	}
 
-	_, deleteTransactionErr := h.historyService.DeleteTransaction(idInt, uint(claims["id"].(float64)), typeTransaction)
+	_, deleteTransactionErr := h.historyService.DeleteTransaction(idInt, uint(claims["id"].(float64)), typeTransaction, iupopIdInt)
 
 	if deleteTransactionErr != nil {
 		inputMap := make(map[string]interface{})
@@ -506,16 +530,19 @@ func (h *transactionHandler) UpdateDocumentTransaction(c *fiber.Ctx) error {
 		})
 	}
 
-	idInt, err := strconv.Atoi(id)
+	iupopId := c.Params("iupopk_id")
 
-	if err != nil {
+	idInt, err := strconv.Atoi(id)
+	iupopIdInt, iupopErr := strconv.Atoi(iupopId)
+
+	if err != nil || iupopErr != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"error": "record not found",
 		})
 	}
 
 	typeTransaction := strings.ToUpper(c.Params("transaction_type"))
-	detailTransaction, detailTransactionErr := h.transactionService.DetailTransaction(idInt, typeTransaction)
+	detailTransaction, detailTransactionErr := h.transactionService.DetailTransaction(idInt, typeTransaction, iupopIdInt)
 
 	if detailTransactionErr != nil {
 		return c.Status(404).JSON(fiber.Map{

@@ -89,16 +89,6 @@ func (h *masterHandler) GetListMaster(c *fiber.Ctx) error {
 }
 
 func (h *masterHandler) UpdateCounter(c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	responseUnauthorized := map[string]interface{}{
-		"error": "unauthorized",
-	}
-
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
-		return c.Status(401).JSON(responseUnauthorized)
-	}
-
 	updateCounterErr := h.counterService.UpdateCounter()
 
 	if updateCounterErr != nil {
@@ -113,22 +103,6 @@ func (h *masterHandler) UpdateCounter(c *fiber.Ctx) error {
 }
 
 func (h *masterHandler) CreateIupopk(c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	responseUnauthorized := map[string]interface{}{
-		"error": "unauthorized",
-	}
-
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
-		return c.Status(401).JSON(responseUnauthorized)
-	}
-
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
-
-	if checkUserErr != nil || checkUser.IsActive == false {
-		return c.Status(401).JSON(responseUnauthorized)
-	}
-
 	iupopkInput := new(iupopk.InputIupopk)
 
 	// Binds the request body to the Person struct

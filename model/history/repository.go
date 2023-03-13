@@ -2,6 +2,7 @@ package history
 
 import (
 	"ajebackend/helper"
+	"ajebackend/model/counter"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
 	"ajebackend/model/groupingvesseldn"
@@ -32,8 +33,8 @@ import (
 )
 
 type Repository interface {
-	CreateTransactionDN(inputTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
-	DeleteTransaction(id int, userId uint, transactionType string) (bool, error)
+	CreateTransactionDN(inputTransactionDN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error)
+	DeleteTransaction(id int, userId uint, transactionType string, iupopId int) (bool, error)
 	UpdateTransactionDN(idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
 	UploadDocumentTransaction(idTransaction uint, urlS3 string, userId uint, documentType string, transactionType string) (transaction.Transaction, error)
 	CreateTransactionLN(inputTransactionLN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
@@ -97,19 +98,10 @@ func createIdNumber(model string, id uint) string {
 
 // Transaction
 
-func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error) {
+func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error) {
 	var createdTransaction transaction.Transaction
 
 	tx := r.db.Begin()
-
-	var iup iupopk.Iupopk
-
-	iupErr := tx.Where("name = ? ", "PT Angsana Jaya Energi").First(&iup).Error
-
-	if iupErr != nil {
-		tx.Rollback()
-		return createdTransaction, iupErr
-	}
 
 	var curr currency.Currency
 
@@ -118,6 +110,15 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 	if currencyErr != nil {
 		tx.Rollback()
 		return createdTransaction, currencyErr
+	}
+
+	var iup iupopk.Iupopk
+
+	findIupErr := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if findIupErr != nil {
+		tx.Rollback()
+		return createdTransaction, findIupErr
 	}
 
 	createdTransaction.DmoId = nil
@@ -205,7 +206,20 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 		return createdTransaction, createTransactionErr
 	}
 
-	idNumber := createIdNumber("TDN-AJE", createdTransaction.ID)
+	var counterTransaction counter.Counter
+
+	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).Find(&counterTransaction).Error
+
+	if findCounterTransactionErr != nil {
+		tx.Rollback()
+		return createdTransaction, findCounterTransactionErr
+	}
+
+	code := "TDN"
+
+	code += iup.Code
+
+	idNumber := createIdNumber(code, uint(counterTransaction.TransactionDn))
 
 	updateTransactionsErr := tx.Model(&createdTransaction).Update("id_number", idNumber).Error
 
@@ -227,22 +241,29 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 		return createdTransaction, createHistoryErr
 	}
 
+	updateCounterErr := tx.Model(&counterTransaction).Update("transaction_dn", counterTransaction.TransactionDn+1).Error
+
+	if updateCounterErr != nil {
+		tx.Rollback()
+		return createdTransaction, updateCounterErr
+	}
+
 	tx.Commit()
 	return createdTransaction, createHistoryErr
 }
 
-func (r *repository) DeleteTransaction(id int, userId uint, transactionType string) (bool, error) {
+func (r *repository) DeleteTransaction(id int, userId uint, transactionType string, iupopId int) (bool, error) {
 	var transaction transaction.Transaction
 
 	tx := r.db.Begin()
 
-	errFind := tx.Where("id = ? AND transaction_type = ?", id, transactionType).First(&transaction).Error
+	errFind := tx.Where("id = ? AND transaction_type = ? AND seller_id = ?", id, transactionType, iupopId).First(&transaction).Error
 
 	if errFind != nil {
 		return false, errFind
 	}
 
-	errDelete := tx.Unscoped().Where("id = ? AND transaction_type = ?", id, transactionType).Delete(&transaction).Error
+	errDelete := tx.Unscoped().Where("id = ? AND transaction_type = ? AND seller_id = ?", id, transactionType, iupopId).Delete(&transaction).Error
 
 	if errDelete != nil {
 		tx.Rollback()
@@ -251,7 +272,7 @@ func (r *repository) DeleteTransaction(id int, userId uint, transactionType stri
 
 	var history History
 
-	history.Status = fmt.Sprintf("Deleted Transaction %v with id number %s and id %v", transactionType, *transaction.IdNumber, transaction.ID)
+	history.Status = fmt.Sprintf("Deleted Transaction %v with id number %s and id %v and iupop %v", transactionType, *transaction.IdNumber, transaction.ID, iupopId)
 	history.UserId = userId
 
 	createHistoryErr := tx.Create(&history).Error

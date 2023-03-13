@@ -13,8 +13,8 @@ import (
 )
 
 type Service interface {
-	CreateTransactionDN(inputTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
-	DeleteTransaction(id int, userId uint, transactionType string) (bool, error)
+	CreateTransactionDN(inputTransactionDN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error)
+	DeleteTransaction(id int, userId uint, transactionType string, iupopId int) (bool, error)
 	UpdateTransactionDN(idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
 	UploadDocumentTransaction(idTransaction uint, urlS3 string, userId uint, documentType string, transactionType string) (transaction.Transaction, error)
 	CreateTransactionLN(inputTransactionLN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
@@ -62,14 +62,14 @@ func NewService(repository Repository) *service {
 	return &service{repository}
 }
 
-func (s *service) CreateTransactionDN(inputTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error) {
-	transaction, transactionErr := s.repository.CreateTransactionDN(inputTransactionDN, userId)
+func (s *service) CreateTransactionDN(inputTransactionDN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error) {
+	transaction, transactionErr := s.repository.CreateTransactionDN(inputTransactionDN, userId, iupopkId)
 
 	return transaction, transactionErr
 }
 
-func (s *service) DeleteTransaction(id int, userId uint, transactionType string) (bool, error) {
-	isDeletedTransaction, isDeletedTransactionErr := s.repository.DeleteTransaction(id, userId, transactionType)
+func (s *service) DeleteTransaction(id int, userId uint, transactionType string, iupopId int) (bool, error) {
+	isDeletedTransaction, isDeletedTransactionErr := s.repository.DeleteTransaction(id, userId, transactionType, iupopId)
 
 	return isDeletedTransaction, isDeletedTransactionErr
 }

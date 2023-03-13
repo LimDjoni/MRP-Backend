@@ -103,28 +103,21 @@ func (h *userHandler) Validate(c *fiber.Ctx) error {
 }
 
 func (h *userHandler) CreateUserIupopk(c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwt.Token)
+	iupopkId := c.Params("iupopk_id")
 
-	claims := user.Claims.(jwt.MapClaims)
-	responseUnauthorized := map[string]interface{}{
-		"error": "unauthorized",
-	}
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
-		return c.Status(401).JSON(responseUnauthorized)
-	}
+	userId := c.Params("user_id")
 
-	id := c.Params("iupopk_id")
+	userIdInt, userErr := strconv.Atoi(userId)
 
-	idInt, err := strconv.Atoi(id)
-
-	if err != nil {
+	if err != nil || userErr != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"error": "record not found",
 		})
 	}
 
-	createUserIupopk, createUserIupopkErr := h.userIupopkService.CreateUserIupopk(int(claims["id"].(float64)), idInt)
+	createUserIupopk, createUserIupopkErr := h.userIupopkService.CreateUserIupopk(userIdInt, iupopkIdInt)
 
 	status := 400
 	if createUserIupopkErr != nil {
@@ -142,28 +135,20 @@ func (h *userHandler) CreateUserIupopk(c *fiber.Ctx) error {
 }
 
 func (h *userHandler) DeleteUserIupopk(c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwt.Token)
+	iupopkId := c.Params("iupopk_id")
 
-	claims := user.Claims.(jwt.MapClaims)
-	responseUnauthorized := map[string]interface{}{
-		"error": "unauthorized",
-	}
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
-		return c.Status(401).JSON(responseUnauthorized)
-	}
+	userId := c.Params("user_id")
 
-	id := c.Params("iupopk_id")
+	userIdInt, userErr := strconv.Atoi(userId)
 
-	idInt, err := strconv.Atoi(id)
-
-	if err != nil {
+	if err != nil || userErr != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"error": "record not found",
 		})
 	}
-
-	deleteUserIupopkErr := h.userIupopkService.DeleteUserIupopk(int(claims["id"].(float64)), idInt)
+	deleteUserIupopkErr := h.userIupopkService.DeleteUserIupopk(userIdInt, iupopkIdInt)
 
 	status := 400
 	if deleteUserIupopkErr != nil {

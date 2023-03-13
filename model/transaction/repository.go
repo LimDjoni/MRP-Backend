@@ -32,8 +32,8 @@ func helperString(listString []string, dataString string) bool {
 }
 
 type Repository interface {
-	ListData(page int, sortFilter SortAndFilter, transactionType string) (Pagination, error)
-	DetailTransaction(id int, transactionType string) (Transaction, error)
+	ListData(page int, sortFilter SortAndFilter, transactionType string, iupopId int) (Pagination, error)
+	DetailTransaction(id int, transactionType string, iupopId int) (Transaction, error)
 	ListDataDNWithoutMinerba() ([]Transaction, error)
 	CheckDataDnAndMinerba(listData []int) (bool, error)
 	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) ([]Transaction, error)
@@ -69,7 +69,7 @@ func NewRepository(db *gorm.DB) *repository {
 
 // Transaction
 
-func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionType string) (Pagination, error) {
+func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionType string, iupopId int) (Pagination, error) {
 	var transactions []Transaction
 	var pagination Pagination
 	pagination.Limit = 7
@@ -106,7 +106,7 @@ func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionTyp
 		}
 	}
 
-	queryFilter := fmt.Sprintf("transaction_type = '%s' ", strings.ToUpper(transactionType))
+	queryFilter := fmt.Sprintf("transaction_type = '%s' AND seller_id = %v", strings.ToUpper(transactionType), iupopId)
 
 	if sortFilter.TugboatId != "" {
 		queryFilter = queryFilter + " AND tugboat_id = " + sortFilter.TugboatId
@@ -165,10 +165,10 @@ func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionTyp
 	return pagination, nil
 }
 
-func (r *repository) DetailTransaction(id int, transactionType string) (Transaction, error) {
+func (r *repository) DetailTransaction(id int, transactionType string, iupopId int) (Transaction, error) {
 	var transaction Transaction
 
-	errFind := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("id = ? AND transaction_type = ?", id, transactionType).First(&transaction).Error
+	errFind := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("id = ? AND transaction_type = ? AND seller_id = ?", id, transactionType, iupopId).First(&transaction).Error
 
 	return transaction, errFind
 }

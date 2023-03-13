@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/basicauth"
 	jwtware "github.com/gofiber/jwt/v3"
 	"gorm.io/gorm"
 )
@@ -44,6 +45,14 @@ func MasterRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) 
 
 	masterRouting.Get("/global", masterHandler.GetListMaster)
 
-	masterRouting.Post("/create/iupopk", masterHandler.CreateIupopk)
-	masterRouting.Put("/update/counter", masterHandler.UpdateCounter)
+	basicRouting := app.Group("/basic")
+
+	basicRouting.Use(basicauth.New(basicauth.Config{
+		Users: map[string]string{
+			helper.GetEnvWithKey("USERNAME_BASIC"): helper.GetEnvWithKey("PASSWORD_BASIC"),
+		},
+	}))
+
+	basicRouting.Post("/create/iupopk", masterHandler.CreateIupopk)
+	basicRouting.Put("/update/counter", masterHandler.UpdateCounter)
 }

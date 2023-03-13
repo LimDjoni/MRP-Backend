@@ -46,14 +46,14 @@ func TransactionRouting(db *gorm.DB, app fiber.Router, validate *validator.Valid
 		},
 	}))
 
-	transactionRouting.Post("/create/dn", transactionHandler.CreateTransactionDN)
-	transactionRouting.Post("/create/ln", transactionHandler.CreateTransactionLN)
+	transactionRouting.Post("/create/dn/:iupopk_id", transactionHandler.CreateTransactionDN)
+	transactionRouting.Post("/create/ln/:iupopk_id", transactionHandler.CreateTransactionLN)
 
-	transactionRouting.Put("/update/dn/:id", transactionHandler.UpdateTransactionDN)
-	transactionRouting.Put("/update/ln/:id", transactionHandler.UpdateTransactionLN)
+	transactionRouting.Put("/update/dn/:id/:iupopk_id", transactionHandler.UpdateTransactionDN)
+	transactionRouting.Put("/update/ln/:id/:iupopk_id", transactionHandler.UpdateTransactionLN)
 
-	transactionRouting.Get("/list/:transaction_type", transactionHandler.ListData)
-	transactionRouting.Get("/detail/:transaction_type/:id", transactionHandler.DetailTransaction)
-	transactionRouting.Delete("/delete/:transaction_type/:id", transactionHandler.DeleteTransaction)
-	transactionRouting.Put("/update/document/:transaction_type/:id/:type", transactionHandler.UpdateDocumentTransaction)
+	transactionRouting.Get("/list/:transaction_type/:iupopk_id", transactionHandler.ListData)
+	transactionRouting.Get("/detail/:transaction_type/:id/:iupopk_id", transactionHandler.DetailTransaction)
+	transactionRouting.Delete("/delete/:transaction_type/:id/:iupopk_id", transactionHandler.DeleteTransaction)
+	transactionRouting.Put("/update/document/:transaction_type/:id/:type/:iupopk_id", transactionHandler.UpdateDocumentTransaction)
 }
