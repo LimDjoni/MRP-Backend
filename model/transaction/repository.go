@@ -307,7 +307,7 @@ func (r *repository) GetDetailMinerba(id int, iupopkId int) (DetailMinerba, erro
 
 	detailMinerba.Detail = minerba
 
-	transactionFindErr := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("minerba_id = ? AND iupopk_id = ?", id, iupopkId).Find(&transactions).Error
+	transactionFindErr := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("minerba_id = ? AND seller_id = ?", id, iupopkId).Find(&transactions).Error
 
 	if transactionFindErr != nil {
 		return detailMinerba, transactionFindErr

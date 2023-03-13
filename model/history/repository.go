@@ -766,10 +766,19 @@ func (r *repository) CreateMinerba(period string, updateTransaction []int, userI
 		return createdMinerba, errCreateMinerba
 	}
 
+	var counterTransaction counter.Counter
+
+	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).Find(&counterTransaction).Error
+
+	if findCounterTransactionErr != nil {
+		tx.Rollback()
+		return createdMinerba, findCounterTransactionErr
+	}
+
 	periodSplit := strings.Split(period, " ")
 
 	idNumber := fmt.Sprintf("LSD-%s-%s-%s-", iup.Code, helper.MonthStringToNumberString(periodSplit[0]), periodSplit[1][len(periodSplit[1])-2:])
-	idNumber += helper.CreateIdNumber(int(createdMinerba.ID))
+	idNumber += helper.CreateIdNumber(counterTransaction.Sp3medn)
 
 	updateMinerbaErr := tx.Model(&createdMinerba).Update("id_number", idNumber).Error
 
@@ -796,6 +805,13 @@ func (r *repository) CreateMinerba(period string, updateTransaction []int, userI
 	if createHistoryErr != nil {
 		tx.Rollback()
 		return createdMinerba, createHistoryErr
+	}
+
+	updateCounterErr := tx.Model(&counterTransaction).Update("sp3medn", counterTransaction.Sp3medn+1).Error
+
+	if updateCounterErr != nil {
+		tx.Rollback()
+		return createdMinerba, updateCounterErr
 	}
 
 	tx.Commit()
