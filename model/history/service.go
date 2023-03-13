@@ -14,12 +14,12 @@ import (
 
 type Service interface {
 	CreateTransactionDN(inputTransactionDN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error)
-	DeleteTransaction(id int, userId uint, transactionType string, iupopId int) (bool, error)
-	UpdateTransactionDN(idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
-	UploadDocumentTransaction(idTransaction uint, urlS3 string, userId uint, documentType string, transactionType string) (transaction.Transaction, error)
-	CreateTransactionLN(inputTransactionLN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
-	UpdateTransactionLN(id int, inputTransactionLN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
-	CreateMinerba(period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error)
+	DeleteTransaction(id int, userId uint, transactionType string, iupopkId int) (bool, error)
+	UpdateTransactionDN(idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error)
+	UploadDocumentTransaction(idTransaction uint, urlS3 string, userId uint, documentType string, transactionType string, iupopkId int) (transaction.Transaction, error)
+	CreateTransactionLN(inputTransactionLN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error)
+	UpdateTransactionLN(id int, inputTransactionLN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error)
+	CreateMinerba(period string, updateTransaction []int, userId uint, iupopkId int) (minerba.Minerba, error)
 	UpdateMinerba(id int, updateTransaction []int, userId uint) (minerba.Minerba, error)
 	DeleteMinerba(idMinerba int, userId uint) (bool, error)
 	UpdateDocumentMinerba(id int, documentLink minerba.InputUpdateDocumentMinerba, userId uint) (minerba.Minerba, error)
@@ -68,38 +68,38 @@ func (s *service) CreateTransactionDN(inputTransactionDN transaction.DataTransac
 	return transaction, transactionErr
 }
 
-func (s *service) DeleteTransaction(id int, userId uint, transactionType string, iupopId int) (bool, error) {
-	isDeletedTransaction, isDeletedTransactionErr := s.repository.DeleteTransaction(id, userId, transactionType, iupopId)
+func (s *service) DeleteTransaction(id int, userId uint, transactionType string, iupopkId int) (bool, error) {
+	isDeletedTransaction, isDeletedTransactionErr := s.repository.DeleteTransaction(id, userId, transactionType, iupopkId)
 
 	return isDeletedTransaction, isDeletedTransactionErr
 }
 
-func (s *service) UpdateTransactionDN(idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error) {
-	updateTransaction, updateTransactionErr := s.repository.UpdateTransactionDN(idTransaction, inputEditTransactionDN, userId)
+func (s *service) UpdateTransactionDN(idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error) {
+	updateTransaction, updateTransactionErr := s.repository.UpdateTransactionDN(idTransaction, inputEditTransactionDN, userId, iupopkId)
 
 	return updateTransaction, updateTransactionErr
 }
 
-func (s *service) UploadDocumentTransaction(idTransaction uint, urlS3 string, userId uint, documentType string, transactionType string) (transaction.Transaction, error) {
-	uploadedDocument, uploadedDocumentErr := s.repository.UploadDocumentTransaction(idTransaction, urlS3, userId, documentType, transactionType)
+func (s *service) UploadDocumentTransaction(idTransaction uint, urlS3 string, userId uint, documentType string, transactionType string, iupopkId int) (transaction.Transaction, error) {
+	uploadedDocument, uploadedDocumentErr := s.repository.UploadDocumentTransaction(idTransaction, urlS3, userId, documentType, transactionType, iupopkId)
 
 	return uploadedDocument, uploadedDocumentErr
 }
 
-func (s *service) CreateTransactionLN(inputTransactionLN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error) {
-	transactionLn, transactionLnErr := s.repository.CreateTransactionLN(inputTransactionLN, userId)
+func (s *service) CreateTransactionLN(inputTransactionLN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error) {
+	transactionLn, transactionLnErr := s.repository.CreateTransactionLN(inputTransactionLN, userId, iupopkId)
 
 	return transactionLn, transactionLnErr
 }
 
-func (s *service) UpdateTransactionLN(id int, inputTransactionLN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error) {
-	transactionLn, transactionLnErr := s.repository.UpdateTransactionLN(id, inputTransactionLN, userId)
+func (s *service) UpdateTransactionLN(id int, inputTransactionLN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error) {
+	transactionLn, transactionLnErr := s.repository.UpdateTransactionLN(id, inputTransactionLN, userId, iupopkId)
 
 	return transactionLn, transactionLnErr
 }
 
-func (s *service) CreateMinerba(period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error) {
-	createdMinerba, createdMinerbaErr := s.repository.CreateMinerba(period, baseIdNumber, updateTransaction, userId)
+func (s *service) CreateMinerba(period string, updateTransaction []int, userId uint, iupopkId int) (minerba.Minerba, error) {
+	createdMinerba, createdMinerbaErr := s.repository.CreateMinerba(period, updateTransaction, userId, iupopkId)
 
 	return createdMinerba, createdMinerbaErr
 }

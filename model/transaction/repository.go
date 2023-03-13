@@ -32,12 +32,12 @@ func helperString(listString []string, dataString string) bool {
 }
 
 type Repository interface {
-	ListData(page int, sortFilter SortAndFilter, transactionType string, iupopId int) (Pagination, error)
-	DetailTransaction(id int, transactionType string, iupopId int) (Transaction, error)
-	ListDataDNWithoutMinerba() ([]Transaction, error)
-	CheckDataDnAndMinerba(listData []int) (bool, error)
+	ListData(page int, sortFilter SortAndFilter, transactionType string, iupopkId int) (Pagination, error)
+	DetailTransaction(id int, transactionType string, iupopkId int) (Transaction, error)
+	ListDataDNWithoutMinerba(iupopkId int) ([]Transaction, error)
+	CheckDataDnAndMinerba(listData []int, iupopkId int) (bool, error)
 	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) ([]Transaction, error)
-	GetDetailMinerba(id int) (DetailMinerba, error)
+	GetDetailMinerba(id int, iupopkId int) (DetailMinerba, error)
 	ListDataDNBargeWithoutVessel() ([]Transaction, error)
 	ListDataDNBargeWithVessel() ([]Transaction, error)
 	ListDataDNVessel() ([]Transaction, error)
@@ -69,7 +69,7 @@ func NewRepository(db *gorm.DB) *repository {
 
 // Transaction
 
-func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionType string, iupopId int) (Pagination, error) {
+func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionType string, iupopkId int) (Pagination, error) {
 	var transactions []Transaction
 	var pagination Pagination
 	pagination.Limit = 7
@@ -106,7 +106,7 @@ func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionTyp
 		}
 	}
 
-	queryFilter := fmt.Sprintf("transaction_type = '%s' AND seller_id = %v", strings.ToUpper(transactionType), iupopId)
+	queryFilter := fmt.Sprintf("transaction_type = '%s' AND seller_id = %v", strings.ToUpper(transactionType), iupopkId)
 
 	if sortFilter.TugboatId != "" {
 		queryFilter = queryFilter + " AND tugboat_id = " + sortFilter.TugboatId
@@ -165,18 +165,18 @@ func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionTyp
 	return pagination, nil
 }
 
-func (r *repository) DetailTransaction(id int, transactionType string, iupopId int) (Transaction, error) {
+func (r *repository) DetailTransaction(id int, transactionType string, iupopkId int) (Transaction, error) {
 	var transaction Transaction
 
-	errFind := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("id = ? AND transaction_type = ? AND seller_id = ?", id, transactionType, iupopId).First(&transaction).Error
+	errFind := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("id = ? AND transaction_type = ? AND seller_id = ?", id, transactionType, iupopkId).First(&transaction).Error
 
 	return transaction, errFind
 }
 
-func (r *repository) ListDataDNWithoutMinerba() ([]Transaction, error) {
+func (r *repository) ListDataDNWithoutMinerba(iupopkId int) ([]Transaction, error) {
 	var listDataDnWithoutMinerba []Transaction
 
-	errFind := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("minerba_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND is_finance_check = ?", "DN", false, false, true).Find(&listDataDnWithoutMinerba).Error
+	errFind := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("minerba_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND is_finance_check = ? AND seller_id = ?", "DN", false, false, true, iupopkId).Find(&listDataDnWithoutMinerba).Error
 
 	return listDataDnWithoutMinerba, errFind
 }
@@ -232,10 +232,10 @@ func (r *repository) CheckDataUnique(inputTrans DataTransactionInput) (bool, boo
 
 // Minerba
 
-func (r *repository) CheckDataDnAndMinerba(listData []int) (bool, error) {
+func (r *repository) CheckDataDnAndMinerba(listData []int, iupopkId int) (bool, error) {
 	var listDnValid []Transaction
 
-	errFindValid := r.db.Where("id IN ?", listData).Find(&listDnValid).Error
+	errFindValid := r.db.Where("id IN ? AND seller_id = ?", listData, iupopkId).Find(&listDnValid).Error
 
 	if errFindValid != nil {
 		return false, errFindValid
@@ -292,14 +292,14 @@ func (r *repository) CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) 
 	return listDn, nil
 }
 
-func (r *repository) GetDetailMinerba(id int) (DetailMinerba, error) {
+func (r *repository) GetDetailMinerba(id int, iupopkId int) (DetailMinerba, error) {
 
 	var detailMinerba DetailMinerba
 
 	var minerba minerba.Minerba
 	var transactions []Transaction
 
-	minerbaFindErr := r.db.Where("id = ?", id).First(&minerba).Error
+	minerbaFindErr := r.db.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&minerba).Error
 
 	if minerbaFindErr != nil {
 		return detailMinerba, minerbaFindErr
@@ -307,7 +307,7 @@ func (r *repository) GetDetailMinerba(id int) (DetailMinerba, error) {
 
 	detailMinerba.Detail = minerba
 
-	transactionFindErr := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("minerba_id = ?", id).Find(&transactions).Error
+	transactionFindErr := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("minerba_id = ? AND iupopk_id = ?", id, iupopkId).Find(&transactions).Error
 
 	if transactionFindErr != nil {
 		return detailMinerba, transactionFindErr

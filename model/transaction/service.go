@@ -13,13 +13,13 @@ import (
 )
 
 type Service interface {
-	ListData(page int, sortFilter SortAndFilter, transactionType string, iupopId int) (Pagination, error)
-	DetailTransaction(id int, transactionType string, iupopId int) (Transaction, error)
+	ListData(page int, sortFilter SortAndFilter, transactionType string, iupopkId int) (Pagination, error)
+	DetailTransaction(id int, transactionType string, iupopkId int) (Transaction, error)
 	CheckDataUnique(inputTrans DataTransactionInput) (bool, bool, bool, bool)
-	ListDataDNWithoutMinerba() ([]Transaction, error)
-	CheckDataDnAndMinerba(listData []int) (bool, error)
+	ListDataDNWithoutMinerba(iupopkId int) ([]Transaction, error)
+	CheckDataDnAndMinerba(listData []int, iupopkId int) (bool, error)
 	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) ([]Transaction, error)
-	GetDetailMinerba(id int) (DetailMinerba, error)
+	GetDetailMinerba(id int, iupopkId int) (DetailMinerba, error)
 	RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (map[string]interface{}, error)
 	RequestCreateExcelLn(reqInput InputRequestCreateExcelMinerba) (map[string]interface{}, error)
 	ListDataDNBargeWithoutVessel() ([]Transaction, error)
@@ -53,14 +53,14 @@ func NewService(repository Repository) *service {
 	return &service{repository}
 }
 
-func (s *service) ListData(page int, sortFilter SortAndFilter, transactionType string, iupopId int) (Pagination, error) {
-	listDN, listDNErr := s.repository.ListData(page, sortFilter, transactionType, iupopId)
+func (s *service) ListData(page int, sortFilter SortAndFilter, transactionType string, iupopkId int) (Pagination, error) {
+	listDN, listDNErr := s.repository.ListData(page, sortFilter, transactionType, iupopkId)
 
 	return listDN, listDNErr
 }
 
-func (s *service) DetailTransaction(id int, transactionType string, iupopId int) (Transaction, error) {
-	detailTransactionDN, detailTransactionDNErr := s.repository.DetailTransaction(id, transactionType, iupopId)
+func (s *service) DetailTransaction(id int, transactionType string, iupopkId int) (Transaction, error) {
+	detailTransactionDN, detailTransactionDNErr := s.repository.DetailTransaction(id, transactionType, iupopkId)
 
 	return detailTransactionDN, detailTransactionDNErr
 }
@@ -71,14 +71,14 @@ func (s *service) CheckDataUnique(inputTrans DataTransactionInput) (bool, bool, 
 	return isDpRoyaltyNtpnUnique, isDpRoyaltyBillingCodeUnique, isPaymentDpRoyaltyNtpnUnique, isPaymentDpRoyaltyBillingCodeUnique
 }
 
-func (s *service) ListDataDNWithoutMinerba() ([]Transaction, error) {
-	listDataDNWithoutMinerba, listDataDNWithoutMinerbaErr := s.repository.ListDataDNWithoutMinerba()
+func (s *service) ListDataDNWithoutMinerba(iupopkId int) ([]Transaction, error) {
+	listDataDNWithoutMinerba, listDataDNWithoutMinerbaErr := s.repository.ListDataDNWithoutMinerba(iupopkId)
 
 	return listDataDNWithoutMinerba, listDataDNWithoutMinerbaErr
 }
 
-func (s *service) CheckDataDnAndMinerba(listData []int) (bool, error) {
-	checkData, checkDataErr := s.repository.CheckDataDnAndMinerba(listData)
+func (s *service) CheckDataDnAndMinerba(listData []int, iupopkId int) (bool, error) {
+	checkData, checkDataErr := s.repository.CheckDataDnAndMinerba(listData, iupopkId)
 
 	return checkData, checkDataErr
 }
@@ -89,8 +89,8 @@ func (s *service) CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) ([]
 	return checkData, checkDataErr
 }
 
-func (s *service) GetDetailMinerba(id int) (DetailMinerba, error) {
-	detailMinerba, detailMinerbaErr := s.repository.GetDetailMinerba(id)
+func (s *service) GetDetailMinerba(id int, iupopkId int) (DetailMinerba, error) {
+	detailMinerba, detailMinerbaErr := s.repository.GetDetailMinerba(id, iupopkId)
 
 	return detailMinerba, detailMinerbaErr
 }

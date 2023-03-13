@@ -15,6 +15,7 @@ type Repository interface {
 	CreateUserIupopk(userId int, iupopkId int) (UserIupopk, error)
 	LoginUser(input user.LoginUserInput) (user.TokenUser, error)
 	DeleteUserIupopk(userId int, iupopkId int) error
+	FindUser(id uint, iupopkId int) (user.User, error)
 }
 
 type repository struct {
@@ -146,4 +147,16 @@ func (r *repository) DeleteUserIupopk(userId int, iupopkId int) error {
 	}
 
 	return nil
+}
+
+func (r *repository) FindUser(id uint, iupopkId int) (user.User, error) {
+	var userIupopk UserIupopk
+
+	errFind := r.db.Preload(clause.Associations).Where("user_id = ? AND iupopk_id = ?", id, iupopkId).First(&userIupopk).Error
+
+	var user user.User
+
+	user = userIupopk.User
+
+	return user, errFind
 }

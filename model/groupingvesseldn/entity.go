@@ -4,6 +4,7 @@ import (
 	"ajebackend/model/master/company"
 	"ajebackend/model/master/country"
 	"ajebackend/model/master/destination"
+	"ajebackend/model/master/iupopk"
 	"ajebackend/model/master/ports"
 	"ajebackend/model/master/vessel"
 	"ajebackend/model/reportdmo"
@@ -52,4 +53,6 @@ type GroupingVesselDn struct {
 	IsCoaFinish          bool                     `json:"is_coa_finish"`
 	ReportDmoId          *uint                    `json:"report_dmo_id"`
 	ReportDmo            *reportdmo.ReportDmo     `json:"report_dmo" gorm:"constraint:OnDelete:SET NULL;"`
+	IupopkId             uint                     `json:"iupopk_id"`
+	Iupopk               iupopk.Iupopk            `json:"iupopk"`
 }

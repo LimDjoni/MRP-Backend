@@ -1,11 +1,14 @@
 package useriupopk
 
-import "ajebackend/model/user"
+import (
+	"ajebackend/model/user"
+)
 
 type Service interface {
 	CreateUserIupopk(userId int, iupopkId int) (UserIupopk, error)
 	LoginUser(input user.LoginUserInput) (user.TokenUser, error)
 	DeleteUserIupopk(userId int, iupopkId int) error
+	FindUser(id uint, iupopkId int) (user.User, error)
 }
 
 type service struct {
@@ -32,4 +35,10 @@ func (s *service) DeleteUserIupopk(userId int, iupopkId int) error {
 	deleteUserIupopkErr := s.repository.DeleteUserIupopk(userId, iupopkId)
 
 	return deleteUserIupopkErr
+}
+
+func (s *service) FindUser(id uint, iupopkId int) (user.User, error) {
+	user, userErr := s.repository.FindUser(id, iupopkId)
+
+	return user, userErr
 }

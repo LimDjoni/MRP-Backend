@@ -6,7 +6,7 @@ import (
 	"ajebackend/model/logs"
 	"ajebackend/model/master/destination"
 	"ajebackend/model/transaction"
-	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
 	"ajebackend/validatorfunc"
 	"encoding/json"
 	"fmt"
@@ -21,21 +21,21 @@ import (
 
 type transactionHandler struct {
 	transactionService transaction.Service
-	userService        user.Service
 	historyService     history.Service
 	v                  *validator.Validate
 	logService         logs.Service
 	destinationService destination.Service
+	userIupopkService  useriupopk.Service
 }
 
-func NewTransactionHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, v *validator.Validate, logService logs.Service, destinationService destination.Service) *transactionHandler {
+func NewTransactionHandler(transactionService transaction.Service, historyService history.Service, v *validator.Validate, logService logs.Service, destinationService destination.Service, userIupopkService useriupopk.Service) *transactionHandler {
 	return &transactionHandler{
 		transactionService,
-		userService,
 		historyService,
 		v,
 		logService,
 		destinationService,
+		userIupopkService,
 	}
 }
 
@@ -50,12 +50,6 @@ func (h *transactionHandler) CreateTransactionDN(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
-
-	if checkUserErr != nil || checkUser.IsActive == false {
-		return c.Status(401).JSON(responseUnauthorized)
-	}
-
 	iupopkId := c.Params("iupopk_id")
 
 	iupopkIdInt, err := strconv.Atoi(iupopkId)
@@ -64,6 +58,12 @@ func (h *transactionHandler) CreateTransactionDN(c *fiber.Ctx) error {
 		return c.Status(404).JSON(fiber.Map{
 			"error": "iupopk record not found",
 		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
 	}
 
 	transactionInput := new(transaction.DataTransactionInput)
@@ -160,7 +160,17 @@ func (h *transactionHandler) ListData(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	intIupopkId, iupopkErr := strconv.Atoi(iupopkId)
+
+	if iupopkErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": iupopkErr.Error(),
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), intIupopkId)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -178,15 +188,6 @@ func (h *transactionHandler) ListData(c *fiber.Ctx) error {
 	sortAndFilter.ShippingEnd = c.Query("shipping_end")
 	sortAndFilter.VerificationFilter = c.Query("verification_filter")
 
-	iupopId := c.Params("iupopk_id")
-
-	intIupopId, iupopErr := strconv.Atoi(iupopId)
-
-	if iupopErr != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"error": iupopErr.Error(),
-		})
-	}
 	pageNumber, err := strconv.Atoi(page)
 
 	if err != nil && page != "" {
@@ -199,7 +200,7 @@ func (h *transactionHandler) ListData(c *fiber.Ctx) error {
 	}
 
 	typeTransaction := strings.ToUpper(c.Params("transaction_type"))
-	listDN, listDNErr := h.transactionService.ListData(pageNumber, sortAndFilter, typeTransaction, intIupopId)
+	listDN, listDNErr := h.transactionService.ListData(pageNumber, sortAndFilter, typeTransaction, intIupopkId)
 
 	if listDNErr != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -221,25 +222,25 @@ func (h *transactionHandler) DetailTransaction(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
-
-	if checkUserErr != nil || checkUser.IsActive == false {
-		return c.Status(401).JSON(responseUnauthorized)
-	}
-
 	id := c.Params("id")
-	iupopId := c.Params("iupopk_id")
+	iupopkId := c.Params("iupopk_id")
 	typeTransaction := strings.ToUpper(c.Params("transaction_type"))
 	idInt, err := strconv.Atoi(id)
-	iupopIdInt, iupopErr := strconv.Atoi(iupopId)
+	iupopkIdInt, iupopkErr := strconv.Atoi(iupopkId)
 
-	if err != nil || iupopErr != nil {
+	if err != nil || iupopkErr != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"error": "record not found",
 		})
 	}
 
-	detailTransactionDN, detailTransactionDNErr := h.transactionService.DetailTransaction(idInt, typeTransaction, iupopIdInt)
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	detailTransactionDN, detailTransactionDNErr := h.transactionService.DetailTransaction(idInt, typeTransaction, iupopkIdInt)
 
 	if detailTransactionDNErr != nil {
 		return c.Status(404).JSON(fiber.Map{
@@ -261,26 +262,24 @@ func (h *transactionHandler) DeleteTransaction(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	id := c.Params("id")
+	iupopkId := c.Params("iupopk_id")
+	typeTransaction := strings.ToUpper(c.Params("transaction_type"))
+	idInt, err := strconv.Atoi(id)
+	iupopkIdInt, iupopkErr := strconv.Atoi(iupopkId)
+
+	if err != nil || iupopkErr != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "record not found",
+		})
+	}
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	id := c.Params("id")
-	iupopId := c.Params("iupopk_id")
-
-	typeTransaction := strings.ToUpper(c.Params("transaction_type"))
-	idInt, err := strconv.Atoi(id)
-	iupopIdInt, iupopErr := strconv.Atoi(iupopId)
-
-	if err != nil || iupopErr != nil {
-		return c.Status(404).JSON(fiber.Map{
-			"error": "record not found",
-		})
-	}
-
-	findTransaction, findTransactionErr := h.transactionService.DetailTransaction(idInt, typeTransaction, iupopIdInt)
+	findTransaction, findTransactionErr := h.transactionService.DetailTransaction(idInt, typeTransaction, iupopkIdInt)
 
 	if findTransactionErr != nil {
 		return c.Status(404).JSON(fiber.Map{
@@ -294,7 +293,7 @@ func (h *transactionHandler) DeleteTransaction(c *fiber.Ctx) error {
 		})
 	}
 
-	_, deleteTransactionErr := h.historyService.DeleteTransaction(idInt, uint(claims["id"].(float64)), typeTransaction, iupopIdInt)
+	_, deleteTransactionErr := h.historyService.DeleteTransaction(idInt, uint(claims["id"].(float64)), typeTransaction, iupopkIdInt)
 
 	if deleteTransactionErr != nil {
 		inputMap := make(map[string]interface{})
@@ -414,20 +413,22 @@ func (h *transactionHandler) UpdateTransactionDN(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
-
-	if checkUserErr != nil || checkUser.IsActive == false {
-		return c.Status(401).JSON(responseUnauthorized)
-	}
-
 	id := c.Params("id")
+	iupopkId := c.Params("iupopk_id")
 
 	idInt, err := strconv.Atoi(id)
+	iupopkIdInt, iupopkErr := strconv.Atoi(iupopkId)
 
-	if err != nil {
+	if err != nil || iupopkErr != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"error": "record not found",
 		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
 	}
 
 	transactionInput := new(transaction.DataTransactionInput)
@@ -448,7 +449,7 @@ func (h *transactionHandler) UpdateTransactionDN(c *fiber.Ctx) error {
 		})
 	}
 
-	updateTransaction, updateTransactionErr := h.historyService.UpdateTransactionDN(idInt, *transactionInput, uint(claims["id"].(float64)))
+	updateTransaction, updateTransactionErr := h.historyService.UpdateTransactionDN(idInt, *transactionInput, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if updateTransactionErr != nil {
 		inputMap := make(map[string]interface{})
@@ -496,13 +497,22 @@ func (h *transactionHandler) UpdateDocumentTransaction(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	id := c.Params("id")
+	iupopkId := c.Params("iupopk_id")
+	idInt, err := strconv.Atoi(id)
+	iupopkIdInt, iupopkErr := strconv.Atoi(iupopkId)
+
+	if err != nil || iupopkErr != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
-
-	id := c.Params("id")
 
 	documentType := c.Params("type")
 	responseErr := fiber.Map{
@@ -530,19 +540,8 @@ func (h *transactionHandler) UpdateDocumentTransaction(c *fiber.Ctx) error {
 		})
 	}
 
-	iupopId := c.Params("iupopk_id")
-
-	idInt, err := strconv.Atoi(id)
-	iupopIdInt, iupopErr := strconv.Atoi(iupopId)
-
-	if err != nil || iupopErr != nil {
-		return c.Status(404).JSON(fiber.Map{
-			"error": "record not found",
-		})
-	}
-
 	typeTransaction := strings.ToUpper(c.Params("transaction_type"))
-	detailTransaction, detailTransactionErr := h.transactionService.DetailTransaction(idInt, typeTransaction, iupopIdInt)
+	detailTransaction, detailTransactionErr := h.transactionService.DetailTransaction(idInt, typeTransaction, iupopkIdInt)
 
 	if detailTransactionErr != nil {
 		return c.Status(404).JSON(fiber.Map{
@@ -580,7 +579,7 @@ func (h *transactionHandler) UpdateDocumentTransaction(c *fiber.Ctx) error {
 		return c.Status(400).JSON(responseErr)
 	}
 
-	editDocument, editDocumentErr := h.historyService.UploadDocumentTransaction(detailTransaction.ID, up.Location, uint(claims["id"].(float64)), documentType, typeTransaction)
+	editDocument, editDocumentErr := h.historyService.UploadDocumentTransaction(detailTransaction.ID, up.Location, uint(claims["id"].(float64)), documentType, typeTransaction, iupopkIdInt)
 
 	if editDocumentErr != nil {
 		inputMap := make(map[string]interface{})
@@ -628,7 +627,17 @@ func (h *transactionHandler) CreateTransactionLN(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -693,7 +702,7 @@ func (h *transactionHandler) CreateTransactionLN(c *fiber.Ctx) error {
 		})
 	}
 
-	createdTransactionLN, createdTransactionLNErr := h.historyService.CreateTransactionLN(*transactionInput, uint(claims["id"].(float64)))
+	createdTransactionLN, createdTransactionLNErr := h.historyService.CreateTransactionLN(*transactionInput, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createdTransactionLNErr != nil {
 		inputJson, _ := json.Marshal(transactionInput)
@@ -727,20 +736,21 @@ func (h *transactionHandler) UpdateTransactionLN(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
-
-	if checkUserErr != nil || checkUser.IsActive == false {
-		return c.Status(401).JSON(responseUnauthorized)
-	}
-
 	id := c.Params("id")
-
+	iupopkId := c.Params("iupopk_id")
 	idInt, err := strconv.Atoi(id)
+	iupopkIdInt, iupopkErr := strconv.Atoi(iupopkId)
 
-	if err != nil {
+	if err != nil || iupopkErr != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"error": "record not found",
 		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
 	}
 
 	transactionInput := new(transaction.DataTransactionInput)
@@ -761,7 +771,7 @@ func (h *transactionHandler) UpdateTransactionLN(c *fiber.Ctx) error {
 		})
 	}
 
-	updateTransaction, updateTransactionErr := h.historyService.UpdateTransactionLN(idInt, *transactionInput, uint(claims["id"].(float64)))
+	updateTransaction, updateTransactionErr := h.historyService.UpdateTransactionLN(idInt, *transactionInput, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if updateTransactionErr != nil {
 		inputMap := make(map[string]interface{})

@@ -140,6 +140,7 @@ func main() {
 		seedingmaster.SeedingUnit(db)
 		seedingmaster.SeedingVessel(db)
 		seedingmaster.SeedingCounter(db)
+		seeding.UpdateIupopk(db)
 		fmt.Println(errMigrate)
 	}
 

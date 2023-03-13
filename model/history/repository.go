@@ -35,11 +35,11 @@ import (
 type Repository interface {
 	CreateTransactionDN(inputTransactionDN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error)
 	DeleteTransaction(id int, userId uint, transactionType string, iupopId int) (bool, error)
-	UpdateTransactionDN(idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
-	UploadDocumentTransaction(idTransaction uint, urlS3 string, userId uint, documentType string, transactionType string) (transaction.Transaction, error)
-	CreateTransactionLN(inputTransactionLN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
-	UpdateTransactionLN(id int, inputTransactionLN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error)
-	CreateMinerba(period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error)
+	UpdateTransactionDN(idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error)
+	UploadDocumentTransaction(idTransaction uint, urlS3 string, userId uint, documentType string, transactionType string, iupopkId int) (transaction.Transaction, error)
+	CreateTransactionLN(inputTransactionLN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error)
+	UpdateTransactionLN(id int, inputTransactionLN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error)
+	CreateMinerba(period string, updateTransaction []int, userId uint, iupopkId int) (minerba.Minerba, error)
 	UpdateMinerba(id int, updateTransaction []int, userId uint) (minerba.Minerba, error)
 	DeleteMinerba(idMinerba int, userId uint) (bool, error)
 	UpdateDocumentMinerba(id int, documentLink minerba.InputUpdateDocumentMinerba, userId uint) (minerba.Minerba, error)
@@ -215,7 +215,7 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 		return createdTransaction, findCounterTransactionErr
 	}
 
-	code := "TDN"
+	code := "TDN-"
 
 	code += iup.Code
 
@@ -286,12 +286,12 @@ func (r *repository) DeleteTransaction(id int, userId uint, transactionType stri
 	return true, createHistoryErr
 }
 
-func (r *repository) UpdateTransactionDN(idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error) {
+func (r *repository) UpdateTransactionDN(idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error) {
 	var transaction transaction.Transaction
 
 	tx := r.db.Begin()
 
-	errFind := r.db.Where("id = ?", idTransaction).First(&transaction).Error
+	errFind := r.db.Where("id = ? AND transaction_type = ? AND seller_id = ?", idTransaction, "DN", iupopkId).First(&transaction).Error
 
 	if errFind != nil {
 		tx.Rollback()
@@ -364,12 +364,12 @@ func (r *repository) UpdateTransactionDN(idTransaction int, inputEditTransaction
 	return transaction, nil
 }
 
-func (r *repository) UploadDocumentTransaction(idTransaction uint, urlS3 string, userId uint, documentType string, transactionType string) (transaction.Transaction, error) {
+func (r *repository) UploadDocumentTransaction(idTransaction uint, urlS3 string, userId uint, documentType string, transactionType string, iupopkId int) (transaction.Transaction, error) {
 	var uploadedTransaction transaction.Transaction
 
 	tx := r.db.Begin()
 
-	errFind := tx.Where("id = ? AND transaction_type = ?", idTransaction, transactionType).First(&uploadedTransaction).Error
+	errFind := tx.Where("id = ? AND transaction_type = ? AND seller_id = ?", idTransaction, transactionType, iupopkId).First(&uploadedTransaction).Error
 
 	if errFind != nil {
 		return uploadedTransaction, errFind
@@ -457,28 +457,29 @@ func (r *repository) UploadDocumentTransaction(idTransaction uint, urlS3 string,
 
 // Transaction LN
 
-func (r *repository) CreateTransactionLN(inputTransactionLN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error) {
+func (r *repository) CreateTransactionLN(inputTransactionLN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error) {
 	var createdTransactionLn transaction.Transaction
 
 	tx := r.db.Begin()
 
-	var iup iupopk.Iupopk
-
-	iupErr := tx.Where("name = ? ", "PT Angsana Jaya Energi").First(&iup).Error
-
-	if iupErr != nil {
-		tx.Rollback()
-		return createdTransactionLn, iupErr
-	}
-
 	var curr currency.Currency
 
-	currencyErr := tx.Where("code = ?", "IDR").First(&curr).Error
+	currencyErr := tx.Where("code = ?", "USD").First(&curr).Error
 
 	if currencyErr != nil {
 		tx.Rollback()
 		return createdTransactionLn, currencyErr
 	}
+
+	var iup iupopk.Iupopk
+
+	findIupErr := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if findIupErr != nil {
+		tx.Rollback()
+		return createdTransactionLn, findIupErr
+	}
+
 	var createVesselMaster vessel.Vessel
 	if inputTransactionLN.VesselName != "" {
 
@@ -577,7 +578,20 @@ func (r *repository) CreateTransactionLN(inputTransactionLN transaction.DataTran
 		return createdTransactionLn, createTransactionErr
 	}
 
-	idNumber := createIdNumber("TLN-AJE", createdTransactionLn.ID)
+	var counterTransaction counter.Counter
+
+	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).Find(&counterTransaction).Error
+
+	if findCounterTransactionErr != nil {
+		tx.Rollback()
+		return createdTransactionLn, findCounterTransactionErr
+	}
+
+	code := "TLN-"
+
+	code += iup.Code
+
+	idNumber := createIdNumber(code, uint(counterTransaction.TransactionLn))
 
 	updateTransactionsErr := tx.Model(&createdTransactionLn).Update("id_number", idNumber).Error
 
@@ -599,16 +613,23 @@ func (r *repository) CreateTransactionLN(inputTransactionLN transaction.DataTran
 		return createdTransactionLn, createHistoryErr
 	}
 
+	updateCounterErr := tx.Model(&counterTransaction).Update("transaction_ln", counterTransaction.TransactionLn+1).Error
+
+	if updateCounterErr != nil {
+		tx.Rollback()
+		return createdTransactionLn, updateCounterErr
+	}
+
 	tx.Commit()
 	return createdTransactionLn, createHistoryErr
 }
 
-func (r *repository) UpdateTransactionLN(id int, inputTransactionLN transaction.DataTransactionInput, userId uint) (transaction.Transaction, error) {
+func (r *repository) UpdateTransactionLN(id int, inputTransactionLN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error) {
 	var updatedTransactionLn transaction.Transaction
 
 	tx := r.db.Begin()
 
-	errFind := r.db.Where("id = ? AND transaction_type = ?", id, "LN").First(&updatedTransactionLn).Error
+	errFind := r.db.Where("id = ? AND transaction_type = ? AND seller_id = ?", id, "LN", iupopkId).First(&updatedTransactionLn).Error
 
 	if errFind != nil {
 		tx.Rollback()
@@ -699,13 +720,13 @@ func (r *repository) UpdateTransactionLN(id int, inputTransactionLN transaction.
 
 // Minerba
 
-func (r *repository) CreateMinerba(period string, baseIdNumber string, updateTransaction []int, userId uint) (minerba.Minerba, error) {
+func (r *repository) CreateMinerba(period string, updateTransaction []int, userId uint, iupopkId int) (minerba.Minerba, error) {
 	var createdMinerba minerba.Minerba
 
 	tx := r.db.Begin()
 	createdMinerba.Period = period
 	var transactions []transaction.Transaction
-	findTransactionsErr := tx.Where("id IN ?", updateTransaction).Find(&transactions).Error
+	findTransactionsErr := tx.Where("id IN ? AND seller_id = ?", updateTransaction, iupopkId).Find(&transactions).Error
 
 	if findTransactionsErr != nil {
 		tx.Rollback()
@@ -715,6 +736,15 @@ func (r *repository) CreateMinerba(period string, baseIdNumber string, updateTra
 	if len(transactions) != len(updateTransaction) {
 		tx.Rollback()
 		return createdMinerba, errors.New("please check some of transactions not found")
+	}
+
+	var iup iupopk.Iupopk
+
+	findIupErr := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if findIupErr != nil {
+		tx.Rollback()
+		return createdMinerba, findIupErr
 	}
 
 	var tempQuantity float64
@@ -727,6 +757,8 @@ func (r *repository) CreateMinerba(period string, baseIdNumber string, updateTra
 
 	createdMinerba.Quantity = math.Round(parseTempQuantity*1000) / 1000
 
+	createdMinerba.IupopkId = iup.ID
+
 	errCreateMinerba := tx.Create(&createdMinerba).Error
 
 	if errCreateMinerba != nil {
@@ -734,7 +766,10 @@ func (r *repository) CreateMinerba(period string, baseIdNumber string, updateTra
 		return createdMinerba, errCreateMinerba
 	}
 
-	idNumber := baseIdNumber + "-" + helper.CreateIdNumber(int(createdMinerba.ID))
+	periodSplit := strings.Split(period, " ")
+
+	idNumber := fmt.Sprintf("LSD-%s-%s-%s-", iup.Code, helper.MonthStringToNumberString(periodSplit[0]), periodSplit[1][len(periodSplit[1])-2:])
+	idNumber += helper.CreateIdNumber(int(createdMinerba.ID))
 
 	updateMinerbaErr := tx.Model(&createdMinerba).Update("id_number", idNumber).Error
 
@@ -743,7 +778,7 @@ func (r *repository) CreateMinerba(period string, baseIdNumber string, updateTra
 		return createdMinerba, updateMinerbaErr
 	}
 
-	updateTransactionErr := tx.Table("transactions").Where("id IN ?", updateTransaction).Update("minerba_id", createdMinerba.ID).Error
+	updateTransactionErr := tx.Table("transactions").Where("id IN ? AND seller_id = ?", updateTransaction, iupopkId).Update("minerba_id", createdMinerba.ID).Error
 
 	if updateTransactionErr != nil {
 		tx.Rollback()

@@ -7,7 +7,7 @@ import (
 	"ajebackend/model/logs"
 	"ajebackend/model/master/destination"
 	"ajebackend/model/transaction"
-	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -19,9 +19,6 @@ func TransactionRouting(db *gorm.DB, app fiber.Router, validate *validator.Valid
 	transactionRepository := transaction.NewRepository(db)
 	transactionService := transaction.NewService(transactionRepository)
 
-	userRepository := user.NewRepository(db)
-	userService := user.NewService(userRepository)
-
 	historyRepository := history.NewRepository(db)
 	historyService := history.NewService(historyRepository)
 
@@ -31,7 +28,10 @@ func TransactionRouting(db *gorm.DB, app fiber.Router, validate *validator.Valid
 	destinationRepository := destination.NewRepository(db)
 	destinationService := destination.NewService(destinationRepository)
 
-	transactionHandler := handler.NewTransactionHandler(transactionService, userService, historyService, validate, logService, destinationService)
+	userIupopkRepository := useriupopk.NewRepository(db)
+	userIupopkService := useriupopk.NewService(userIupopkRepository)
+
+	transactionHandler := handler.NewTransactionHandler(transactionService, historyService, validate, logService, destinationService, userIupopkService)
 
 	transactionRouting := app.Group("/transaction")
 

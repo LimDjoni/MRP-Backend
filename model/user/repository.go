@@ -39,7 +39,7 @@ func (r *repository) RegisterUser(user RegisterUserInput) (User, error) {
 func (r *repository) FindUser(id uint) (User, error) {
 	var user User
 
-	errFind := r.db.Where("id = ? ", id).First(&user).Error
+	errFind := r.db.Where("id = ?", id).First(&user).Error
 
 	return user, errFind
 }
