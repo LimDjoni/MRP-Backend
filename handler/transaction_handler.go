@@ -162,7 +162,7 @@ func (h *transactionHandler) ListData(c *fiber.Ctx) error {
 
 	iupopkId := c.Params("iupopk_id")
 
-	intIupopkId, iupopkErr := strconv.Atoi(iupopkId)
+	iupopkIdInt, iupopkErr := strconv.Atoi(iupopkId)
 
 	if iupopkErr != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -170,7 +170,7 @@ func (h *transactionHandler) ListData(c *fiber.Ctx) error {
 		})
 	}
 
-	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), intIupopkId)
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -200,7 +200,7 @@ func (h *transactionHandler) ListData(c *fiber.Ctx) error {
 	}
 
 	typeTransaction := strings.ToUpper(c.Params("transaction_type"))
-	listDN, listDNErr := h.transactionService.ListData(pageNumber, sortAndFilter, typeTransaction, intIupopkId)
+	listDN, listDNErr := h.transactionService.ListData(pageNumber, sortAndFilter, typeTransaction, iupopkIdInt)
 
 	if listDNErr != nil {
 		return c.Status(400).JSON(fiber.Map{

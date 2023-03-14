@@ -232,7 +232,7 @@ func (h *reportDmoHandler) UpdateDocumentReportDmo(c *fiber.Ctx) error {
 	inputNotification.Type = "report dmo"
 	inputNotification.Status = "membuat"
 	inputNotification.Period = updateReportDmo.Period
-	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), 11)
 
 	if createdNotificationErr != nil {
 		inputMap := make(map[string]interface{})
@@ -432,7 +432,7 @@ func (h *reportDmoHandler) UpdateReportDmo(c *fiber.Ctx) error {
 	createNotif.Status = "mengedit"
 	createNotif.Period = updateReportDmo.Period
 
-	_, createNotifUpdateReportDmo := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)))
+	_, createNotifUpdateReportDmo := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), 11)
 
 	if createNotifUpdateReportDmo != nil {
 		inputMap := make(map[string]interface{})
@@ -570,7 +570,7 @@ func (h *reportDmoHandler) DeleteReportDmo(c *fiber.Ctx) error {
 	createNotif.Status = "menghapus"
 	createNotif.Period = detailReportDmo.Detail.Period
 
-	_, createNotificationDeleteReportDmoErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)))
+	_, createNotificationDeleteReportDmoErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), 11)
 
 	if createNotificationDeleteReportDmoErr != nil {
 		inputMap := make(map[string]interface{})

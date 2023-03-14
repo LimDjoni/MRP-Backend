@@ -9,7 +9,7 @@ import (
 )
 
 type Repository interface {
-	CreateNotification(input notification.InputNotification, userId uint) (notification.Notification, error)
+	CreateNotification(input notification.InputNotification, userId uint, iupopkId int) (notification.Notification, error)
 	GetNotification(userId uint) ([]NotificationUser, error)
 	UpdateReadNotification(userId uint) ([]NotificationUser, error)
 }
@@ -22,7 +22,7 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
-func (r *repository) CreateNotification(input notification.InputNotification, userId uint) (notification.Notification, error) {
+func (r *repository) CreateNotification(input notification.InputNotification, userId uint, iupopkId int) (notification.Notification, error) {
 	var createdNotification notification.Notification
 
 	createdNotification.Status = input.Status
@@ -31,6 +31,7 @@ func (r *repository) CreateNotification(input notification.InputNotification, us
 	createdNotification.Document = input.Document
 	createdNotification.EndUser = input.EndUser
 	createdNotification.UserId = userId
+	createdNotification.IupopkId = uint(iupopkId)
 
 	tx := r.db.Begin()
 
@@ -73,6 +74,7 @@ func (r *repository) CreateNotification(input notification.InputNotification, us
 func (r *repository) GetNotification(userId uint) ([]NotificationUser, error) {
 	var listNotification []NotificationUser
 
+	// Will change to provide iupopk id filter
 	errFind := r.db.Preload("Notification.User").Preload(clause.Associations).Order("id desc").Where("user_id = ?", userId).Find(&listNotification).Error
 
 	if errFind != nil {

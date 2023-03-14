@@ -8,7 +8,6 @@ import (
 	"ajebackend/model/notification"
 	"ajebackend/model/notificationuser"
 	"ajebackend/model/transaction"
-	"ajebackend/model/user"
 	"ajebackend/model/useriupopk"
 	"ajebackend/validatorfunc"
 	"encoding/json"
@@ -23,7 +22,6 @@ import (
 
 type minerbaHandler struct {
 	transactionService      transaction.Service
-	userService             user.Service
 	historyService          history.Service
 	logService              logs.Service
 	minerbaService          minerba.Service
@@ -32,10 +30,9 @@ type minerbaHandler struct {
 	userIupopkService       useriupopk.Service
 }
 
-func NewMinerbaHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, minerbaService minerba.Service, notificationUserService notificationuser.Service, v *validator.Validate, userIupopkService useriupopk.Service) *minerbaHandler {
+func NewMinerbaHandler(transactionService transaction.Service, historyService history.Service, logService logs.Service, minerbaService minerba.Service, notificationUserService notificationuser.Service, v *validator.Validate, userIupopkService useriupopk.Service) *minerbaHandler {
 	return &minerbaHandler{
 		transactionService,
-		userService,
 		historyService,
 		logService,
 		minerbaService,
@@ -98,7 +95,7 @@ func (h *minerbaHandler) CreateMinerba(c *fiber.Ctx) error {
 
 	iupopkId := c.Params("iupopk_id")
 
-	intIupopkId, iupopkErr := strconv.Atoi(iupopkId)
+	iupopkIdInt, iupopkErr := strconv.Atoi(iupopkId)
 
 	if iupopkErr != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -106,7 +103,7 @@ func (h *minerbaHandler) CreateMinerba(c *fiber.Ctx) error {
 		})
 	}
 
-	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), intIupopkId)
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -146,7 +143,7 @@ func (h *minerbaHandler) CreateMinerba(c *fiber.Ctx) error {
 		})
 	}
 
-	_, findMinerbaErr := h.minerbaService.GetReportMinerbaWithPeriod(inputCreateMinerba.Period, intIupopkId)
+	_, findMinerbaErr := h.minerbaService.GetReportMinerbaWithPeriod(inputCreateMinerba.Period, iupopkIdInt)
 
 	if findMinerbaErr == nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -154,7 +151,7 @@ func (h *minerbaHandler) CreateMinerba(c *fiber.Ctx) error {
 		})
 	}
 
-	_, checkMinerbaTransactionErr := h.transactionService.CheckDataDnAndMinerba(inputCreateMinerba.ListDataDn, intIupopkId)
+	_, checkMinerbaTransactionErr := h.transactionService.CheckDataDnAndMinerba(inputCreateMinerba.ListDataDn, iupopkIdInt)
 
 	if checkMinerbaTransactionErr != nil {
 		inputMap := make(map[string]interface{})
@@ -185,7 +182,7 @@ func (h *minerbaHandler) CreateMinerba(c *fiber.Ctx) error {
 		})
 	}
 
-	createMinerba, createMinerbaErr := h.historyService.CreateMinerba(inputCreateMinerba.Period, inputCreateMinerba.ListDataDn, uint(claims["id"].(float64)), intIupopkId)
+	createMinerba, createMinerbaErr := h.historyService.CreateMinerba(inputCreateMinerba.Period, inputCreateMinerba.ListDataDn, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createMinerbaErr != nil {
 		inputMap := make(map[string]interface{})
@@ -233,6 +230,7 @@ func (h *minerbaHandler) UpdateMinerba(c *fiber.Ctx) error {
 			"error": "iupopk record not found",
 		})
 	}
+
 	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
@@ -299,7 +297,7 @@ func (h *minerbaHandler) UpdateMinerba(c *fiber.Ctx) error {
 		})
 	}
 
-	_, checkMinerbaUpdateTransactionErr := h.transactionService.CheckDataDnAndMinerbaUpdate(inputUpdateMinerba.ListDataDn, idInt)
+	_, checkMinerbaUpdateTransactionErr := h.transactionService.CheckDataDnAndMinerbaUpdate(inputUpdateMinerba.ListDataDn, idInt, iupopkIdInt)
 
 	if checkMinerbaUpdateTransactionErr != nil {
 		inputMap := make(map[string]interface{})
@@ -330,7 +328,7 @@ func (h *minerbaHandler) UpdateMinerba(c *fiber.Ctx) error {
 		})
 	}
 
-	updateMinerba, updateMinerbaErr := h.historyService.UpdateMinerba(idInt, inputUpdateMinerba.ListDataDn, uint(claims["id"].(float64)))
+	updateMinerba, updateMinerbaErr := h.historyService.UpdateMinerba(idInt, inputUpdateMinerba.ListDataDn, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if updateMinerbaErr != nil {
 		inputMap := make(map[string]interface{})
@@ -361,7 +359,7 @@ func (h *minerbaHandler) UpdateMinerba(c *fiber.Ctx) error {
 	createNotif.Status = "mengedit"
 	createNotif.Period = updateMinerba.Period
 
-	_, createNotificationUpdateMinerbaErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)))
+	_, createNotificationUpdateMinerbaErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createNotificationUpdateMinerbaErr != nil {
 		inputMap := make(map[string]interface{})
@@ -402,7 +400,7 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 
 	iupopkId := c.Params("iupopk_id")
 
-	intIupopkId, iupopkErr := strconv.Atoi(iupopkId)
+	iupopkIdInt, iupopkErr := strconv.Atoi(iupopkId)
 
 	if iupopkErr != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -410,7 +408,7 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 		})
 	}
 
-	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), intIupopkId)
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -427,7 +425,7 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 		})
 	}
 
-	dataMinerba, getDataMinerbaErr := h.minerbaService.GetDataMinerba(idInt, intIupopkId)
+	dataMinerba, getDataMinerbaErr := h.minerbaService.GetDataMinerba(idInt, iupopkIdInt)
 
 	if getDataMinerbaErr != nil {
 		return c.Status(404).JSON(fiber.Map{
@@ -436,7 +434,7 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 		})
 	}
 
-	_, deleteMinerbaErr := h.historyService.DeleteMinerba(idInt, uint(claims["id"].(float64)))
+	_, deleteMinerbaErr := h.historyService.DeleteMinerba(idInt, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if deleteMinerbaErr != nil {
 		inputMap := make(map[string]interface{})
@@ -528,8 +526,8 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 	createNotif.Type = "minerba"
 	createNotif.Status = "menghapus"
 	createNotif.Period = dataMinerba.Period
-
-	_, createNotificationDeleteMinerbaErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)))
+	createNotif.IupopkId = dataMinerba.IupopkId
+	_, createNotificationDeleteMinerbaErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createNotificationDeleteMinerbaErr != nil {
 		inputMap := make(map[string]interface{})
@@ -647,7 +645,7 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 		})
 	}
 
-	updateMinerba, updateMinerbaErr := h.historyService.UpdateDocumentMinerba(idInt, *inputUpdateMinerba, uint(claims["id"].(float64)))
+	updateMinerba, updateMinerbaErr := h.historyService.UpdateDocumentMinerba(idInt, *inputUpdateMinerba, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if updateMinerbaErr != nil {
 		inputMap := make(map[string]interface{})
@@ -681,7 +679,7 @@ func (h *minerbaHandler) UpdateDocumentMinerba(c *fiber.Ctx) error {
 	inputNotification.Type = "minerba"
 	inputNotification.Status = "membuat"
 	inputNotification.Period = detailMinerba.Detail.Period
-	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createdNotificationErr != nil {
 		inputMap := make(map[string]interface{})
@@ -882,6 +880,7 @@ func (h *minerbaHandler) RequestCreateExcelMinerba(c *fiber.Ctx) error {
 	inputRequestCreateExcel.MinerbaNumber = *detailMinerba.Detail.IdNumber
 	inputRequestCreateExcel.MinerbaPeriod = detailMinerba.Detail.Period
 	inputRequestCreateExcel.Transactions = detailMinerba.List
+	inputRequestCreateExcel.Minerba = detailMinerba.Detail
 
 	hitJob, hitJobErr := h.transactionService.RequestCreateExcel(inputRequestCreateExcel)
 
@@ -907,7 +906,7 @@ func (h *minerbaHandler) CheckValidPeriodMinerba(c *fiber.Ctx) error {
 
 	iupopkId := c.Params("iupopk_id")
 
-	intIupopkId, iupopkErr := strconv.Atoi(iupopkId)
+	iupopkIdInt, iupopkErr := strconv.Atoi(iupopkId)
 
 	if iupopkErr != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -915,7 +914,7 @@ func (h *minerbaHandler) CheckValidPeriodMinerba(c *fiber.Ctx) error {
 		})
 	}
 
-	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), intIupopkId)
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -939,7 +938,7 @@ func (h *minerbaHandler) CheckValidPeriodMinerba(c *fiber.Ctx) error {
 		})
 	}
 
-	_, detailMinerbaErr := h.minerbaService.GetReportMinerbaWithPeriod(inputCheckMinerba.Period, intIupopkId)
+	_, detailMinerbaErr := h.minerbaService.GetReportMinerbaWithPeriod(inputCheckMinerba.Period, iupopkIdInt)
 
 	if detailMinerbaErr != nil && detailMinerbaErr.Error() == "record not found" {
 		return c.Status(200).JSON(fiber.Map{

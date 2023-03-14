@@ -36,7 +36,7 @@ type Repository interface {
 	DetailTransaction(id int, transactionType string, iupopkId int) (Transaction, error)
 	ListDataDNWithoutMinerba(iupopkId int) ([]Transaction, error)
 	CheckDataDnAndMinerba(listData []int, iupopkId int) (bool, error)
-	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) ([]Transaction, error)
+	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int, iupopkId int) ([]Transaction, error)
 	GetDetailMinerba(id int, iupopkId int) (DetailMinerba, error)
 	ListDataDNBargeWithoutVessel() ([]Transaction, error)
 	ListDataDNBargeWithVessel() ([]Transaction, error)
@@ -260,10 +260,10 @@ func (r *repository) CheckDataDnAndMinerba(listData []int, iupopkId int) (bool, 
 	return true, nil
 }
 
-func (r *repository) CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) ([]Transaction, error) {
+func (r *repository) CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int, iupopkId int) ([]Transaction, error) {
 	var listDnValid []Transaction
 
-	errFindValid := r.db.Where("id IN ?", listData).Find(&listDnValid).Error
+	errFindValid := r.db.Where("id IN ? AND seller_id = ?", listData, iupopkId).Find(&listDnValid).Error
 
 	if errFindValid != nil {
 		return listDnValid, errFindValid
@@ -275,7 +275,7 @@ func (r *repository) CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) 
 
 	var listDn []Transaction
 
-	errFind := r.db.Where("id IN ?", listData).Find(&listDn).Error
+	errFind := r.db.Where("id IN ? AND seller_id = ?", listData, iupopkId).Find(&listDn).Error
 
 	if errFind != nil {
 		return listDn, errFind

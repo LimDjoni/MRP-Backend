@@ -337,7 +337,7 @@ func (h *inswHandler) DeleteInsw(c *fiber.Ctx) error {
 	createNotif.Status = "menghapus"
 	createNotif.Period = fmt.Sprintf("%s %v", detailInsw.Detail.Month, detailInsw.Detail.Year)
 
-	_, createNotificationDeleteInsw := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)))
+	_, createNotificationDeleteInsw := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), 11)
 
 	if createNotificationDeleteInsw != nil {
 		inputMap := make(map[string]interface{})
@@ -484,7 +484,7 @@ func (h *inswHandler) UpdateDocumentInsw(c *fiber.Ctx) error {
 	inputNotification.Type = "insw"
 	inputNotification.Status = "membuat"
 	inputNotification.Period = fmt.Sprintf("%v %v", detailInsw.Detail.Month, detailInsw.Detail.Year)
-	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), 11)
 
 	if createdNotificationErr != nil {
 		inputMap := make(map[string]interface{})

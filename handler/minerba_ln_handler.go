@@ -277,7 +277,7 @@ func (h *minerbaLnHandler) UpdateMinerbaLn(c *fiber.Ctx) error {
 	createNotif.Status = "mengedit"
 	createNotif.Period = updateMinerbaLn.Period
 
-	_, createNotificationUpdateMinerbaLnErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)))
+	_, createNotificationUpdateMinerbaLnErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), 11)
 
 	if createNotificationUpdateMinerbaLnErr != nil {
 		inputMap := make(map[string]interface{})
@@ -438,7 +438,7 @@ func (h *minerbaLnHandler) DeleteMinerbaLn(c *fiber.Ctx) error {
 	createNotif.Status = "menghapus"
 	createNotif.Period = dataMinerbaLn.Period
 
-	_, createNotificationDeleteMinerbaLnErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)))
+	_, createNotificationDeleteMinerbaLnErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), 11)
 
 	if createNotificationDeleteMinerbaLnErr != nil {
 		inputMap := make(map[string]interface{})
@@ -757,7 +757,7 @@ func (h *minerbaLnHandler) UpdateDocumentMinerbaLn(c *fiber.Ctx) error {
 	inputNotification.Type = "minerba ln"
 	inputNotification.Status = "membuat"
 	inputNotification.Period = detailMinerbaLn.Detail.Period
-	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), 11)
 
 	if createdNotificationErr != nil {
 		inputMap := make(map[string]interface{})

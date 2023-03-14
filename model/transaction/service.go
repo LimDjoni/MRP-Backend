@@ -18,7 +18,7 @@ type Service interface {
 	CheckDataUnique(inputTrans DataTransactionInput) (bool, bool, bool, bool)
 	ListDataDNWithoutMinerba(iupopkId int) ([]Transaction, error)
 	CheckDataDnAndMinerba(listData []int, iupopkId int) (bool, error)
-	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) ([]Transaction, error)
+	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int, iupopkId int) ([]Transaction, error)
 	GetDetailMinerba(id int, iupopkId int) (DetailMinerba, error)
 	RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (map[string]interface{}, error)
 	RequestCreateExcelLn(reqInput InputRequestCreateExcelMinerba) (map[string]interface{}, error)
@@ -83,8 +83,8 @@ func (s *service) CheckDataDnAndMinerba(listData []int, iupopkId int) (bool, err
 	return checkData, checkDataErr
 }
 
-func (s *service) CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) ([]Transaction, error) {
-	checkData, checkDataErr := s.repository.CheckDataDnAndMinerbaUpdate(listData, idMinerba)
+func (s *service) CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int, iupopkId int) ([]Transaction, error) {
+	checkData, checkDataErr := s.repository.CheckDataDnAndMinerbaUpdate(listData, idMinerba, iupopkId)
 
 	return checkData, checkDataErr
 }

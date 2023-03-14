@@ -13,7 +13,7 @@ import (
 	"ajebackend/model/notificationuser"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
-	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
 	"ajebackend/validatorfunc"
 	"encoding/json"
 	"fmt"
@@ -28,7 +28,6 @@ import (
 
 type dmoHandler struct {
 	transactionService      transaction.Service
-	userService             user.Service
 	historyService          history.Service
 	logService              logs.Service
 	dmoService              dmo.Service
@@ -38,12 +37,12 @@ type dmoHandler struct {
 	companyService          company.Service
 	v                       *validator.Validate
 	dmoVesselService        dmovessel.Service
+	userIupopkService       useriupopk.Service
 }
 
-func NewDmoHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, dmoService dmo.Service, traderService trader.Service, traderDmoService traderdmo.Service, notificationUserService notificationuser.Service, companyService company.Service, v *validator.Validate, dmoVesselService dmovessel.Service) *dmoHandler {
+func NewDmoHandler(transactionService transaction.Service, historyService history.Service, logService logs.Service, dmoService dmo.Service, traderService trader.Service, traderDmoService traderdmo.Service, notificationUserService notificationuser.Service, companyService company.Service, v *validator.Validate, dmoVesselService dmovessel.Service, userIupopkService useriupopk.Service) *dmoHandler {
 	return &dmoHandler{
 		transactionService,
-		userService,
 		historyService,
 		logService,
 		dmoService,
@@ -53,6 +52,7 @@ func NewDmoHandler(transactionService transaction.Service, userService user.Serv
 		companyService,
 		v,
 		dmoVesselService,
+		userIupopkService,
 	}
 }
 
@@ -67,7 +67,17 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -76,9 +86,9 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	inputCreateDmo := new(dmo.CreateDmoInput)
 
 	// Binds the request body to the Person struct
-	err := c.BodyParser(inputCreateDmo)
+	errParsing := c.BodyParser(inputCreateDmo)
 
-	if err != nil {
+	if errParsing != nil {
 		inputCreateDmo.Period = strings.Replace(inputCreateDmo.Period, "\"", "", -1)
 
 		formPart, errFormPart := c.MultipartForm()
@@ -191,7 +201,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 
 	var dataTransactions []transaction.Transaction
 	if len(inputCreateDmo.TransactionBarge) > 0 {
-		checkDmoBarge, checkDmoBargeErr := h.transactionService.CheckDataDnAndDmo(inputCreateDmo.TransactionBarge)
+		checkDmoBarge, checkDmoBargeErr := h.transactionService.CheckDataDnAndDmo(inputCreateDmo.TransactionBarge, iupopkIdInt)
 
 		if checkDmoBargeErr != nil {
 			inputMap := make(map[string]interface{})
@@ -230,7 +240,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	}
 
 	if len(inputCreateDmo.GroupingVessel) > 0 {
-		_, checkDmoVesselErr := h.transactionService.CheckGroupingVesselAndDmo(inputCreateDmo.GroupingVessel)
+		_, checkDmoVesselErr := h.transactionService.CheckGroupingVesselAndDmo(inputCreateDmo.GroupingVessel, iupopkIdInt)
 
 		if checkDmoVesselErr != nil {
 			inputMap := make(map[string]interface{})
@@ -267,7 +277,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	splitPeriod := strings.Split(inputCreateDmo.Period, " ")
 
 	baseIdNumber := fmt.Sprintf("LBU-AJE-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1][len(splitPeriod[1])-2:])
-	createDmo, createDmoErr := h.historyService.CreateDmo(*inputCreateDmo, baseIdNumber, uint(claims["id"].(float64)))
+	createDmo, createDmoErr := h.historyService.CreateDmo(*inputCreateDmo, baseIdNumber, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -293,7 +303,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	list, endUser, listTraderDmoErr := h.traderDmoService.TraderListWithDmoId(int(createDmo.ID))
+	list, endUser, listTraderDmoErr := h.traderDmoService.TraderListWithDmoId(int(createDmo.ID), iupopkIdInt)
 
 	if listTraderDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -320,7 +330,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	listTransactionDmo, listTransactionDmoErr := h.transactionService.GetDataDmo(createDmo.ID)
+	listTransactionDmo, listTransactionDmoErr := h.transactionService.GetDataDmo(createDmo.ID, iupopkIdInt)
 
 	if listTransactionDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -441,7 +451,17 @@ func (h *dmoHandler) UpdateDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -655,7 +675,17 @@ func (h *dmoHandler) ListDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -706,7 +736,17 @@ func (h *dmoHandler) DetailDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -749,7 +789,17 @@ func (h *dmoHandler) ListTransactionForDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -790,7 +840,17 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -916,7 +976,7 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 	createNotif.Period = findDmo.Detail.Period
 	createNotif.EndUser = endUserDmo.Company.CompanyName
 
-	_, createNotificationDeleteDmoErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)))
+	_, createNotificationDeleteDmoErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), 11)
 
 	if createNotificationDeleteDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -956,7 +1016,17 @@ func (h *dmoHandler) UpdateDocumentDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -1092,7 +1162,7 @@ func (h *dmoHandler) UpdateDocumentDmo(c *fiber.Ctx) error {
 	inputNotification.Status = "membuat"
 	inputNotification.EndUser = getEndUserDmo.Company.CompanyName
 	inputNotification.Period = detailDmo.Detail.Period
-	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), 11)
 
 	if createdNotificationErr != nil {
 		inputMap := make(map[string]interface{})
@@ -1131,7 +1201,17 @@ func (h *dmoHandler) UpdateIsDownloadedDocumentDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -1243,7 +1323,17 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -1411,7 +1501,7 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 	inputNotification.Document = typeDocument
 	inputNotification.EndUser = endUserDmo.Company.CompanyName
 
-	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), 11)
 
 	if createdNotificationErr != nil {
 		inputMap := make(map[string]interface{})
@@ -1451,7 +1541,17 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -1610,7 +1710,7 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 	inputNotification.Document = typeDocument
 	inputNotification.EndUser = endUserDmo.Company.CompanyName
 
-	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), 11)
 
 	if createdNotificationErr != nil {
 		inputMap := make(map[string]interface{})
@@ -1650,7 +1750,17 @@ func (h *dmoHandler) MasterCompanyTrader(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)

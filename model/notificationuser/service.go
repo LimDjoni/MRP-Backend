@@ -3,7 +3,7 @@ package notificationuser
 import "ajebackend/model/notification"
 
 type Service interface {
-	CreateNotification(input notification.InputNotification, userId uint) (notification.Notification, error)
+	CreateNotification(input notification.InputNotification, userId uint, iupopkId int) (notification.Notification, error)
 	GetNotification(userId uint) ([]NotificationUser, error)
 	UpdateReadNotification(userId uint) ([]NotificationUser, error)
 }
@@ -16,8 +16,8 @@ func NewService(repository Repository) *service {
 	return &service{repository}
 }
 
-func (s *service) CreateNotification(input notification.InputNotification, userId uint) (notification.Notification, error) {
-	createdNotification, createdNotificationErr := s.repository.CreateNotification(input, userId)
+func (s *service) CreateNotification(input notification.InputNotification, userId uint, iupopkId int) (notification.Notification, error) {
+	createdNotification, createdNotificationErr := s.repository.CreateNotification(input, userId, iupopkId)
 
 	return createdNotification, createdNotificationErr
 }

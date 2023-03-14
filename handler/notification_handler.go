@@ -7,18 +7,19 @@ import (
 	"ajebackend/model/user"
 	"ajebackend/validatorfunc"
 	"encoding/json"
+	"reflect"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
-	"reflect"
 )
 
 type notificationHandler struct {
-	userService user.Service
-	notificationService notification.Service
+	userService             user.Service
+	notificationService     notification.Service
 	notificationUserService notificationuser.Service
-	logsService logs.Service
-	v *validator.Validate
+	logsService             logs.Service
+	v                       *validator.Validate
 }
 
 func NewNotificationHandler(userService user.Service, notificationService notification.Service, notificationUserService notificationuser.Service, logsService logs.Service, v *validator.Validate) *notificationHandler {
@@ -31,14 +32,14 @@ func NewNotificationHandler(userService user.Service, notificationService notifi
 	}
 }
 
-func (h *notificationHandler) CreateNotification(c *fiber.Ctx) error  {
+func (h *notificationHandler) CreateNotification(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	responseUnauthorized := map[string]interface{}{
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -64,14 +65,14 @@ func (h *notificationHandler) CreateNotification(c *fiber.Ctx) error  {
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
 		inputMap["input"] = inputCreateNotification
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
-			"errors": dataErrors,
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"errors":  dataErrors,
 			"message": "failed to create notification",
 		})
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
+			Input:   inputJson,
 			Message: messageJson,
 		}
 
@@ -82,20 +83,20 @@ func (h *notificationHandler) CreateNotification(c *fiber.Ctx) error  {
 		})
 	}
 
-	createdNotification, createdNotificationErr := h.notificationUserService.CreateNotification(*inputCreateNotification, uint(claims["id"].(float64)))
+	createdNotification, createdNotificationErr := h.notificationUserService.CreateNotification(*inputCreateNotification, uint(claims["id"].(float64)), 11)
 
 	if createdNotificationErr != nil {
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
 		inputMap["input"] = inputCreateNotification
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
-			"errors": createdNotificationErr.Error(),
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"errors":  createdNotificationErr.Error(),
 			"message": "failed to create notification",
 		})
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
+			Input:   inputJson,
 			Message: messageJson,
 		}
 
@@ -116,7 +117,7 @@ func (h *notificationHandler) GetNotification(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -146,7 +147,7 @@ func (h *notificationHandler) UpdateNotification(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -160,7 +161,7 @@ func (h *notificationHandler) UpdateNotification(c *fiber.Ctx) error {
 
 	if updatedNotificationErr != nil {
 		return c.Status(400).JSON(fiber.Map{
-			"error": updatedNotificationErr.Error(),
+			"error":   updatedNotificationErr.Error(),
 			"message": "failed to update notification",
 		})
 	}
@@ -177,7 +178,7 @@ func (h *notificationHandler) DeleteNotification(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -191,12 +192,12 @@ func (h *notificationHandler) DeleteNotification(c *fiber.Ctx) error {
 
 	if deletedNotificationErr != nil {
 		return c.Status(400).JSON(fiber.Map{
-			"error": deletedNotificationErr.Error(),
+			"error":   deletedNotificationErr.Error(),
 			"message": "failed to delete notification",
 		})
 	}
 
 	return c.Status(200).JSON(fiber.Map{
-		"message" : "success delete notification",
+		"message": "success delete notification",
 	})
 }
