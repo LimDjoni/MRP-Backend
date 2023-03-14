@@ -1023,13 +1023,22 @@ func (r *repository) CreateDmo(dmoInput dmo.CreateDmoInput, baseIdNumber string,
 	vessel := false
 	tx := r.db.Begin()
 
+	var iup iupopk.Iupopk
+
+	findIupErr := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if findIupErr != nil {
+		tx.Rollback()
+		return createdDmo, findIupErr
+	}
+
 	createdDmo.Period = dmoInput.Period
 	createdDmo.IsDocumentCustom = dmoInput.IsDocumentCustom
 	createdDmo.DocumentDate = dmoInput.DocumentDate
 	if len(dmoInput.TransactionBarge) > 0 {
 		var bargeQuantity float64
 		barge = true
-		findTransactionBargeErr := tx.Where("id IN ? AND dmo_id IS NULL", dmoInput.TransactionBarge).Find(&transactionBarge).Error
+		findTransactionBargeErr := tx.Where("id IN ? AND dmo_id IS NULL AND seller_id = ?", dmoInput.TransactionBarge, iupopkId).Find(&transactionBarge).Error
 
 		if findTransactionBargeErr != nil {
 			tx.Rollback()
@@ -1108,14 +1117,29 @@ func (r *repository) CreateDmo(dmoInput dmo.CreateDmoInput, baseIdNumber string,
 		createdDmo.IsReconciliationLetterSigned = true
 	}
 
-	createdDmoErr := tx.Create(&createdDmo).Error
+	createdDmoErr := tx.Preload(clause.Associations).Create(&createdDmo).Error
 
 	if createdDmoErr != nil {
 		tx.Rollback()
 		return createdDmo, createdDmoErr
 	}
 
-	idNumber := baseIdNumber + "-" + helper.CreateIdNumber(int(createdDmo.ID))
+	var counterTransaction counter.Counter
+
+	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).Find(&counterTransaction).Error
+
+	if findCounterTransactionErr != nil {
+		tx.Rollback()
+		return createdDmo, findCounterTransactionErr
+	}
+	code := "LBU-"
+
+	code += iup.Code
+
+	periodSplit := strings.Split(dmoInput.Period, " ")
+
+	idNumber := fmt.Sprintf("LBU-%s-%s-%s-", iup.Code, helper.MonthStringToNumberString(periodSplit[0]), periodSplit[1][len(periodSplit[1])-2:])
+	idNumber += helper.CreateIdNumber(counterTransaction.BaEndUser)
 
 	updateDmoErr := tx.Model(&createdDmo).Update("id_number", idNumber).Error
 
