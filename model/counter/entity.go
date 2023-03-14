@@ -19,4 +19,5 @@ type Counter struct {
 	BaEndUser     int            `json:"ba_end_user`
 	Dmo           int            `json:"dmo`
 	Production    int            `json:"production`
+	Insw          int            `json:"insw"`
 }

@@ -5,6 +5,7 @@ import (
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/master/trader"
 	"ajebackend/model/minerba"
+	"ajebackend/model/minerbaln"
 	"ajebackend/model/reportdmo"
 )
 
@@ -90,6 +91,15 @@ type InputRequestCreateExcelMinerba struct {
 	MinerbaId     int             `json:"minerba_id"`
 	Transactions  []Transaction   `json:"transactions"`
 	Minerba       minerba.Minerba `json:"minerba"`
+}
+
+type InputRequestCreateExcelMinerbaLn struct {
+	Authorization string              `json:"authorization"`
+	MinerbaNumber string              `json:"minerba_number"`
+	MinerbaPeriod string              `json:"minerba_period"`
+	MinerbaId     int                 `json:"minerba_id"`
+	Transactions  []Transaction       `json:"transactions"`
+	MinerbaLn     minerbaln.MinerbaLn `json:"minerba_ln"`
 }
 
 type InputRequestCreateUploadDmo struct {

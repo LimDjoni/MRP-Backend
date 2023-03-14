@@ -9,7 +9,7 @@ import (
 	"ajebackend/model/logs"
 	"ajebackend/model/master/destination"
 	"ajebackend/model/transaction"
-	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -21,9 +21,6 @@ func GroupingVesselLnRouting(db *gorm.DB, app fiber.Router, validate *validator.
 	transactionRepository := transaction.NewRepository(db)
 	transactionService := transaction.NewService(transactionRepository)
 
-	userRepository := user.NewRepository(db)
-	userService := user.NewService(userRepository)
-
 	historyRepository := history.NewRepository(db)
 	historyService := history.NewService(historyRepository)
 
@@ -33,15 +30,18 @@ func GroupingVesselLnRouting(db *gorm.DB, app fiber.Router, validate *validator.
 	groupingVesselLnRepository := groupingvesselln.NewRepository(db)
 	groupingVesselLnService := groupingvesselln.NewService(groupingVesselLnRepository)
 
-	groupingVesselLnHandler := handler.NewGroupingVesselLnHandler(transactionService, userService, historyService, validate, logService, groupingVesselLnService)
-
 	groupingVesselDnRepository := groupingvesseldn.NewRepository(db)
 	groupingVesselDnService := groupingvesseldn.NewService(groupingVesselDnRepository)
 
 	destinationRepository := destination.NewRepository(db)
 	destinationService := destination.NewService(destinationRepository)
 
-	groupingVesselDnHandler := handler.NewGroupingVesselDnHandler(transactionService, userService, historyService, validate, logService, groupingVesselDnService, destinationService)
+	userIupopkRepository := useriupopk.NewRepository(db)
+	userIupopkService := useriupopk.NewService(userIupopkRepository)
+
+	groupingVesselDnHandler := handler.NewGroupingVesselDnHandler(transactionService, historyService, validate, logService, groupingVesselDnService, destinationService, userIupopkService)
+
+	groupingVesselLnHandler := handler.NewGroupingVesselLnHandler(transactionService, historyService, validate, logService, groupingVesselLnService, userIupopkService)
 
 	groupingVesselRouting := app.Group("/groupingvessel")
 

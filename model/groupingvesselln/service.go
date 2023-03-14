@@ -8,9 +8,9 @@ import (
 )
 
 type Service interface {
-	ListGroupingVesselLn(page int, sortFilter SortFilterGroupingVesselLn) (Pagination, error)
-	ListGroupingVesselLnWithPeriod(month string, year int) ([]GroupingVesselLn, error)
-	DetailInsw(id int) (DetailInsw, error)
+	ListGroupingVesselLn(page int, sortFilter SortFilterGroupingVesselLn, iupopkId int) (Pagination, error)
+	ListGroupingVesselLnWithPeriod(month string, year int, iupopkId int) ([]GroupingVesselLn, error)
+	DetailInsw(id int, iupopkId int) (DetailInsw, error)
 	RequestCreateExcelInsw(reqInput InputRequestCreateUploadInsw) (map[string]interface{}, error)
 }
 
@@ -22,20 +22,20 @@ func NewService(repository Repository) *service {
 	return &service{repository}
 }
 
-func (s *service) ListGroupingVesselLn(page int, sortFilter SortFilterGroupingVesselLn) (Pagination, error) {
-	listGroupingVesselLn, listGroupingVesselLnErr := s.repository.ListGroupingVesselLn(page, sortFilter)
+func (s *service) ListGroupingVesselLn(page int, sortFilter SortFilterGroupingVesselLn, iupopkId int) (Pagination, error) {
+	listGroupingVesselLn, listGroupingVesselLnErr := s.repository.ListGroupingVesselLn(page, sortFilter, iupopkId)
 
 	return listGroupingVesselLn, listGroupingVesselLnErr
 }
 
-func (s *service) ListGroupingVesselLnWithPeriod(month string, year int) ([]GroupingVesselLn, error) {
-	listGroupingVesselLnWithoutInsw, listGroupingVesselLnWithoutInswErr := s.repository.ListGroupingVesselLnWithPeriod(month, year)
+func (s *service) ListGroupingVesselLnWithPeriod(month string, year int, iupopkId int) ([]GroupingVesselLn, error) {
+	listGroupingVesselLnWithoutInsw, listGroupingVesselLnWithoutInswErr := s.repository.ListGroupingVesselLnWithPeriod(month, year, iupopkId)
 
 	return listGroupingVesselLnWithoutInsw, listGroupingVesselLnWithoutInswErr
 }
 
-func (s *service) DetailInsw(id int) (DetailInsw, error) {
-	detailInsw, detailInswErr := s.repository.DetailInsw(id)
+func (s *service) DetailInsw(id int, iupopkId int) (DetailInsw, error) {
+	detailInsw, detailInswErr := s.repository.DetailInsw(id, iupopkId)
 
 	return detailInsw, detailInswErr
 }

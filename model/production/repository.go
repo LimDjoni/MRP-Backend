@@ -1,12 +1,14 @@
 package production
 
 import (
+	"fmt"
+
 	"gorm.io/gorm"
 )
 
 type Repository interface {
-	GetListProduction(page int, filter FilterListProduction) (Pagination, error)
-	DetailProduction(id int) (Production, error)
+	GetListProduction(page int, filter FilterListProduction, iupopkId int) (Pagination, error)
+	DetailProduction(id int, iupopkId int) (Production, error)
 }
 
 type repository struct {
@@ -17,13 +19,13 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
-func (r *repository) GetListProduction(page int, filter FilterListProduction) (Pagination, error) {
+func (r *repository) GetListProduction(page int, filter FilterListProduction, iupopkId int) (Pagination, error) {
 	var listProduction []Production
 
 	var pagination Pagination
 	pagination.Limit = 7
 	pagination.Page = page
-	queryFilter := ""
+	queryFilter := fmt.Sprintf("iupopk_id = %v", iupopkId)
 	querySort := "id desc"
 
 	if filter.Field != "" && filter.Sort != "" {
@@ -31,23 +33,15 @@ func (r *repository) GetListProduction(page int, filter FilterListProduction) (P
 	}
 
 	if filter.ProductionDateStart != "" {
-		queryFilter = queryFilter + "production_date >= '" + filter.ProductionDateStart + "'"
+		queryFilter = queryFilter + " AND production_date >= '" + filter.ProductionDateStart + "'"
 	}
 
 	if filter.ProductionDateEnd != "" {
-		if queryFilter != "" {
-			queryFilter = queryFilter + " AND production_date <= '" + filter.ProductionDateEnd + "T23:59:59'"
-		} else {
-			queryFilter = "production_date <= '" + filter.ProductionDateEnd + "T23:59:59'"
-		}
+		queryFilter = queryFilter + " AND production_date <= '" + filter.ProductionDateEnd + "T23:59:59'"
 	}
 
 	if filter.Quantity != "" {
-		if queryFilter != "" {
-			queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" + filter.Quantity + "%'"
-		} else {
-			queryFilter = "cast(quantity AS TEXT) LIKE '%" + filter.Quantity + "%'"
-		}
+		queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" + filter.Quantity + "%'"
 	}
 
 	errFind := r.db.Where(queryFilter).Order(querySort).Scopes(paginateProduction(listProduction, &pagination, r.db, queryFilter)).Find(&listProduction).Error
@@ -61,10 +55,10 @@ func (r *repository) GetListProduction(page int, filter FilterListProduction) (P
 	return pagination, nil
 }
 
-func (r *repository) DetailProduction(id int) (Production, error) {
+func (r *repository) DetailProduction(id int, iupopkId int) (Production, error) {
 	var detailProduction Production
 
-	errFind := r.db.Where("id = ?", id).First(&detailProduction).Error
+	errFind := r.db.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&detailProduction).Error
 
 	return detailProduction, errFind
 }

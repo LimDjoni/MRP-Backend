@@ -6,7 +6,8 @@ import (
 	"ajebackend/model/logs"
 	"ajebackend/model/notification"
 	"ajebackend/model/notificationuser"
-	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	jwtware "github.com/gofiber/jwt/v3"
@@ -14,9 +15,6 @@ import (
 )
 
 func NotificationRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
-	userRepository := user.NewRepository(db)
-	userService := user.NewService(userRepository)
-
 	notificationRepository := notification.NewRepository(db)
 	notificationService := notification.NewService(notificationRepository)
 
@@ -26,7 +24,10 @@ func NotificationRouting(db *gorm.DB, app fiber.Router, validate *validator.Vali
 	logsRepository := logs.NewRepository(db)
 	logsService := logs.NewService(logsRepository)
 
-	notificationHandler := handler.NewNotificationHandler(userService, notificationService, notificationUserService, logsService, validate)
+	userIupopkRepository := useriupopk.NewRepository(db)
+	userIupopkService := useriupopk.NewService(userIupopkRepository)
+
+	notificationHandler := handler.NewNotificationHandler(notificationService, notificationUserService, logsService, validate, userIupopkService)
 
 	notificationRouting := app.Group("/notification")
 
@@ -36,7 +37,7 @@ func NotificationRouting(db *gorm.DB, app fiber.Router, validate *validator.Vali
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
 			return ctx.Status(401).JSON(fiber.Map{
 				"error": "unauthorized",
-				"err": err.Error(),
+				"err":   err.Error(),
 			})
 		},
 	}))
@@ -44,5 +45,5 @@ func NotificationRouting(db *gorm.DB, app fiber.Router, validate *validator.Vali
 	notificationRouting.Post("/create", notificationHandler.CreateNotification)
 	notificationRouting.Put("/update", notificationHandler.UpdateNotification)
 	notificationRouting.Delete("/delete", notificationHandler.DeleteNotification)
-	notificationRouting.Get("/list", notificationHandler.GetNotification)
+	notificationRouting.Get("/list/:iupopk_id", notificationHandler.GetNotification)
 }

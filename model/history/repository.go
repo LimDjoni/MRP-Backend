@@ -43,7 +43,7 @@ type Repository interface {
 	UpdateMinerba(id int, updateTransaction []int, userId uint, iupopkId int) (minerba.Minerba, error)
 	DeleteMinerba(idMinerba int, userId uint, iupopkId int) (bool, error)
 	UpdateDocumentMinerba(id int, documentLink minerba.InputUpdateDocumentMinerba, userId uint, iupopkId int) (minerba.Minerba, error)
-	CreateDmo(dmoInput dmo.CreateDmoInput, baseIdNumber string, userId uint, iupopkId int) (dmo.Dmo, error)
+	CreateDmo(dmoInput dmo.CreateDmoInput, userId uint, iupopkId int) (dmo.Dmo, error)
 	DeleteDmo(idDmo int, userId uint, iupopkId int) (bool, error)
 	UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocumentDmo, userId uint, iupopkId int) (dmo.Dmo, error)
 	UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, isReconciliationLetterEndUser bool, id int, userId uint, iupopkId int) (dmo.Dmo, error)
@@ -61,14 +61,14 @@ type Repository interface {
 	EditGroupingVesselLn(id int, editGrouping groupingvesselln.InputEditGroupingVesselLn, userId uint, iupopkId int) (groupingvesselln.GroupingVesselLn, error)
 	UploadDocumentGroupingVesselLn(id uint, urlS3 string, userId uint, documentType string, iupopkId int) (groupingvesselln.GroupingVesselLn, error)
 	DeleteGroupingVesselLn(id int, userId uint, iupopkId int) (bool, error)
-	CreateMinerbaLn(period string, baseIdNumber string, listTransactions []int, userId uint, iupopkId int) (minerbaln.MinerbaLn, error)
+	CreateMinerbaLn(period string, listTransactions []int, userId uint, iupopkId int) (minerbaln.MinerbaLn, error)
 	UpdateMinerbaLn(id int, listTransactions []int, userId uint, iupopkId int) (minerbaln.MinerbaLn, error)
 	DeleteMinerbaLn(idMinerbaLn int, userId uint, iupopkId int) (bool, error)
 	UpdateDocumentMinerbaLn(id int, documentLink minerbaln.InputUpdateDocumentMinerbaLn, userId uint, iupopkId int) (minerbaln.MinerbaLn, error)
-	CreateInsw(month string, year int, baseIdNumber string, userId uint, iupopkId int) (insw.Insw, error)
+	CreateInsw(month string, year int, userId uint, iupopkId int) (insw.Insw, error)
 	DeleteInsw(idInsw int, userId uint, iupopkId int) (bool, error)
 	UpdateDocumentInsw(id int, documentLink insw.InputUpdateDocumentInsw, userId uint, iupopkId int) (insw.Insw, error)
-	CreateReportDmo(input reportdmo.InputCreateReportDmo, baseIdNumber string, userId uint, iupopkId int) (reportdmo.ReportDmo, error)
+	CreateReportDmo(input reportdmo.InputCreateReportDmo, userId uint, iupopkId int) (reportdmo.ReportDmo, error)
 	UpdateDocumentReportDmo(id int, documentLink reportdmo.InputUpdateDocumentReportDmo, userId uint, iupopkId int) (reportdmo.ReportDmo, error)
 	UpdateTransactionReportDmo(id int, inputUpdate reportdmo.InputUpdateReportDmo, userId uint, iupopkId int) (reportdmo.ReportDmo, error)
 	DeleteReportDmo(idReportDmo int, userId uint, iupopkId int) (bool, error)
@@ -951,7 +951,7 @@ func (r *repository) DeleteMinerba(idMinerba int, userId uint, iupopkId int) (bo
 
 	history.Status = fmt.Sprintf("Deleted Minerba Report with id number %s and id %v", *minerba.IdNumber, minerba.ID)
 	history.UserId = userId
-	history.IupopkId = minerba.IupopkId
+	history.IupopkId = &minerba.IupopkId
 	createHistoryErr := tx.Create(&history).Error
 
 	if createHistoryErr != nil {
@@ -996,7 +996,7 @@ func (r *repository) UpdateDocumentMinerba(id int, documentLink minerba.InputUpd
 	history.MinerbaId = &minerba.ID
 	history.UserId = userId
 	history.Status = fmt.Sprintf("Update upload document minerba with id = %v", minerba.ID)
-	history.IupopkId = minerba.IupopkId
+	history.IupopkId = &minerba.IupopkId
 	dataInput, _ := json.Marshal(documentLink)
 
 	history.AfterData = dataInput
@@ -1014,7 +1014,7 @@ func (r *repository) UpdateDocumentMinerba(id int, documentLink minerba.InputUpd
 
 // Dmo
 
-func (r *repository) CreateDmo(dmoInput dmo.CreateDmoInput, baseIdNumber string, userId uint, iupopkId int) (dmo.Dmo, error) {
+func (r *repository) CreateDmo(dmoInput dmo.CreateDmoInput, userId uint, iupopkId int) (dmo.Dmo, error) {
 	var createdDmo dmo.Dmo
 	var transactionBarge []transaction.Transaction
 	var groupingVessel []groupingvesseldn.GroupingVesselDn
@@ -1032,6 +1032,7 @@ func (r *repository) CreateDmo(dmoInput dmo.CreateDmoInput, baseIdNumber string,
 		return createdDmo, findIupErr
 	}
 
+	createdDmo.IupopkId = iup.ID
 	createdDmo.Period = dmoInput.Period
 	createdDmo.IsDocumentCustom = dmoInput.IsDocumentCustom
 	createdDmo.DocumentDate = dmoInput.DocumentDate
@@ -1230,12 +1231,19 @@ func (r *repository) CreateDmo(dmoInput dmo.CreateDmoInput, baseIdNumber string,
 	history.DmoId = &createdDmo.ID
 	history.Status = "Created Dmo"
 	history.UserId = userId
-
+	history.IupopkId = &iup.ID
 	createHistoryErr := tx.Create(&history).Error
 
 	if createHistoryErr != nil {
 		tx.Rollback()
 		return createdDmo, createHistoryErr
+	}
+
+	updateCounterErr := tx.Model(&counterTransaction).Update("ba_end_user", counterTransaction.BaEndUser+1).Error
+
+	if updateCounterErr != nil {
+		tx.Rollback()
+		return createdDmo, updateCounterErr
 	}
 
 	tx.Commit()
@@ -1247,7 +1255,7 @@ func (r *repository) DeleteDmo(idDmo int, userId uint, iupopkId int) (bool, erro
 	tx := r.db.Begin()
 	var dmo dmo.Dmo
 
-	findDmoErr := tx.Where("id = ?", idDmo).First(&dmo).Error
+	findDmoErr := tx.Where("id = ? AND iupopk_id = ?", idDmo, iupopkId).First(&dmo).Error
 
 	if findDmoErr != nil {
 		tx.Rollback()
@@ -1263,9 +1271,10 @@ func (r *repository) DeleteDmo(idDmo int, userId uint, iupopkId int) (bool, erro
 
 	var history History
 
+	iupId := uint(iupopkId)
 	history.Status = fmt.Sprintf("Deleted Dmo with id number %s and id %v", *dmo.IdNumber, dmo.ID)
 	history.UserId = userId
-
+	history.IupopkId = &iupId
 	createHistoryErr := tx.Create(&history).Error
 
 	if createHistoryErr != nil {
@@ -1281,7 +1290,7 @@ func (r *repository) UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocum
 	tx := r.db.Begin()
 	var dmoUpdate dmo.Dmo
 
-	errFind := tx.Where("id = ?", id).First(&dmoUpdate).Error
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&dmoUpdate).Error
 
 	if errFind != nil {
 		tx.Rollback()
@@ -1328,7 +1337,7 @@ func (r *repository) UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocum
 	history.DmoId = &dmoUpdate.ID
 	history.UserId = userId
 	history.Status = fmt.Sprintf("Update upload document dmo with id = %v", dmoUpdate.ID)
-
+	history.IupopkId = &dmoUpdate.IupopkId
 	dataInput, _ := json.Marshal(documentLink)
 	history.AfterData = dataInput
 
@@ -1348,7 +1357,7 @@ func (r *repository) UpdateIsDownloadedDmoDocument(isBast bool, isStatementLette
 
 	tx := r.db.Begin()
 
-	findErr := tx.Where("id = ?", id).First(&dmoUpdate).Error
+	findErr := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&dmoUpdate).Error
 
 	if findErr != nil {
 		tx.Rollback()
@@ -1380,7 +1389,7 @@ func (r *repository) UpdateIsDownloadedDmoDocument(isBast bool, isStatementLette
 		field = "is_reconciliation_letter_end_user_downloaded"
 	}
 
-	updateErr := tx.Model(&dmoUpdate).Where("id = ?", id).Update(field, true).Error
+	updateErr := tx.Model(&dmoUpdate).Where("id = ? AND iupopk_id = ?", id, iupopkId).Update(field, true).Error
 
 	if findErr != nil {
 		tx.Rollback()
@@ -1396,6 +1405,7 @@ func (r *repository) UpdateIsDownloadedDmoDocument(isBast bool, isStatementLette
 	afterData, _ := json.Marshal(dmoUpdate)
 	history.BeforeData = beforeData
 	history.AfterData = afterData
+	history.IupopkId = &dmoUpdate.IupopkId
 
 	createHistoryErr := tx.Create(&history).Error
 
@@ -1413,7 +1423,7 @@ func (r *repository) UpdateTrueIsSignedDmoDocument(isBast bool, isStatementLette
 
 	tx := r.db.Begin()
 
-	findErr := tx.Where("id = ?", id).First(&dmoUpdate).Error
+	findErr := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&dmoUpdate).Error
 
 	if findErr != nil {
 		tx.Rollback()
@@ -1454,7 +1464,7 @@ func (r *repository) UpdateTrueIsSignedDmoDocument(isBast bool, isStatementLette
 		updatesDmo["signed_reconciliation_letter_end_user_document_link"] = location
 	}
 
-	updateErr := tx.Model(&dmoUpdate).Where("id = ?", id).Updates(updatesDmo).Error
+	updateErr := tx.Model(&dmoUpdate).Where("id = ? AND iupopk_id = ?", id, iupopkId).Updates(updatesDmo).Error
 
 	if findErr != nil {
 		tx.Rollback()
@@ -1470,7 +1480,7 @@ func (r *repository) UpdateTrueIsSignedDmoDocument(isBast bool, isStatementLette
 	afterData, _ := json.Marshal(dmoUpdate)
 	history.BeforeData = beforeData
 	history.AfterData = afterData
-
+	history.IupopkId = &dmoUpdate.IupopkId
 	createHistoryErr := tx.Create(&history).Error
 
 	if createHistoryErr != nil {
@@ -1487,7 +1497,7 @@ func (r *repository) UpdateFalseIsSignedDmoDocument(isBast bool, isStatementLett
 
 	tx := r.db.Begin()
 
-	findErr := tx.Where("id = ?", id).First(&dmoUpdate).Error
+	findErr := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&dmoUpdate).Error
 
 	if findErr != nil {
 		tx.Rollback()
@@ -1544,6 +1554,7 @@ func (r *repository) UpdateFalseIsSignedDmoDocument(isBast bool, isStatementLett
 	afterData, _ := json.Marshal(dmoUpdate)
 	history.BeforeData = beforeData
 	history.AfterData = afterData
+	history.IupopkId = &dmoUpdate.IupopkId
 
 	createHistoryErr := tx.Create(&history).Error
 
@@ -1566,7 +1577,7 @@ func (r *repository) UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId
 	tx := r.db.Begin()
 	beforeUpdate := make(map[string]interface{})
 	afterUpdate := make(map[string]interface{})
-	errFind := tx.Where("id = ?", id).First(&updatedDmo).Error
+	errFind := tx.Preload(clause.Associations).Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&updatedDmo).Error
 
 	if errFind != nil {
 		tx.Rollback()
@@ -1577,7 +1588,7 @@ func (r *repository) UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId
 
 	var transactionBefore []transaction.Transaction
 
-	errFindTransactionBefore := tx.Where("dmo_id = ? AND grouping_vessel_dn_id IS NULL", id).Find(&transactionBefore).Error
+	errFindTransactionBefore := tx.Where("dmo_id = ? AND grouping_vessel_dn_id IS NULL AND seller_id = ?", id, iupopkId).Find(&transactionBefore).Error
 
 	if errFindTransactionBefore != nil {
 		tx.Rollback()
@@ -1586,7 +1597,7 @@ func (r *repository) UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId
 
 	beforeUpdate["transaction"] = transactionBefore
 
-	errUpdateTransactionBefore := tx.Table("transactions").Where("dmo_id = ?", id).Update("dmo_id", nil).Error
+	errUpdateTransactionBefore := tx.Table("transactions").Where("dmo_id = ? AND seller_id = ?", id, iupopkId).Update("dmo_id", nil).Error
 
 	if errUpdateTransactionBefore != nil {
 		tx.Rollback()
@@ -1608,7 +1619,7 @@ func (r *repository) UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId
 
 	var groupingVesselBefore []groupingvesseldn.GroupingVesselDn
 
-	errFindGroupingVesselBefore := tx.Where("id IN ? ", groupingVesselIdBefore).Find(&groupingVesselBefore).Error
+	errFindGroupingVesselBefore := tx.Where("id IN ? AND iupopk_id = ?", groupingVesselIdBefore, iupopkId).Find(&groupingVesselBefore).Error
 
 	if errFindGroupingVesselBefore != nil {
 		tx.Rollback()
@@ -1629,7 +1640,7 @@ func (r *repository) UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId
 	if len(dmoUpdateInput.TransactionBarge) > 0 {
 		var bargeQuantity float64
 		barge = true
-		findTransactionBargeErr := tx.Where("id IN ? AND dmo_id IS NULL", dmoUpdateInput.TransactionBarge).Find(&transactionBarge).Error
+		findTransactionBargeErr := tx.Where("id IN ? AND dmo_id IS NULL AND seller_id = ?", dmoUpdateInput.TransactionBarge, iupopkId).Find(&transactionBarge).Error
 
 		if findTransactionBargeErr != nil {
 			tx.Rollback()
@@ -1668,7 +1679,7 @@ func (r *repository) UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId
 			return updatedDmo, errors.New("Ada grouping vessel yang sudah digunakan")
 		}
 
-		findGroupingVesselErr := tx.Where("id IN ?", dmoUpdateInput.GroupingVessel).Find(&groupingVessel).Error
+		findGroupingVesselErr := tx.Where("id IN ? AND iupopk_id = ?", dmoUpdateInput.GroupingVessel, iupopkId).Find(&groupingVessel).Error
 
 		if findGroupingVesselErr != nil {
 			tx.Rollback()
@@ -1698,7 +1709,7 @@ func (r *repository) UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId
 		updatedMap["type"] = "Vessel"
 	}
 
-	updateDmoErr := tx.Model(&updatedDmo).Where("id = ?", id).Updates(updatedMap).Error
+	updateDmoErr := tx.Model(&updatedDmo).Where("id = ? AND iupopk_id = ?", id, iupopkId).Updates(updatedMap).Error
 
 	if updateDmoErr != nil {
 		tx.Rollback()
@@ -1710,14 +1721,14 @@ func (r *repository) UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId
 	if len(dmoUpdateInput.TransactionBarge) > 0 {
 		var transactionAfter []transaction.Transaction
 
-		updateTransactionBargeErr := tx.Table("transactions").Where("id IN ?", dmoUpdateInput.TransactionBarge).Update("dmo_id", updatedDmo.ID).Error
+		updateTransactionBargeErr := tx.Table("transactions").Where("id IN ? AND seller_id = ?", dmoUpdateInput.TransactionBarge, iupopkId).Update("dmo_id", updatedDmo.ID).Error
 
 		if updateTransactionBargeErr != nil {
 			tx.Rollback()
 			return updatedDmo, updateTransactionBargeErr
 		}
 
-		errFindTransactionAfter := tx.Where("id IN ?", dmoUpdateInput.TransactionBarge).Find(&transactionAfter).Error
+		errFindTransactionAfter := tx.Where("id IN ? AND seller_id = ?", dmoUpdateInput.TransactionBarge, iupopkId).Find(&transactionAfter).Error
 
 		if errFindTransactionAfter != nil {
 			tx.Rollback()
@@ -1731,7 +1742,7 @@ func (r *repository) UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId
 		var transactionGroupVessel []transaction.Transaction
 
 		var listIdTransactionGroupVessel []uint
-		findTransactionGroupVesselErr := tx.Where("grouping_vessel_dn_id IN ? AND dmo_id IS NULL", dmoUpdateInput.GroupingVessel).Find(&transactionGroupVessel).Error
+		findTransactionGroupVesselErr := tx.Where("grouping_vessel_dn_id IN ? AND dmo_id IS NULL AND seller_id = ?", dmoUpdateInput.GroupingVessel, iupopkId).Find(&transactionGroupVessel).Error
 
 		if findTransactionGroupVesselErr != nil {
 			tx.Rollback()
@@ -1742,7 +1753,7 @@ func (r *repository) UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId
 			listIdTransactionGroupVessel = append(listIdTransactionGroupVessel, v.ID)
 		}
 
-		updateTransactionGroupVesselErr := tx.Table("transactions").Where("id IN ?", listIdTransactionGroupVessel).Update("dmo_id", updatedDmo.ID).Error
+		updateTransactionGroupVesselErr := tx.Table("transactions").Where("id IN ? AND seller_id = ?", listIdTransactionGroupVessel, iupopkId).Update("dmo_id", updatedDmo.ID).Error
 
 		if updateTransactionGroupVesselErr != nil {
 			tx.Rollback()
@@ -1769,7 +1780,7 @@ func (r *repository) UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId
 
 		var groupingVesselAfter []groupingvesseldn.GroupingVesselDn
 
-		errFindGroupingVesselAfter := tx.Where("id IN ?", dmoUpdateInput.GroupingVessel).Find(&groupingVesselAfter).Error
+		errFindGroupingVesselAfter := tx.Where("id IN ? AND iupopk_id = ?", dmoUpdateInput.GroupingVessel, iupopkId).Find(&groupingVesselAfter).Error
 
 		if errFindGroupingVesselAfter != nil {
 			tx.Rollback()
@@ -1800,7 +1811,7 @@ func (r *repository) UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId
 	history.UserId = userId
 	history.BeforeData = beforeUpdateJson
 	history.AfterData = afterUpdateJson
-
+	history.IupopkId = &updatedDmo.IupopkId
 	createHistoryErr := tx.Create(&history).Error
 
 	if createHistoryErr != nil {
@@ -1818,7 +1829,7 @@ func (r *repository) CreateProduction(input production.InputCreateProduction, us
 
 	createdProduction.ProductionDate = input.ProductionDate
 	createdProduction.Quantity = math.Round(input.Quantity*1000) / 1000
-
+	createdProduction.IupopkId = uint(iupopkId)
 	tx := r.db.Begin()
 
 	errCreateProduction := tx.Create(&createdProduction).Error
@@ -1833,7 +1844,7 @@ func (r *repository) CreateProduction(input production.InputCreateProduction, us
 	history.ProductionId = &createdProduction.ID
 	history.Status = "Created Production"
 	history.UserId = userId
-
+	history.IupopkId = &createdProduction.IupopkId
 	createHistoryErr := tx.Create(&history).Error
 
 	if createHistoryErr != nil {
@@ -1850,7 +1861,7 @@ func (r *repository) UpdateProduction(input production.InputCreateProduction, pr
 
 	tx := r.db.Begin()
 
-	errFindProduction := tx.Where("id = ?", productionId).First(&updatedProduction).Error
+	errFindProduction := tx.Where("id = ? AND iupopk_id = ?", productionId, iupopkId).First(&updatedProduction).Error
 
 	if errFindProduction != nil {
 		tx.Rollback()
@@ -1879,7 +1890,7 @@ func (r *repository) UpdateProduction(input production.InputCreateProduction, pr
 	history.UserId = userId
 	history.BeforeData = beforeData
 	history.AfterData = afterData
-
+	history.IupopkId = &updatedProduction.IupopkId
 	createHistoryErr := tx.Create(&history).Error
 
 	if createHistoryErr != nil {
@@ -1895,7 +1906,7 @@ func (r *repository) DeleteProduction(productionId int, userId uint, iupopkId in
 	tx := r.db.Begin()
 	var deletedProduction production.Production
 
-	findDeletedProductionErr := tx.Where("id = ?", productionId).First(&deletedProduction).Error
+	findDeletedProductionErr := tx.Where("id = ? AND iupopk_id = ?", productionId, iupopkId).First(&deletedProduction).Error
 
 	if findDeletedProductionErr != nil {
 		tx.Rollback()
@@ -1904,7 +1915,7 @@ func (r *repository) DeleteProduction(productionId int, userId uint, iupopkId in
 
 	beforeData, _ := json.Marshal(deletedProduction)
 
-	errDelete := tx.Unscoped().Where("id = ?", productionId).Delete(&deletedProduction).Error
+	errDelete := tx.Unscoped().Where("id = ? AND iupopk_id = ?", productionId, iupopkId).Delete(&deletedProduction).Error
 
 	if errDelete != nil {
 		tx.Rollback()
@@ -1916,7 +1927,7 @@ func (r *repository) DeleteProduction(productionId int, userId uint, iupopkId in
 	history.Status = fmt.Sprintf("Deleted Production with id %v", deletedProduction.ID)
 	history.UserId = userId
 	history.BeforeData = beforeData
-
+	history.IupopkId = &deletedProduction.IupopkId
 	createHistoryErr := tx.Create(&history).Error
 
 	if createHistoryErr != nil {
@@ -1933,8 +1944,16 @@ func (r *repository) CreateGroupingVesselDN(inputGrouping groupingvesseldn.Input
 	var createdGroupingVesselDn groupingvesseldn.GroupingVesselDn
 	var transactions []transaction.Transaction
 	tx := r.db.Begin()
+	var iup iupopk.Iupopk
 
-	findTransactionsErr := tx.Where("id IN ? AND dmo_id is NULL AND transaction_type = ? AND grouping_vessel_dn_id is NULL AND is_migration = ? AND is_not_claim = ?", inputGrouping.ListTransactions, "DN", false, false).Find(&transactions).Error
+	findIupErr := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if findIupErr != nil {
+		tx.Rollback()
+		return createdGroupingVesselDn, findIupErr
+	}
+
+	findTransactionsErr := tx.Where("id IN ? AND dmo_id is NULL AND transaction_type = ? AND grouping_vessel_dn_id is NULL AND is_migration = ? AND is_not_claim = ? AND seller_id = ?", inputGrouping.ListTransactions, "DN", false, false, iupopkId).Find(&transactions).Error
 
 	if findTransactionsErr != nil {
 		tx.Rollback()
@@ -1991,6 +2010,7 @@ func (r *repository) CreateGroupingVesselDN(inputGrouping groupingvesseldn.Input
 	createdGroupingVesselDn.QualityCaloriesAr = inputGrouping.QualityCaloriesAr
 	createdGroupingVesselDn.QualityCaloriesAdb = inputGrouping.QualityCaloriesAdb
 	createdGroupingVesselDn.BlNumber = strings.ToUpper(inputGrouping.BlNumber)
+	createdGroupingVesselDn.IupopkId = uint(iupopkId)
 	errCreatedGroupingVesselDn := tx.Create(&createdGroupingVesselDn).Error
 
 	if errCreatedGroupingVesselDn != nil {
@@ -1998,7 +2018,19 @@ func (r *repository) CreateGroupingVesselDN(inputGrouping groupingvesseldn.Input
 		return createdGroupingVesselDn, errCreatedGroupingVesselDn
 	}
 
-	idNumber := createIdNumber("GMD-AJE", createdGroupingVesselDn.ID)
+	var counterTransaction counter.Counter
+
+	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).Find(&counterTransaction).Error
+
+	if findCounterTransactionErr != nil {
+		tx.Rollback()
+		return createdGroupingVesselDn, findCounterTransactionErr
+	}
+
+	code := "GMD-"
+	code += iup.Code
+
+	idNumber := createIdNumber(code, uint(counterTransaction.GroupingMvDn))
 
 	updatedGroupingVesselDnErr := tx.Model(&createdGroupingVesselDn).Update("id_number", idNumber).Error
 
@@ -2038,12 +2070,20 @@ func (r *repository) CreateGroupingVesselDN(inputGrouping groupingvesseldn.Input
 	history.UserId = userId
 	history.BeforeData = beforeDataJson
 	history.AfterData = afterDataJson
+	history.IupopkId = &createdGroupingVesselDn.IupopkId
 
 	createHistoryErr := tx.Create(&history).Error
 
 	if createHistoryErr != nil {
 		tx.Rollback()
 		return createdGroupingVesselDn, createHistoryErr
+	}
+
+	updateCounterErr := tx.Model(&counterTransaction).Update("grouping_mv_dn", counterTransaction.GroupingMvDn+1).Error
+
+	if updateCounterErr != nil {
+		tx.Rollback()
+		return createdGroupingVesselDn, updateCounterErr
 	}
 
 	tx.Commit()
@@ -2666,13 +2706,13 @@ func (r *repository) DeleteGroupingVesselLn(id int, userId uint, iupopkId int) (
 
 // Minerba LN
 
-func (r *repository) CreateMinerbaLn(period string, baseIdNumber string, listTransactions []int, userId uint, iupopkId int) (minerbaln.MinerbaLn, error) {
+func (r *repository) CreateMinerbaLn(period string, listTransactions []int, userId uint, iupopkId int) (minerbaln.MinerbaLn, error) {
 	var createdMinerbaLn minerbaln.MinerbaLn
 
 	tx := r.db.Begin()
 	createdMinerbaLn.Period = period
 	var transactions []transaction.Transaction
-	findTransactionsErr := tx.Where("id IN ? AND transaction_type = ? AND minerba_ln_id is NULL AND is_finance_check = ?", listTransactions, "LN", true).Find(&transactions).Error
+	findTransactionsErr := tx.Where("id IN ? AND transaction_type = ? AND minerba_ln_id is NULL AND is_finance_check = ? AND seller_id = ?", listTransactions, "LN", true, iupopkId).Find(&transactions).Error
 
 	if findTransactionsErr != nil {
 		tx.Rollback()
@@ -2682,6 +2722,15 @@ func (r *repository) CreateMinerbaLn(period string, baseIdNumber string, listTra
 	if len(transactions) != len(listTransactions) {
 		tx.Rollback()
 		return createdMinerbaLn, errors.New("please check some of transactions not found or already in report")
+	}
+
+	var iup iupopk.Iupopk
+
+	findIupErr := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if findIupErr != nil {
+		tx.Rollback()
+		return createdMinerbaLn, findIupErr
 	}
 
 	var tempQuantity float64
@@ -2701,7 +2750,19 @@ func (r *repository) CreateMinerbaLn(period string, baseIdNumber string, listTra
 		return createdMinerbaLn, errCreateMinerbaLn
 	}
 
-	idNumber := baseIdNumber + "-" + helper.CreateIdNumber(int(createdMinerbaLn.ID))
+	var counterTransaction counter.Counter
+
+	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).Find(&counterTransaction).Error
+
+	if findCounterTransactionErr != nil {
+		tx.Rollback()
+		return createdMinerbaLn, findCounterTransactionErr
+	}
+
+	periodSplit := strings.Split(period, " ")
+
+	idNumber := fmt.Sprintf("LSL-%s-%s-%s-", iup.Code, helper.MonthStringToNumberString(periodSplit[0]), periodSplit[1][len(periodSplit[1])-2:])
+	idNumber += helper.CreateIdNumber(counterTransaction.Sp3meln)
 
 	updateMinerbaErr := tx.Model(&createdMinerbaLn).Update("id_number", idNumber).Error
 
@@ -2710,7 +2771,7 @@ func (r *repository) CreateMinerbaLn(period string, baseIdNumber string, listTra
 		return createdMinerbaLn, updateMinerbaErr
 	}
 
-	listTransactionsErr := tx.Table("transactions").Where("id IN ?", listTransactions).Update("minerba_ln_id", createdMinerbaLn.ID).Error
+	listTransactionsErr := tx.Table("transactions").Where("id IN ? AND seller_id = ?", listTransactions, iupopkId).Update("minerba_ln_id", createdMinerbaLn.ID).Error
 
 	if listTransactionsErr != nil {
 		tx.Rollback()
@@ -2722,12 +2783,20 @@ func (r *repository) CreateMinerbaLn(period string, baseIdNumber string, listTra
 	history.MinerbaLnId = &createdMinerbaLn.ID
 	history.Status = "Created Minerba LN Report"
 	history.UserId = userId
+	history.IupopkId = &createdMinerbaLn.IupopkId
 
 	createHistoryErr := tx.Create(&history).Error
 
 	if createHistoryErr != nil {
 		tx.Rollback()
 		return createdMinerbaLn, createHistoryErr
+	}
+
+	updateCounterErr := tx.Model(&counterTransaction).Update("sp3meln", counterTransaction.Sp3meln+1).Error
+
+	if updateCounterErr != nil {
+		tx.Rollback()
+		return createdMinerbaLn, updateCounterErr
 	}
 
 	tx.Commit()
@@ -2922,17 +2991,26 @@ func (r *repository) UpdateDocumentMinerbaLn(id int, documentLink minerbaln.Inpu
 
 // INSW
 
-func (r *repository) CreateInsw(month string, year int, baseIdNumber string, userId uint, iupopkId int) (insw.Insw, error) {
+func (r *repository) CreateInsw(month string, year int, userId uint, iupopkId int) (insw.Insw, error) {
 	tx := r.db.Begin()
 	var createInsw insw.Insw
 
 	var checkInsw insw.Insw
 
-	findInswErr := tx.Where("month = ? AND year = ?", month, year).First(&checkInsw).Error
+	findInswErr := tx.Where("month = ? AND year = ? AND iupopk_id = ?", month, year, iupopkId).First(&checkInsw).Error
 
 	if findInswErr == nil {
 		tx.Rollback()
 		return createInsw, errors.New("Laporan INSW sudah pernah dibuat")
+	}
+
+	var iup iupopk.Iupopk
+
+	findIupErr := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if findIupErr != nil {
+		tx.Rollback()
+		return createInsw, findIupErr
 	}
 
 	firstOfMonth := time.Date(year, time.Month(helper.MonthLongToNumber(month)), 1, 0, 0, 0, 0, time.Local)
@@ -2941,7 +3019,7 @@ func (r *repository) CreateInsw(month string, year int, baseIdNumber string, use
 
 	var findGroupingVessel []groupingvesselln.GroupingVesselLn
 
-	findGroupingVesselErr := tx.Where("peb_register_date >= ? AND peb_register_date <= ? AND insw_id is NULL", firstOfMonth, lastOfMonth).Find(&findGroupingVessel).Error
+	findGroupingVesselErr := tx.Where("peb_register_date >= ? AND peb_register_date <= ? AND insw_id is NULL AND iupopk_id = ?", firstOfMonth, lastOfMonth, iupopkId).Find(&findGroupingVessel).Error
 
 	if findGroupingVesselErr != nil {
 		tx.Rollback()
@@ -2956,7 +3034,7 @@ func (r *repository) CreateInsw(month string, year int, baseIdNumber string, use
 
 	createInsw.Month = month
 	createInsw.Year = year
-
+	createInsw.IupopkId = iup.ID
 	createInswErr := tx.Create(&createInsw).Error
 
 	if createInswErr != nil {
@@ -2964,7 +3042,17 @@ func (r *repository) CreateInsw(month string, year int, baseIdNumber string, use
 		return createInsw, createInswErr
 	}
 
-	idNumber := baseIdNumber + "-" + helper.CreateIdNumber(int(createInsw.ID))
+	var counterTransaction counter.Counter
+
+	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).Find(&counterTransaction).Error
+
+	if findCounterTransactionErr != nil {
+		tx.Rollback()
+		return createInsw, findCounterTransactionErr
+	}
+
+	idNumber := fmt.Sprintf("LIW-%s-%s-%s-", iup.Code, helper.MonthStringToNumberString(month), strconv.Itoa(year)[len(strconv.Itoa(year))-2:])
+	idNumber += helper.CreateIdNumber(counterTransaction.Insw)
 
 	updateInswErr := tx.Model(&createInsw).Update("id_number", idNumber).Error
 
@@ -2973,7 +3061,7 @@ func (r *repository) CreateInsw(month string, year int, baseIdNumber string, use
 		return createInsw, updateInswErr
 	}
 
-	updateGroupingVesselLnErr := tx.Table("grouping_vessel_lns").Where("id IN ?", idGroupingVessel).Update("insw_id", createInsw.ID).Error
+	updateGroupingVesselLnErr := tx.Table("grouping_vessel_lns").Where("id IN ? AND iupopk_id = ?", idGroupingVessel, iupopkId).Update("insw_id", createInsw.ID).Error
 
 	if updateGroupingVesselLnErr != nil {
 		tx.Rollback()
@@ -2985,6 +3073,7 @@ func (r *repository) CreateInsw(month string, year int, baseIdNumber string, use
 	history.InswId = &createInsw.ID
 	history.Status = "Created Insw Report"
 	history.UserId = userId
+	history.IupopkId = &createInsw.IupopkId
 
 	createHistoryErr := tx.Create(&history).Error
 
@@ -3001,14 +3090,14 @@ func (r *repository) DeleteInsw(idInsw int, userId uint, iupopkId int) (bool, er
 	tx := r.db.Begin()
 	var inswData insw.Insw
 
-	findInswErr := tx.Where("id = ?", idInsw).First(&inswData).Error
+	findInswErr := tx.Where("id = ? AND iupopk_id = ?", idInsw, iupopkId).First(&inswData).Error
 
 	if findInswErr != nil {
 		tx.Rollback()
 		return false, findInswErr
 	}
 
-	errDelete := tx.Unscoped().Where("id = ?", idInsw).Delete(&inswData).Error
+	errDelete := tx.Unscoped().Where("id = ? AND iupopk_id = ?", idInsw, iupopkId).Delete(&inswData).Error
 
 	if errDelete != nil {
 		tx.Rollback()
@@ -3019,7 +3108,7 @@ func (r *repository) DeleteInsw(idInsw int, userId uint, iupopkId int) (bool, er
 
 	history.Status = fmt.Sprintf("Deleted INSW Report with id number %s and id %v", *inswData.IdNumber, inswData.ID)
 	history.UserId = userId
-
+	history.IupopkId = &inswData.IupopkId
 	createHistoryErr := tx.Create(&history).Error
 
 	if createHistoryErr != nil {
@@ -3035,7 +3124,7 @@ func (r *repository) UpdateDocumentInsw(id int, documentLink insw.InputUpdateDoc
 	tx := r.db.Begin()
 	var insw insw.Insw
 
-	errFind := tx.Where("id = ?", id).First(&insw).Error
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&insw).Error
 
 	if errFind != nil {
 		tx.Rollback()
@@ -3064,7 +3153,7 @@ func (r *repository) UpdateDocumentInsw(id int, documentLink insw.InputUpdateDoc
 	history.InswId = &insw.ID
 	history.UserId = userId
 	history.Status = fmt.Sprintf("Update upload document insw with id = %v", insw.ID)
-
+	history.IupopkId = &insw.IupopkId
 	dataInput, _ := json.Marshal(documentLink)
 	history.AfterData = dataInput
 
@@ -3081,18 +3170,27 @@ func (r *repository) UpdateDocumentInsw(id int, documentLink insw.InputUpdateDoc
 
 // Report Dmo
 
-func (r *repository) CreateReportDmo(input reportdmo.InputCreateReportDmo, baseIdNumber string, userId uint, iupopkId int) (reportdmo.ReportDmo, error) {
+func (r *repository) CreateReportDmo(input reportdmo.InputCreateReportDmo, userId uint, iupopkId int) (reportdmo.ReportDmo, error) {
 	var createdReportDmo reportdmo.ReportDmo
 
 	tx := r.db.Begin()
 	var transactionBarge []transaction.Transaction
 	var groupingVessel []groupingvesseldn.GroupingVesselDn
 
-	createdReportDmo.Period = input.Period
+	var iup iupopk.Iupopk
 
+	findIupErr := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if findIupErr != nil {
+		tx.Rollback()
+		return createdReportDmo, findIupErr
+	}
+
+	createdReportDmo.Period = input.Period
+	createdReportDmo.IupopkId = uint(iupopkId)
 	if len(input.Transactions) > 0 {
 		var bargeQuantity float64
-		findTransactionBargeErr := tx.Where("id IN ? AND report_dmo_id IS NULL AND is_finance_check = ? AND transaction_type = ?", input.Transactions, true, "DN").Find(&transactionBarge).Error
+		findTransactionBargeErr := tx.Where("id IN ? AND report_dmo_id IS NULL AND is_finance_check = ? AND transaction_type = ? AND iupopk_id = ?", input.Transactions, true, "DN", iupopkId).Find(&transactionBarge).Error
 
 		if findTransactionBargeErr != nil {
 			tx.Rollback()
@@ -3114,7 +3212,7 @@ func (r *repository) CreateReportDmo(input reportdmo.InputCreateReportDmo, baseI
 	if len(input.GroupingVessels) > 0 {
 		var vesselQuantity float64
 
-		findCheckDmoGroupingErr := tx.Where("id IN ? AND sales_system = ? AND report_dmo_id IS NULL", input.GroupingVessels, "Vessel").Find(&groupingVessel).Error
+		findCheckDmoGroupingErr := tx.Where("id IN ? AND sales_system = ? AND report_dmo_id IS NULL AND iupopk_id = ?", input.GroupingVessels, "Vessel", iupopkId).Find(&groupingVessel).Error
 
 		if findCheckDmoGroupingErr != nil {
 			tx.Rollback()
@@ -3146,7 +3244,19 @@ func (r *repository) CreateReportDmo(input reportdmo.InputCreateReportDmo, baseI
 		return createdReportDmo, createReportDmoErr
 	}
 
-	idNumber := baseIdNumber + "-" + helper.CreateIdNumber(int(createdReportDmo.ID))
+	var counterTransaction counter.Counter
+
+	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).Find(&counterTransaction).Error
+
+	if findCounterTransactionErr != nil {
+		tx.Rollback()
+		return createdReportDmo, findCounterTransactionErr
+	}
+
+	periodSplit := strings.Split(input.Period, " ")
+
+	idNumber := fmt.Sprintf("LDO-%s-%s-%s-", iup.Code, helper.MonthStringToNumberString(periodSplit[0]), periodSplit[1][len(periodSplit[1])-2:])
+	idNumber += helper.CreateIdNumber(counterTransaction.Dmo)
 
 	updateDmoErr := tx.Model(&createdReportDmo).Update("id_number", idNumber).Error
 
@@ -3156,7 +3266,7 @@ func (r *repository) CreateReportDmo(input reportdmo.InputCreateReportDmo, baseI
 	}
 
 	if len(input.Transactions) > 0 {
-		updateTransactionBargeErr := tx.Table("transactions").Where("id IN ?", input.Transactions).Update("report_dmo_id", createdReportDmo.ID).Error
+		updateTransactionBargeErr := tx.Table("transactions").Where("id IN ? AND seller_id = ?", input.Transactions, iupopkId).Update("report_dmo_id", createdReportDmo.ID).Error
 
 		if updateTransactionBargeErr != nil {
 			tx.Rollback()
@@ -3166,7 +3276,7 @@ func (r *repository) CreateReportDmo(input reportdmo.InputCreateReportDmo, baseI
 
 	if len(input.GroupingVessels) > 0 {
 
-		updateGroupVesselErr := tx.Table("grouping_vessel_dns").Where("id IN ?", input.GroupingVessels).Update("report_dmo_id", createdReportDmo.ID).Error
+		updateGroupVesselErr := tx.Table("grouping_vessel_dns").Where("id IN ? AND iupopk_id = ?", input.GroupingVessels, iupopkId).Update("report_dmo_id", createdReportDmo.ID).Error
 
 		if updateGroupVesselErr != nil {
 			tx.Rollback()
@@ -3176,7 +3286,7 @@ func (r *repository) CreateReportDmo(input reportdmo.InputCreateReportDmo, baseI
 		var transactionGroupVessel []transaction.Transaction
 
 		var listIdTransactionGroupVessel []uint
-		findTransactionGroupVesselErr := tx.Where("grouping_vessel_dn_id IN ? AND report_dmo_id IS NULL", input.GroupingVessels).Find(&transactionGroupVessel).Error
+		findTransactionGroupVesselErr := tx.Where("grouping_vessel_dn_id IN ? AND report_dmo_id IS NULL AND iupopk_id = ?", input.GroupingVessels, iupopkId).Find(&transactionGroupVessel).Error
 
 		if findTransactionGroupVesselErr != nil {
 			tx.Rollback()
@@ -3187,7 +3297,7 @@ func (r *repository) CreateReportDmo(input reportdmo.InputCreateReportDmo, baseI
 			listIdTransactionGroupVessel = append(listIdTransactionGroupVessel, v.ID)
 		}
 
-		updateTransactionGroupVesselErr := tx.Table("transactions").Where("id IN ?", listIdTransactionGroupVessel).Update("report_dmo_id", createdReportDmo.ID).Error
+		updateTransactionGroupVesselErr := tx.Table("transactions").Where("id IN ? AND seller_id = ?", listIdTransactionGroupVessel, iupopkId).Update("report_dmo_id", createdReportDmo.ID).Error
 
 		if updateTransactionGroupVesselErr != nil {
 			tx.Rollback()
@@ -3200,7 +3310,7 @@ func (r *repository) CreateReportDmo(input reportdmo.InputCreateReportDmo, baseI
 	history.ReportDmoId = &createdReportDmo.ID
 	history.Status = "Created Report Dmo"
 	history.UserId = userId
-
+	history.IupopkId = &createdReportDmo.IupopkId
 	createHistoryErr := tx.Create(&history).Error
 
 	if createHistoryErr != nil {
@@ -3216,7 +3326,7 @@ func (r *repository) UpdateDocumentReportDmo(id int, documentLink reportdmo.Inpu
 	tx := r.db.Begin()
 	var reportDmo reportdmo.ReportDmo
 
-	errFind := tx.Where("id = ?", id).First(&reportDmo).Error
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&reportDmo).Error
 
 	if errFind != nil {
 		tx.Rollback()
@@ -3248,7 +3358,7 @@ func (r *repository) UpdateDocumentReportDmo(id int, documentLink reportdmo.Inpu
 	history.ReportDmoId = &reportDmo.ID
 	history.UserId = userId
 	history.Status = fmt.Sprintf("Update upload document report dmo with id = %v", reportDmo.ID)
-
+	history.IupopkId = &reportDmo.IupopkId
 	dataInput, _ := json.Marshal(documentLink)
 
 	history.AfterData = dataInput
@@ -3272,7 +3382,7 @@ func (r *repository) UpdateTransactionReportDmo(id int, inputUpdate reportdmo.In
 	historyAfter := make(map[string]interface{})
 	tx := r.db.Begin()
 
-	findReportDmoErr := tx.Where("id = ?", id).First(&updateReportDmo).Error
+	findReportDmoErr := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&updateReportDmo).Error
 
 	if findReportDmoErr != nil {
 		return updateReportDmo, findReportDmoErr
@@ -3294,7 +3404,7 @@ func (r *repository) UpdateTransactionReportDmo(id int, inputUpdate reportdmo.In
 	}
 
 	var beforeTransaction []transaction.Transaction
-	findTransactionBeforeErr := tx.Where("report_dmo_id = ? AND sales_system_id IN ?", id, salesSystemId).Find(&beforeTransaction).Error
+	findTransactionBeforeErr := tx.Where("report_dmo_id = ? AND sales_system_id IN ? AND seller_id = ?", id, salesSystemId, iupopkId).Find(&beforeTransaction).Error
 
 	if findTransactionBeforeErr != nil {
 		return updateReportDmo, findTransactionBeforeErr
@@ -3310,7 +3420,7 @@ func (r *repository) UpdateTransactionReportDmo(id int, inputUpdate reportdmo.In
 
 	var beforeGroupingVesselDn []groupingvesseldn.GroupingVesselDn
 
-	findGroupingVesselDnErr := tx.Where("report_dmo_id = ?", id).Find(&beforeGroupingVesselDn).Error
+	findGroupingVesselDnErr := tx.Where("report_dmo_id = ? AND iupopk_id = ?", id, iupopkId).Find(&beforeGroupingVesselDn).Error
 
 	if findGroupingVesselDnErr != nil {
 		return updateReportDmo, findGroupingVesselDnErr
@@ -3318,7 +3428,7 @@ func (r *repository) UpdateTransactionReportDmo(id int, inputUpdate reportdmo.In
 
 	historyBefore["grouping_vessel_dn"] = beforeGroupingVesselDn
 
-	errUpdReportDmoNull := tx.Model(&beforeTransaction).Where("report_dmo_id = ?", id).Update("report_dmo_id", nil).Error
+	errUpdReportDmoNull := tx.Model(&beforeTransaction).Where("report_dmo_id = ? AND seller_id = ?", id, iupopkId).Update("report_dmo_id", nil).Error
 
 	if errUpdReportDmoNull != nil {
 		tx.Rollback()
@@ -3326,7 +3436,7 @@ func (r *repository) UpdateTransactionReportDmo(id int, inputUpdate reportdmo.In
 	}
 
 	var transactions []transaction.Transaction
-	findTransactionsErr := tx.Where("id IN ? AND transaction_type = ? AND report_dmo_id is NULL AND is_finance_check = ? AND sales_system_id IN ?", inputUpdate.Transactions, "DN", true, salesSystemId).Find(&transactions).Error
+	findTransactionsErr := tx.Where("id IN ? AND transaction_type = ? AND report_dmo_id is NULL AND is_finance_check = ? AND sales_system_id IN ? AND seller_id = ?", inputUpdate.Transactions, "DN", true, salesSystemId, iupopkId).Find(&transactions).Error
 
 	if findTransactionsErr != nil {
 		tx.Rollback()
@@ -3342,14 +3452,14 @@ func (r *repository) UpdateTransactionReportDmo(id int, inputUpdate reportdmo.In
 		quantityReportDmo += v.Quantity
 	}
 
-	listTransactionsErr := tx.Table("transactions").Where("id IN ?", inputUpdate.Transactions).Update("report_dmo_id", id).Error
+	listTransactionsErr := tx.Table("transactions").Where("id IN ? AND iupopk_id = ?", inputUpdate.Transactions, iupopkId).Update("report_dmo_id", id).Error
 
 	if listTransactionsErr != nil {
 		tx.Rollback()
 		return updateReportDmo, listTransactionsErr
 	}
 
-	errUpdGroupingVesselNull := tx.Model(&beforeGroupingVesselDn).Where("report_dmo_id = ?", id).Update("report_dmo_id", nil).Error
+	errUpdGroupingVesselNull := tx.Model(&beforeGroupingVesselDn).Where("report_dmo_id = ? AND iupopk_id = ?", id, iupopkId).Update("report_dmo_id", nil).Error
 
 	if errUpdGroupingVesselNull != nil {
 		tx.Rollback()
@@ -3358,14 +3468,14 @@ func (r *repository) UpdateTransactionReportDmo(id int, inputUpdate reportdmo.In
 
 	var groupingVesselDn []groupingvesseldn.GroupingVesselDn
 
-	findGroupingVesselErr := tx.Where("id IN ? AND report_dmo_id is NULL", inputUpdate.GroupingVessels).Find(&groupingVesselDn).Error
+	findGroupingVesselErr := tx.Where("id IN ? AND report_dmo_id is NULL AND iupopk_id = ?", inputUpdate.GroupingVessels, iupopkId).Find(&groupingVesselDn).Error
 
 	if findGroupingVesselErr != nil {
 		tx.Rollback()
 		return updateReportDmo, findGroupingVesselErr
 	}
 
-	groupingVesselErr := tx.Table("grouping_vessel_dns").Where("id IN ?", inputUpdate.GroupingVessels).Update("report_dmo_id", id).Error
+	groupingVesselErr := tx.Table("grouping_vessel_dns").Where("id IN ? AND iupopk_id = ?", inputUpdate.GroupingVessels, iupopkId).Update("report_dmo_id", id).Error
 
 	if groupingVesselErr != nil {
 		tx.Rollback()
@@ -3407,6 +3517,7 @@ func (r *repository) UpdateTransactionReportDmo(id int, inputUpdate reportdmo.In
 	history.UserId = userId
 	history.AfterData = afterData
 	history.BeforeData = beforeData
+	history.IupopkId = &updateReportDmo.IupopkId
 	createHistoryErr := tx.Create(&history).Error
 
 	if createHistoryErr != nil {
@@ -3423,14 +3534,14 @@ func (r *repository) DeleteReportDmo(idReportDmo int, userId uint, iupopkId int)
 	tx := r.db.Begin()
 	var reportDmo reportdmo.ReportDmo
 
-	findReportDmo := tx.Where("id = ?", idReportDmo).First(&reportDmo).Error
+	findReportDmo := tx.Where("id = ? AND iupopk_id = ?", idReportDmo, iupopkId).First(&reportDmo).Error
 
 	if findReportDmo != nil {
 		tx.Rollback()
 		return false, findReportDmo
 	}
 
-	errDelete := tx.Unscoped().Where("id = ?", idReportDmo).Delete(&reportDmo).Error
+	errDelete := tx.Unscoped().Where("id = ? AND iupopk_id = ?", idReportDmo, iupopkId).Delete(&reportDmo).Error
 
 	if errDelete != nil {
 		tx.Rollback()
@@ -3441,7 +3552,7 @@ func (r *repository) DeleteReportDmo(idReportDmo int, userId uint, iupopkId int)
 
 	history.Status = fmt.Sprintf("Deleted Report Dmo with id number %s and id %v", *reportDmo.IdNumber, reportDmo.ID)
 	history.UserId = userId
-
+	history.IupopkId = &reportDmo.IupopkId
 	createHistoryErr := tx.Create(&history).Error
 
 	if createHistoryErr != nil {

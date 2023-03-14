@@ -12,9 +12,9 @@ import (
 )
 
 type Repository interface {
-	ListGroupingVesselLn(page int, sortFilter SortFilterGroupingVesselLn) (Pagination, error)
-	ListGroupingVesselLnWithPeriod(month string, year int) ([]GroupingVesselLn, error)
-	DetailInsw(id int) (DetailInsw, error)
+	ListGroupingVesselLn(page int, sortFilter SortFilterGroupingVesselLn, iupopkId int) (Pagination, error)
+	ListGroupingVesselLnWithPeriod(month string, year int, iupopkId int) ([]GroupingVesselLn, error)
+	DetailInsw(id int, iupopkId int) (DetailInsw, error)
 }
 
 type repository struct {
@@ -25,14 +25,14 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
-func (r *repository) ListGroupingVesselLn(page int, sortFilter SortFilterGroupingVesselLn) (Pagination, error) {
+func (r *repository) ListGroupingVesselLn(page int, sortFilter SortFilterGroupingVesselLn, iupopkId int) (Pagination, error) {
 	var listGroupingVesselLn []GroupingVesselLn
 	var pagination Pagination
 
 	pagination.Limit = 7
 	pagination.Page = page
 	querySort := "id desc"
-	queryFilter := ""
+	queryFilter := fmt.Sprintf("grouping_vessel_lns.iupopk_id = %s", iupopkId)
 
 	if sortFilter.Field != "" && sortFilter.Sort != "" {
 
@@ -46,31 +46,19 @@ func (r *repository) ListGroupingVesselLn(page int, sortFilter SortFilterGroupin
 	}
 
 	if sortFilter.Quantity != "" {
-		queryFilter = queryFilter + "cast(grand_total_quantity AS TEXT) LIKE '%" + sortFilter.Quantity + "%'"
+		queryFilter = queryFilter + " AND cast(grand_total_quantity AS TEXT) LIKE '%" + sortFilter.Quantity + "%'"
 	}
 
 	if sortFilter.VesselId != "" {
-		if queryFilter != "" {
-			queryFilter += "AND vessel_id = " + sortFilter.VesselId
-		} else {
-			queryFilter = "vessel_id = " + sortFilter.VesselId
-		}
+		queryFilter += " AND vessel_id = " + sortFilter.VesselId
 	}
 
 	if sortFilter.BlDateStart != "" {
-		if queryFilter != "" {
-			queryFilter += "AND bl_date >= '" + sortFilter.BlDateStart + "'"
-		} else {
-			queryFilter = "bl_date >= '" + sortFilter.BlDateStart + "'"
-		}
+		queryFilter += " AND bl_date >= '" + sortFilter.BlDateStart + "'"
 	}
 
 	if sortFilter.BlDateEnd != "" {
-		if queryFilter != "" {
-			queryFilter += "AND bl_date <= '" + sortFilter.BlDateEnd + "T23:59:59'"
-		} else {
-			queryFilter = "bl_date <= '" + sortFilter.BlDateEnd + "T23:59:59'"
-		}
+		queryFilter += " AND bl_date <= '" + sortFilter.BlDateEnd + "T23:59:59'"
 	}
 
 	errFind := r.db.Preload(clause.Associations).Select("grouping_vessel_lns.*").Joins("LEFT JOIN vessels vessels on grouping_vessel_lns.vessel_id = vessels.id").Where(queryFilter).Order(querySort).Scopes(paginateData(listGroupingVesselLn, &pagination, r.db, queryFilter)).Find(&listGroupingVesselLn).Error
@@ -89,11 +77,11 @@ func (r *repository) ListGroupingVesselLn(page int, sortFilter SortFilterGroupin
 	return pagination, nil
 }
 
-func (r *repository) ListGroupingVesselLnWithPeriod(month string, year int) ([]GroupingVesselLn, error) {
+func (r *repository) ListGroupingVesselLnWithPeriod(month string, year int, iupopkId int) ([]GroupingVesselLn, error) {
 	var listGroupingVesselLn []GroupingVesselLn
 	var checkInsw insw.Insw
 
-	errFindInsw := r.db.Where("month = ? AND year = ?", month, year).First(&checkInsw).Error
+	errFindInsw := r.db.Where("month = ? AND year = ? AND iupopk_id = ?", month, year, iupopkId).First(&checkInsw).Error
 
 	if errFindInsw == nil {
 		return listGroupingVesselLn, errors.New("Laporan INSW sudah pernah dibuat")
@@ -103,7 +91,7 @@ func (r *repository) ListGroupingVesselLnWithPeriod(month string, year int) ([]G
 
 	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
 
-	errFind := r.db.Preload(clause.Associations).Where("peb_register_date >= ? AND peb_register_date <= ? AND insw_id is NULL", firstOfMonth, lastOfMonth).Find(&listGroupingVesselLn).Error
+	errFind := r.db.Preload(clause.Associations).Where("peb_register_date >= ? AND peb_register_date <= ? AND insw_id is NULL AND iupopk_id = ?", firstOfMonth, lastOfMonth, iupopkId).Find(&listGroupingVesselLn).Error
 
 	if errFind != nil {
 		return listGroupingVesselLn, errFind
@@ -112,11 +100,11 @@ func (r *repository) ListGroupingVesselLnWithPeriod(month string, year int) ([]G
 	return listGroupingVesselLn, nil
 }
 
-func (r *repository) DetailInsw(id int) (DetailInsw, error) {
+func (r *repository) DetailInsw(id int, iupopkId int) (DetailInsw, error) {
 	var detailInsw DetailInsw
 
 	var inswData insw.Insw
-	errFindInsw := r.db.Where("id = ?", id).First(&inswData).Error
+	errFindInsw := r.db.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&inswData).Error
 
 	if errFindInsw != nil {
 		return detailInsw, errFindInsw

@@ -9,7 +9,7 @@ import (
 type Minerba struct {
 	gorm.Model
 	IdNumber               *string       `json:"id_number" gorm:"UNIQUE"`
-	Period                 string        `json:"period" gorm:"UNIQUE"`
+	Period                 string        `json:"period"`
 	Quantity               float64       `json:"quantity"`
 	SP3MEDNDocumentLink    *string       `json:"sp3medn_document_link"`
 	RecapDmoDocumentLink   *string       `json:"recap_dmo_document_link"`

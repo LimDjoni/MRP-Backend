@@ -276,8 +276,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 
 	splitPeriod := strings.Split(inputCreateDmo.Period, " ")
 
-	baseIdNumber := fmt.Sprintf("LBU-AJE-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1][len(splitPeriod[1])-2:])
-	createDmo, createDmoErr := h.historyService.CreateDmo(*inputCreateDmo, baseIdNumber, uint(claims["id"].(float64)), iupopkIdInt)
+	createDmo, createDmoErr := h.historyService.CreateDmo(*inputCreateDmo, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -303,7 +302,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	list, endUser, listTraderDmoErr := h.traderDmoService.TraderListWithDmoId(int(createDmo.ID), iupopkIdInt)
+	list, endUser, listTraderDmoErr := h.traderDmoService.TraderListWithDmoId(int(createDmo.ID))
 
 	if listTraderDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -360,7 +359,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	var reqInputCreateUploadDmo transaction.InputRequestCreateUploadDmo
 
 	reqInputCreateUploadDmo.Authorization = header["Authorization"]
-	reqInputCreateUploadDmo.BastNumber = fmt.Sprintf("%s/BAST/AJE/%s", splitPeriod[1], helper.CreateIdNumber(int(createDmo.ID)))
+	reqInputCreateUploadDmo.BastNumber = fmt.Sprintf("%s/BAST/%s/%s", splitPeriod[1], createDmo.Iupopk.Code, helper.CreateIdNumber(int(createDmo.ID)))
 	reqInputCreateUploadDmo.DataDmo = createDmo
 	reqInputCreateUploadDmo.Trader = list
 	reqInputCreateUploadDmo.TraderEndUser = endUser
@@ -487,7 +486,7 @@ func (h *dmoHandler) UpdateDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	detailDmo, detailDmoErr := h.transactionService.GetDetailDmo(idInt)
+	detailDmo, detailDmoErr := h.transactionService.GetDetailDmo(idInt, iupopkIdInt)
 
 	if detailDmoErr != nil {
 		status := 400
@@ -535,7 +534,7 @@ func (h *dmoHandler) UpdateDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	updateDmo, updateDmoErr := h.historyService.UpdateDmo(*inputUpdateDmo, idInt, uint(claims["id"].(float64)))
+	updateDmo, updateDmoErr := h.historyService.UpdateDmo(*inputUpdateDmo, idInt, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if updateDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -589,7 +588,7 @@ func (h *dmoHandler) UpdateDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	listTransactionDmo, listTransactionDmoErr := h.transactionService.GetDataDmo(updateDmo.ID)
+	listTransactionDmo, listTransactionDmoErr := h.transactionService.GetDataDmo(updateDmo.ID, iupopkIdInt)
 
 	if listTransactionDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -621,7 +620,7 @@ func (h *dmoHandler) UpdateDmo(c *fiber.Ctx) error {
 	var reqInputCreateUploadDmo transaction.InputRequestCreateUploadDmo
 
 	reqInputCreateUploadDmo.Authorization = header["Authorization"]
-	reqInputCreateUploadDmo.BastNumber = fmt.Sprintf("%s/BAST/AJE/%s", splitPeriod[1], helper.CreateIdNumber(int(updateDmo.ID)))
+	reqInputCreateUploadDmo.BastNumber = fmt.Sprintf("%s/BAST/%s/%s", splitPeriod[1], updateDmo.Iupopk.Code, helper.CreateIdNumber(int(updateDmo.ID)))
 	reqInputCreateUploadDmo.DataDmo = updateDmo
 	reqInputCreateUploadDmo.Trader = list
 	reqInputCreateUploadDmo.TraderEndUser = endUser
@@ -714,7 +713,7 @@ func (h *dmoHandler) ListDmo(c *fiber.Ctx) error {
 	filterDmo.Field = c.Query("field")
 	filterDmo.Sort = c.Query("sort")
 
-	listDmo, listDmoErr := h.dmoService.GetListReportDmoAll(pageNumber, filterDmo)
+	listDmo, listDmoErr := h.dmoService.GetListReportDmoAll(pageNumber, filterDmo, iupopkIdInt)
 
 	if listDmoErr != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -762,7 +761,7 @@ func (h *dmoHandler) DetailDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	detailDmo, detailDmoErr := h.transactionService.GetDetailDmo(idInt)
+	detailDmo, detailDmoErr := h.transactionService.GetDetailDmo(idInt, iupopkIdInt)
 
 	if detailDmoErr != nil {
 		status := 400
@@ -807,7 +806,7 @@ func (h *dmoHandler) ListTransactionForDmo(c *fiber.Ctx) error {
 
 	var listTransactionForDmo transaction.ChooseTransactionDmo
 
-	listBarge, listBargeErr := h.transactionService.ListDataDNBargeWithoutVessel()
+	listBarge, listBargeErr := h.transactionService.ListDataDNBargeWithoutVessel(iupopkIdInt)
 
 	if listBargeErr != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -817,7 +816,7 @@ func (h *dmoHandler) ListTransactionForDmo(c *fiber.Ctx) error {
 
 	listTransactionForDmo.BargeTransaction = listBarge
 
-	listGroupingVessel, listGroupingVesselErr := h.dmoVesselService.ListGroupingVesselWithoutDmo()
+	listGroupingVessel, listGroupingVesselErr := h.dmoVesselService.ListGroupingVesselWithoutDmo(iupopkIdInt)
 
 	if listGroupingVesselErr != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -867,7 +866,7 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	findDmo, findDmoErr := h.transactionService.GetDetailDmo(idInt)
+	findDmo, findDmoErr := h.transactionService.GetDetailDmo(idInt, iupopkIdInt)
 
 	if findDmoErr != nil {
 		status := 400
@@ -937,7 +936,7 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 
 	endUserDmo, _ := h.traderDmoService.GetTraderEndUserDmo(idInt)
 
-	_, deleteDmoErr := h.historyService.DeleteDmo(idInt, uint(claims["id"].(float64)))
+	_, deleteDmoErr := h.historyService.DeleteDmo(idInt, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if deleteDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -975,8 +974,7 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 	createNotif.Status = "menghapus"
 	createNotif.Period = findDmo.Detail.Period
 	createNotif.EndUser = endUserDmo.Company.CompanyName
-
-	_, createNotificationDeleteDmoErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), 11)
+	_, createNotificationDeleteDmoErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createNotificationDeleteDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -1081,7 +1079,7 @@ func (h *dmoHandler) UpdateDocumentDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	detailDmo, detailDmoErr := h.transactionService.GetDetailDmo(idInt)
+	detailDmo, detailDmoErr := h.transactionService.GetDetailDmo(idInt, iupopkIdInt)
 
 	if detailDmoErr != nil {
 		status := 400
@@ -1094,7 +1092,7 @@ func (h *dmoHandler) UpdateDocumentDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	updateDocumentDmo, updateDocumentDmoErr := h.historyService.UpdateDocumentDmo(idInt, *inputUpdateDmo, uint(claims["id"].(float64)))
+	updateDocumentDmo, updateDocumentDmoErr := h.historyService.UpdateDocumentDmo(idInt, *inputUpdateDmo, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if updateDocumentDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -1162,7 +1160,7 @@ func (h *dmoHandler) UpdateDocumentDmo(c *fiber.Ctx) error {
 	inputNotification.Status = "membuat"
 	inputNotification.EndUser = getEndUserDmo.Company.CompanyName
 	inputNotification.Period = detailDmo.Detail.Period
-	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), 11)
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createdNotificationErr != nil {
 		inputMap := make(map[string]interface{})
@@ -1278,7 +1276,7 @@ func (h *dmoHandler) UpdateIsDownloadedDocumentDmo(c *fiber.Ctx) error {
 		isReconciliationLetterEndUser = true
 	}
 
-	updateDownloadedDocumentDmo, updateDownloadedDocumentDmoErr := h.historyService.UpdateIsDownloadedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, isReconciliationLetterEndUser, idInt, uint(claims["id"].(float64)))
+	updateDownloadedDocumentDmo, updateDownloadedDocumentDmoErr := h.historyService.UpdateIsDownloadedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, isReconciliationLetterEndUser, idInt, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if updateDownloadedDocumentDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -1357,7 +1355,7 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 	var isReconciliationLetter bool
 	var isReconciliationLetterEndUser bool
 
-	dataDmo, dataDmoErr := h.dmoService.GetDataDmo(idInt)
+	dataDmo, dataDmoErr := h.dmoService.GetDataDmo(idInt, iupopkIdInt)
 
 	if dataDmoErr != nil {
 		status := 400
@@ -1374,7 +1372,8 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 	var fileName string
 
 	idNumber := *dataDmo.IdNumber
-	fileName = "AJE/LBU/"
+	fileName = dataDmo.Iupopk.Code
+	fileName += "/LBU/"
 	fileName += idNumber
 
 	file, errFormFile := c.FormFile("document")
@@ -1461,7 +1460,7 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 		})
 	}
 
-	updateSignedDocumentDmo, updateSignedDocumentDmoErr := h.historyService.UpdateTrueIsSignedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, isReconciliationLetterEndUser, idInt, uint(claims["id"].(float64)), up.Location)
+	updateSignedDocumentDmo, updateSignedDocumentDmoErr := h.historyService.UpdateTrueIsSignedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, isReconciliationLetterEndUser, idInt, uint(claims["id"].(float64)), up.Location, iupopkIdInt)
 
 	if updateSignedDocumentDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -1501,7 +1500,7 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 	inputNotification.Document = typeDocument
 	inputNotification.EndUser = endUserDmo.Company.CompanyName
 
-	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), 11)
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createdNotificationErr != nil {
 		inputMap := make(map[string]interface{})
@@ -1575,7 +1574,7 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 	var isReconciliationLetter bool
 	var isReconciliationLetterEndUser bool
 
-	dataDmo, dataDmoErr := h.dmoService.GetDataDmo(idInt)
+	dataDmo, dataDmoErr := h.dmoService.GetDataDmo(idInt, iupopkIdInt)
 
 	if dataDmoErr != nil {
 		status := 400
@@ -1591,7 +1590,8 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 
 	var fileName string
 
-	fileName = "AJE/LBU/"
+	fileName = dataDmo.Iupopk.Code
+	fileName += "/LBU/"
 	fileName += *dataDmo.IdNumber
 	fileName += "/"
 	fileName += *dataDmo.IdNumber
@@ -1670,7 +1670,7 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 		})
 	}
 
-	updateSignedDocumentDmo, updateSignedDocumentDmoErr := h.historyService.UpdateFalseIsSignedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, isReconciliationLetterEndUser, idInt, uint(claims["id"].(float64)))
+	updateSignedDocumentDmo, updateSignedDocumentDmoErr := h.historyService.UpdateFalseIsSignedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, isReconciliationLetterEndUser, idInt, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if updateSignedDocumentDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -1710,7 +1710,7 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 	inputNotification.Document = typeDocument
 	inputNotification.EndUser = endUserDmo.Company.CompanyName
 
-	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), 11)
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createdNotificationErr != nil {
 		inputMap := make(map[string]interface{})
@@ -1737,53 +1737,4 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(updateSignedDocumentDmo)
-}
-
-func (h *dmoHandler) MasterCompanyTrader(c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	responseUnauthorized := map[string]interface{}{
-		"error": "unauthorized",
-	}
-
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
-		return c.Status(401).JSON(responseUnauthorized)
-	}
-
-	iupopkId := c.Params("iupopk_id")
-
-	iupopkIdInt, err := strconv.Atoi(iupopkId)
-
-	if err != nil {
-		return c.Status(404).JSON(fiber.Map{
-			"error": "iupopk record not found",
-		})
-	}
-
-	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
-
-	if checkUserErr != nil || checkUser.IsActive == false {
-		return c.Status(401).JSON(responseUnauthorized)
-	}
-
-	company, companyErr := h.companyService.ListCompany()
-
-	if companyErr != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"error": companyErr.Error(),
-		})
-	}
-
-	trader, traderErr := h.traderService.ListTrader()
-
-	if traderErr != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"error": traderErr.Error(),
-		})
-	}
-
-	return c.Status(200).JSON(fiber.Map{
-		"companies": company,
-		"traders":   trader,
-	})
 }

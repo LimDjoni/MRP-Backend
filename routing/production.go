@@ -6,7 +6,8 @@ import (
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
 	"ajebackend/model/production"
-	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	jwtware "github.com/gofiber/jwt/v3"
@@ -14,9 +15,6 @@ import (
 )
 
 func ProductionRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
-	userRepository := user.NewRepository(db)
-	userService := user.NewService(userRepository)
-
 	historyRepository := history.NewRepository(db)
 	historyService := history.NewService(historyRepository)
 
@@ -26,8 +24,10 @@ func ProductionRouting(db *gorm.DB, app fiber.Router, validate *validator.Valida
 	logsRepository := logs.NewRepository(db)
 	logsService := logs.NewService(logsRepository)
 
+	userIupopkRepository := useriupopk.NewRepository(db)
+	userIupopkService := useriupopk.NewService(userIupopkRepository)
 
-	productionHandler := handler.NewProductionHandler(userService, historyService, productionService, logsService, validate)
+	productionHandler := handler.NewProductionHandler(historyService, productionService, logsService, validate, userIupopkService)
 
 	productionRouting := app.Group("/production")
 
@@ -37,7 +37,7 @@ func ProductionRouting(db *gorm.DB, app fiber.Router, validate *validator.Valida
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
 			return ctx.Status(401).JSON(fiber.Map{
 				"error": "unauthorized",
-				"err": err.Error(),
+				"err":   err.Error(),
 			})
 		},
 	}))

@@ -526,7 +526,6 @@ func (h *minerbaHandler) DeleteMinerba(c *fiber.Ctx) error {
 	createNotif.Type = "minerba"
 	createNotif.Status = "menghapus"
 	createNotif.Period = dataMinerba.Period
-	createNotif.IupopkId = dataMinerba.IupopkId
 	_, createNotificationDeleteMinerbaErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createNotificationDeleteMinerbaErr != nil {

@@ -6,7 +6,7 @@ import (
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
 	"ajebackend/model/transaction"
-	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
 	"ajebackend/validatorfunc"
 	"encoding/json"
 	"fmt"
@@ -21,21 +21,21 @@ import (
 
 type groupingVesselLnHandler struct {
 	transactionService      transaction.Service
-	userService             user.Service
 	historyService          history.Service
 	v                       *validator.Validate
 	logService              logs.Service
 	groupingVesselLnService groupingvesselln.Service
+	userIupopkService       useriupopk.Service
 }
 
-func NewGroupingVesselLnHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, v *validator.Validate, logService logs.Service, groupingVesselLnService groupingvesselln.Service) *groupingVesselLnHandler {
+func NewGroupingVesselLnHandler(transactionService transaction.Service, historyService history.Service, v *validator.Validate, logService logs.Service, groupingVesselLnService groupingvesselln.Service, userIupopkService useriupopk.Service) *groupingVesselLnHandler {
 	return &groupingVesselLnHandler{
 		transactionService,
-		userService,
 		historyService,
 		v,
 		logService,
 		groupingVesselLnService,
+		userIupopkService,
 	}
 }
 
@@ -50,7 +50,16 @@ func (h *groupingVesselLnHandler) CreateGroupingVesselLn(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -74,7 +83,7 @@ func (h *groupingVesselLnHandler) CreateGroupingVesselLn(c *fiber.Ctx) error {
 		})
 	}
 
-	createdGroupingVesselLn, createdGroupingVesselLnErr := h.historyService.CreateGroupingVesselLN(*groupingVesselLnInput, uint(claims["id"].(float64)))
+	createdGroupingVesselLn, createdGroupingVesselLnErr := h.historyService.CreateGroupingVesselLN(*groupingVesselLnInput, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createdGroupingVesselLnErr != nil {
 		inputJson, _ := json.Marshal(groupingVesselLnInput)
@@ -108,7 +117,17 @@ func (h *groupingVesselLnHandler) GetDetailGroupingVesselLn(c *fiber.Ctx) error 
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -122,7 +141,7 @@ func (h *groupingVesselLnHandler) GetDetailGroupingVesselLn(c *fiber.Ctx) error 
 			"error": "record not found",
 		})
 	}
-	detailGroupingVesselLn, detailGroupingVesselLnErr := h.transactionService.GetDetailGroupingVesselLn(idInt)
+	detailGroupingVesselLn, detailGroupingVesselLnErr := h.transactionService.GetDetailGroupingVesselLn(idInt, iupopkIdInt)
 
 	if detailGroupingVesselLnErr != nil {
 
@@ -150,7 +169,17 @@ func (h *groupingVesselLnHandler) EditGroupingVesselLn(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -183,7 +212,7 @@ func (h *groupingVesselLnHandler) EditGroupingVesselLn(c *fiber.Ctx) error {
 		})
 	}
 
-	editGroupingVesselLn, editGroupingVesselLnErr := h.historyService.EditGroupingVesselLn(idInt, *editGroupingVesselLnInput, uint(claims["id"].(float64)))
+	editGroupingVesselLn, editGroupingVesselLnErr := h.historyService.EditGroupingVesselLn(idInt, *editGroupingVesselLnInput, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if editGroupingVesselLnErr != nil {
 		inputJson, _ := json.Marshal(editGroupingVesselLnInput)
@@ -217,7 +246,17 @@ func (h *groupingVesselLnHandler) UploadDocumentGroupingVesselLn(c *fiber.Ctx) e
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -265,7 +304,7 @@ func (h *groupingVesselLnHandler) UploadDocumentGroupingVesselLn(c *fiber.Ctx) e
 		})
 	}
 
-	detailGroupingVesselLn, detailGroupingVesselLnErr := h.transactionService.GetDetailGroupingVesselLn(idInt)
+	detailGroupingVesselLn, detailGroupingVesselLnErr := h.transactionService.GetDetailGroupingVesselLn(idInt, iupopkIdInt)
 
 	if detailGroupingVesselLnErr != nil {
 		return c.Status(404).JSON(fiber.Map{
@@ -274,7 +313,10 @@ func (h *groupingVesselLnHandler) UploadDocumentGroupingVesselLn(c *fiber.Ctx) e
 		})
 	}
 
-	fileName := fmt.Sprintf("AJE/GML/%v/%v_%s.pdf", *detailGroupingVesselLn.Detail.IdNumber, *detailGroupingVesselLn.Detail.IdNumber, documentType)
+	var fileName string
+	fileName = detailGroupingVesselLn.Detail.Iupopk.Code
+
+	fileName += fmt.Sprintf("/GML/%v/%v_%s.pdf", *detailGroupingVesselLn.Detail.IdNumber, *detailGroupingVesselLn.Detail.IdNumber, documentType)
 
 	up, uploadErr := awshelper.UploadDocument(file, fileName)
 
@@ -303,7 +345,7 @@ func (h *groupingVesselLnHandler) UploadDocumentGroupingVesselLn(c *fiber.Ctx) e
 		return c.Status(400).JSON(responseErr)
 	}
 
-	editDocument, editDocumentErr := h.historyService.UploadDocumentGroupingVesselLn(detailGroupingVesselLn.Detail.ID, up.Location, uint(claims["id"].(float64)), documentType)
+	editDocument, editDocumentErr := h.historyService.UploadDocumentGroupingVesselLn(detailGroupingVesselLn.Detail.ID, up.Location, uint(claims["id"].(float64)), documentType, iupopkIdInt)
 
 	if editDocumentErr != nil {
 		inputMap := make(map[string]interface{})
@@ -351,7 +393,17 @@ func (h *groupingVesselLnHandler) DeleteGroupingVesselLn(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -368,7 +420,7 @@ func (h *groupingVesselLnHandler) DeleteGroupingVesselLn(c *fiber.Ctx) error {
 		})
 	}
 
-	detailGroupingVesselLn, detailGroupingVesselLnErr := h.transactionService.GetDetailGroupingVesselLn(idInt)
+	detailGroupingVesselLn, detailGroupingVesselLnErr := h.transactionService.GetDetailGroupingVesselLn(idInt, iupopkIdInt)
 
 	if detailGroupingVesselLnErr != nil {
 		return c.Status(404).JSON(fiber.Map{
@@ -377,7 +429,7 @@ func (h *groupingVesselLnHandler) DeleteGroupingVesselLn(c *fiber.Ctx) error {
 		})
 	}
 
-	_, deleteGroupingVesselLnErr := h.historyService.DeleteGroupingVesselLn(idInt, uint(claims["id"].(float64)))
+	_, deleteGroupingVesselLnErr := h.historyService.DeleteGroupingVesselLn(idInt, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if deleteGroupingVesselLnErr != nil {
 		inputMap := make(map[string]interface{})
@@ -417,7 +469,9 @@ func (h *groupingVesselLnHandler) DeleteGroupingVesselLn(c *fiber.Ctx) error {
 		detailGroupingVesselLn.Detail.SkaCooDocumentLink != "" ||
 		detailGroupingVesselLn.Detail.CoaCowDocumentLink != "" ||
 		detailGroupingVesselLn.Detail.BlMvDocumentLink != "" {
-		fileName := fmt.Sprintf("AJE/GML/%s/", *detailGroupingVesselLn.Detail.IdNumber)
+		var fileName string
+		fileName = detailGroupingVesselLn.Detail.Iupopk.Code
+		fileName += fmt.Sprintf("/GML/%s/", *detailGroupingVesselLn.Detail.IdNumber)
 		_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
 
 		if deleteAwsErr != nil {
@@ -463,7 +517,17 @@ func (h *groupingVesselLnHandler) ListGroupingVesselLn(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -489,7 +553,7 @@ func (h *groupingVesselLnHandler) ListGroupingVesselLn(c *fiber.Ctx) error {
 		pageNumber = 1
 	}
 
-	listGroupingVesselLn, listGroupingVesselLnErr := h.groupingVesselLnService.ListGroupingVesselLn(pageNumber, sortAndFilter)
+	listGroupingVesselLn, listGroupingVesselLnErr := h.groupingVesselLnService.ListGroupingVesselLn(pageNumber, sortAndFilter, iupopkIdInt)
 
 	if listGroupingVesselLnErr != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -511,13 +575,23 @@ func (h *groupingVesselLnHandler) ListLnWithoutGroup(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	listLnWithoutGroup, listLnWithoutGroupErr := h.transactionService.ListDataLnWithoutGroup()
+	listLnWithoutGroup, listLnWithoutGroupErr := h.transactionService.ListDataLnWithoutGroup(iupopkIdInt)
 
 	if listLnWithoutGroupErr != nil {
 

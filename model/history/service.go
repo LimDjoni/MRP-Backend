@@ -23,7 +23,7 @@ type Service interface {
 	UpdateMinerba(id int, updateTransaction []int, userId uint, iupopkId int) (minerba.Minerba, error)
 	DeleteMinerba(idMinerba int, userId uint, iupopkId int) (bool, error)
 	UpdateDocumentMinerba(id int, documentLink minerba.InputUpdateDocumentMinerba, userId uint, iupopkId int) (minerba.Minerba, error)
-	CreateDmo(dmoInput dmo.CreateDmoInput, baseIdNumber string, userId uint, iupopkId int) (dmo.Dmo, error)
+	CreateDmo(dmoInput dmo.CreateDmoInput, userId uint, iupopkId int) (dmo.Dmo, error)
 	DeleteDmo(idDmo int, userId uint, iupopkId int) (bool, error)
 	UpdateDocumentDmo(id int, documentLink dmo.InputUpdateDocumentDmo, userId uint, iupopkId int) (dmo.Dmo, error)
 	UpdateIsDownloadedDmoDocument(isBast bool, isStatementLetter bool, isReconciliationLetter bool, isReconciliationLetterEndUser bool, id int, userId uint, iupopkId int) (dmo.Dmo, error)
@@ -41,14 +41,14 @@ type Service interface {
 	EditGroupingVesselLn(id int, editGrouping groupingvesselln.InputEditGroupingVesselLn, userId uint, iupopkId int) (groupingvesselln.GroupingVesselLn, error)
 	UploadDocumentGroupingVesselLn(id uint, urlS3 string, userId uint, documentType string, iupopkId int) (groupingvesselln.GroupingVesselLn, error)
 	DeleteGroupingVesselLn(id int, userId uint, iupopkId int) (bool, error)
-	CreateMinerbaLn(period string, baseIdNumber string, listTransactions []int, userId uint, iupopkId int) (minerbaln.MinerbaLn, error)
+	CreateMinerbaLn(period string, listTransactions []int, userId uint, iupopkId int) (minerbaln.MinerbaLn, error)
 	UpdateMinerbaLn(id int, listTransactions []int, userId uint, iupopkId int) (minerbaln.MinerbaLn, error)
 	DeleteMinerbaLn(idMinerbaLn int, userId uint, iupopkId int) (bool, error)
 	UpdateDocumentMinerbaLn(id int, documentLink minerbaln.InputUpdateDocumentMinerbaLn, userId uint, iupopkId int) (minerbaln.MinerbaLn, error)
-	CreateInsw(month string, year int, baseIdNumber string, userId uint, iupopkId int) (insw.Insw, error)
+	CreateInsw(month string, year int, userId uint, iupopkId int) (insw.Insw, error)
 	DeleteInsw(idInsw int, userId uint, iupopkId int) (bool, error)
 	UpdateDocumentInsw(id int, documentLink insw.InputUpdateDocumentInsw, userId uint, iupopkId int) (insw.Insw, error)
-	CreateReportDmo(input reportdmo.InputCreateReportDmo, baseIdNumber string, userId uint, iupopkId int) (reportdmo.ReportDmo, error)
+	CreateReportDmo(input reportdmo.InputCreateReportDmo, userId uint, iupopkId int) (reportdmo.ReportDmo, error)
 	UpdateDocumentReportDmo(id int, documentLink reportdmo.InputUpdateDocumentReportDmo, userId uint, iupopkId int) (reportdmo.ReportDmo, error)
 	UpdateTransactionReportDmo(id int, inputUpdate reportdmo.InputUpdateReportDmo, userId uint, iupopkId int) (reportdmo.ReportDmo, error)
 	DeleteReportDmo(idReportDmo int, userId uint, iupopkId int) (bool, error)
@@ -122,8 +122,8 @@ func (s *service) UpdateDocumentMinerba(id int, documentLink minerba.InputUpdate
 	return uploadMinerba, uploadMinerbaErr
 }
 
-func (s *service) CreateDmo(dmoInput dmo.CreateDmoInput, baseIdNumber string, userId uint, iupopkId int) (dmo.Dmo, error) {
-	createDmo, createDmoErr := s.repository.CreateDmo(dmoInput, baseIdNumber, userId, iupopkId)
+func (s *service) CreateDmo(dmoInput dmo.CreateDmoInput, userId uint, iupopkId int) (dmo.Dmo, error) {
+	createDmo, createDmoErr := s.repository.CreateDmo(dmoInput, userId, iupopkId)
 
 	return createDmo, createDmoErr
 }
@@ -230,8 +230,8 @@ func (s *service) DeleteGroupingVesselLn(id int, userId uint, iupopkId int) (boo
 	return deleteGroupingVesselLn, deleteGroupingVesselLnErr
 }
 
-func (s *service) CreateMinerbaLn(period string, baseIdNumber string, listTransactions []int, userId uint, iupopkId int) (minerbaln.MinerbaLn, error) {
-	createMinerbaLn, createMinerbaLnErr := s.repository.CreateMinerbaLn(period, baseIdNumber, listTransactions, userId, iupopkId)
+func (s *service) CreateMinerbaLn(period string, listTransactions []int, userId uint, iupopkId int) (minerbaln.MinerbaLn, error) {
+	createMinerbaLn, createMinerbaLnErr := s.repository.CreateMinerbaLn(period, listTransactions, userId, iupopkId)
 
 	return createMinerbaLn, createMinerbaLnErr
 }
@@ -254,8 +254,8 @@ func (s *service) UpdateDocumentMinerbaLn(id int, documentLink minerbaln.InputUp
 	return uploadMinerbaLn, uploadMinerbaLnErr
 }
 
-func (s *service) CreateInsw(month string, year int, baseIdNumber string, userId uint, iupopkId int) (insw.Insw, error) {
-	createInsw, createInswErr := s.repository.CreateInsw(month, year, baseIdNumber, userId, iupopkId)
+func (s *service) CreateInsw(month string, year int, userId uint, iupopkId int) (insw.Insw, error) {
+	createInsw, createInswErr := s.repository.CreateInsw(month, year, userId, iupopkId)
 
 	return createInsw, createInswErr
 }
@@ -272,8 +272,8 @@ func (s *service) UpdateDocumentInsw(id int, documentLink insw.InputUpdateDocume
 	return updateDocumentInsw, updateDocumentInswErr
 }
 
-func (s *service) CreateReportDmo(input reportdmo.InputCreateReportDmo, baseIdNumber string, userId uint, iupopkId int) (reportdmo.ReportDmo, error) {
-	createReportDmo, createReportDmoErr := s.repository.CreateReportDmo(input, baseIdNumber, userId, iupopkId)
+func (s *service) CreateReportDmo(input reportdmo.InputCreateReportDmo, userId uint, iupopkId int) (reportdmo.ReportDmo, error) {
+	createReportDmo, createReportDmoErr := s.repository.CreateReportDmo(input, userId, iupopkId)
 
 	return createReportDmo, createReportDmoErr
 }

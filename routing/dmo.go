@@ -13,7 +13,6 @@ import (
 	"ajebackend/model/reportdmo"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
-	"ajebackend/model/user"
 	"ajebackend/model/useriupopk"
 
 	"github.com/go-playground/validator/v10"
@@ -25,9 +24,6 @@ import (
 func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	transactionRepository := transaction.NewRepository(db)
 	transactionService := transaction.NewService(transactionRepository)
-
-	userRepository := user.NewRepository(db)
-	userService := user.NewService(userRepository)
 
 	historyRepository := history.NewRepository(db)
 	historyService := history.NewService(historyRepository)
@@ -61,7 +57,7 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 
 	dmoHandler := handler.NewDmoHandler(transactionService, historyService, logService, dmoService, traderService, traderDmoService, notificationUserService, companyService, validate, dmoVesselService, userIupopkService)
 
-	reportDmoHandler := handler.NewReportDmoHandler(transactionService, userService, historyService, logService, notificationUserService, validate, reportDmoService)
+	reportDmoHandler := handler.NewReportDmoHandler(transactionService, historyService, logService, notificationUserService, validate, reportDmoService, userIupopkService)
 
 	dmoRouting := app.Group("/dmo")
 
@@ -85,7 +81,6 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	dmoRouting.Put("/update/document/downloaded/:id/:type/:iupopk_id", dmoHandler.UpdateIsDownloadedDocumentDmo)
 	dmoRouting.Put("/update/document/signed/:id/:type/:iupopk_id", dmoHandler.UpdateTrueIsSignedDmoDocument)
 	dmoRouting.Put("/update/document/not_signed/:id/:type/:iupopk_id", dmoHandler.UpdateFalseIsSignedDmoDocument)
-	dmoRouting.Get("/master/:iupopk_id", dmoHandler.MasterCompanyTrader)
 	dmoRouting.Put("/update/:id/:iupopk_id", dmoHandler.UpdateDmo)
 
 	// Report

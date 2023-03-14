@@ -68,6 +68,7 @@ func SeedingIupopk(db *gorm.DB) {
 			BaEndUser:     1,
 			Dmo:           1,
 			Production:    1,
+			Insw:          1,
 		})
 	}
 

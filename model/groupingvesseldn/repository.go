@@ -8,7 +8,7 @@ import (
 )
 
 type Repository interface {
-	ListGroupingVesselDn(page int, sortFilter SortFilterGroupingVesselDn) (Pagination, error)
+	ListGroupingVesselDn(page int, sortFilter SortFilterGroupingVesselDn, iupopkId int) (Pagination, error)
 }
 
 type repository struct {
@@ -19,14 +19,15 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
-func (r *repository) ListGroupingVesselDn(page int, sortFilter SortFilterGroupingVesselDn) (Pagination, error) {
+func (r *repository) ListGroupingVesselDn(page int, sortFilter SortFilterGroupingVesselDn, iupopkId int) (Pagination, error) {
 	var listGroupingVesselDn []GroupingVesselDn
 	var pagination Pagination
 
 	pagination.Limit = 7
 	pagination.Page = page
 	querySort := "id desc"
-	queryFilter := ""
+
+	queryFilter := fmt.Sprintf("grouping_vessel_dns.iupopk_id = %v", iupopkId)
 
 	if sortFilter.Field != "" && sortFilter.Sort != "" {
 
@@ -40,31 +41,19 @@ func (r *repository) ListGroupingVesselDn(page int, sortFilter SortFilterGroupin
 	}
 
 	if sortFilter.Quantity != "" {
-		queryFilter = queryFilter + "cast(grand_total_quantity AS TEXT) LIKE '%" + sortFilter.Quantity + "%'"
+		queryFilter = queryFilter + " AND cast(grand_total_quantity AS TEXT) LIKE '%" + sortFilter.Quantity + "%'"
 	}
 
 	if sortFilter.VesselId != "" {
-		if queryFilter != "" {
-			queryFilter += "AND vessel_id = " + sortFilter.VesselId
-		} else {
-			queryFilter = "vessel_id = " + sortFilter.VesselId
-		}
+		queryFilter += " AND vessel_id = " + sortFilter.VesselId
 	}
 
 	if sortFilter.BlDateStart != "" {
-		if queryFilter != "" {
-			queryFilter += "AND bl_date >= '" + sortFilter.BlDateStart + "'"
-		} else {
-			queryFilter = "bl_date >= '" + sortFilter.BlDateStart + "'"
-		}
+		queryFilter += " AND bl_date >= '" + sortFilter.BlDateStart + "'"
 	}
 
 	if sortFilter.BlDateEnd != "" {
-		if queryFilter != "" {
-			queryFilter += "AND bl_date <= '" + sortFilter.BlDateEnd + "T23:59:59'"
-		} else {
-			queryFilter = "bl_date <= '" + sortFilter.BlDateEnd + "T23:59:59'"
-		}
+		queryFilter += " AND bl_date <= '" + sortFilter.BlDateEnd + "T23:59:59'"
 	}
 
 	errFind := r.db.Preload(clause.Associations).Select("grouping_vessel_dns.*").Joins("LEFT JOIN vessels vessels on grouping_vessel_dns.vessel_id = vessels.id").Order(querySort).Where(queryFilter).Scopes(paginateData(listGroupingVesselDn, &pagination, r.db, queryFilter)).Find(&listGroupingVesselDn).Error
