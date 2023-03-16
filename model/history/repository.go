@@ -127,6 +127,7 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 	createdTransaction.ShippingDate = inputTransactionDN.ShippingDate
 
 	createdTransaction.Quantity = math.Round(inputTransactionDN.Quantity*1000) / 1000
+	createdTransaction.QuantityUnloading = math.Round(inputTransactionDN.QuantityUnloading*1000) / 1000
 	createdTransaction.TugboatId = inputTransactionDN.TugboatId
 	createdTransaction.BargeId = inputTransactionDN.BargeId
 	createdTransaction.VesselId = inputTransactionDN.VesselId
@@ -292,6 +293,7 @@ func (r *repository) UpdateTransactionDN(idTransaction int, inputEditTransaction
 	inputEditTransactionDN.InvoiceNumber = strings.ToUpper(inputEditTransactionDN.InvoiceNumber)
 	inputEditTransactionDN.ContractNumber = strings.ToUpper(inputEditTransactionDN.ContractNumber)
 	inputEditTransactionDN.Quantity = math.Round(inputEditTransactionDN.Quantity*1000) / 1000
+	inputEditTransactionDN.QuantityUnloading = math.Round(inputEditTransactionDN.QuantityUnloading*1000) / 1000
 	dataInput, errorMarshal := json.Marshal(inputEditTransactionDN)
 
 	if errorMarshal != nil {
@@ -476,6 +478,7 @@ func (r *repository) CreateTransactionLN(inputTransactionLN transaction.DataTran
 	createdTransactionLn.TransactionType = "LN"
 	createdTransactionLn.SellerId = &iup.ID
 	createdTransactionLn.Quantity = math.Round(inputTransactionLN.Quantity*1000) / 1000
+	createdTransactionLn.QuantityUnloading = math.Round(inputTransactionLN.QuantityUnloading*1000) / 1000
 	createdTransactionLn.DestinationCountryId = inputTransactionLN.DestinationCountryId
 	createdTransactionLn.ShippingDate = inputTransactionLN.ShippingDate
 	createdTransactionLn.TugboatId = inputTransactionLN.TugboatId
@@ -610,6 +613,7 @@ func (r *repository) UpdateTransactionLN(id int, inputTransactionLN transaction.
 	inputTransactionLN.InvoiceNumber = strings.ToUpper(inputTransactionLN.InvoiceNumber)
 	inputTransactionLN.ContractNumber = strings.ToUpper(inputTransactionLN.ContractNumber)
 	inputTransactionLN.Quantity = math.Round(inputTransactionLN.Quantity*1000) / 1000
+	inputTransactionLN.QuantityUnloading = math.Round(inputTransactionLN.QuantityUnloading*1000) / 1000
 
 	editTransaction, errorMarshal := json.Marshal(inputTransactionLN)
 
@@ -698,7 +702,7 @@ func (r *repository) CreateMinerba(period string, baseIdNumber string, updateTra
 
 	var tempQuantity float64
 	for _, v := range transactions {
-		tempQuantity += v.Quantity
+		tempQuantity += v.QuantityUnloading
 	}
 
 	stringTempQuantity := fmt.Sprintf("%.3f", tempQuantity)
@@ -798,7 +802,7 @@ func (r *repository) UpdateMinerba(id int, updateTransaction []int, userId uint)
 	}
 
 	for _, v := range transactions {
-		quantityMinerba += v.Quantity
+		quantityMinerba += v.QuantityUnloading
 	}
 
 	quantityMinerba = math.Round(quantityMinerba*1000) / 1000
@@ -1540,7 +1544,7 @@ func (r *repository) UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId
 		}
 
 		for _, v := range transactionBarge {
-			bargeQuantity += v.Quantity
+			bargeQuantity += v.QuantityUnloading
 		}
 
 		updatedMap["barge_total_quantity"] = math.Round(bargeQuantity*1000) / 1000
@@ -2584,7 +2588,7 @@ func (r *repository) CreateMinerbaLn(period string, baseIdNumber string, listTra
 
 	var tempQuantity float64
 	for _, v := range transactions {
-		tempQuantity += v.Quantity
+		tempQuantity += v.QuantityUnloading
 	}
 
 	stringTempQuantity := fmt.Sprintf("%.3f", tempQuantity)
@@ -2684,7 +2688,7 @@ func (r *repository) UpdateMinerbaLn(id int, listTransactions []int, userId uint
 	}
 
 	for _, v := range transactions {
-		quantityMinerba += v.Quantity
+		quantityMinerba += v.QuantityUnloading
 	}
 
 	quantityMinerba = math.Round(quantityMinerba*1000) / 1000
@@ -3003,7 +3007,7 @@ func (r *repository) CreateReportDmo(input reportdmo.InputCreateReportDmo, baseI
 		}
 
 		for _, v := range transactionBarge {
-			bargeQuantity += v.Quantity
+			bargeQuantity += v.QuantityUnloading
 		}
 
 		createdReportDmo.Quantity = math.Round(bargeQuantity*1000) / 1000
@@ -3237,7 +3241,7 @@ func (r *repository) UpdateTransactionReportDmo(id int, inputUpdate reportdmo.In
 	}
 
 	for _, v := range transactions {
-		quantityReportDmo += v.Quantity
+		quantityReportDmo += v.QuantityUnloading
 	}
 
 	listTransactionsErr := tx.Table("transactions").Where("id IN ?", inputUpdate.Transactions).Update("report_dmo_id", id).Error

@@ -10,6 +10,7 @@ import (
 type DataTransactionInput struct {
 	ShippingDate                *string `json:"shipping_date" validate:"DateValidation"`
 	Quantity                    float64 `json:"quantity"`
+	QuantityUnloading           float64 `json:"quantity_unloading"`
 	TugboatId                   *uint   `json:"tugboat_id"`
 	BargeId                     *uint   `json:"barge_id"`
 	VesselName                  string  `json:"vessel_name"`

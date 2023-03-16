@@ -32,6 +32,7 @@ type Transaction struct {
 	TransactionType                string                             `json:"transaction_type"`
 	ShippingDate                   *string                            `json:"shipping_date" gorm:"type:DATE"`
 	Quantity                       float64                            `json:"quantity"`
+	QuantityUnloading              float64                            `json:"quantity_unloading"`
 	TugboatId                      *uint                              `json:"tugboat_id"`
 	Tugboat                        *tugboat.Tugboat                   `json:"tugboat"`
 	BargeId                        *uint                              `json:"barge_id"`
