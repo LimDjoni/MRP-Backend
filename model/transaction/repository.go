@@ -1182,13 +1182,13 @@ func (r *repository) ListDataDnWithoutGroup() (ListTransactionNotHaveGroupingVes
 		salesSystemVesselId = append(salesSystemVesselId, v.ID)
 	}
 
-	findTransactionBargeErr := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND grouping_vessel_dn_id is NULL AND sales_system_id IN ? AND vessel_id IS NOT NULL", "DN", false, false, salesSystemBargeId).Find(&transactionBarge).Error
+	findTransactionBargeErr := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND grouping_vessel_dn_id is NULL AND sales_system_id IN ? AND vessel_id IS NOT NULL AND dmo_id IS NULL", "DN", false, false, salesSystemBargeId).Find(&transactionBarge).Error
 
 	if findTransactionBargeErr != nil {
 		return listGroup, findTransactionBargeErr
 	}
 
-	findTransactionVesselErr := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND grouping_vessel_dn_id is NULL AND sales_system_id IN ? AND vessel_id IS NOT NULL", "DN", false, false, salesSystemVesselId).Find(&transactionVessel).Error
+	findTransactionVesselErr := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND grouping_vessel_dn_id is NULL AND sales_system_id IN ? AND vessel_id IS NOT NULL AND dmo_id IS NULL", "DN", false, false, salesSystemVesselId).Find(&transactionVessel).Error
 
 	if findTransactionVesselErr != nil {
 		return listGroup, findTransactionVesselErr
@@ -1229,7 +1229,7 @@ func (r *repository) GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, 
 func (r *repository) ListDataLnWithoutGroup() ([]Transaction, error) {
 	var listDataLnWithoutGrouping []Transaction
 
-	errListDataLnWithoutGrouping := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND grouping_vessel_ln_id is NULL", "LN", false, false).Find(&listDataLnWithoutGrouping).Error
+	errListDataLnWithoutGrouping := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND grouping_vessel_ln_id is NULL AND dmo_id IS NULL", "LN", false, false).Find(&listDataLnWithoutGrouping).Error
 
 	if errListDataLnWithoutGrouping != nil {
 		return listDataLnWithoutGrouping, errListDataLnWithoutGrouping
