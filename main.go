@@ -124,6 +124,7 @@ func main() {
 		seeding.SeedingTraderAndCompanyData(db)
 		seeding.SeedingDestination(db)
 		seeding.UpdateNaming(db)
+		seeding.UpdateTransactionsQuantity(db)
 		seedingmaster.SeedingBarge(db)
 		seedingmaster.SeedingCountry(db)
 		seedingmaster.SeedingCurrency(db)
