@@ -32,7 +32,7 @@ func (r *repository) ListGroupingVesselLn(page int, sortFilter SortFilterGroupin
 	pagination.Limit = 7
 	pagination.Page = page
 	querySort := "id desc"
-	queryFilter := fmt.Sprintf("grouping_vessel_lns.iupopk_id = %s", iupopkId)
+	queryFilter := fmt.Sprintf("grouping_vessel_lns.iupopk_id = %v", iupopkId)
 
 	if sortFilter.Field != "" && sortFilter.Sort != "" {
 
