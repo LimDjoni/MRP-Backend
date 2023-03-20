@@ -2099,7 +2099,7 @@ func (r *repository) EditGroupingVesselDn(id int, editGrouping groupingvesseldn.
 	var updatedGroupingVesselDn groupingvesseldn.GroupingVesselDn
 	tx := r.db.Begin()
 
-	errFind := r.db.Where("id = ?", id).First(&updatedGroupingVesselDn).Error
+	errFind := r.db.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&updatedGroupingVesselDn).Error
 
 	if errFind != nil {
 		tx.Rollback()
@@ -2393,6 +2393,7 @@ func (r *repository) CreateGroupingVesselLN(inputGrouping groupingvesselln.Input
 	createdGroupingVesselLn.NettQualityCaloriesAr = inputGrouping.NettQualityCaloriesAr
 	createdGroupingVesselLn.BlDate = inputGrouping.BlDate
 	createdGroupingVesselLn.BlNumber = strings.ToUpper(inputGrouping.BlNumber)
+	createdGroupingVesselLn.IupopkId = uint(iupopkId)
 
 	errCreatedGroupingVesselLn := tx.Create(&createdGroupingVesselLn).Error
 
@@ -2454,7 +2455,7 @@ func (r *repository) EditGroupingVesselLn(id int, editGrouping groupingvesselln.
 	var updatedGroupingVesselLn groupingvesselln.GroupingVesselLn
 	tx := r.db.Begin()
 
-	errFind := r.db.Where("id = ?", id).First(&updatedGroupingVesselLn).Error
+	errFind := r.db.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&updatedGroupingVesselLn).Error
 
 	if errFind != nil {
 		tx.Rollback()
