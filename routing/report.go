@@ -38,6 +38,6 @@ func ReportRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) 
 		},
 	}))
 
-	reportRouting.Post("/", reportHandler.Report)
-	reportRouting.Get("/download", reportHandler.DownloadReport)
+	reportRouting.Post("//:iupopk_id", reportHandler.Report)
+	reportRouting.Get("/download/:iupopk_id", reportHandler.DownloadReport)
 }

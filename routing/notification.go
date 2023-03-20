@@ -42,8 +42,8 @@ func NotificationRouting(db *gorm.DB, app fiber.Router, validate *validator.Vali
 		},
 	}))
 
-	notificationRouting.Post("/create", notificationHandler.CreateNotification)
-	notificationRouting.Put("/update", notificationHandler.UpdateNotification)
-	notificationRouting.Delete("/delete", notificationHandler.DeleteNotification)
+	notificationRouting.Post("/create/:iupopk_id", notificationHandler.CreateNotification)
+	notificationRouting.Put("/update/:iupopk_id", notificationHandler.UpdateNotification)
+	notificationRouting.Delete("/delete/:iupopk_id", notificationHandler.DeleteNotification)
 	notificationRouting.Get("/list/:iupopk_id", notificationHandler.GetNotification)
 }

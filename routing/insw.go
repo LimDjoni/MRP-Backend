@@ -54,11 +54,11 @@ func InswRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 		},
 	}))
 
-	inswRouting.Get("/list", inswHandler.ListInsw)
-	inswRouting.Post("/create", inswHandler.CreateInsw)
-	inswRouting.Post("/preview", inswHandler.ListGroupingVesselLnWithPeriod)
-	inswRouting.Get("/detail/:id", inswHandler.DetailInsw)
-	inswRouting.Delete("/delete/:id", inswHandler.DeleteInsw)
-	inswRouting.Put("/update/document/:id", inswHandler.UpdateDocumentInsw)
-	inswRouting.Post("/create/excel/:id", inswHandler.RequestCreateExcelInsw)
+	inswRouting.Get("/list/:iupopk_id", inswHandler.ListInsw)
+	inswRouting.Post("/create/:iupopk_id", inswHandler.CreateInsw)
+	inswRouting.Post("/preview/:iupopk_id", inswHandler.ListGroupingVesselLnWithPeriod)
+	inswRouting.Get("/detail/:id/:iupopk_id", inswHandler.DetailInsw)
+	inswRouting.Delete("/delete/:id/:iupopk_id", inswHandler.DeleteInsw)
+	inswRouting.Put("/update/document/:id/:iupopk_id", inswHandler.UpdateDocumentInsw)
+	inswRouting.Post("/create/excel/:id/:iupopk_id", inswHandler.RequestCreateExcelInsw)
 }

@@ -42,9 +42,9 @@ func ProductionRouting(db *gorm.DB, app fiber.Router, validate *validator.Valida
 		},
 	}))
 
-	productionRouting.Post("/create", productionHandler.CreateProduction)
-	productionRouting.Put("/update/:id", productionHandler.UpdateProduction)
-	productionRouting.Delete("/delete/:id", productionHandler.DeleteProduction)
-	productionRouting.Get("/list", productionHandler.ListProduction)
-	productionRouting.Get("/detail/:id", productionHandler.DetailProduction)
+	productionRouting.Post("/create/:iupopk_id", productionHandler.CreateProduction)
+	productionRouting.Put("/update/:id/:iupopk_id", productionHandler.UpdateProduction)
+	productionRouting.Delete("/delete/:id/:iupopk_id", productionHandler.DeleteProduction)
+	productionRouting.Get("/list/:iupopk_id", productionHandler.ListProduction)
+	productionRouting.Get("/detail/:id/:iupopk_id", productionHandler.DetailProduction)
 }
