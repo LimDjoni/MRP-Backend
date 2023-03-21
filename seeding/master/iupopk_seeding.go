@@ -33,6 +33,7 @@ func SeedingIupopk(db *gorm.DB) {
 			DirectorName: "Richard NM Palar",
 			Position:     "Direktur",
 			Code:         "AJE",
+			Location:     "Tanah Bumbu, Provinsi Kalimantan Selatan",
 		},
 		iupopk.Iupopk{
 			Name:         "PT Tantra Mining Development",
@@ -44,6 +45,7 @@ func SeedingIupopk(db *gorm.DB) {
 			DirectorName: "Yansen Andriyan",
 			Position:     "Direktur",
 			Code:         "TMD",
+			Location:     "Tanah Bumbu, Provinsi Kalimantan Selatan",
 		},
 	)
 

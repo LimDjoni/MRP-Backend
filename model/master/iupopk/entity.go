@@ -15,4 +15,5 @@ type Iupopk struct {
 	DirectorName string  `json:"director_name"`
 	Position     string  `json:"position"`
 	Code         string  `json:"code"`
+	Location     string  `json:"location"`
 }

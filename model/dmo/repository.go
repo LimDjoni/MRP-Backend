@@ -95,24 +95,20 @@ WHERE b.is_end_user = TRUE `
 		return pagination, errFind
 	}
 
-	fmt.Println(listDmo)
-
-	var emptyCell []int
+	emptyCell := make([]int, 0)
 	pagination.Data = listDmo
 
-	fmt.Println(emptyCell)
-	if pagination.Data == nil {
+	if len(listDmo) == 0 {
 		pagination.Data = emptyCell
 	}
 
-	fmt.Println(pagination.Data)
 	return pagination, nil
 }
 
 func (r *repository) GetDataDmo(id int, iupopkId int) (Dmo, error) {
 	var dmo Dmo
 
-	errFind := r.db.Preload(clause.Associations).Where("id = ? AND iupopkId = ?", id, iupopkId).First(&dmo).Error
+	errFind := r.db.Preload(clause.Associations).Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&dmo).Error
 
 	return dmo, errFind
 }

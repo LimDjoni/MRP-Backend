@@ -460,7 +460,7 @@ func (r *repository) GetDetailDmo(id int, iupopkId int) (DetailDmo, error) {
 
 	var dmoVessel []dmovessel.DmoVessel
 
-	dmoVesselFindErr := r.db.Preload(clause.Associations).Preload("GroupingVesselDn.Buyer").Preload("GroupingVesselDn.Destination").Preload("GroupingVesselDn.Vessel").Preload("GroupingVesselDn.DmoDestinationPort.PortLocation").Where("dmo_id = ? AND iupopk_id = ?", id, iupopkId).Find(&dmoVessel).Error
+	dmoVesselFindErr := r.db.Preload(clause.Associations).Preload("GroupingVesselDn.Buyer").Preload("GroupingVesselDn.Destination").Preload("GroupingVesselDn.Vessel").Preload("GroupingVesselDn.DmoDestinationPort.PortLocation").Where("dmo_id = ?", id).Find(&dmoVessel).Error
 
 	if dmoVesselFindErr != nil {
 		return detailDmo, dmoVesselFindErr
