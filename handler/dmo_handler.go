@@ -544,8 +544,6 @@ func (h *dmoHandler) UpdateDmo(c *fiber.Ctx) error {
 
 	list, endUser, listTraderDmoErr := h.traderDmoService.TraderListWithDmoId(int(updateDmo.ID))
 
-	fmt.Println(list)
-	fmt.Println(endUser)
 	if listTraderDmoErr != nil {
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
