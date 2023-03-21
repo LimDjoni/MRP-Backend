@@ -2,6 +2,7 @@ package traderdmo
 
 import (
 	"ajebackend/model/master/trader"
+	"fmt"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -48,8 +49,9 @@ func (r *repository) TraderListWithDmoId(idDmo int) ([]trader.Trader, trader.Tra
 	for _, v := range traderDmoList {
 		var traderTemp trader.Trader
 
-		findTempErr := r.db.Preload(clause.Associations).Where("id = ?", v.TraderId).First(&traderTemp).Error
+		findTempErr := r.db.Preload(clause.Associations).Preload("Company.IndustryType").Where("id = ?", v.TraderId).First(&traderTemp).Error
 
+		fmt.Println(traderTemp)
 		if findTempErr != nil {
 			return traderList, traderEndUser, findTempErr
 		}
@@ -67,7 +69,7 @@ func (r *repository) TraderListWithDmoId(idDmo int) ([]trader.Trader, trader.Tra
 func (r *repository) GetTraderEndUserDmo(idDmo int) (trader.Trader, error) {
 	var endUserDmo TraderDmo
 
-	errFind := r.db.Preload("Trader.Company").Preload(clause.Associations).Where("dmo_id = ? AND is_end_user = ?", idDmo, true).First(&endUserDmo).Error
+	errFind := r.db.Preload(clause.Associations).Preload("Trader.Company.IndustryType").Where("dmo_id = ? AND is_end_user = ?", idDmo, true).First(&endUserDmo).Error
 
 	if errFind != nil {
 		return endUserDmo.Trader, errFind
