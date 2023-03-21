@@ -366,6 +366,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	reqInputCreateUploadDmo.ListTransactionBarge = listTransactionDmo.ListTransactionBarge
 	reqInputCreateUploadDmo.ListTransactionGroupingVessel = listTransactionDmo.ListTransactionGroupingVessel
 	reqInputCreateUploadDmo.ListGroupingVessel = listTransactionDmo.ListGroupingVessel
+	reqInputCreateUploadDmo.Iupopk = createDmo.Iupopk
 
 	if !inputCreateDmo.IsDocumentCustom {
 		_, requestJobDmoErr := h.transactionService.RequestCreateDmo(reqInputCreateUploadDmo)
@@ -627,7 +628,7 @@ func (h *dmoHandler) UpdateDmo(c *fiber.Ctx) error {
 	reqInputCreateUploadDmo.ListTransactionBarge = listTransactionDmo.ListTransactionBarge
 	reqInputCreateUploadDmo.ListGroupingVessel = listTransactionDmo.ListGroupingVessel
 	reqInputCreateUploadDmo.ListTransactionGroupingVessel = listTransactionDmo.ListTransactionGroupingVessel
-
+	reqInputCreateUploadDmo.Iupopk = updateDmo.Iupopk
 	if !detailDmo.Detail.IsDocumentCustom {
 		_, requestJobDmoErr := h.transactionService.RequestCreateDmo(reqInputCreateUploadDmo)
 

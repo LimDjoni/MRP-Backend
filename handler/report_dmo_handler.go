@@ -334,6 +334,7 @@ func (h *reportDmoHandler) RequestCreateExcelReportDmo(c *fiber.Ctx) error {
 	inputRequestCreateReportDmo.ReportDmo = detailReportDmo.Detail
 	inputRequestCreateReportDmo.GroupingVessels = detailReportDmo.GroupingVessels
 	inputRequestCreateReportDmo.Transactions = detailReportDmo.Transactions
+	inputRequestCreateReportDmo.Iupopk = detailReportDmo.Detail.Iupopk
 
 	hitJob, hitJobErr := h.transactionService.RequestCreateReportDmo(inputRequestCreateReportDmo)
 

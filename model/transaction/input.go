@@ -3,6 +3,7 @@ package transaction
 import (
 	"ajebackend/model/dmo"
 	"ajebackend/model/groupingvesseldn"
+	"ajebackend/model/master/iupopk"
 	"ajebackend/model/master/trader"
 	"ajebackend/model/minerba"
 	"ajebackend/model/minerbaln"
@@ -92,6 +93,7 @@ type InputRequestCreateExcelMinerba struct {
 	MinerbaId     int             `json:"minerba_id"`
 	Transactions  []Transaction   `json:"transactions"`
 	Minerba       minerba.Minerba `json:"minerba"`
+	Iupopk        iupopk.Iupopk   `json:"iupopk"`
 }
 
 type InputRequestCreateExcelMinerbaLn struct {
@@ -101,6 +103,7 @@ type InputRequestCreateExcelMinerbaLn struct {
 	MinerbaId     int                 `json:"minerba_id"`
 	Transactions  []Transaction       `json:"transactions"`
 	MinerbaLn     minerbaln.MinerbaLn `json:"minerba_ln"`
+	Iupopk        iupopk.Iupopk       `json:"iupopk"`
 }
 
 type InputRequestCreateUploadDmo struct {
@@ -112,6 +115,7 @@ type InputRequestCreateUploadDmo struct {
 	ListTransactionBarge          []Transaction                       `json:"list_transaction_barge"`
 	ListTransactionGroupingVessel []Transaction                       `json:"list_transaction_grouping_vessel"`
 	ListGroupingVessel            []groupingvesseldn.GroupingVesselDn `json:"list_grouping_vessel"`
+	Iupopk                        iupopk.Iupopk                       `json:"iupopk"`
 }
 
 type InputRequestGetReport struct {
@@ -125,4 +129,5 @@ type InputRequestCreateReportDmo struct {
 	ReportDmo       reportdmo.ReportDmo                 `json:"report_dmo"`
 	Transactions    []Transaction                       `json:"transactions"`
 	GroupingVessels []groupingvesseldn.GroupingVesselDn `json:"grouping_vessels"`
+	Iupopk          iupopk.Iupopk                       `json:"iupopk"`
 }

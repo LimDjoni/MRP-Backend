@@ -36,7 +36,7 @@ func (r *repository) GetListReportDmoAll(page int, filterDmo FilterAndSortDmo, i
 	var pagination Pagination
 	pagination.Limit = 7
 	pagination.Page = page
-	queryFilter := fmt.Sprintf("AND iupopk_id = %v", iupopkId)
+	queryFilter := fmt.Sprintf("iupopk_id = %v", iupopkId)
 	sortFilter := "id desc"
 
 	if filterDmo.Field != "" && filterDmo.Sort != "" {
@@ -77,15 +77,16 @@ func (r *repository) GetListReportDmoAll(page int, filterDmo FilterAndSortDmo, i
 
 	var listDmo []map[string]interface{}
 
-	var rawQuery = `select a.*, d.company_name from  dmos a
+	var rawQuery = `select a.*, d.company_name from dmos a
 LEFT JOIN trader_dmos b on a.id = b.dmo_id
 LEFT JOIN traders c on b.trader_id = c.id
 LEFT JOIN companies d on c.company_id = d.id
-Where b.is_end_user = TRUE`
+WHERE b.is_end_user = TRUE `
 
 	if queryFilter != "" {
-		rawQuery += queryFilter
+		rawQuery += "AND " + queryFilter
 	}
+
 	rawQuery += ` order by ` + sortFilter
 
 	errFind := r.db.Scopes(paginateDmo(listReportDmo, &pagination, r.db, queryFilter)).Raw(rawQuery).Scan(&listDmo).Error
@@ -94,8 +95,17 @@ Where b.is_end_user = TRUE`
 		return pagination, errFind
 	}
 
+	fmt.Println(listDmo)
+
+	var emptyCell []int
 	pagination.Data = listDmo
 
+	fmt.Println(emptyCell)
+	if pagination.Data == nil {
+		pagination.Data = emptyCell
+	}
+
+	fmt.Println(pagination.Data)
 	return pagination, nil
 }
 

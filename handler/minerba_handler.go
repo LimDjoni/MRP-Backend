@@ -880,6 +880,7 @@ func (h *minerbaHandler) RequestCreateExcelMinerba(c *fiber.Ctx) error {
 	inputRequestCreateExcel.MinerbaPeriod = detailMinerba.Detail.Period
 	inputRequestCreateExcel.Transactions = detailMinerba.List
 	inputRequestCreateExcel.Minerba = detailMinerba.Detail
+	inputRequestCreateExcel.Iupopk = detailMinerba.Detail.Iupopk
 
 	hitJob, hitJobErr := h.transactionService.RequestCreateExcel(inputRequestCreateExcel)
 

@@ -617,7 +617,7 @@ func (h *inswHandler) RequestCreateExcelInsw(c *fiber.Ctx) error {
 	inputRequestCreateExcel.Authorization = header["Authorization"]
 	inputRequestCreateExcel.Insw = detailInsw.Detail
 	inputRequestCreateExcel.GroupingVesselLn = detailInsw.ListGroupingVesselLn
-
+	inputRequestCreateExcel.Iupopk = detailInsw.Detail.Iupopk
 	hitJob, hitJobErr := h.groupingVesselLnService.RequestCreateExcelInsw(inputRequestCreateExcel)
 
 	if hitJobErr != nil {

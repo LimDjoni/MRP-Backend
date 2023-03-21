@@ -918,6 +918,8 @@ func (h *minerbaLnHandler) RequestCreateExcelMinerbaLn(c *fiber.Ctx) error {
 	inputRequestCreateExcel.MinerbaPeriod = detailMinerbaLn.Detail.Period
 	inputRequestCreateExcel.Transactions = detailMinerbaLn.List
 	inputRequestCreateExcel.MinerbaLn = detailMinerbaLn.Detail
+	inputRequestCreateExcel.Iupopk = detailMinerbaLn.Detail.Iupopk
+
 	hitJob, hitJobErr := h.transactionService.RequestCreateExcelLn(inputRequestCreateExcel)
 
 	if hitJobErr != nil {
