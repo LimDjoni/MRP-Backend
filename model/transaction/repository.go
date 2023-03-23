@@ -299,7 +299,7 @@ func (r *repository) GetDetailMinerba(id int, iupopkId int) (DetailMinerba, erro
 	var minerba minerba.Minerba
 	var transactions []Transaction
 
-	minerbaFindErr := r.db.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&minerba).Error
+	minerbaFindErr := r.db.Preload(clause.Associations).Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&minerba).Error
 
 	if minerbaFindErr != nil {
 		return detailMinerba, minerbaFindErr
@@ -1256,7 +1256,7 @@ func (r *repository) GetDetailMinerbaLn(id int, iupopkId int) (DetailMinerbaLn, 
 	var minerbaLn minerbaln.MinerbaLn
 	var transactions []Transaction
 
-	minerbaLnFindErr := r.db.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&minerbaLn).Error
+	minerbaLnFindErr := r.db.Preload(clause.Associations).Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&minerbaLn).Error
 
 	if minerbaLnFindErr != nil {
 		return detailMinerbaLn, minerbaLnFindErr

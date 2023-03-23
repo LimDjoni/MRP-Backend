@@ -3,6 +3,7 @@ package routing
 import (
 	"ajebackend/handler"
 	"ajebackend/helper"
+	"ajebackend/model/counter"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
 	"ajebackend/model/history"
@@ -55,7 +56,10 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	userIupopkRepository := useriupopk.NewRepository(db)
 	userIupopkService := useriupopk.NewService(userIupopkRepository)
 
-	dmoHandler := handler.NewDmoHandler(transactionService, historyService, logService, dmoService, traderService, traderDmoService, notificationUserService, companyService, validate, dmoVesselService, userIupopkService)
+	counterRepository := counter.NewRepository(db)
+	counterService := counter.NewService(counterRepository)
+
+	dmoHandler := handler.NewDmoHandler(transactionService, historyService, logService, dmoService, traderService, traderDmoService, notificationUserService, companyService, validate, dmoVesselService, userIupopkService, counterService)
 
 	reportDmoHandler := handler.NewReportDmoHandler(transactionService, historyService, logService, notificationUserService, validate, reportDmoService, userIupopkService)
 

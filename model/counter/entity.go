@@ -20,4 +20,5 @@ type Counter struct {
 	Dmo           int            `json:"dmo`
 	Production    int            `json:"production`
 	Insw          int            `json:"insw"`
+	BastFormat    string         `json:"bast_format"`
 }

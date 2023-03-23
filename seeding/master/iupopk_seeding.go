@@ -58,7 +58,20 @@ func SeedingIupopk(db *gorm.DB) {
 	}
 	var counters []counter.Counter
 
+	formatAje := "YYYY/BAST/CODE/MM/COUNTER"
+	formatTmd := "BAST/CODE/YYYY/MM/COUNTER"
+
 	for _, v := range createIupopk {
+		var formatBast string
+
+		if v.Name == "PT Angsana Jaya Energi" {
+			formatBast = formatAje
+		}
+
+		if v.Name == "PT Tantra Mining Development" {
+			formatBast = formatTmd
+		}
+
 		counters = append(counters, counter.Counter{
 			IupopkId:      v.ID,
 			TransactionDn: 1,
@@ -71,6 +84,7 @@ func SeedingIupopk(db *gorm.DB) {
 			Dmo:           1,
 			Production:    1,
 			Insw:          1,
+			BastFormat:    formatBast,
 		})
 	}
 

@@ -11,6 +11,7 @@ import (
 type Repository interface {
 	UpdateCounter() error
 	CreateIupopk(input iupopk.InputIupopk) (iupopk.Iupopk, error)
+	GetCounter(iupopkId int) (Counter, error)
 }
 
 type repository struct {
@@ -94,5 +95,12 @@ func (r *repository) CreateIupopk(input iupopk.InputIupopk) (iupopk.Iupopk, erro
 
 	tx.Commit()
 	return createdIupopk, nil
+}
 
+func (r *repository) GetCounter(iupopkId int) (Counter, error) {
+	var counter Counter
+
+	errFind := r.db.Where("iupopk_id = ?", iupopkId).First(&counter).Error
+
+	return counter, errFind
 }

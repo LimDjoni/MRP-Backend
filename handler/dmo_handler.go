@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"ajebackend/helper"
 	"ajebackend/model/awshelper"
+	"ajebackend/model/counter"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
 	"ajebackend/model/history"
@@ -38,9 +38,22 @@ type dmoHandler struct {
 	v                       *validator.Validate
 	dmoVesselService        dmovessel.Service
 	userIupopkService       useriupopk.Service
+	counterService          counter.Service
 }
 
-func NewDmoHandler(transactionService transaction.Service, historyService history.Service, logService logs.Service, dmoService dmo.Service, traderService trader.Service, traderDmoService traderdmo.Service, notificationUserService notificationuser.Service, companyService company.Service, v *validator.Validate, dmoVesselService dmovessel.Service, userIupopkService useriupopk.Service) *dmoHandler {
+func NewDmoHandler(
+	transactionService transaction.Service,
+	historyService history.Service,
+	logService logs.Service,
+	dmoService dmo.Service,
+	traderService trader.Service,
+	traderDmoService traderdmo.Service,
+	notificationUserService notificationuser.Service,
+	companyService company.Service,
+	v *validator.Validate,
+	dmoVesselService dmovessel.Service,
+	userIupopkService useriupopk.Service,
+	counterService counter.Service) *dmoHandler {
 	return &dmoHandler{
 		transactionService,
 		historyService,
@@ -53,6 +66,7 @@ func NewDmoHandler(transactionService transaction.Service, historyService histor
 		v,
 		dmoVesselService,
 		userIupopkService,
+		counterService,
 	}
 }
 
@@ -359,7 +373,73 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	var reqInputCreateUploadDmo transaction.InputRequestCreateUploadDmo
 
 	reqInputCreateUploadDmo.Authorization = header["Authorization"]
-	reqInputCreateUploadDmo.BastNumber = fmt.Sprintf("%s/BAST/%s/%s", splitPeriod[1], createDmo.Iupopk.Code, helper.CreateIdNumber(int(createDmo.ID)))
+	idNumberSplit := strings.Split(*createDmo.IdNumber, "-")
+
+	counterDetail, counterDetailErr := h.counterService.GetCounter(iupopkIdInt)
+
+	if counterDetailErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_period"] = inputCreateDmo.Period
+		inputMap["list_transaction_barge"] = inputCreateDmo.TransactionBarge
+		inputMap["list_grouping_vessel"] = inputCreateDmo.GroupingVessel
+		inputMap["input"] = inputCreateDmo
+		inputMap["input_job"] = reqInputCreateUploadDmo
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": counterDetailErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"message": "dmo created but job failed", "error": counterDetailErr.Error(),
+		})
+	}
+
+	var bastFormat string
+	bastFormatSplit := strings.Split(counterDetail.BastFormat, "/")
+
+	for i, v := range bastFormatSplit {
+		switch v {
+		case "BAST":
+			bastFormat += "BAST"
+			if i < len(bastFormatSplit)-1 {
+				bastFormat += "/"
+			}
+		case "CODE":
+			bastFormat += idNumberSplit[1]
+			if i < len(bastFormatSplit)-1 {
+				bastFormat += "/"
+			}
+		case "COUNTER":
+			if len(idNumberSplit) == 1 {
+				bastFormat += "0" + idNumberSplit[4]
+			} else {
+				bastFormat += idNumberSplit[4]
+			}
+			if i < len(bastFormatSplit)-1 {
+				bastFormat += "/"
+			}
+		case "MM":
+			bastFormat += idNumberSplit[2]
+			if i < len(bastFormatSplit)-1 {
+				bastFormat += "/"
+			}
+		case "YYYY":
+			bastFormat += splitPeriod[1]
+			if i < len(bastFormatSplit)-1 {
+				bastFormat += "/"
+			}
+		}
+	}
+
+	reqInputCreateUploadDmo.BastNumber = bastFormat
 	reqInputCreateUploadDmo.DataDmo = createDmo
 	reqInputCreateUploadDmo.Trader = list
 	reqInputCreateUploadDmo.TraderEndUser = endUser
@@ -617,11 +697,78 @@ func (h *dmoHandler) UpdateDmo(c *fiber.Ctx) error {
 	}
 
 	splitPeriod := strings.Split(detailDmo.Detail.Period, " ")
+	idNumberSplit := strings.Split(*detailDmo.Detail.IdNumber, "-")
+
+	counterDetail, counterDetailErr := h.counterService.GetCounter(iupopkIdInt)
+
+	if counterDetailErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_period"] = detailDmo.Detail.Period
+		inputMap["list_transaction_barge"] = inputUpdateDmo.TransactionBarge
+		inputMap["list_grouping_vessel"] = inputUpdateDmo.GroupingVessel
+		inputMap["input"] = inputUpdateDmo
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": counterDetailErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+			DmoId:   &idDmo,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Dmo already has been updated, but job failed",
+			"error":   counterDetailErr.Error(),
+			"dmo":     updateDmo,
+		})
+	}
+
+	var bastFormat string
+	bastFormatSplit := strings.Split(counterDetail.BastFormat, "/")
+
+	for i, v := range bastFormatSplit {
+		switch v {
+		case "BAST":
+			bastFormat += "BAST"
+			if i < len(bastFormatSplit)-1 {
+				bastFormat += "/"
+			}
+		case "CODE":
+			bastFormat += idNumberSplit[1]
+			if i < len(bastFormatSplit)-1 {
+				bastFormat += "/"
+			}
+		case "COUNTER":
+			if len(idNumberSplit) == 1 {
+				bastFormat += "0" + idNumberSplit[4]
+			} else {
+				bastFormat += idNumberSplit[4]
+			}
+			if i < len(bastFormatSplit)-1 {
+				bastFormat += "/"
+			}
+		case "MM":
+			bastFormat += idNumberSplit[2]
+			if i < len(bastFormatSplit)-1 {
+				bastFormat += "/"
+			}
+		case "YYYY":
+			bastFormat += splitPeriod[1]
+			if i < len(bastFormatSplit)-1 {
+				bastFormat += "/"
+			}
+		}
+	}
 
 	var reqInputCreateUploadDmo transaction.InputRequestCreateUploadDmo
 
 	reqInputCreateUploadDmo.Authorization = header["Authorization"]
-	reqInputCreateUploadDmo.BastNumber = fmt.Sprintf("%s/BAST/%s/%s", splitPeriod[1], updateDmo.Iupopk.Code, helper.CreateIdNumber(int(updateDmo.ID)))
+	reqInputCreateUploadDmo.BastNumber = bastFormat
 	reqInputCreateUploadDmo.DataDmo = updateDmo
 	reqInputCreateUploadDmo.Trader = list
 	reqInputCreateUploadDmo.TraderEndUser = endUser
@@ -629,6 +776,7 @@ func (h *dmoHandler) UpdateDmo(c *fiber.Ctx) error {
 	reqInputCreateUploadDmo.ListGroupingVessel = listTransactionDmo.ListGroupingVessel
 	reqInputCreateUploadDmo.ListTransactionGroupingVessel = listTransactionDmo.ListTransactionGroupingVessel
 	reqInputCreateUploadDmo.Iupopk = updateDmo.Iupopk
+
 	if !detailDmo.Detail.IsDocumentCustom {
 		_, requestJobDmoErr := h.transactionService.RequestCreateDmo(reqInputCreateUploadDmo)
 
@@ -660,7 +808,6 @@ func (h *dmoHandler) UpdateDmo(c *fiber.Ctx) error {
 			})
 		}
 	}
-
 	return c.Status(200).JSON(updateDmo)
 }
 
