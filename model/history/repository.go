@@ -2309,6 +2309,15 @@ func (r *repository) CreateGroupingVesselLN(inputGrouping groupingvesselln.Input
 	var transactions []transaction.Transaction
 	tx := r.db.Begin()
 
+	var iup iupopk.Iupopk
+
+	findIupErr := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if findIupErr != nil {
+		tx.Rollback()
+		return createdGroupingVesselLn, findIupErr
+	}
+
 	findTransactionsErr := tx.Where("id IN ? AND transaction_type = ? AND grouping_vessel_ln_id is NULL AND is_migration = ? AND is_not_claim = ? AND seller_id = ?", inputGrouping.ListTransactions, "LN", false, false, iupopkId).Find(&transactions).Error
 
 	if findTransactionsErr != nil {
@@ -2410,7 +2419,18 @@ func (r *repository) CreateGroupingVesselLN(inputGrouping groupingvesselln.Input
 		return createdGroupingVesselLn, errCreatedGroupingVesselLn
 	}
 
-	idNumber := createIdNumber("GML-AJE", createdGroupingVesselLn.ID)
+	var counterTransaction counter.Counter
+
+	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).Find(&counterTransaction).Error
+
+	if findCounterTransactionErr != nil {
+		tx.Rollback()
+		return createdGroupingVesselLn, findCounterTransactionErr
+	}
+	code := "GML-"
+	code += iup.Code
+
+	idNumber := createIdNumber(code, uint(counterTransaction.GroupingMvLn))
 
 	updatedGroupingVesselLnErr := tx.Model(&createdGroupingVesselLn).Update("id_number", idNumber).Error
 
@@ -2446,12 +2466,20 @@ func (r *repository) CreateGroupingVesselLN(inputGrouping groupingvesselln.Input
 	history.UserId = userId
 	history.AfterData = afterDataJson
 	history.BeforeData = beforeDataJson
+	history.IupopkId = &createdGroupingVesselLn.IupopkId
 
 	createHistoryErr := tx.Create(&history).Error
 
 	if createHistoryErr != nil {
 		tx.Rollback()
 		return createdGroupingVesselLn, createHistoryErr
+	}
+
+	updateCounterErr := tx.Model(&counterTransaction).Update("grouping_mv_ln", counterTransaction.GroupingMvLn+1).Error
+
+	if updateCounterErr != nil {
+		tx.Rollback()
+		return createdGroupingVesselLn, updateCounterErr
 	}
 
 	tx.Commit()
