@@ -6,7 +6,7 @@ import (
 	"ajebackend/model/logs"
 	"ajebackend/model/master/company"
 	"ajebackend/model/master/trader"
-	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -15,9 +15,6 @@ import (
 )
 
 func CompanyRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
-	userRepository := user.NewRepository(db)
-	userService := user.NewService(userRepository)
-
 	traderRepository := trader.NewRepository(db)
 	traderService := trader.NewService(traderRepository)
 
@@ -27,7 +24,10 @@ func CompanyRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate)
 	logRepository := logs.NewRepository(db)
 	logService := logs.NewService(logRepository)
 
-	companyHandler := handler.NewCompanyHandler(userService, companyService, traderService, logService, validate)
+	userIupopkRepository := useriupopk.NewRepository(db)
+	userIupopkService := useriupopk.NewService(userIupopkRepository)
+
+	companyHandler := handler.NewCompanyHandler(companyService, traderService, logService, validate, userIupopkService)
 
 	companyRouting := app.Group("/company")
 

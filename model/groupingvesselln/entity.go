@@ -6,6 +6,7 @@ import (
 	"ajebackend/model/master/currency"
 	"ajebackend/model/master/documenttype"
 	"ajebackend/model/master/insurancecompany"
+	"ajebackend/model/master/iupopk"
 	"ajebackend/model/master/navycompany"
 	"ajebackend/model/master/navyship"
 	"ajebackend/model/master/pabeanoffice"
@@ -84,4 +85,6 @@ type GroupingVesselLn struct {
 	IsCoaFinish           bool                               `json:"is_coa_finish"`
 	InswId                *uint                              `json:"insw_id"`
 	Insw                  *insw.Insw                         `json:"insw" gorm:"constraint:OnDelete:SET NULL;"`
+	IupopkId              uint                               `json:"iupopk_id"`
+	Iupopk                iupopk.Iupopk                      `json:"iupopk"`
 }

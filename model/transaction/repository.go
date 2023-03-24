@@ -32,31 +32,31 @@ func helperString(listString []string, dataString string) bool {
 }
 
 type Repository interface {
-	ListData(page int, sortFilter SortAndFilter, transactionType string) (Pagination, error)
-	DetailTransaction(id int, transactionType string) (Transaction, error)
-	ListDataDNWithoutMinerba() ([]Transaction, error)
-	CheckDataDnAndMinerba(listData []int) (bool, error)
-	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) ([]Transaction, error)
-	GetDetailMinerba(id int) (DetailMinerba, error)
-	ListDataDNBargeWithoutVessel() ([]Transaction, error)
-	ListDataDNBargeWithVessel() ([]Transaction, error)
-	ListDataDNVessel() ([]Transaction, error)
-	CheckDataDnAndDmo(listData []int) ([]Transaction, error)
-	CheckGroupingVesselAndDmo(listData []int) ([]dmovessel.DmoVessel, error)
-	GetDetailDmo(id int) (DetailDmo, error)
-	GetDataDmo(id uint) (ListTransactionDmoBackgroundJob, error)
-	GetDetailReportDmo(id int) (DetailReportDmo, error)
+	ListData(page int, sortFilter SortAndFilter, transactionType string, iupopkId int) (Pagination, error)
+	DetailTransaction(id int, transactionType string, iupopkId int) (Transaction, error)
+	ListDataDNWithoutMinerba(iupopkId int) ([]Transaction, error)
+	CheckDataDnAndMinerba(listData []int, iupopkId int) (bool, error)
+	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int, iupopkId int) ([]Transaction, error)
+	GetDetailMinerba(id int, iupopkId int) (DetailMinerba, error)
+	ListDataDNBargeWithoutVessel(iupopkId int) ([]Transaction, error)
+	ListDataDNBargeWithVessel(iupopkId int) ([]Transaction, error)
+	ListDataDNVessel(iupopkId int) ([]Transaction, error)
+	CheckDataDnAndDmo(listData []int, iupopkId int) ([]Transaction, error)
+	CheckGroupingVesselAndDmo(listData []int, iupopkId int) ([]dmovessel.DmoVessel, error)
+	GetDetailDmo(id int, iupopkId int) (DetailDmo, error)
+	GetDataDmo(id uint, iupopkId int) (ListTransactionDmoBackgroundJob, error)
+	GetDetailReportDmo(id int, iupopkId int) (DetailReportDmo, error)
 	CheckDataUnique(inputTrans DataTransactionInput) (bool, bool, bool, bool)
-	GetReport(year int) (ReportRecapOutput, ReportDetailOutput, error)
-	GetListForReport() (ListForCreatingReportDmoOutput, error)
-	GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, error)
-	ListDataDnWithoutGroup() (ListTransactionNotHaveGroupingVessel, error)
-	GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, error)
-	ListDataLnWithoutGroup() ([]Transaction, error)
-	ListDataLNWithoutMinerba() ([]Transaction, error)
-	GetDetailMinerbaLn(id int) (DetailMinerbaLn, error)
-	CheckDataLnAndMinerbaLnUpdate(listData []int, idMinerba int) ([]Transaction, error)
-	CheckDataLnAndMinerbaLn(listData []int) (bool, error)
+	GetReport(year int, iupopkId int) (ReportRecapOutput, ReportDetailOutput, error)
+	GetListForReport(iupopkId int) (ListForCreatingReportDmoOutput, error)
+	GetDetailGroupingVesselDn(id int, iupopkId int) (DetailGroupingVesselDn, error)
+	ListDataDnWithoutGroup(iupopkId int) (ListTransactionNotHaveGroupingVessel, error)
+	GetDetailGroupingVesselLn(id int, iupopkId int) (DetailGroupingVesselLn, error)
+	ListDataLnWithoutGroup(iupopkId int) ([]Transaction, error)
+	ListDataLNWithoutMinerba(iupopkId int) ([]Transaction, error)
+	GetDetailMinerbaLn(id int, iupopkId int) (DetailMinerbaLn, error)
+	CheckDataLnAndMinerbaLnUpdate(listData []int, idMinerba int, iupopkId int) ([]Transaction, error)
+	CheckDataLnAndMinerbaLn(listData []int, iupopkId int) (bool, error)
 }
 
 type repository struct {
@@ -69,7 +69,7 @@ func NewRepository(db *gorm.DB) *repository {
 
 // Transaction
 
-func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionType string) (Pagination, error) {
+func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionType string, iupopkId int) (Pagination, error) {
 	var transactions []Transaction
 	var pagination Pagination
 	pagination.Limit = 7
@@ -106,7 +106,7 @@ func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionTyp
 		}
 	}
 
-	queryFilter := fmt.Sprintf("transaction_type = '%s' ", strings.ToUpper(transactionType))
+	queryFilter := fmt.Sprintf("transaction_type = '%s' AND seller_id = %v", strings.ToUpper(transactionType), iupopkId)
 
 	if sortFilter.TugboatId != "" {
 		queryFilter = queryFilter + " AND tugboat_id = " + sortFilter.TugboatId
@@ -165,18 +165,18 @@ func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionTyp
 	return pagination, nil
 }
 
-func (r *repository) DetailTransaction(id int, transactionType string) (Transaction, error) {
+func (r *repository) DetailTransaction(id int, transactionType string, iupopkId int) (Transaction, error) {
 	var transaction Transaction
 
-	errFind := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("id = ? AND transaction_type = ?", id, transactionType).First(&transaction).Error
+	errFind := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("id = ? AND transaction_type = ? AND seller_id = ?", id, transactionType, iupopkId).First(&transaction).Error
 
 	return transaction, errFind
 }
 
-func (r *repository) ListDataDNWithoutMinerba() ([]Transaction, error) {
+func (r *repository) ListDataDNWithoutMinerba(iupopkId int) ([]Transaction, error) {
 	var listDataDnWithoutMinerba []Transaction
 
-	errFind := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("minerba_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND is_finance_check = ?", "DN", false, false, true).Find(&listDataDnWithoutMinerba).Error
+	errFind := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("minerba_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND is_finance_check = ? AND seller_id = ?", "DN", false, false, true, iupopkId).Find(&listDataDnWithoutMinerba).Error
 
 	return listDataDnWithoutMinerba, errFind
 }
@@ -232,10 +232,10 @@ func (r *repository) CheckDataUnique(inputTrans DataTransactionInput) (bool, boo
 
 // Minerba
 
-func (r *repository) CheckDataDnAndMinerba(listData []int) (bool, error) {
+func (r *repository) CheckDataDnAndMinerba(listData []int, iupopkId int) (bool, error) {
 	var listDnValid []Transaction
 
-	errFindValid := r.db.Where("id IN ?", listData).Find(&listDnValid).Error
+	errFindValid := r.db.Where("id IN ? AND seller_id = ?", listData, iupopkId).Find(&listDnValid).Error
 
 	if errFindValid != nil {
 		return false, errFindValid
@@ -260,10 +260,10 @@ func (r *repository) CheckDataDnAndMinerba(listData []int) (bool, error) {
 	return true, nil
 }
 
-func (r *repository) CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) ([]Transaction, error) {
+func (r *repository) CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int, iupopkId int) ([]Transaction, error) {
 	var listDnValid []Transaction
 
-	errFindValid := r.db.Where("id IN ?", listData).Find(&listDnValid).Error
+	errFindValid := r.db.Where("id IN ? AND seller_id = ?", listData, iupopkId).Find(&listDnValid).Error
 
 	if errFindValid != nil {
 		return listDnValid, errFindValid
@@ -275,7 +275,7 @@ func (r *repository) CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) 
 
 	var listDn []Transaction
 
-	errFind := r.db.Where("id IN ?", listData).Find(&listDn).Error
+	errFind := r.db.Where("id IN ? AND seller_id = ?", listData, iupopkId).Find(&listDn).Error
 
 	if errFind != nil {
 		return listDn, errFind
@@ -292,14 +292,14 @@ func (r *repository) CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) 
 	return listDn, nil
 }
 
-func (r *repository) GetDetailMinerba(id int) (DetailMinerba, error) {
+func (r *repository) GetDetailMinerba(id int, iupopkId int) (DetailMinerba, error) {
 
 	var detailMinerba DetailMinerba
 
 	var minerba minerba.Minerba
 	var transactions []Transaction
 
-	minerbaFindErr := r.db.Where("id = ?", id).First(&minerba).Error
+	minerbaFindErr := r.db.Preload(clause.Associations).Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&minerba).Error
 
 	if minerbaFindErr != nil {
 		return detailMinerba, minerbaFindErr
@@ -307,7 +307,7 @@ func (r *repository) GetDetailMinerba(id int) (DetailMinerba, error) {
 
 	detailMinerba.Detail = minerba
 
-	transactionFindErr := r.db.Order("shipping_date asc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("minerba_id = ?", id).Find(&transactions).Error
+	transactionFindErr := r.db.Order("shipping_date asc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("minerba_id = ? AND seller_id = ?", id, iupopkId).Find(&transactions).Error
 
 	if transactionFindErr != nil {
 		return detailMinerba, transactionFindErr
@@ -319,7 +319,7 @@ func (r *repository) GetDetailMinerba(id int) (DetailMinerba, error) {
 
 // DMO
 
-func (r *repository) ListDataDNBargeWithoutVessel() ([]Transaction, error) {
+func (r *repository) ListDataDNBargeWithoutVessel(iupopkId int) ([]Transaction, error) {
 	var listDataDnBargeDmo []Transaction
 
 	var salesSystem []salessystem.SalesSystem
@@ -335,7 +335,7 @@ func (r *repository) ListDataDNBargeWithoutVessel() ([]Transaction, error) {
 		salesSystemId = append(salesSystemId, v.ID)
 	}
 
-	errFindBarge := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_id IS NULL AND sales_system_id IN ? AND grouping_vessel_dn_id is NULL", "DN", false, false, salesSystemId).Find(&listDataDnBargeDmo).Error
+	errFindBarge := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_id IS NULL AND sales_system_id IN ? AND grouping_vessel_dn_id is NULL AND seller_id = ?", "DN", false, false, salesSystemId, iupopkId).Find(&listDataDnBargeDmo).Error
 
 	if errFindBarge != nil {
 		return listDataDnBargeDmo, errFindBarge
@@ -344,7 +344,7 @@ func (r *repository) ListDataDNBargeWithoutVessel() ([]Transaction, error) {
 	return listDataDnBargeDmo, nil
 }
 
-func (r *repository) ListDataDNBargeWithVessel() ([]Transaction, error) {
+func (r *repository) ListDataDNBargeWithVessel(iupopkId int) ([]Transaction, error) {
 	var listDataDnBargeDmo []Transaction
 
 	var salesSystem []salessystem.SalesSystem
@@ -360,7 +360,7 @@ func (r *repository) ListDataDNBargeWithVessel() ([]Transaction, error) {
 		salesSystemId = append(salesSystemId, v.ID)
 	}
 
-	errFindBarge := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_id IS NOT NULL AND sales_system_id IN ? AND grouping_vessel_dn_id is NULL", "DN", false, false, salesSystemId).Find(&listDataDnBargeDmo).Error
+	errFindBarge := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_id IS NOT NULL AND sales_system_id IN ? AND grouping_vessel_dn_id is NULL AND seller_id = ?", "DN", false, false, salesSystemId, iupopkId).Find(&listDataDnBargeDmo).Error
 
 	if errFindBarge != nil {
 		return listDataDnBargeDmo, errFindBarge
@@ -369,7 +369,7 @@ func (r *repository) ListDataDNBargeWithVessel() ([]Transaction, error) {
 	return listDataDnBargeDmo, nil
 }
 
-func (r *repository) ListDataDNVessel() ([]Transaction, error) {
+func (r *repository) ListDataDNVessel(iupopkId int) ([]Transaction, error) {
 	var listDataDnVessel []Transaction
 
 	var salesSystem []salessystem.SalesSystem
@@ -385,7 +385,7 @@ func (r *repository) ListDataDNVessel() ([]Transaction, error) {
 		salesSystemId = append(salesSystemId, v.ID)
 	}
 
-	errFindBarge := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_name = ? AND is_finance_check = ? AND sales_system IN ? AND grouping_vessel_dn_id is NULL", "DN", false, false, "", true, salesSystemId).Find(&listDataDnVessel).Error
+	errFindBarge := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_id IS NOT NULL AND is_finance_check = ? AND sales_system IN ? AND grouping_vessel_dn_id is NULL AND seller_id = ?", "DN", false, false, true, salesSystemId, iupopkId).Find(&listDataDnVessel).Error
 
 	if errFindBarge != nil {
 		return listDataDnVessel, errFindBarge
@@ -394,7 +394,7 @@ func (r *repository) ListDataDNVessel() ([]Transaction, error) {
 	return listDataDnVessel, nil
 }
 
-func (r *repository) CheckDataDnAndDmo(listData []int) ([]Transaction, error) {
+func (r *repository) CheckDataDnAndDmo(listData []int, iupopkId int) ([]Transaction, error) {
 	var listDnValid []Transaction
 
 	errFindValid := r.db.Where("id IN ?", listData).Find(&listDnValid).Error
@@ -422,7 +422,7 @@ func (r *repository) CheckDataDnAndDmo(listData []int) ([]Transaction, error) {
 	return listDn, nil
 }
 
-func (r *repository) CheckGroupingVesselAndDmo(listData []int) ([]dmovessel.DmoVessel, error) {
+func (r *repository) CheckGroupingVesselAndDmo(listData []int, iupopkId int) ([]dmovessel.DmoVessel, error) {
 	var listGroupingVessel []dmovessel.DmoVessel
 
 	errFind := r.db.Where("grouping_vessel_dn_id in ?", listData).Find(&listGroupingVessel).Error
@@ -434,7 +434,7 @@ func (r *repository) CheckGroupingVesselAndDmo(listData []int) ([]dmovessel.DmoV
 	return listGroupingVessel, errFind
 }
 
-func (r *repository) GetDetailDmo(id int) (DetailDmo, error) {
+func (r *repository) GetDetailDmo(id int, iupopkId int) (DetailDmo, error) {
 
 	var detailDmo DetailDmo
 
@@ -442,7 +442,7 @@ func (r *repository) GetDetailDmo(id int) (DetailDmo, error) {
 	var transactions []Transaction
 	var groupingVessel []groupingvesseldn.GroupingVesselDn
 
-	dmoFindErr := r.db.Where("id = ?", id).First(&dmoData).Error
+	dmoFindErr := r.db.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&dmoData).Error
 
 	if dmoFindErr != nil {
 		return detailDmo, dmoFindErr
@@ -450,7 +450,7 @@ func (r *repository) GetDetailDmo(id int) (DetailDmo, error) {
 
 	detailDmo.Detail = dmoData
 
-	transactionFindErr := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("dmo_id = ? and grouping_vessel_dn_id IS NULL", id).Find(&transactions).Error
+	transactionFindErr := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("dmo_id = ? and grouping_vessel_dn_id IS NULL AND seller_id = ?", id, iupopkId).Find(&transactions).Error
 
 	if transactionFindErr != nil {
 		return detailDmo, transactionFindErr
@@ -496,7 +496,7 @@ func (r *repository) GetDetailDmo(id int) (DetailDmo, error) {
 	return detailDmo, nil
 }
 
-func (r *repository) GetDataDmo(id uint) (ListTransactionDmoBackgroundJob, error) {
+func (r *repository) GetDataDmo(id uint, iupopkId int) (ListTransactionDmoBackgroundJob, error) {
 	var listTransactionDmoBackgroundJob ListTransactionDmoBackgroundJob
 
 	var transactionBarge []Transaction
@@ -544,7 +544,7 @@ func (r *repository) GetDataDmo(id uint) (ListTransactionDmoBackgroundJob, error
 	return listTransactionDmoBackgroundJob, nil
 }
 
-func (r *repository) GetDetailReportDmo(id int) (DetailReportDmo, error) {
+func (r *repository) GetDetailReportDmo(id int, iupopkId int) (DetailReportDmo, error) {
 	var detailReportDmo DetailReportDmo
 
 	var reportDmoData reportdmo.ReportDmo
@@ -564,19 +564,19 @@ func (r *repository) GetDetailReportDmo(id int) (DetailReportDmo, error) {
 		salesSystemId = append(salesSystemId, v.ID)
 	}
 
-	errFindTransactions := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Order("shipping_date asc").Where("report_dmo_id = ? AND sales_system_id IN ?", id, salesSystemId).Find(&transactions).Error
+	errFindTransactions := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Order("shipping_date asc").Where("report_dmo_id = ? AND sales_system_id IN ? AND seller_id = ?", id, salesSystemId, iupopkId).Find(&transactions).Error
 
 	if errFindTransactions != nil {
 		return detailReportDmo, errFindTransactions
 	}
 
-	errFindGroupingVessel := r.db.Preload(clause.Associations).Order("bl_date asc").Where("report_dmo_id = ?", id).Find(&groupingVesselDn).Error
+	errFindGroupingVessel := r.db.Preload(clause.Associations).Order("bl_date asc").Where("report_dmo_id = ? AND iupopk_id = ?", id, iupopkId).Find(&groupingVesselDn).Error
 
 	if errFindGroupingVessel != nil {
 		return detailReportDmo, errFindGroupingVessel
 	}
 
-	errFindReportDmo := r.db.Where("id = ?", id).First(&reportDmoData).Error
+	errFindReportDmo := r.db.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&reportDmoData).Error
 
 	if errFindReportDmo != nil {
 		return detailReportDmo, errFindReportDmo
@@ -591,7 +591,7 @@ func (r *repository) GetDetailReportDmo(id int) (DetailReportDmo, error) {
 
 // Report
 
-func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput, error) {
+func (r *repository) GetReport(year int, iupopkId int) (ReportRecapOutput, ReportDetailOutput, error) {
 	var reportRecap ReportRecapOutput
 	var reportDetail ReportDetailOutput
 
@@ -605,7 +605,8 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 	startFilter := fmt.Sprintf("%v-01-01", year)
 	endFilter := fmt.Sprintf("%v-12-31", year)
 
-	queryFilter := "transaction_type = DN" + "minerba_id IS NOT NULL AND shipping_date >= '" + startFilter + "' AND shipping_date <= '" + endFilter + "'"
+	queryFilter := fmt.Sprintf("iupopk_id = %v", iupopkId)
+	queryFilter += " AND transaction_type = DN" + "minerba_id IS NOT NULL AND shipping_date >= '" + startFilter + "' AND shipping_date <= '" + endFilter + "'"
 	queryFilterProduction := "production_date >= '" + startFilter + "' AND production_date <= '" + endFilter + "'"
 	errFind := r.db.Preload("Company.IndustryType").Where(queryFilter).Order("id ASC").Find(&listTransactions).Error
 	errFindProduction := r.db.Where(queryFilterProduction).Order("id ASC").Find(&listProduction).Error
@@ -1086,7 +1087,7 @@ func (r *repository) GetReport(year int) (ReportRecapOutput, ReportDetailOutput,
 	return reportRecap, reportDetail, nil
 }
 
-func (r *repository) GetListForReport() (ListForCreatingReportDmoOutput, error) {
+func (r *repository) GetListForReport(iupopkId int) (ListForCreatingReportDmoOutput, error) {
 	var list ListForCreatingReportDmoOutput
 
 	var transactions []Transaction
@@ -1106,13 +1107,13 @@ func (r *repository) GetListForReport() (ListForCreatingReportDmoOutput, error) 
 		salesSystemBargeId = append(salesSystemBargeId, v.ID)
 	}
 
-	errFindTransaction := r.db.Preload(clause.Associations).Where("report_dmo_id IS NULL AND sales_system_id IN ? AND is_finance_check = ? AND transaction_type = ?", salesSystemBargeId, true, "DN").Find(&transactions).Error
+	errFindTransaction := r.db.Preload(clause.Associations).Where("report_dmo_id IS NULL AND sales_system_id IN ? AND is_finance_check = ? AND transaction_type = ? AND seller_id = ?", salesSystemBargeId, true, "DN", iupopkId).Find(&transactions).Error
 
 	if errFindTransaction != nil {
 		return list, errFindTransaction
 	}
 
-	errFindGroupingVessel := r.db.Preload(clause.Associations).Where("report_dmo_id IS NULL AND sales_system = ?", "Vessel").Find(&groupingVessel).Error
+	errFindGroupingVessel := r.db.Preload(clause.Associations).Where("report_dmo_id IS NULL AND sales_system = ? AND iupopk_id = ?", "Vessel", iupopkId).Find(&groupingVessel).Error
 
 	if errFindGroupingVessel != nil {
 		return list, errFindGroupingVessel
@@ -1125,14 +1126,14 @@ func (r *repository) GetListForReport() (ListForCreatingReportDmoOutput, error) 
 }
 
 // Grouping Vessel Dn
-func (r *repository) GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, error) {
+func (r *repository) GetDetailGroupingVesselDn(id int, iupopkId int) (DetailGroupingVesselDn, error) {
 
 	var detailGroupingVesselDn DetailGroupingVesselDn
 
 	var groupingVesselDn groupingvesseldn.GroupingVesselDn
 	var transactions []Transaction
 
-	findGroupingVesselDnErr := r.db.Preload(clause.Associations).Where("id = ?", id).First(&groupingVesselDn).Error
+	findGroupingVesselDnErr := r.db.Preload(clause.Associations).Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&groupingVesselDn).Error
 
 	if findGroupingVesselDnErr != nil {
 		return detailGroupingVesselDn, findGroupingVesselDnErr
@@ -1140,7 +1141,7 @@ func (r *repository) GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, 
 
 	detailGroupingVesselDn.Detail = groupingVesselDn
 
-	transactionFindErr := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("grouping_vessel_dn_id = ?", id).Find(&transactions).Error
+	transactionFindErr := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("grouping_vessel_dn_id = ? AND seller_id = ?", id, iupopkId).Find(&transactions).Error
 
 	if transactionFindErr != nil {
 		return detailGroupingVesselDn, transactionFindErr
@@ -1151,7 +1152,7 @@ func (r *repository) GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, 
 	return detailGroupingVesselDn, nil
 }
 
-func (r *repository) ListDataDnWithoutGroup() (ListTransactionNotHaveGroupingVessel, error) {
+func (r *repository) ListDataDnWithoutGroup(iupopkId int) (ListTransactionNotHaveGroupingVessel, error) {
 	var listGroup ListTransactionNotHaveGroupingVessel
 	var transactionBarge []Transaction
 	var transactionVessel []Transaction
@@ -1182,13 +1183,13 @@ func (r *repository) ListDataDnWithoutGroup() (ListTransactionNotHaveGroupingVes
 		salesSystemVesselId = append(salesSystemVesselId, v.ID)
 	}
 
-	findTransactionBargeErr := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND grouping_vessel_dn_id is NULL AND sales_system_id IN ? AND vessel_id IS NOT NULL AND dmo_id IS NULL", "DN", false, false, salesSystemBargeId).Find(&transactionBarge).Error
+	findTransactionBargeErr := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND grouping_vessel_dn_id is NULL AND sales_system_id IN ? AND vessel_id IS NOT NULL AND seller_id = ? AND dmo_id IS NULL", "DN", false, false, salesSystemBargeId, iupopkId).Find(&transactionBarge).Error
 
 	if findTransactionBargeErr != nil {
 		return listGroup, findTransactionBargeErr
 	}
 
-	findTransactionVesselErr := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND grouping_vessel_dn_id is NULL AND sales_system_id IN ? AND vessel_id IS NOT NULL AND dmo_id IS NULL", "DN", false, false, salesSystemVesselId).Find(&transactionVessel).Error
+	findTransactionVesselErr := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND grouping_vessel_dn_id is NULL AND sales_system_id IN ? AND vessel_id IS NOT NULL AND seller_id = ? AND dmo_id IS NULL", "DN", false, false, salesSystemVesselId, iupopkId).Find(&transactionVessel).Error
 
 	if findTransactionVesselErr != nil {
 		return listGroup, findTransactionVesselErr
@@ -1200,14 +1201,14 @@ func (r *repository) ListDataDnWithoutGroup() (ListTransactionNotHaveGroupingVes
 }
 
 // Grouping Vessel Ln
-func (r *repository) GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, error) {
+func (r *repository) GetDetailGroupingVesselLn(id int, iupopkId int) (DetailGroupingVesselLn, error) {
 
 	var detailGroupingVesselLn DetailGroupingVesselLn
 
 	var groupingVesselLn groupingvesselln.GroupingVesselLn
 	var transactions []Transaction
 
-	findGroupingVesselLnErr := r.db.Preload(clause.Associations).Where("id = ?", id).First(&groupingVesselLn).Error
+	findGroupingVesselLnErr := r.db.Preload(clause.Associations).Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&groupingVesselLn).Error
 
 	if findGroupingVesselLnErr != nil {
 		return detailGroupingVesselLn, findGroupingVesselLnErr
@@ -1215,7 +1216,7 @@ func (r *repository) GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, 
 
 	detailGroupingVesselLn.Detail = groupingVesselLn
 
-	transactionFindErr := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("grouping_vessel_ln_id = ?", id).Find(&transactions).Error
+	transactionFindErr := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("grouping_vessel_ln_id = ? AND seller_id = ?", id, iupopkId).Find(&transactions).Error
 
 	if transactionFindErr != nil {
 		return detailGroupingVesselLn, transactionFindErr
@@ -1226,10 +1227,10 @@ func (r *repository) GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, 
 	return detailGroupingVesselLn, nil
 }
 
-func (r *repository) ListDataLnWithoutGroup() ([]Transaction, error) {
+func (r *repository) ListDataLnWithoutGroup(iupopkId int) ([]Transaction, error) {
 	var listDataLnWithoutGrouping []Transaction
 
-	errListDataLnWithoutGrouping := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND grouping_vessel_ln_id is NULL AND dmo_id IS NULL", "LN", false, false).Find(&listDataLnWithoutGrouping).Error
+	errListDataLnWithoutGrouping := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND grouping_vessel_ln_id is NULL AND seller_id = ? AND dmo_id IS NULL", "LN", false, false, iupopkId).Find(&listDataLnWithoutGrouping).Error
 
 	if errListDataLnWithoutGrouping != nil {
 		return listDataLnWithoutGrouping, errListDataLnWithoutGrouping
@@ -1240,22 +1241,22 @@ func (r *repository) ListDataLnWithoutGroup() ([]Transaction, error) {
 
 // Minerba LN
 
-func (r *repository) ListDataLNWithoutMinerba() ([]Transaction, error) {
+func (r *repository) ListDataLNWithoutMinerba(iupopkId int) ([]Transaction, error) {
 	var listDataLnWithoutMinerba []Transaction
 
-	errFind := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("minerba_ln_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND is_finance_check = ?", "LN", false, false, true).Find(&listDataLnWithoutMinerba).Error
+	errFind := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("minerba_ln_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND is_finance_check = ? AND seller_id = ?", "LN", false, false, true, iupopkId).Find(&listDataLnWithoutMinerba).Error
 
 	return listDataLnWithoutMinerba, errFind
 }
 
-func (r *repository) GetDetailMinerbaLn(id int) (DetailMinerbaLn, error) {
+func (r *repository) GetDetailMinerbaLn(id int, iupopkId int) (DetailMinerbaLn, error) {
 
 	var detailMinerbaLn DetailMinerbaLn
 
 	var minerbaLn minerbaln.MinerbaLn
 	var transactions []Transaction
 
-	minerbaLnFindErr := r.db.Where("id = ?", id).First(&minerbaLn).Error
+	minerbaLnFindErr := r.db.Preload(clause.Associations).Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&minerbaLn).Error
 
 	if minerbaLnFindErr != nil {
 		return detailMinerbaLn, minerbaLnFindErr
@@ -1263,7 +1264,7 @@ func (r *repository) GetDetailMinerbaLn(id int) (DetailMinerbaLn, error) {
 
 	detailMinerbaLn.Detail = minerbaLn
 
-	transactionFindErr := r.db.Order("shipping_date asc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("minerba_ln_id = ?", id).Find(&transactions).Error
+	transactionFindErr := r.db.Order("shipping_date asc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("minerba_ln_id = ? AND seller_id = ?", id, iupopkId).Find(&transactions).Error
 
 	if transactionFindErr != nil {
 		return detailMinerbaLn, transactionFindErr
@@ -1273,10 +1274,10 @@ func (r *repository) GetDetailMinerbaLn(id int) (DetailMinerbaLn, error) {
 	return detailMinerbaLn, nil
 }
 
-func (r *repository) CheckDataLnAndMinerbaLnUpdate(listData []int, idMinerba int) ([]Transaction, error) {
+func (r *repository) CheckDataLnAndMinerbaLnUpdate(listData []int, idMinerba int, iupopkId int) ([]Transaction, error) {
 	var listLnValid []Transaction
 
-	errFindValid := r.db.Where("id IN ?", listData).Find(&listLnValid).Error
+	errFindValid := r.db.Where("id IN ? AND seller_id = ?", listData, iupopkId).Find(&listLnValid).Error
 
 	if errFindValid != nil {
 		return listLnValid, errFindValid
@@ -1288,7 +1289,7 @@ func (r *repository) CheckDataLnAndMinerbaLnUpdate(listData []int, idMinerba int
 
 	var listLn []Transaction
 
-	errFind := r.db.Where("id IN ?", listData).Find(&listLn).Error
+	errFind := r.db.Where("id IN ? AND seller_id = ?", listData, iupopkId).Find(&listLn).Error
 
 	if errFind != nil {
 		return listLn, errFind
@@ -1305,10 +1306,10 @@ func (r *repository) CheckDataLnAndMinerbaLnUpdate(listData []int, idMinerba int
 	return listLn, nil
 }
 
-func (r *repository) CheckDataLnAndMinerbaLn(listData []int) (bool, error) {
+func (r *repository) CheckDataLnAndMinerbaLn(listData []int, iupopkId int) (bool, error) {
 	var listLnValid []Transaction
 
-	errFindValid := r.db.Where("id IN ?", listData).Find(&listLnValid).Error
+	errFindValid := r.db.Where("id IN ? AND seller_id = ?", listData, iupopkId).Find(&listLnValid).Error
 
 	if errFindValid != nil {
 		return false, errFindValid
@@ -1320,7 +1321,7 @@ func (r *repository) CheckDataLnAndMinerbaLn(listData []int) (bool, error) {
 
 	var listLn []Transaction
 
-	errFind := r.db.Where("minerba_ln_id is NULL AND id IN ?", listData).Find(&listLn).Error
+	errFind := r.db.Where("minerba_ln_id is NULL AND id IN ? AND seller_id = ?", listData, iupopkId).Find(&listLn).Error
 
 	if errFind != nil {
 		return false, errFind

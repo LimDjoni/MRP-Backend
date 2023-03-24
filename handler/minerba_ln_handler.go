@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"ajebackend/helper"
 	"ajebackend/model/awshelper"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
@@ -9,10 +8,9 @@ import (
 	"ajebackend/model/notification"
 	"ajebackend/model/notificationuser"
 	"ajebackend/model/transaction"
-	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
 	"ajebackend/validatorfunc"
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -24,23 +22,23 @@ import (
 
 type minerbaLnHandler struct {
 	transactionService      transaction.Service
-	userService             user.Service
 	historyService          history.Service
 	logService              logs.Service
 	minerbaLnService        minerbaln.Service
 	notificationUserService notificationuser.Service
 	v                       *validator.Validate
+	userIupopkService       useriupopk.Service
 }
 
-func NewMinerbaLnHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, minerbaLnService minerbaln.Service, notificationUserService notificationuser.Service, v *validator.Validate) *minerbaLnHandler {
+func NewMinerbaLnHandler(transactionService transaction.Service, historyService history.Service, logService logs.Service, minerbaLnService minerbaln.Service, notificationUserService notificationuser.Service, v *validator.Validate, userIupopkService useriupopk.Service) *minerbaLnHandler {
 	return &minerbaLnHandler{
 		transactionService,
-		userService,
 		historyService,
 		logService,
 		minerbaLnService,
 		notificationUserService,
 		v,
+		userIupopkService,
 	}
 }
 
@@ -55,7 +53,17 @@ func (h *minerbaLnHandler) CreateMinerbaLn(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -96,7 +104,7 @@ func (h *minerbaLnHandler) CreateMinerbaLn(c *fiber.Ctx) error {
 		})
 	}
 
-	_, findMinerbaErr := h.minerbaLnService.GetReportMinerbaLnWithPeriod(inputCreateMinerbaLn.Period)
+	_, findMinerbaErr := h.minerbaLnService.GetReportMinerbaLnWithPeriod(inputCreateMinerbaLn.Period, iupopkIdInt)
 
 	if findMinerbaErr == nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -104,10 +112,7 @@ func (h *minerbaLnHandler) CreateMinerbaLn(c *fiber.Ctx) error {
 		})
 	}
 
-	splitPeriod := strings.Split(inputCreateMinerbaLn.Period, " ")
-
-	baseIdNumber := fmt.Sprintf("LSL-AJE-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1][len(splitPeriod[1])-2:])
-	createMinerbaLn, createMinerbaLnErr := h.historyService.CreateMinerbaLn(inputCreateMinerbaLn.Period, baseIdNumber, inputCreateMinerbaLn.ListDataLn, uint(claims["id"].(float64)))
+	createMinerbaLn, createMinerbaLnErr := h.historyService.CreateMinerbaLn(inputCreateMinerbaLn.Period, inputCreateMinerbaLn.ListDataLn, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createMinerbaLnErr != nil {
 		inputMap := make(map[string]interface{})
@@ -146,7 +151,17 @@ func (h *minerbaLnHandler) UpdateMinerbaLn(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -200,7 +215,7 @@ func (h *minerbaLnHandler) UpdateMinerbaLn(c *fiber.Ctx) error {
 		})
 	}
 
-	_, findDetailMinerbaLnErr := h.transactionService.GetDetailMinerbaLn(idInt)
+	_, findDetailMinerbaLnErr := h.transactionService.GetDetailMinerbaLn(idInt, iupopkIdInt)
 
 	if findDetailMinerbaLnErr != nil {
 		status := 400
@@ -213,7 +228,7 @@ func (h *minerbaLnHandler) UpdateMinerbaLn(c *fiber.Ctx) error {
 		})
 	}
 
-	_, checkMinerbaLnUpdateTransactionErr := h.transactionService.CheckDataLnAndMinerbaLnUpdate(inputUpdateMinerbaLn.ListDataLn, idInt)
+	_, checkMinerbaLnUpdateTransactionErr := h.transactionService.CheckDataLnAndMinerbaLnUpdate(inputUpdateMinerbaLn.ListDataLn, idInt, iupopkIdInt)
 
 	if checkMinerbaLnUpdateTransactionErr != nil {
 		inputMap := make(map[string]interface{})
@@ -245,7 +260,7 @@ func (h *minerbaLnHandler) UpdateMinerbaLn(c *fiber.Ctx) error {
 		})
 	}
 
-	updateMinerbaLn, updateMinerbaLnErr := h.historyService.UpdateMinerbaLn(idInt, inputUpdateMinerbaLn.ListDataLn, uint(claims["id"].(float64)))
+	updateMinerbaLn, updateMinerbaLnErr := h.historyService.UpdateMinerbaLn(idInt, inputUpdateMinerbaLn.ListDataLn, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if updateMinerbaLnErr != nil {
 		inputMap := make(map[string]interface{})
@@ -277,7 +292,7 @@ func (h *minerbaLnHandler) UpdateMinerbaLn(c *fiber.Ctx) error {
 	createNotif.Status = "mengedit"
 	createNotif.Period = updateMinerbaLn.Period
 
-	_, createNotificationUpdateMinerbaLnErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)))
+	_, createNotificationUpdateMinerbaLnErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createNotificationUpdateMinerbaLnErr != nil {
 		inputMap := make(map[string]interface{})
@@ -317,7 +332,17 @@ func (h *minerbaLnHandler) DeleteMinerbaLn(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -334,7 +359,7 @@ func (h *minerbaLnHandler) DeleteMinerbaLn(c *fiber.Ctx) error {
 		})
 	}
 
-	dataMinerbaLn, getDataMinerbaLnErr := h.minerbaLnService.GetDataMinerbaLn(idInt)
+	dataMinerbaLn, getDataMinerbaLnErr := h.minerbaLnService.GetDataMinerbaLn(idInt, iupopkIdInt)
 
 	if getDataMinerbaLnErr != nil {
 		return c.Status(404).JSON(fiber.Map{
@@ -343,7 +368,7 @@ func (h *minerbaLnHandler) DeleteMinerbaLn(c *fiber.Ctx) error {
 		})
 	}
 
-	_, deleteMinerbaLnErr := h.historyService.DeleteMinerbaLn(idInt, uint(claims["id"].(float64)))
+	_, deleteMinerbaLnErr := h.historyService.DeleteMinerbaLn(idInt, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if deleteMinerbaLnErr != nil {
 		inputMap := make(map[string]interface{})
@@ -396,7 +421,6 @@ func (h *minerbaLnHandler) DeleteMinerbaLn(c *fiber.Ctx) error {
 			}
 		}
 
-		fmt.Println(fileName)
 		_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
 
 		if deleteAwsErr != nil {
@@ -438,7 +462,7 @@ func (h *minerbaLnHandler) DeleteMinerbaLn(c *fiber.Ctx) error {
 	createNotif.Status = "menghapus"
 	createNotif.Period = dataMinerbaLn.Period
 
-	_, createNotificationDeleteMinerbaLnErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)))
+	_, createNotificationDeleteMinerbaLnErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createNotificationDeleteMinerbaLnErr != nil {
 		inputMap := make(map[string]interface{})
@@ -479,13 +503,23 @@ func (h *minerbaLnHandler) ListDataLNWithoutMinerba(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	listDataLNWithoutMinerba, listDataLNWithoutMinerbaErr := h.transactionService.ListDataLNWithoutMinerba()
+	listDataLNWithoutMinerba, listDataLNWithoutMinerbaErr := h.transactionService.ListDataLNWithoutMinerba(iupopkIdInt)
 
 	if listDataLNWithoutMinerbaErr != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -509,7 +543,17 @@ func (h *minerbaLnHandler) ListMinerbaLn(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -539,7 +583,7 @@ func (h *minerbaLnHandler) ListMinerbaLn(c *fiber.Ctx) error {
 	filterMinerbaLn.Field = c.Query("field")
 	filterMinerbaLn.Sort = c.Query("sort")
 
-	listMinerbaLn, listMinerbaLnErr := h.minerbaLnService.GetListReportMinerbaLnAll(pageNumber, filterMinerbaLn)
+	listMinerbaLn, listMinerbaLnErr := h.minerbaLnService.GetListReportMinerbaLnAll(pageNumber, filterMinerbaLn, iupopkIdInt)
 
 	if listMinerbaLnErr != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -561,7 +605,17 @@ func (h *minerbaLnHandler) DetailMinerbaLn(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -577,7 +631,7 @@ func (h *minerbaLnHandler) DetailMinerbaLn(c *fiber.Ctx) error {
 		})
 	}
 
-	detailMinerbaLn, detailMinerbaLnErr := h.transactionService.GetDetailMinerbaLn(idInt)
+	detailMinerbaLn, detailMinerbaLnErr := h.transactionService.GetDetailMinerbaLn(idInt, iupopkIdInt)
 
 	if detailMinerbaLnErr != nil {
 		status := 400
@@ -604,7 +658,17 @@ func (h *minerbaLnHandler) CheckValidPeriodMinerbaLn(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -628,7 +692,7 @@ func (h *minerbaLnHandler) CheckValidPeriodMinerbaLn(c *fiber.Ctx) error {
 		})
 	}
 
-	_, detailMinerbaLnErr := h.minerbaLnService.GetReportMinerbaLnWithPeriod(inputCheckMinerbaLn.Period)
+	_, detailMinerbaLnErr := h.minerbaLnService.GetReportMinerbaLnWithPeriod(inputCheckMinerbaLn.Period, iupopkIdInt)
 
 	if detailMinerbaLnErr != nil && detailMinerbaLnErr.Error() == "record not found" {
 		return c.Status(200).JSON(fiber.Map{
@@ -652,7 +716,17 @@ func (h *minerbaLnHandler) UpdateDocumentMinerbaLn(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -707,7 +781,7 @@ func (h *minerbaLnHandler) UpdateDocumentMinerbaLn(c *fiber.Ctx) error {
 		})
 	}
 
-	detailMinerbaLn, detailMinerbaLnErr := h.transactionService.GetDetailMinerbaLn(idInt)
+	detailMinerbaLn, detailMinerbaLnErr := h.transactionService.GetDetailMinerbaLn(idInt, iupopkIdInt)
 
 	if detailMinerbaLnErr != nil {
 		status := 400
@@ -720,7 +794,7 @@ func (h *minerbaLnHandler) UpdateDocumentMinerbaLn(c *fiber.Ctx) error {
 		})
 	}
 
-	updateMinerbaLn, updateMinerbaLnErr := h.historyService.UpdateDocumentMinerbaLn(idInt, *inputUpdateMinerbaLn, uint(claims["id"].(float64)))
+	updateMinerbaLn, updateMinerbaLnErr := h.historyService.UpdateDocumentMinerbaLn(idInt, *inputUpdateMinerbaLn, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if updateMinerbaLnErr != nil {
 		inputMap := make(map[string]interface{})
@@ -757,7 +831,7 @@ func (h *minerbaLnHandler) UpdateDocumentMinerbaLn(c *fiber.Ctx) error {
 	inputNotification.Type = "minerba ln"
 	inputNotification.Status = "membuat"
 	inputNotification.Period = detailMinerbaLn.Detail.Period
-	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createdNotificationErr != nil {
 		inputMap := make(map[string]interface{})
@@ -796,7 +870,17 @@ func (h *minerbaLnHandler) RequestCreateExcelMinerbaLn(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -814,7 +898,7 @@ func (h *minerbaLnHandler) RequestCreateExcelMinerbaLn(c *fiber.Ctx) error {
 
 	header := c.GetReqHeaders()
 
-	detailMinerbaLn, detailMinerbaLnErr := h.transactionService.GetDetailMinerbaLn(idInt)
+	detailMinerbaLn, detailMinerbaLnErr := h.transactionService.GetDetailMinerbaLn(idInt, iupopkIdInt)
 
 	if detailMinerbaLnErr != nil {
 		status := 400
@@ -827,12 +911,14 @@ func (h *minerbaLnHandler) RequestCreateExcelMinerbaLn(c *fiber.Ctx) error {
 		})
 	}
 
-	var inputRequestCreateExcel transaction.InputRequestCreateExcelMinerba
+	var inputRequestCreateExcel transaction.InputRequestCreateExcelMinerbaLn
 	inputRequestCreateExcel.Authorization = header["Authorization"]
 	inputRequestCreateExcel.MinerbaId = idInt
 	inputRequestCreateExcel.MinerbaNumber = *detailMinerbaLn.Detail.IdNumber
 	inputRequestCreateExcel.MinerbaPeriod = detailMinerbaLn.Detail.Period
 	inputRequestCreateExcel.Transactions = detailMinerbaLn.List
+	inputRequestCreateExcel.MinerbaLn = detailMinerbaLn.Detail
+	inputRequestCreateExcel.Iupopk = detailMinerbaLn.Detail.Iupopk
 
 	hitJob, hitJobErr := h.transactionService.RequestCreateExcelLn(inputRequestCreateExcel)
 

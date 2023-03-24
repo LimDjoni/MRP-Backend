@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"ajebackend/helper"
 	"ajebackend/model/awshelper"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
@@ -9,13 +8,12 @@ import (
 	"ajebackend/model/notificationuser"
 	"ajebackend/model/reportdmo"
 	"ajebackend/model/transaction"
-	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
 	"ajebackend/validatorfunc"
 	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
-	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -24,23 +22,23 @@ import (
 
 type reportDmoHandler struct {
 	transactionService      transaction.Service
-	userService             user.Service
 	historyService          history.Service
 	logService              logs.Service
 	notificationUserService notificationuser.Service
 	v                       *validator.Validate
 	reportDmoService        reportdmo.Service
+	userIupopkService       useriupopk.Service
 }
 
-func NewReportDmoHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, notificationUserService notificationuser.Service, v *validator.Validate, reportDmoService reportdmo.Service) *reportDmoHandler {
+func NewReportDmoHandler(transactionService transaction.Service, historyService history.Service, logService logs.Service, notificationUserService notificationuser.Service, v *validator.Validate, reportDmoService reportdmo.Service, userIupopkService useriupopk.Service) *reportDmoHandler {
 	return &reportDmoHandler{
 		transactionService,
-		userService,
 		historyService,
 		logService,
 		notificationUserService,
 		v,
 		reportDmoService,
+		userIupopkService,
 	}
 }
 
@@ -55,7 +53,17 @@ func (h *reportDmoHandler) CreateReportDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -97,11 +105,7 @@ func (h *reportDmoHandler) CreateReportDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	splitPeriod := strings.Split(inputCreateReportDmo.Period, " ")
-
-	baseIdNumber := fmt.Sprintf("LDO-AJE-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1][len(splitPeriod[1])-2:])
-
-	createReportDmo, createReportDmoErr := h.historyService.CreateReportDmo(*inputCreateReportDmo, baseIdNumber, uint(claims["id"].(float64)))
+	createReportDmo, createReportDmoErr := h.historyService.CreateReportDmo(*inputCreateReportDmo, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createReportDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -140,8 +144,17 @@ func (h *reportDmoHandler) UpdateDocumentReportDmo(c *fiber.Ctx) error {
 	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
+	iupopkId := c.Params("iupopk_id")
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -196,7 +209,7 @@ func (h *reportDmoHandler) UpdateDocumentReportDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	updateReportDmo, updateReportDmoErr := h.historyService.UpdateDocumentReportDmo(idInt, *inputUpdateDocumentReportDmo, uint(claims["id"].(float64)))
+	updateReportDmo, updateReportDmoErr := h.historyService.UpdateDocumentReportDmo(idInt, *inputUpdateDocumentReportDmo, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if updateReportDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -232,7 +245,7 @@ func (h *reportDmoHandler) UpdateDocumentReportDmo(c *fiber.Ctx) error {
 	inputNotification.Type = "report dmo"
 	inputNotification.Status = "membuat"
 	inputNotification.Period = updateReportDmo.Period
-	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createdNotificationErr != nil {
 		inputMap := make(map[string]interface{})
@@ -273,7 +286,17 @@ func (h *reportDmoHandler) RequestCreateExcelReportDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -291,7 +314,7 @@ func (h *reportDmoHandler) RequestCreateExcelReportDmo(c *fiber.Ctx) error {
 
 	header := c.GetReqHeaders()
 
-	detailReportDmo, detailReportDmoErr := h.transactionService.GetDetailReportDmo(idInt)
+	detailReportDmo, detailReportDmoErr := h.transactionService.GetDetailReportDmo(idInt, iupopkIdInt)
 
 	if detailReportDmoErr != nil {
 		status := 400
@@ -311,6 +334,7 @@ func (h *reportDmoHandler) RequestCreateExcelReportDmo(c *fiber.Ctx) error {
 	inputRequestCreateReportDmo.ReportDmo = detailReportDmo.Detail
 	inputRequestCreateReportDmo.GroupingVessels = detailReportDmo.GroupingVessels
 	inputRequestCreateReportDmo.Transactions = detailReportDmo.Transactions
+	inputRequestCreateReportDmo.Iupopk = detailReportDmo.Detail.Iupopk
 
 	hitJob, hitJobErr := h.transactionService.RequestCreateReportDmo(inputRequestCreateReportDmo)
 
@@ -334,7 +358,17 @@ func (h *reportDmoHandler) UpdateReportDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -387,7 +421,7 @@ func (h *reportDmoHandler) UpdateReportDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	_, findDetailReportDmoErr := h.transactionService.GetDetailReportDmo(idInt)
+	_, findDetailReportDmoErr := h.transactionService.GetDetailReportDmo(idInt, iupopkIdInt)
 
 	if findDetailReportDmoErr != nil {
 		status := 400
@@ -400,7 +434,7 @@ func (h *reportDmoHandler) UpdateReportDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	updateReportDmo, updateReportDmoErr := h.historyService.UpdateTransactionReportDmo(idInt, *inputUpdateReportDmo, uint(claims["id"].(float64)))
+	updateReportDmo, updateReportDmoErr := h.historyService.UpdateTransactionReportDmo(idInt, *inputUpdateReportDmo, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if updateReportDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -432,7 +466,7 @@ func (h *reportDmoHandler) UpdateReportDmo(c *fiber.Ctx) error {
 	createNotif.Status = "mengedit"
 	createNotif.Period = updateReportDmo.Period
 
-	_, createNotifUpdateReportDmo := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)))
+	_, createNotifUpdateReportDmo := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createNotifUpdateReportDmo != nil {
 		inputMap := make(map[string]interface{})
@@ -472,7 +506,17 @@ func (h *reportDmoHandler) DeleteReportDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -489,7 +533,7 @@ func (h *reportDmoHandler) DeleteReportDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	detailReportDmo, getDetailReportDmoErr := h.transactionService.GetDetailReportDmo(idInt)
+	detailReportDmo, getDetailReportDmoErr := h.transactionService.GetDetailReportDmo(idInt, iupopkIdInt)
 
 	if getDetailReportDmoErr != nil {
 		return c.Status(404).JSON(fiber.Map{
@@ -498,7 +542,7 @@ func (h *reportDmoHandler) DeleteReportDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	_, deleteReportDmoErr := h.historyService.DeleteReportDmo(idInt, uint(claims["id"].(float64)))
+	_, deleteReportDmoErr := h.historyService.DeleteReportDmo(idInt, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if deleteReportDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -533,7 +577,9 @@ func (h *reportDmoHandler) DeleteReportDmo(c *fiber.Ctx) error {
 
 	if detailReportDmo.Detail.RecapDmoDocumentLink != nil || detailReportDmo.Detail.DetailDmoDocumentLink != nil {
 
-		fileName := fmt.Sprintf("AJE/LDO/%s/", *detailReportDmo.Detail.IdNumber)
+		var fileName string
+		fileName = detailReportDmo.Detail.Iupopk.Code
+		fileName += fmt.Sprintf("/LDO/%s/", *detailReportDmo.Detail.IdNumber)
 
 		_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
 
@@ -570,7 +616,7 @@ func (h *reportDmoHandler) DeleteReportDmo(c *fiber.Ctx) error {
 	createNotif.Status = "menghapus"
 	createNotif.Period = detailReportDmo.Detail.Period
 
-	_, createNotificationDeleteReportDmoErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)))
+	_, createNotificationDeleteReportDmoErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createNotificationDeleteReportDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -611,13 +657,23 @@ func (h *reportDmoHandler) GetListForReport(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	getListForReport, getListForReportErr := h.transactionService.GetListForReport()
+	getListForReport, getListForReportErr := h.transactionService.GetListForReport(iupopkIdInt)
 
 	if getListForReportErr != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -641,7 +697,17 @@ func (h *reportDmoHandler) CheckValidPeriodReportDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -665,7 +731,7 @@ func (h *reportDmoHandler) CheckValidPeriodReportDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	_, detailReportDmoErr := h.reportDmoService.GetReportDmoWithPeriod(inputCheckReportDmo.Period)
+	_, detailReportDmoErr := h.reportDmoService.GetReportDmoWithPeriod(inputCheckReportDmo.Period, iupopkIdInt)
 
 	if detailReportDmoErr != nil && detailReportDmoErr.Error() == "record not found" {
 		return c.Status(200).JSON(fiber.Map{
@@ -689,7 +755,17 @@ func (h *reportDmoHandler) DetailReportDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -705,7 +781,7 @@ func (h *reportDmoHandler) DetailReportDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	detailReportDmo, detailReportDmoErr := h.transactionService.GetDetailReportDmo(idInt)
+	detailReportDmo, detailReportDmoErr := h.transactionService.GetDetailReportDmo(idInt, iupopkIdInt)
 
 	if detailReportDmoErr != nil {
 		status := 400
@@ -732,7 +808,17 @@ func (h *reportDmoHandler) ListReportDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -762,7 +848,7 @@ func (h *reportDmoHandler) ListReportDmo(c *fiber.Ctx) error {
 	filterReportDmo.Field = c.Query("field")
 	filterReportDmo.Sort = c.Query("sort")
 
-	listReportDmo, listReportDmoErr := h.reportDmoService.GetListReportDmoAll(pageNumber, filterReportDmo)
+	listReportDmo, listReportDmoErr := h.reportDmoService.GetListReportDmoAll(pageNumber, filterReportDmo, iupopkIdInt)
 
 	if listReportDmoErr != nil {
 		return c.Status(400).JSON(fiber.Map{

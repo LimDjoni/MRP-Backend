@@ -1,6 +1,9 @@
 package groupingvesselln
 
-import "ajebackend/model/insw"
+import (
+	"ajebackend/model/insw"
+	"ajebackend/model/master/iupopk"
+)
 
 type InputGroupingVesselLn struct {
 	ListTransactions      []uint  `json:"list_transactions" validate:"required,min=1"`
@@ -114,4 +117,5 @@ type InputRequestCreateUploadInsw struct {
 	Authorization    string             `json:"authorization"`
 	Insw             insw.Insw          `json:"insw"`
 	GroupingVesselLn []GroupingVesselLn `json:"grouping_vessel"`
+	Iupopk           iupopk.Iupopk      `json:"iupopk"`
 }

@@ -5,6 +5,7 @@ import (
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/insw"
+	"ajebackend/model/master/iupopk"
 	"ajebackend/model/minerba"
 	"ajebackend/model/minerbaln"
 	"ajebackend/model/production"
@@ -41,4 +42,6 @@ type History struct {
 	ReportDmo          *reportdmo.ReportDmo              `json:"report_dmo" gorm:"constraint:OnDelete:CASCADE;"`
 	BeforeData         datatypes.JSON                    `json:"before_data"`
 	AfterData          datatypes.JSON                    `json:"after_data"`
+	IupopkId           *uint                             `json:"iupopk_id"`
+	Iupopk             *iupopk.Iupopk                    `json:"iupopk" gorm:"constraint:OnDelete:CASCADE;"`
 }

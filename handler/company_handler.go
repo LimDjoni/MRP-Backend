@@ -4,7 +4,7 @@ import (
 	"ajebackend/model/logs"
 	"ajebackend/model/master/company"
 	"ajebackend/model/master/trader"
-	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
 	"ajebackend/validatorfunc"
 	"encoding/json"
 	"reflect"
@@ -16,20 +16,20 @@ import (
 )
 
 type companyHandler struct {
-	userService    user.Service
-	companyService company.Service
-	traderService  trader.Service
-	logsService    logs.Service
-	v              *validator.Validate
+	companyService    company.Service
+	traderService     trader.Service
+	logsService       logs.Service
+	v                 *validator.Validate
+	userIupopkService useriupopk.Service
 }
 
-func NewCompanyHandler(userService user.Service, companyService company.Service, traderService trader.Service, logsService logs.Service, v *validator.Validate) *companyHandler {
+func NewCompanyHandler(companyService company.Service, traderService trader.Service, logsService logs.Service, v *validator.Validate, userIupopkService useriupopk.Service) *companyHandler {
 	return &companyHandler{
-		userService,
 		companyService,
 		traderService,
 		logsService,
 		v,
+		userIupopkService,
 	}
 }
 
@@ -44,7 +44,17 @@ func (h *companyHandler) ListCompany(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -74,7 +84,17 @@ func (h *companyHandler) CreateCompany(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -152,7 +172,17 @@ func (h *companyHandler) UpdateCompany(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -232,7 +262,17 @@ func (h *companyHandler) DeleteCompany(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -318,7 +358,17 @@ func (h *companyHandler) DetailCompany(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)

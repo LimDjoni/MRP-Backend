@@ -9,7 +9,7 @@ import (
 	"ajebackend/model/logs"
 	"ajebackend/model/master/destination"
 	"ajebackend/model/transaction"
-	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -21,9 +21,6 @@ func GroupingVesselLnRouting(db *gorm.DB, app fiber.Router, validate *validator.
 	transactionRepository := transaction.NewRepository(db)
 	transactionService := transaction.NewService(transactionRepository)
 
-	userRepository := user.NewRepository(db)
-	userService := user.NewService(userRepository)
-
 	historyRepository := history.NewRepository(db)
 	historyService := history.NewService(historyRepository)
 
@@ -33,15 +30,18 @@ func GroupingVesselLnRouting(db *gorm.DB, app fiber.Router, validate *validator.
 	groupingVesselLnRepository := groupingvesselln.NewRepository(db)
 	groupingVesselLnService := groupingvesselln.NewService(groupingVesselLnRepository)
 
-	groupingVesselLnHandler := handler.NewGroupingVesselLnHandler(transactionService, userService, historyService, validate, logService, groupingVesselLnService)
-
 	groupingVesselDnRepository := groupingvesseldn.NewRepository(db)
 	groupingVesselDnService := groupingvesseldn.NewService(groupingVesselDnRepository)
 
 	destinationRepository := destination.NewRepository(db)
 	destinationService := destination.NewService(destinationRepository)
 
-	groupingVesselDnHandler := handler.NewGroupingVesselDnHandler(transactionService, userService, historyService, validate, logService, groupingVesselDnService, destinationService)
+	userIupopkRepository := useriupopk.NewRepository(db)
+	userIupopkService := useriupopk.NewService(userIupopkRepository)
+
+	groupingVesselDnHandler := handler.NewGroupingVesselDnHandler(transactionService, historyService, validate, logService, groupingVesselDnService, destinationService, userIupopkService)
+
+	groupingVesselLnHandler := handler.NewGroupingVesselLnHandler(transactionService, historyService, validate, logService, groupingVesselLnService, userIupopkService)
 
 	groupingVesselRouting := app.Group("/groupingvessel")
 
@@ -57,20 +57,20 @@ func GroupingVesselLnRouting(db *gorm.DB, app fiber.Router, validate *validator.
 	}))
 
 	// DN
-	groupingVesselRouting.Get("/list/dn", groupingVesselDnHandler.ListGroupingVesselDn)
-	groupingVesselRouting.Post("/create/dn", groupingVesselDnHandler.CreateGroupingVesselDn)
-	groupingVesselRouting.Put("/update/dn/:id", groupingVesselDnHandler.EditGroupingVesselDn)
-	groupingVesselRouting.Put("/update/document/dn/:id/:type", groupingVesselDnHandler.UploadDocumentGroupingVesselDn)
-	groupingVesselRouting.Delete("/delete/dn/:id", groupingVesselDnHandler.DeleteGroupingVesselDn)
-	groupingVesselRouting.Get("/detail/dn/:id", groupingVesselDnHandler.GetDetailGroupingVesselDn)
-	groupingVesselRouting.Get("/list/dn/transaction", groupingVesselDnHandler.ListDnWithoutGroup)
+	groupingVesselRouting.Get("/list/dn/:iupopk_id", groupingVesselDnHandler.ListGroupingVesselDn)
+	groupingVesselRouting.Post("/create/dn/:iupopk_id", groupingVesselDnHandler.CreateGroupingVesselDn)
+	groupingVesselRouting.Put("/update/dn/:id/:iupopk_id", groupingVesselDnHandler.EditGroupingVesselDn)
+	groupingVesselRouting.Put("/update/document/dn/:id/:type/:iupopk_id", groupingVesselDnHandler.UploadDocumentGroupingVesselDn)
+	groupingVesselRouting.Delete("/delete/dn/:id/:iupopk_id", groupingVesselDnHandler.DeleteGroupingVesselDn)
+	groupingVesselRouting.Get("/detail/dn/:id/:iupopk_id", groupingVesselDnHandler.GetDetailGroupingVesselDn)
+	groupingVesselRouting.Get("/list/dn/transaction/:iupopk_id", groupingVesselDnHandler.ListDnWithoutGroup)
 
 	// LN
-	groupingVesselRouting.Post("/create/ln", groupingVesselLnHandler.CreateGroupingVesselLn)
-	groupingVesselRouting.Get("/detail/ln/:id", groupingVesselLnHandler.GetDetailGroupingVesselLn)
-	groupingVesselRouting.Put("/update/ln/:id", groupingVesselLnHandler.EditGroupingVesselLn)
-	groupingVesselRouting.Put("/update/document/ln/:id/:type", groupingVesselLnHandler.UploadDocumentGroupingVesselLn)
-	groupingVesselRouting.Delete("/delete/ln/:id", groupingVesselLnHandler.DeleteGroupingVesselLn)
-	groupingVesselRouting.Get("/list/ln", groupingVesselLnHandler.ListGroupingVesselLn)
-	groupingVesselRouting.Get("/list/ln/transaction", groupingVesselLnHandler.ListLnWithoutGroup)
+	groupingVesselRouting.Post("/create/ln/:iupopk_id", groupingVesselLnHandler.CreateGroupingVesselLn)
+	groupingVesselRouting.Get("/detail/ln/:id/:iupopk_id", groupingVesselLnHandler.GetDetailGroupingVesselLn)
+	groupingVesselRouting.Put("/update/ln/:id/:iupopk_id", groupingVesselLnHandler.EditGroupingVesselLn)
+	groupingVesselRouting.Put("/update/document/ln/:id/:type/:iupopk_id", groupingVesselLnHandler.UploadDocumentGroupingVesselLn)
+	groupingVesselRouting.Delete("/delete/ln/:id/:iupopk_id", groupingVesselLnHandler.DeleteGroupingVesselLn)
+	groupingVesselRouting.Get("/list/ln/:iupopk_id", groupingVesselLnHandler.ListGroupingVesselLn)
+	groupingVesselRouting.Get("/list/ln/transaction/:iupopk_id", groupingVesselLnHandler.ListLnWithoutGroup)
 }

@@ -3,7 +3,10 @@ package transaction
 import (
 	"ajebackend/model/dmo"
 	"ajebackend/model/groupingvesseldn"
+	"ajebackend/model/master/iupopk"
 	"ajebackend/model/master/trader"
+	"ajebackend/model/minerba"
+	"ajebackend/model/minerbaln"
 	"ajebackend/model/reportdmo"
 )
 
@@ -84,11 +87,23 @@ type SortAndFilter struct {
 }
 
 type InputRequestCreateExcelMinerba struct {
-	Authorization string        `json:"authorization"`
-	MinerbaNumber string        `json:"minerba_number"`
-	MinerbaPeriod string        `json:"minerba_period"`
-	MinerbaId     int           `json:"minerba_id"`
-	Transactions  []Transaction `json:"transactions"`
+	Authorization string          `json:"authorization"`
+	MinerbaNumber string          `json:"minerba_number"`
+	MinerbaPeriod string          `json:"minerba_period"`
+	MinerbaId     int             `json:"minerba_id"`
+	Transactions  []Transaction   `json:"transactions"`
+	Minerba       minerba.Minerba `json:"minerba"`
+	Iupopk        iupopk.Iupopk   `json:"iupopk"`
+}
+
+type InputRequestCreateExcelMinerbaLn struct {
+	Authorization string              `json:"authorization"`
+	MinerbaNumber string              `json:"minerba_number"`
+	MinerbaPeriod string              `json:"minerba_period"`
+	MinerbaId     int                 `json:"minerba_id"`
+	Transactions  []Transaction       `json:"transactions"`
+	MinerbaLn     minerbaln.MinerbaLn `json:"minerba_ln"`
+	Iupopk        iupopk.Iupopk       `json:"iupopk"`
 }
 
 type InputRequestCreateUploadDmo struct {
@@ -100,6 +115,7 @@ type InputRequestCreateUploadDmo struct {
 	ListTransactionBarge          []Transaction                       `json:"list_transaction_barge"`
 	ListTransactionGroupingVessel []Transaction                       `json:"list_transaction_grouping_vessel"`
 	ListGroupingVessel            []groupingvesseldn.GroupingVesselDn `json:"list_grouping_vessel"`
+	Iupopk                        iupopk.Iupopk                       `json:"iupopk"`
 }
 
 type InputRequestGetReport struct {
@@ -113,4 +129,5 @@ type InputRequestCreateReportDmo struct {
 	ReportDmo       reportdmo.ReportDmo                 `json:"report_dmo"`
 	Transactions    []Transaction                       `json:"transactions"`
 	GroupingVessels []groupingvesseldn.GroupingVesselDn `json:"grouping_vessels"`
+	Iupopk          iupopk.Iupopk                       `json:"iupopk"`
 }

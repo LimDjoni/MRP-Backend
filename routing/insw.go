@@ -9,7 +9,7 @@ import (
 	"ajebackend/model/logs"
 	"ajebackend/model/notificationuser"
 	"ajebackend/model/transaction"
-	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -20,9 +20,6 @@ import (
 func InswRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	transactionRepository := transaction.NewRepository(db)
 	transactionService := transaction.NewService(transactionRepository)
-
-	userRepository := user.NewRepository(db)
-	userService := user.NewService(userRepository)
 
 	historyRepository := history.NewRepository(db)
 	historyService := history.NewService(historyRepository)
@@ -39,7 +36,10 @@ func InswRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	inswRepository := insw.NewRepository(db)
 	inswService := insw.NewService(inswRepository)
 
-	inswHandler := handler.NewInswHandler(transactionService, userService, historyService, validate, logService, groupingVesselLnService, notificationUserService, inswService)
+	userIupopkRepository := useriupopk.NewRepository(db)
+	userIupopkService := useriupopk.NewService(userIupopkRepository)
+
+	inswHandler := handler.NewInswHandler(transactionService, historyService, validate, logService, groupingVesselLnService, notificationUserService, inswService, userIupopkService)
 
 	inswRouting := app.Group("/insw")
 
@@ -54,11 +54,11 @@ func InswRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 		},
 	}))
 
-	inswRouting.Get("/list", inswHandler.ListInsw)
-	inswRouting.Post("/create", inswHandler.CreateInsw)
-	inswRouting.Post("/preview", inswHandler.ListGroupingVesselLnWithPeriod)
-	inswRouting.Get("/detail/:id", inswHandler.DetailInsw)
-	inswRouting.Delete("/delete/:id", inswHandler.DeleteInsw)
-	inswRouting.Put("/update/document/:id", inswHandler.UpdateDocumentInsw)
-	inswRouting.Post("/create/excel/:id", inswHandler.RequestCreateExcelInsw)
+	inswRouting.Get("/list/:iupopk_id", inswHandler.ListInsw)
+	inswRouting.Post("/create/:iupopk_id", inswHandler.CreateInsw)
+	inswRouting.Post("/preview/:iupopk_id", inswHandler.ListGroupingVesselLnWithPeriod)
+	inswRouting.Get("/detail/:id/:iupopk_id", inswHandler.DetailInsw)
+	inswRouting.Delete("/delete/:id/:iupopk_id", inswHandler.DeleteInsw)
+	inswRouting.Put("/update/document/:id/:iupopk_id", inswHandler.UpdateDocumentInsw)
+	inswRouting.Post("/create/excel/:id/:iupopk_id", inswHandler.RequestCreateExcelInsw)
 }

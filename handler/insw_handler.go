@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"ajebackend/helper"
 	"ajebackend/model/awshelper"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/history"
@@ -10,7 +9,7 @@ import (
 	"ajebackend/model/notification"
 	"ajebackend/model/notificationuser"
 	"ajebackend/model/transaction"
-	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
 	"ajebackend/validatorfunc"
 	"encoding/json"
 	"fmt"
@@ -25,25 +24,25 @@ import (
 
 type inswHandler struct {
 	transactionService      transaction.Service
-	userService             user.Service
 	historyService          history.Service
 	v                       *validator.Validate
 	logService              logs.Service
 	groupingVesselLnService groupingvesselln.Service
 	notificationUserService notificationuser.Service
 	inswService             insw.Service
+	userIupopkService       useriupopk.Service
 }
 
-func NewInswHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, v *validator.Validate, logService logs.Service, groupingVesselLnService groupingvesselln.Service, notificationUserService notificationuser.Service, inswService insw.Service) *inswHandler {
+func NewInswHandler(transactionService transaction.Service, historyService history.Service, v *validator.Validate, logService logs.Service, groupingVesselLnService groupingvesselln.Service, notificationUserService notificationuser.Service, inswService insw.Service, userIupopkService useriupopk.Service) *inswHandler {
 	return &inswHandler{
 		transactionService,
-		userService,
 		historyService,
 		v,
 		logService,
 		groupingVesselLnService,
 		notificationUserService,
 		inswService,
+		userIupopkService,
 	}
 }
 
@@ -58,7 +57,17 @@ func (h *inswHandler) CreateInsw(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -99,8 +108,7 @@ func (h *inswHandler) CreateInsw(c *fiber.Ctx) error {
 		})
 	}
 
-	baseIdNumber := fmt.Sprintf("LIW-AJE-%s-%v", helper.MonthLongToNumberString(inputCreateInsw.Month), inputCreateInsw.Year%1e2)
-	createInsw, createInswErr := h.historyService.CreateInsw(inputCreateInsw.Month, inputCreateInsw.Year, baseIdNumber, uint(claims["id"].(float64)))
+	createInsw, createInswErr := h.historyService.CreateInsw(inputCreateInsw.Month, inputCreateInsw.Year, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createInswErr != nil {
 		fmt.Println(createInswErr)
@@ -140,7 +148,17 @@ func (h *inswHandler) ListGroupingVesselLnWithPeriod(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -165,7 +183,7 @@ func (h *inswHandler) ListGroupingVesselLnWithPeriod(c *fiber.Ctx) error {
 		})
 	}
 
-	listGroupingVesselLnWithPeriod, listGroupingVesselLnWithPeriodErr := h.groupingVesselLnService.ListGroupingVesselLnWithPeriod(inputCreateInsw.Month, inputCreateInsw.Year)
+	listGroupingVesselLnWithPeriod, listGroupingVesselLnWithPeriodErr := h.groupingVesselLnService.ListGroupingVesselLnWithPeriod(inputCreateInsw.Month, inputCreateInsw.Year, iupopkIdInt)
 
 	if listGroupingVesselLnWithPeriodErr != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -187,7 +205,17 @@ func (h *inswHandler) DetailInsw(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -203,7 +231,7 @@ func (h *inswHandler) DetailInsw(c *fiber.Ctx) error {
 		})
 	}
 
-	detailInsw, detailInswErr := h.groupingVesselLnService.DetailInsw(idInt)
+	detailInsw, detailInswErr := h.groupingVesselLnService.DetailInsw(idInt, iupopkIdInt)
 
 	if detailInswErr != nil {
 
@@ -232,7 +260,17 @@ func (h *inswHandler) DeleteInsw(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -248,7 +286,7 @@ func (h *inswHandler) DeleteInsw(c *fiber.Ctx) error {
 		})
 	}
 
-	detailInsw, detailInswErr := h.groupingVesselLnService.DetailInsw(idInt)
+	detailInsw, detailInswErr := h.groupingVesselLnService.DetailInsw(idInt, iupopkIdInt)
 
 	if detailInswErr != nil {
 
@@ -263,7 +301,7 @@ func (h *inswHandler) DeleteInsw(c *fiber.Ctx) error {
 		})
 	}
 
-	_, deleteInswErr := h.historyService.DeleteInsw(idInt, uint(claims["id"].(float64)))
+	_, deleteInswErr := h.historyService.DeleteInsw(idInt, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if deleteInswErr != nil {
 
@@ -337,7 +375,7 @@ func (h *inswHandler) DeleteInsw(c *fiber.Ctx) error {
 	createNotif.Status = "menghapus"
 	createNotif.Period = fmt.Sprintf("%s %v", detailInsw.Detail.Month, detailInsw.Detail.Year)
 
-	_, createNotificationDeleteInsw := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)))
+	_, createNotificationDeleteInsw := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createNotificationDeleteInsw != nil {
 		inputMap := make(map[string]interface{})
@@ -379,7 +417,17 @@ func (h *inswHandler) UpdateDocumentInsw(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -434,7 +482,7 @@ func (h *inswHandler) UpdateDocumentInsw(c *fiber.Ctx) error {
 		})
 	}
 
-	detailInsw, detailInswErr := h.groupingVesselLnService.DetailInsw(idInt)
+	detailInsw, detailInswErr := h.groupingVesselLnService.DetailInsw(idInt, iupopkIdInt)
 
 	if detailInswErr != nil {
 		status := 400
@@ -447,7 +495,7 @@ func (h *inswHandler) UpdateDocumentInsw(c *fiber.Ctx) error {
 		})
 	}
 
-	updateInsw, updateInswErr := h.historyService.UpdateDocumentInsw(idInt, *inputUpdateInsw, uint(claims["id"].(float64)))
+	updateInsw, updateInswErr := h.historyService.UpdateDocumentInsw(idInt, *inputUpdateInsw, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if updateInswErr != nil {
 		inputMap := make(map[string]interface{})
@@ -484,7 +532,7 @@ func (h *inswHandler) UpdateDocumentInsw(c *fiber.Ctx) error {
 	inputNotification.Type = "insw"
 	inputNotification.Status = "membuat"
 	inputNotification.Period = fmt.Sprintf("%v %v", detailInsw.Detail.Month, detailInsw.Detail.Year)
-	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createdNotificationErr != nil {
 		inputMap := make(map[string]interface{})
@@ -525,7 +573,16 @@ func (h *inswHandler) RequestCreateExcelInsw(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -543,7 +600,7 @@ func (h *inswHandler) RequestCreateExcelInsw(c *fiber.Ctx) error {
 
 	header := c.GetReqHeaders()
 
-	detailInsw, detailInswErr := h.groupingVesselLnService.DetailInsw(idInt)
+	detailInsw, detailInswErr := h.groupingVesselLnService.DetailInsw(idInt, iupopkIdInt)
 
 	if detailInswErr != nil {
 		status := 400
@@ -560,7 +617,7 @@ func (h *inswHandler) RequestCreateExcelInsw(c *fiber.Ctx) error {
 	inputRequestCreateExcel.Authorization = header["Authorization"]
 	inputRequestCreateExcel.Insw = detailInsw.Detail
 	inputRequestCreateExcel.GroupingVesselLn = detailInsw.ListGroupingVesselLn
-
+	inputRequestCreateExcel.Iupopk = detailInsw.Detail.Iupopk
 	hitJob, hitJobErr := h.groupingVesselLnService.RequestCreateExcelInsw(inputRequestCreateExcel)
 
 	if hitJobErr != nil {
@@ -583,7 +640,17 @@ func (h *inswHandler) ListInsw(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -610,7 +677,7 @@ func (h *inswHandler) ListInsw(c *fiber.Ctx) error {
 	filterInsw.Month = c.Query("month")
 	filterInsw.Year = c.Query("year")
 
-	listInsw, listInswErr := h.inswService.ListInsw(pageNumber, filterInsw)
+	listInsw, listInswErr := h.inswService.ListInsw(pageNumber, filterInsw, iupopkIdInt)
 
 	if listInswErr != nil {
 		return c.Status(400).JSON(fiber.Map{

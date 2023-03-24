@@ -13,36 +13,36 @@ import (
 )
 
 type Service interface {
-	ListData(page int, sortFilter SortAndFilter, transactionType string) (Pagination, error)
-	DetailTransaction(id int, transactionType string) (Transaction, error)
+	ListData(page int, sortFilter SortAndFilter, transactionType string, iupopkId int) (Pagination, error)
+	DetailTransaction(id int, transactionType string, iupopkId int) (Transaction, error)
 	CheckDataUnique(inputTrans DataTransactionInput) (bool, bool, bool, bool)
-	ListDataDNWithoutMinerba() ([]Transaction, error)
-	CheckDataDnAndMinerba(listData []int) (bool, error)
-	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) ([]Transaction, error)
-	GetDetailMinerba(id int) (DetailMinerba, error)
+	ListDataDNWithoutMinerba(iupopkId int) ([]Transaction, error)
+	CheckDataDnAndMinerba(listData []int, iupopkId int) (bool, error)
+	CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int, iupopkId int) ([]Transaction, error)
+	GetDetailMinerba(id int, iupopkId int) (DetailMinerba, error)
 	RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (map[string]interface{}, error)
-	RequestCreateExcelLn(reqInput InputRequestCreateExcelMinerba) (map[string]interface{}, error)
-	ListDataDNBargeWithoutVessel() ([]Transaction, error)
-	ListDataDNBargeWithVessel() ([]Transaction, error)
-	ListDataDNVessel() ([]Transaction, error)
-	CheckDataDnAndDmo(listData []int) ([]Transaction, error)
-	CheckGroupingVesselAndDmo(listData []int) ([]dmovessel.DmoVessel, error)
-	GetDetailDmo(id int) (DetailDmo, error)
+	RequestCreateExcelLn(reqInput InputRequestCreateExcelMinerbaLn) (map[string]interface{}, error)
+	ListDataDNBargeWithoutVessel(iupopkId int) ([]Transaction, error)
+	ListDataDNBargeWithVessel(iupopkId int) ([]Transaction, error)
+	ListDataDNVessel(iupopkId int) ([]Transaction, error)
+	CheckDataDnAndDmo(listData []int, iupopkId int) ([]Transaction, error)
+	CheckGroupingVesselAndDmo(listData []int, iupopkId int) ([]dmovessel.DmoVessel, error)
+	GetDetailDmo(id int, iupopkId int) (DetailDmo, error)
 	RequestCreateDmo(reqInput InputRequestCreateUploadDmo) (map[string]interface{}, error)
 	RequestCreateCustomDmo(dataDmo dmo.Dmo, traderEndUser trader.Trader, reconciliationLetter *multipart.FileHeader, authorization string, reqInputCreateUploadDmo InputRequestCreateUploadDmo) (map[string]interface{}, error)
-	GetReport(year int) (ReportRecapOutput, ReportDetailOutput, error)
-	GetListForReport() (ListForCreatingReportDmoOutput, error)
-	GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, error)
-	ListDataDnWithoutGroup() (ListTransactionNotHaveGroupingVessel, error)
-	GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, error)
-	ListDataLnWithoutGroup() ([]Transaction, error)
-	GetDetailMinerbaLn(id int) (DetailMinerbaLn, error)
-	ListDataLNWithoutMinerba() ([]Transaction, error)
-	CheckDataLnAndMinerbaLnUpdate(listData []int, idMinerba int) ([]Transaction, error)
-	CheckDataLnAndMinerbaLn(listData []int) (bool, error)
-	GetDataDmo(id uint) (ListTransactionDmoBackgroundJob, error)
+	GetReport(year int, iupopkId int) (ReportRecapOutput, ReportDetailOutput, error)
+	GetListForReport(iupopkId int) (ListForCreatingReportDmoOutput, error)
+	GetDetailGroupingVesselDn(id int, iupopkId int) (DetailGroupingVesselDn, error)
+	ListDataDnWithoutGroup(iupopkId int) (ListTransactionNotHaveGroupingVessel, error)
+	GetDetailGroupingVesselLn(id int, iupopkId int) (DetailGroupingVesselLn, error)
+	ListDataLnWithoutGroup(iupopkId int) ([]Transaction, error)
+	GetDetailMinerbaLn(id int, iupopkId int) (DetailMinerbaLn, error)
+	ListDataLNWithoutMinerba(iupopkId int) ([]Transaction, error)
+	CheckDataLnAndMinerbaLnUpdate(listData []int, idMinerba int, iupopkId int) ([]Transaction, error)
+	CheckDataLnAndMinerbaLn(listData []int, iupopkId int) (bool, error)
+	GetDataDmo(id uint, iupopkId int) (ListTransactionDmoBackgroundJob, error)
 	RequestCreateReportDmo(input InputRequestCreateReportDmo) (map[string]interface{}, error)
-	GetDetailReportDmo(id int) (DetailReportDmo, error)
+	GetDetailReportDmo(id int, iupopkId int) (DetailReportDmo, error)
 }
 
 type service struct {
@@ -53,14 +53,14 @@ func NewService(repository Repository) *service {
 	return &service{repository}
 }
 
-func (s *service) ListData(page int, sortFilter SortAndFilter, transactionType string) (Pagination, error) {
-	listDN, listDNErr := s.repository.ListData(page, sortFilter, transactionType)
+func (s *service) ListData(page int, sortFilter SortAndFilter, transactionType string, iupopkId int) (Pagination, error) {
+	listDN, listDNErr := s.repository.ListData(page, sortFilter, transactionType, iupopkId)
 
 	return listDN, listDNErr
 }
 
-func (s *service) DetailTransaction(id int, transactionType string) (Transaction, error) {
-	detailTransactionDN, detailTransactionDNErr := s.repository.DetailTransaction(id, transactionType)
+func (s *service) DetailTransaction(id int, transactionType string, iupopkId int) (Transaction, error) {
+	detailTransactionDN, detailTransactionDNErr := s.repository.DetailTransaction(id, transactionType, iupopkId)
 
 	return detailTransactionDN, detailTransactionDNErr
 }
@@ -71,26 +71,26 @@ func (s *service) CheckDataUnique(inputTrans DataTransactionInput) (bool, bool, 
 	return isDpRoyaltyNtpnUnique, isDpRoyaltyBillingCodeUnique, isPaymentDpRoyaltyNtpnUnique, isPaymentDpRoyaltyBillingCodeUnique
 }
 
-func (s *service) ListDataDNWithoutMinerba() ([]Transaction, error) {
-	listDataDNWithoutMinerba, listDataDNWithoutMinerbaErr := s.repository.ListDataDNWithoutMinerba()
+func (s *service) ListDataDNWithoutMinerba(iupopkId int) ([]Transaction, error) {
+	listDataDNWithoutMinerba, listDataDNWithoutMinerbaErr := s.repository.ListDataDNWithoutMinerba(iupopkId)
 
 	return listDataDNWithoutMinerba, listDataDNWithoutMinerbaErr
 }
 
-func (s *service) CheckDataDnAndMinerba(listData []int) (bool, error) {
-	checkData, checkDataErr := s.repository.CheckDataDnAndMinerba(listData)
+func (s *service) CheckDataDnAndMinerba(listData []int, iupopkId int) (bool, error) {
+	checkData, checkDataErr := s.repository.CheckDataDnAndMinerba(listData, iupopkId)
 
 	return checkData, checkDataErr
 }
 
-func (s *service) CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int) ([]Transaction, error) {
-	checkData, checkDataErr := s.repository.CheckDataDnAndMinerbaUpdate(listData, idMinerba)
+func (s *service) CheckDataDnAndMinerbaUpdate(listData []int, idMinerba int, iupopkId int) ([]Transaction, error) {
+	checkData, checkDataErr := s.repository.CheckDataDnAndMinerbaUpdate(listData, idMinerba, iupopkId)
 
 	return checkData, checkDataErr
 }
 
-func (s *service) GetDetailMinerba(id int) (DetailMinerba, error) {
-	detailMinerba, detailMinerbaErr := s.repository.GetDetailMinerba(id)
+func (s *service) GetDetailMinerba(id int, iupopkId int) (DetailMinerba, error) {
+	detailMinerba, detailMinerbaErr := s.repository.GetDetailMinerba(id, iupopkId)
 
 	return detailMinerba, detailMinerbaErr
 }
@@ -125,7 +125,7 @@ func (s *service) RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (m
 	return res, doReqErr
 }
 
-func (s *service) RequestCreateExcelLn(reqInput InputRequestCreateExcelMinerba) (map[string]interface{}, error) {
+func (s *service) RequestCreateExcelLn(reqInput InputRequestCreateExcelMinerbaLn) (map[string]interface{}, error) {
 	var res map[string]interface{}
 	baseURL := helper.GetEnvWithKey("BASE_JOB_URL")
 
@@ -155,38 +155,38 @@ func (s *service) RequestCreateExcelLn(reqInput InputRequestCreateExcelMinerba) 
 	return res, doReqErr
 }
 
-func (s *service) ListDataDNBargeWithoutVessel() ([]Transaction, error) {
-	listDataDNBargeWithoutVessel, listDataDNBargeWithoutVesselErr := s.repository.ListDataDNBargeWithoutVessel()
+func (s *service) ListDataDNBargeWithoutVessel(iupopkId int) ([]Transaction, error) {
+	listDataDNBargeWithoutVessel, listDataDNBargeWithoutVesselErr := s.repository.ListDataDNBargeWithoutVessel(iupopkId)
 
 	return listDataDNBargeWithoutVessel, listDataDNBargeWithoutVesselErr
 }
 
-func (s *service) ListDataDNBargeWithVessel() ([]Transaction, error) {
-	listDataDNBargeWithVessel, listDataDNBargeWithVesselErr := s.repository.ListDataDNBargeWithVessel()
+func (s *service) ListDataDNBargeWithVessel(iupopkId int) ([]Transaction, error) {
+	listDataDNBargeWithVessel, listDataDNBargeWithVesselErr := s.repository.ListDataDNBargeWithVessel(iupopkId)
 
 	return listDataDNBargeWithVessel, listDataDNBargeWithVesselErr
 }
 
-func (s *service) ListDataDNVessel() ([]Transaction, error) {
-	listDataDNVessel, listDataDNVesselErr := s.repository.ListDataDNVessel()
+func (s *service) ListDataDNVessel(iupopkId int) ([]Transaction, error) {
+	listDataDNVessel, listDataDNVesselErr := s.repository.ListDataDNVessel(iupopkId)
 
 	return listDataDNVessel, listDataDNVesselErr
 }
 
-func (s *service) CheckDataDnAndDmo(listData []int) ([]Transaction, error) {
-	checkData, checkDataErr := s.repository.CheckDataDnAndDmo(listData)
+func (s *service) CheckDataDnAndDmo(listData []int, iupopkId int) ([]Transaction, error) {
+	checkData, checkDataErr := s.repository.CheckDataDnAndDmo(listData, iupopkId)
 
 	return checkData, checkDataErr
 }
 
-func (s *service) CheckGroupingVesselAndDmo(listData []int) ([]dmovessel.DmoVessel, error) {
-	checkGrouping, checkGroupingErr := s.repository.CheckGroupingVesselAndDmo(listData)
+func (s *service) CheckGroupingVesselAndDmo(listData []int, iupopkId int) ([]dmovessel.DmoVessel, error) {
+	checkGrouping, checkGroupingErr := s.repository.CheckGroupingVesselAndDmo(listData, iupopkId)
 
 	return checkGrouping, checkGroupingErr
 }
 
-func (s *service) GetDetailDmo(id int) (DetailDmo, error) {
-	detailDmo, detailDmoErr := s.repository.GetDetailDmo(id)
+func (s *service) GetDetailDmo(id int, iupopkId int) (DetailDmo, error) {
+	detailDmo, detailDmoErr := s.repository.GetDetailDmo(id, iupopkId)
 
 	return detailDmo, detailDmoErr
 }
@@ -271,68 +271,68 @@ func (s *service) RequestCreateCustomDmo(dataDmo dmo.Dmo, traderEndUser trader.T
 	return res, doReqErr
 }
 
-func (s *service) GetReport(year int) (ReportRecapOutput, ReportDetailOutput, error) {
-	reportRecap, reportDetail, reportErr := s.repository.GetReport(year)
+func (s *service) GetReport(year int, iupopkId int) (ReportRecapOutput, ReportDetailOutput, error) {
+	reportRecap, reportDetail, reportErr := s.repository.GetReport(year, iupopkId)
 
 	return reportRecap, reportDetail, reportErr
 }
 
-func (s *service) GetListForReport() (ListForCreatingReportDmoOutput, error) {
-	listForReport, listForReportErr := s.repository.GetListForReport()
+func (s *service) GetListForReport(iupopkId int) (ListForCreatingReportDmoOutput, error) {
+	listForReport, listForReportErr := s.repository.GetListForReport(iupopkId)
 
 	return listForReport, listForReportErr
 }
 
-func (s *service) GetDetailGroupingVesselDn(id int) (DetailGroupingVesselDn, error) {
-	detailGroupingVesselDn, detailGroupingVesselDnErr := s.repository.GetDetailGroupingVesselDn(id)
+func (s *service) GetDetailGroupingVesselDn(id int, iupopkId int) (DetailGroupingVesselDn, error) {
+	detailGroupingVesselDn, detailGroupingVesselDnErr := s.repository.GetDetailGroupingVesselDn(id, iupopkId)
 
 	return detailGroupingVesselDn, detailGroupingVesselDnErr
 }
 
-func (s *service) ListDataDnWithoutGroup() (ListTransactionNotHaveGroupingVessel, error) {
-	listWithoutGroup, listWithoutGroupErr := s.repository.ListDataDnWithoutGroup()
+func (s *service) ListDataDnWithoutGroup(iupopkId int) (ListTransactionNotHaveGroupingVessel, error) {
+	listWithoutGroup, listWithoutGroupErr := s.repository.ListDataDnWithoutGroup(iupopkId)
 
 	return listWithoutGroup, listWithoutGroupErr
 }
 
-func (s *service) GetDetailGroupingVesselLn(id int) (DetailGroupingVesselLn, error) {
-	detailGroupingVesselLn, detailGroupingVesselLnErr := s.repository.GetDetailGroupingVesselLn(id)
+func (s *service) GetDetailGroupingVesselLn(id int, iupopkId int) (DetailGroupingVesselLn, error) {
+	detailGroupingVesselLn, detailGroupingVesselLnErr := s.repository.GetDetailGroupingVesselLn(id, iupopkId)
 
 	return detailGroupingVesselLn, detailGroupingVesselLnErr
 }
 
-func (s *service) ListDataLnWithoutGroup() ([]Transaction, error) {
-	listWithoutGroup, listWithoutGroupErr := s.repository.ListDataLnWithoutGroup()
+func (s *service) ListDataLnWithoutGroup(iupopkId int) ([]Transaction, error) {
+	listWithoutGroup, listWithoutGroupErr := s.repository.ListDataLnWithoutGroup(iupopkId)
 
 	return listWithoutGroup, listWithoutGroupErr
 }
 
-func (s *service) GetDetailMinerbaLn(id int) (DetailMinerbaLn, error) {
-	detailMinerbaLn, detailMinerbaLnErr := s.repository.GetDetailMinerbaLn(id)
+func (s *service) GetDetailMinerbaLn(id int, iupopkId int) (DetailMinerbaLn, error) {
+	detailMinerbaLn, detailMinerbaLnErr := s.repository.GetDetailMinerbaLn(id, iupopkId)
 
 	return detailMinerbaLn, detailMinerbaLnErr
 }
 
-func (s *service) ListDataLNWithoutMinerba() ([]Transaction, error) {
-	listDataLNWithoutMinerba, listDataLNWithoutMinerbaErr := s.repository.ListDataLNWithoutMinerba()
+func (s *service) ListDataLNWithoutMinerba(iupopkId int) ([]Transaction, error) {
+	listDataLNWithoutMinerba, listDataLNWithoutMinerbaErr := s.repository.ListDataLNWithoutMinerba(iupopkId)
 
 	return listDataLNWithoutMinerba, listDataLNWithoutMinerbaErr
 }
 
-func (s *service) CheckDataLnAndMinerbaLnUpdate(listData []int, idMinerba int) ([]Transaction, error) {
-	checkData, checkDataErr := s.repository.CheckDataLnAndMinerbaLnUpdate(listData, idMinerba)
+func (s *service) CheckDataLnAndMinerbaLnUpdate(listData []int, idMinerba int, iupopkId int) ([]Transaction, error) {
+	checkData, checkDataErr := s.repository.CheckDataLnAndMinerbaLnUpdate(listData, idMinerba, iupopkId)
 
 	return checkData, checkDataErr
 }
 
-func (s *service) CheckDataLnAndMinerbaLn(listData []int) (bool, error) {
-	checkData, checkDataErr := s.repository.CheckDataLnAndMinerbaLn(listData)
+func (s *service) CheckDataLnAndMinerbaLn(listData []int, iupopkId int) (bool, error) {
+	checkData, checkDataErr := s.repository.CheckDataLnAndMinerbaLn(listData, iupopkId)
 
 	return checkData, checkDataErr
 }
 
-func (s *service) GetDataDmo(id uint) (ListTransactionDmoBackgroundJob, error) {
-	getDataReportDmo, getDataReportDmoErr := s.repository.GetDataDmo(id)
+func (s *service) GetDataDmo(id uint, iupopkId int) (ListTransactionDmoBackgroundJob, error) {
+	getDataReportDmo, getDataReportDmoErr := s.repository.GetDataDmo(id, iupopkId)
 
 	return getDataReportDmo, getDataReportDmoErr
 }
@@ -367,8 +367,8 @@ func (s *service) RequestCreateReportDmo(input InputRequestCreateReportDmo) (map
 	return res, doReqErr
 }
 
-func (s *service) GetDetailReportDmo(id int) (DetailReportDmo, error) {
-	detailReportDmo, detailReportDmoErr := s.repository.GetDetailReportDmo(id)
+func (s *service) GetDetailReportDmo(id int, iupopkId int) (DetailReportDmo, error) {
+	detailReportDmo, detailReportDmoErr := s.repository.GetDetailReportDmo(id, iupopkId)
 
 	return detailReportDmo, detailReportDmoErr
 }

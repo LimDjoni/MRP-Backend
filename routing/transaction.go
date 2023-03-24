@@ -7,7 +7,7 @@ import (
 	"ajebackend/model/logs"
 	"ajebackend/model/master/destination"
 	"ajebackend/model/transaction"
-	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -19,9 +19,6 @@ func TransactionRouting(db *gorm.DB, app fiber.Router, validate *validator.Valid
 	transactionRepository := transaction.NewRepository(db)
 	transactionService := transaction.NewService(transactionRepository)
 
-	userRepository := user.NewRepository(db)
-	userService := user.NewService(userRepository)
-
 	historyRepository := history.NewRepository(db)
 	historyService := history.NewService(historyRepository)
 
@@ -31,7 +28,10 @@ func TransactionRouting(db *gorm.DB, app fiber.Router, validate *validator.Valid
 	destinationRepository := destination.NewRepository(db)
 	destinationService := destination.NewService(destinationRepository)
 
-	transactionHandler := handler.NewTransactionHandler(transactionService, userService, historyService, validate, logService, destinationService)
+	userIupopkRepository := useriupopk.NewRepository(db)
+	userIupopkService := useriupopk.NewService(userIupopkRepository)
+
+	transactionHandler := handler.NewTransactionHandler(transactionService, historyService, validate, logService, destinationService, userIupopkService)
 
 	transactionRouting := app.Group("/transaction")
 
@@ -46,14 +46,14 @@ func TransactionRouting(db *gorm.DB, app fiber.Router, validate *validator.Valid
 		},
 	}))
 
-	transactionRouting.Post("/create/dn", transactionHandler.CreateTransactionDN)
-	transactionRouting.Post("/create/ln", transactionHandler.CreateTransactionLN)
+	transactionRouting.Post("/create/dn/:iupopk_id", transactionHandler.CreateTransactionDN)
+	transactionRouting.Post("/create/ln/:iupopk_id", transactionHandler.CreateTransactionLN)
 
-	transactionRouting.Put("/update/dn/:id", transactionHandler.UpdateTransactionDN)
-	transactionRouting.Put("/update/ln/:id", transactionHandler.UpdateTransactionLN)
+	transactionRouting.Put("/update/dn/:id/:iupopk_id", transactionHandler.UpdateTransactionDN)
+	transactionRouting.Put("/update/ln/:id/:iupopk_id", transactionHandler.UpdateTransactionLN)
 
-	transactionRouting.Get("/list/:transaction_type", transactionHandler.ListData)
-	transactionRouting.Get("/detail/:transaction_type/:id", transactionHandler.DetailTransaction)
-	transactionRouting.Delete("/delete/:transaction_type/:id", transactionHandler.DeleteTransaction)
-	transactionRouting.Put("/update/document/:transaction_type/:id/:type", transactionHandler.UpdateDocumentTransaction)
+	transactionRouting.Get("/list/:transaction_type/:iupopk_id", transactionHandler.ListData)
+	transactionRouting.Get("/detail/:transaction_type/:id/:iupopk_id", transactionHandler.DetailTransaction)
+	transactionRouting.Delete("/delete/:transaction_type/:id/:iupopk_id", transactionHandler.DeleteTransaction)
+	transactionRouting.Put("/update/document/:transaction_type/:id/:type/:iupopk_id", transactionHandler.UpdateDocumentTransaction)
 }

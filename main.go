@@ -2,6 +2,7 @@ package main
 
 import (
 	"ajebackend/helper"
+	"ajebackend/model/counter"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
 	"ajebackend/model/groupingvesselln"
@@ -37,6 +38,7 @@ import (
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
 	routing2 "ajebackend/routing"
 	"ajebackend/seeding"
 	seedingmaster "ajebackend/seeding/master"
@@ -112,8 +114,10 @@ func main() {
 			&salessystem.SalesSystem{},
 			&surveyor.Surveyor{},
 			&unit.Unit{},
+			&useriupopk.UserIupopk{},
 			&vessel.Vessel{},
 			&tugboat.Tugboat{},
+			&counter.Counter{},
 		)
 
 		seeding.UpdateTransactionsRoyalty(db)
@@ -136,6 +140,8 @@ func main() {
 		seedingmaster.SeedingTugboat(db)
 		seedingmaster.SeedingUnit(db)
 		seedingmaster.SeedingVessel(db)
+		seedingmaster.SeedingCounter(db)
+		seeding.UpdateIupopk(db)
 		fmt.Println(errMigrate)
 	}
 

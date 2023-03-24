@@ -1,15 +1,17 @@
 package dmo
 
 import (
+	"fmt"
 	"strings"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Repository interface {
-	GetReportDmoWithPeriod(period string) (Dmo, error)
-	GetListReportDmoAll(page int, filterDmo FilterAndSortDmo) (Pagination, error)
-	GetDataDmo(id int) (Dmo, error)
+	GetReportDmoWithPeriod(period string, iupopkId int) (Dmo, error)
+	GetListReportDmoAll(page int, filterDmo FilterAndSortDmo, iupopkId int) (Pagination, error)
+	GetDataDmo(id int, iupopkId int) (Dmo, error)
 }
 
 type repository struct {
@@ -20,21 +22,21 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
-func (r *repository) GetReportDmoWithPeriod(period string) (Dmo, error) {
+func (r *repository) GetReportDmoWithPeriod(period string, iupopkId int) (Dmo, error) {
 	var reportDmo Dmo
 
-	errFind := r.db.Where("period = ?", period).First(&reportDmo).Error
+	errFind := r.db.Preload(clause.Associations).Where("period = ? AND iupopk_id = ?", period, iupopkId).First(&reportDmo).Error
 
 	return reportDmo, errFind
 }
 
-func (r *repository) GetListReportDmoAll(page int, filterDmo FilterAndSortDmo) (Pagination, error) {
+func (r *repository) GetListReportDmoAll(page int, filterDmo FilterAndSortDmo, iupopkId int) (Pagination, error) {
 	var listReportDmo []Dmo
 
 	var pagination Pagination
 	pagination.Limit = 7
 	pagination.Page = page
-	queryFilter := ""
+	queryFilter := fmt.Sprintf("iupopk_id = %v", iupopkId)
 	sortFilter := "id desc"
 
 	if filterDmo.Field != "" && filterDmo.Sort != "" {
@@ -75,15 +77,16 @@ func (r *repository) GetListReportDmoAll(page int, filterDmo FilterAndSortDmo) (
 
 	var listDmo []map[string]interface{}
 
-	var rawQuery = `select a.*, d.company_name from  dmos a
+	var rawQuery = `select a.*, d.company_name from dmos a
 LEFT JOIN trader_dmos b on a.id = b.dmo_id
 LEFT JOIN traders c on b.trader_id = c.id
 LEFT JOIN companies d on c.company_id = d.id
-Where b.is_end_user = TRUE`
+WHERE b.is_end_user = TRUE `
 
 	if queryFilter != "" {
-		rawQuery += queryFilter
+		rawQuery += "AND " + queryFilter
 	}
+
 	rawQuery += ` order by ` + sortFilter
 
 	errFind := r.db.Scopes(paginateDmo(listReportDmo, &pagination, r.db, queryFilter)).Raw(rawQuery).Scan(&listDmo).Error
@@ -92,15 +95,20 @@ Where b.is_end_user = TRUE`
 		return pagination, errFind
 	}
 
+	emptyCell := make([]int, 0)
 	pagination.Data = listDmo
+
+	if len(listDmo) == 0 {
+		pagination.Data = emptyCell
+	}
 
 	return pagination, nil
 }
 
-func (r *repository) GetDataDmo(id int) (Dmo, error) {
+func (r *repository) GetDataDmo(id int, iupopkId int) (Dmo, error) {
 	var dmo Dmo
 
-	errFind := r.db.Where("id = ?", id).First(&dmo).Error
+	errFind := r.db.Preload(clause.Associations).Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&dmo).Error
 
 	return dmo, errFind
 }
