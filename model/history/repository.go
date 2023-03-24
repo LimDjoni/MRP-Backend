@@ -2937,6 +2937,7 @@ func (r *repository) UpdateMinerbaLn(id int, listTransactions []int, userId uint
 	history.UserId = userId
 	history.AfterData = afterData
 	history.BeforeData = beforeData
+	history.IupopkId = &updatedMinerbaLn.IupopkId
 	createHistoryErr := tx.Create(&history).Error
 
 	if createHistoryErr != nil {
