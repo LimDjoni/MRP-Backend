@@ -1070,7 +1070,7 @@ func (r *repository) CreateDmo(dmoInput dmo.CreateDmoInput, userId uint, iupopkI
 		vessel = true
 		var checkDmoGrouping []dmovessel.DmoVessel
 
-		findCheckDmoGroupingErr := tx.Where("grouping_vessel_dn_id IN ? AND iupopk_id = ?", dmoInput.GroupingVessel, iupopkId).Find(&checkDmoGrouping).Error
+		findCheckDmoGroupingErr := tx.Where("grouping_vessel_dn_id IN ?", dmoInput.GroupingVessel).Find(&checkDmoGrouping).Error
 
 		if findCheckDmoGroupingErr != nil {
 			tx.Rollback()
@@ -1082,7 +1082,7 @@ func (r *repository) CreateDmo(dmoInput dmo.CreateDmoInput, userId uint, iupopkI
 			return createdDmo, errors.New("Ada grouping vessel yang sudah digunakan")
 		}
 
-		findGroupingVesselErr := tx.Where("id IN ?", dmoInput.GroupingVessel).Find(&groupingVessel).Error
+		findGroupingVesselErr := tx.Where("id IN ? AND iupopk_id = ?", dmoInput.GroupingVessel, iupopkId).Find(&groupingVessel).Error
 
 		if findGroupingVesselErr != nil {
 			tx.Rollback()
