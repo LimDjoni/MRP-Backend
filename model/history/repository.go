@@ -108,6 +108,7 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 	currencyErr := tx.Where("code = ?", "IDR").First(&curr).Error
 
 	if currencyErr != nil {
+		fmt.Println(currencyErr.Error(), 1)
 		tx.Rollback()
 		return createdTransaction, currencyErr
 	}
@@ -117,6 +118,7 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 	findIupErr := tx.Where("id = ?", iupopkId).First(&iup).Error
 
 	if findIupErr != nil {
+		fmt.Println(findIupErr.Error(), 2)
 		tx.Rollback()
 		return createdTransaction, findIupErr
 	}
@@ -203,6 +205,7 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 	createTransactionErr := tx.Create(&createdTransaction).Error
 
 	if createTransactionErr != nil {
+		fmt.Println(createTransactionErr.Error(), 3)
 		tx.Rollback()
 		return createdTransaction, createTransactionErr
 	}
@@ -212,6 +215,7 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).Find(&counterTransaction).Error
 
 	if findCounterTransactionErr != nil {
+		fmt.Println(findCounterTransactionErr.Error(), 4)
 		tx.Rollback()
 		return createdTransaction, findCounterTransactionErr
 	}
@@ -222,9 +226,10 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 
 	idNumber := createIdNumber(code, uint(counterTransaction.TransactionDn))
 
-	updateTransactionsErr := tx.Model(&createdTransaction).Update("id_number", idNumber).Error
+	updateTransactionsErr := tx.Model(&createdTransaction).Where("id = ?", createdTransaction.ID).Update("id_number", idNumber).Error
 
 	if updateTransactionsErr != nil {
+		fmt.Println(updateTransactionsErr.Error(), 5)
 		tx.Rollback()
 		return createdTransaction, updateTransactionsErr
 	}
@@ -238,6 +243,7 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 	createHistoryErr := tx.Create(&history).Error
 
 	if createHistoryErr != nil {
+		fmt.Println(createHistoryErr.Error(), 6)
 		tx.Rollback()
 		return createdTransaction, createHistoryErr
 	}
@@ -245,12 +251,13 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 	updateCounterErr := tx.Model(&counterTransaction).Update("transaction_dn", counterTransaction.TransactionDn+1).Error
 
 	if updateCounterErr != nil {
+		fmt.Println(updateCounterErr.Error(), 7)
 		tx.Rollback()
 		return createdTransaction, updateCounterErr
 	}
 
 	tx.Commit()
-	return createdTransaction, createHistoryErr
+	return createdTransaction, nil
 }
 
 func (r *repository) DeleteTransaction(id int, userId uint, transactionType string, iupopId int) (bool, error) {
