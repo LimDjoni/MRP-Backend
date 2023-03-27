@@ -200,7 +200,7 @@ func (r *repository) CheckDataUnique(inputTrans DataTransactionInput) (bool, boo
 	if inputTrans.DpRoyaltyBillingCode != nil {
 		var checkDpRoyaltyBillingCode Transaction
 
-		errCheckDpRoyaltyBillingCode := r.db.Where("dp_royalty_billing_code", inputTrans.DpRoyaltyBillingCode).First(&checkDpRoyaltyBillingCode).Error
+		errCheckDpRoyaltyBillingCode := r.db.Where("dp_royalty_billing_code = ?", inputTrans.DpRoyaltyBillingCode).First(&checkDpRoyaltyBillingCode).Error
 
 		if errCheckDpRoyaltyBillingCode == nil {
 			isDpRoyaltyBillingCodeUnique = true
@@ -210,7 +210,7 @@ func (r *repository) CheckDataUnique(inputTrans DataTransactionInput) (bool, boo
 	if inputTrans.PaymentDpRoyaltyNtpn != nil {
 		var checkPaymentDpRoyaltyNtpn Transaction
 
-		errCheckPaymentDpRoyaltyNtpn := r.db.Where("payment_dp_royalty_ntpn", inputTrans.PaymentDpRoyaltyNtpn).First(&checkPaymentDpRoyaltyNtpn).Error
+		errCheckPaymentDpRoyaltyNtpn := r.db.Where("payment_dp_royalty_ntpn = ?", inputTrans.PaymentDpRoyaltyNtpn).First(&checkPaymentDpRoyaltyNtpn).Error
 
 		if errCheckPaymentDpRoyaltyNtpn == nil {
 			isPaymentDpRoyaltyNtpnUnique = true
@@ -220,7 +220,7 @@ func (r *repository) CheckDataUnique(inputTrans DataTransactionInput) (bool, boo
 	if inputTrans.PaymentDpRoyaltyBillingCode != nil {
 		var checkPaymentDpRoyaltyBillingCode Transaction
 
-		errCheckPaymentDpRoyaltyBillingCode := r.db.Where("payment_dp_royalty_billing_code", inputTrans.PaymentDpRoyaltyBillingCode).First(&checkPaymentDpRoyaltyBillingCode).Error
+		errCheckPaymentDpRoyaltyBillingCode := r.db.Where("payment_dp_royalty_billing_code = ?", inputTrans.PaymentDpRoyaltyBillingCode).First(&checkPaymentDpRoyaltyBillingCode).Error
 
 		if errCheckPaymentDpRoyaltyBillingCode == nil {
 			isPaymentDpRoyaltyBillingCodeUnique = true
