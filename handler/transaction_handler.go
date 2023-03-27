@@ -287,7 +287,7 @@ func (h *transactionHandler) DeleteTransaction(c *fiber.Ctx) error {
 		})
 	}
 
-	if findTransaction.MinerbaId != nil || findTransaction.DmoId != nil || findTransaction.MinerbaLnId != nil || findTransaction.GroupingVesselLnId != nil {
+	if findTransaction.MinerbaId != nil || findTransaction.DmoId != nil || findTransaction.MinerbaLnId != nil || findTransaction.GroupingVesselLnId != nil || findTransaction.GroupingVesselDnId != nil {
 		return c.Status(400).JSON(fiber.Map{
 			"error": "can't delete transaction because it's bound to minerba or dmo or group vessel",
 		})
