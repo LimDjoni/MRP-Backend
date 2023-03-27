@@ -104,7 +104,7 @@ func (r *repository) DetailInsw(id int, iupopkId int) (DetailInsw, error) {
 	var detailInsw DetailInsw
 
 	var inswData insw.Insw
-	errFindInsw := r.db.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&inswData).Error
+	errFindInsw := r.db.Preload(clause.Associations).Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&inswData).Error
 
 	if errFindInsw != nil {
 		return detailInsw, errFindInsw
