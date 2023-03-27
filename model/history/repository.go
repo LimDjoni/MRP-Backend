@@ -108,7 +108,6 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 	currencyErr := tx.Where("code = ?", "IDR").First(&curr).Error
 
 	if currencyErr != nil {
-		fmt.Println(currencyErr.Error(), 1)
 		tx.Rollback()
 		return createdTransaction, currencyErr
 	}
@@ -118,7 +117,6 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 	findIupErr := tx.Where("id = ?", iupopkId).First(&iup).Error
 
 	if findIupErr != nil {
-		fmt.Println(findIupErr.Error(), 2)
 		tx.Rollback()
 		return createdTransaction, findIupErr
 	}
@@ -205,17 +203,15 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 	createTransactionErr := tx.Create(&createdTransaction).Error
 
 	if createTransactionErr != nil {
-		fmt.Println(createTransactionErr.Error(), 3)
 		tx.Rollback()
 		return createdTransaction, createTransactionErr
 	}
 
 	var counterTransaction counter.Counter
 
-	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).Find(&counterTransaction).Error
+	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
 
 	if findCounterTransactionErr != nil {
-		fmt.Println(findCounterTransactionErr.Error(), 4)
 		tx.Rollback()
 		return createdTransaction, findCounterTransactionErr
 	}
@@ -229,7 +225,6 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 	updateTransactionsErr := tx.Model(&createdTransaction).Where("id = ?", createdTransaction.ID).Update("id_number", idNumber).Error
 
 	if updateTransactionsErr != nil {
-		fmt.Println(updateTransactionsErr.Error(), 5)
 		tx.Rollback()
 		return createdTransaction, updateTransactionsErr
 	}
@@ -243,15 +238,13 @@ func (r *repository) CreateTransactionDN(inputTransactionDN transaction.DataTran
 	createHistoryErr := tx.Create(&history).Error
 
 	if createHistoryErr != nil {
-		fmt.Println(createHistoryErr.Error(), 6)
 		tx.Rollback()
 		return createdTransaction, createHistoryErr
 	}
 
-	updateCounterErr := tx.Model(&counterTransaction).Update("transaction_dn", counterTransaction.TransactionDn+1).Error
+	updateCounterErr := tx.Model(&counterTransaction).Where("iupopk_id = ?", iupopkId).Update("transaction_dn", counterTransaction.TransactionDn+1).Error
 
 	if updateCounterErr != nil {
-		fmt.Println(updateCounterErr.Error(), 7)
 		tx.Rollback()
 		return createdTransaction, updateCounterErr
 	}
@@ -592,7 +585,7 @@ func (r *repository) CreateTransactionLN(inputTransactionLN transaction.DataTran
 
 	var counterTransaction counter.Counter
 
-	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).Find(&counterTransaction).Error
+	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
 
 	if findCounterTransactionErr != nil {
 		tx.Rollback()
@@ -626,7 +619,7 @@ func (r *repository) CreateTransactionLN(inputTransactionLN transaction.DataTran
 		return createdTransactionLn, createHistoryErr
 	}
 
-	updateCounterErr := tx.Model(&counterTransaction).Update("transaction_ln", counterTransaction.TransactionLn+1).Error
+	updateCounterErr := tx.Model(&counterTransaction).Where("iupopk_id = ?", iupopkId).Update("transaction_ln", counterTransaction.TransactionLn+1).Error
 
 	if updateCounterErr != nil {
 		tx.Rollback()
@@ -782,7 +775,7 @@ func (r *repository) CreateMinerba(period string, updateTransaction []int, userI
 
 	var counterTransaction counter.Counter
 
-	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).Find(&counterTransaction).Error
+	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
 
 	if findCounterTransactionErr != nil {
 		tx.Rollback()
@@ -822,7 +815,7 @@ func (r *repository) CreateMinerba(period string, updateTransaction []int, userI
 		return createdMinerba, createHistoryErr
 	}
 
-	updateCounterErr := tx.Model(&counterTransaction).Update("sp3medn", counterTransaction.Sp3medn+1).Error
+	updateCounterErr := tx.Model(&counterTransaction).Where("iupopk_id = ?", iupopkId).Update("sp3medn", counterTransaction.Sp3medn+1).Error
 
 	if updateCounterErr != nil {
 		tx.Rollback()
@@ -1145,7 +1138,7 @@ func (r *repository) CreateDmo(dmoInput dmo.CreateDmoInput, userId uint, iupopkI
 
 	var counterTransaction counter.Counter
 
-	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).Find(&counterTransaction).Error
+	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
 
 	if findCounterTransactionErr != nil {
 		tx.Rollback()
@@ -1257,7 +1250,7 @@ func (r *repository) CreateDmo(dmoInput dmo.CreateDmoInput, userId uint, iupopkI
 		return createdDmo, createHistoryErr
 	}
 
-	updateCounterErr := tx.Model(&counterTransaction).Update("ba_end_user", counterTransaction.BaEndUser+1).Error
+	updateCounterErr := tx.Model(&counterTransaction).Where("iupopk_id = ?", iupopkId).Update("ba_end_user", counterTransaction.BaEndUser+1).Error
 
 	if updateCounterErr != nil {
 		tx.Rollback()
@@ -2038,7 +2031,7 @@ func (r *repository) CreateGroupingVesselDN(inputGrouping groupingvesseldn.Input
 
 	var counterTransaction counter.Counter
 
-	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).Find(&counterTransaction).Error
+	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
 
 	if findCounterTransactionErr != nil {
 		tx.Rollback()
@@ -2097,7 +2090,7 @@ func (r *repository) CreateGroupingVesselDN(inputGrouping groupingvesseldn.Input
 		return createdGroupingVesselDn, createHistoryErr
 	}
 
-	updateCounterErr := tx.Model(&counterTransaction).Update("grouping_mv_dn", counterTransaction.GroupingMvDn+1).Error
+	updateCounterErr := tx.Model(&counterTransaction).Where("iupopk_id = ?", iupopkId).Update("grouping_mv_dn", counterTransaction.GroupingMvDn+1).Error
 
 	if updateCounterErr != nil {
 		tx.Rollback()
@@ -2428,7 +2421,7 @@ func (r *repository) CreateGroupingVesselLN(inputGrouping groupingvesselln.Input
 
 	var counterTransaction counter.Counter
 
-	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).Find(&counterTransaction).Error
+	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
 
 	if findCounterTransactionErr != nil {
 		tx.Rollback()
@@ -2482,7 +2475,7 @@ func (r *repository) CreateGroupingVesselLN(inputGrouping groupingvesselln.Input
 		return createdGroupingVesselLn, createHistoryErr
 	}
 
-	updateCounterErr := tx.Model(&counterTransaction).Update("grouping_mv_ln", counterTransaction.GroupingMvLn+1).Error
+	updateCounterErr := tx.Model(&counterTransaction).Where("iupopk_id = ?", iupopkId).Update("grouping_mv_ln", counterTransaction.GroupingMvLn+1).Error
 
 	if updateCounterErr != nil {
 		tx.Rollback()
@@ -2801,7 +2794,7 @@ func (r *repository) CreateMinerbaLn(period string, listTransactions []int, user
 
 	var counterTransaction counter.Counter
 
-	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).Find(&counterTransaction).Error
+	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
 
 	if findCounterTransactionErr != nil {
 		tx.Rollback()
@@ -2841,7 +2834,7 @@ func (r *repository) CreateMinerbaLn(period string, listTransactions []int, user
 		return createdMinerbaLn, createHistoryErr
 	}
 
-	updateCounterErr := tx.Model(&counterTransaction).Update("sp3meln", counterTransaction.Sp3meln+1).Error
+	updateCounterErr := tx.Model(&counterTransaction).Where("iupopk_id = ?", iupopkId).Update("sp3meln", counterTransaction.Sp3meln+1).Error
 
 	if updateCounterErr != nil {
 		tx.Rollback()
@@ -3094,7 +3087,7 @@ func (r *repository) CreateInsw(month string, year int, userId uint, iupopkId in
 
 	var counterTransaction counter.Counter
 
-	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).Find(&counterTransaction).Error
+	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
 
 	if findCounterTransactionErr != nil {
 		tx.Rollback()
@@ -3296,7 +3289,7 @@ func (r *repository) CreateReportDmo(input reportdmo.InputCreateReportDmo, userI
 
 	var counterTransaction counter.Counter
 
-	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).Find(&counterTransaction).Error
+	findCounterTransactionErr := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
 
 	if findCounterTransactionErr != nil {
 		tx.Rollback()

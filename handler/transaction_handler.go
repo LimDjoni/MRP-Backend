@@ -70,7 +70,6 @@ func (h *transactionHandler) CreateTransactionDN(c *fiber.Ctx) error {
 
 	// Binds the request body to the Person struct
 	if err := c.BodyParser(transactionInput); err != nil {
-		fmt.Println(err.Error(), "error")
 		return c.Status(400).JSON(fiber.Map{
 			"error": err.Error(),
 		})
@@ -79,7 +78,6 @@ func (h *transactionHandler) CreateTransactionDN(c *fiber.Ctx) error {
 	errors := h.v.Struct(*transactionInput)
 
 	if errors != nil {
-		fmt.Println(errors, "errors")
 		dataErrors := validatorfunc.ValidateStruct(errors)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"errors": dataErrors,
