@@ -573,7 +573,7 @@ func (r *repository) GetDetailReportDmo(id int, iupopkId int) (DetailReportDmo, 
 		return detailReportDmo, errFindGroupingVessel
 	}
 
-	errFindReportDmo := r.db.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&reportDmoData).Error
+	errFindReportDmo := r.db.Preload(clause.Associations).Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&reportDmoData).Error
 
 	if errFindReportDmo != nil {
 		return detailReportDmo, errFindReportDmo
