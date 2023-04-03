@@ -3,11 +3,12 @@ package routing
 import (
 	"ajebackend/handler"
 	"ajebackend/helper"
-	"ajebackend/model/company"
 	"ajebackend/model/logs"
-	"ajebackend/model/trader"
+	"ajebackend/model/master/company"
+	"ajebackend/model/master/trader"
 	"ajebackend/model/traderdmo"
-	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	jwtware "github.com/gofiber/jwt/v3"
@@ -15,9 +16,6 @@ import (
 )
 
 func TraderRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
-	userRepository := user.NewRepository(db)
-	userService := user.NewService(userRepository)
-
 	traderRepository := trader.NewRepository(db)
 	traderService := trader.NewService(traderRepository)
 
@@ -30,7 +28,10 @@ func TraderRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) 
 	logRepository := logs.NewRepository(db)
 	logService := logs.NewService(logRepository)
 
-	traderHandler := handler.NewTraderHandler(userService, traderService, companyService, traderDmoService, logService, validate)
+	userIupopkRepository := useriupopk.NewRepository(db)
+	userIupopkService := useriupopk.NewService(userIupopkRepository)
+
+	traderHandler := handler.NewTraderHandler(traderService, companyService, traderDmoService, logService, validate, userIupopkService)
 
 	traderRouting := app.Group("/trader")
 
@@ -40,7 +41,7 @@ func TraderRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) 
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
 			return ctx.Status(401).JSON(fiber.Map{
 				"error": "unauthorized",
-				"err": err.Error(),
+				"err":   err.Error(),
 			})
 		},
 	}))

@@ -2,8 +2,10 @@ package handler
 
 import (
 	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
 	"ajebackend/validatorfunc"
 	"reflect"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -11,13 +13,15 @@ import (
 )
 
 type userHandler struct {
-	userService user.Service
-	v           *validator.Validate
+	userService       user.Service
+	userIupopkService useriupopk.Service
+	v                 *validator.Validate
 }
 
-func NewUserHandler(userService user.Service, v *validator.Validate) *userHandler {
+func NewUserHandler(userService user.Service, userIupopkService useriupopk.Service, v *validator.Validate) *userHandler {
 	return &userHandler{
 		userService,
+		userIupopkService,
 		v,
 	}
 }
@@ -64,11 +68,11 @@ func (h *userHandler) LoginUser(c *fiber.Ctx) error {
 		})
 	}
 
-	loginUser, loginUserErr := h.userService.LoginUser(*loginInput)
+	loginUser, loginUserErr := h.userIupopkService.LoginUser(*loginInput)
 
 	if loginUserErr != nil {
 		return c.Status(400).JSON(fiber.Map{
-			"error": "wrong email / username / password",
+			"error": loginUserErr.Error(),
 		})
 	}
 
@@ -95,5 +99,70 @@ func (h *userHandler) Validate(c *fiber.Ctx) error {
 
 	return c.Status(200).JSON(fiber.Map{
 		"message": "validate",
+	})
+}
+
+func (h *userHandler) CreateUserIupopk(c *fiber.Ctx) error {
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	userId := c.Params("user_id")
+
+	userIdInt, userErr := strconv.Atoi(userId)
+
+	if err != nil || userErr != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "record not found",
+		})
+	}
+
+	createUserIupopk, createUserIupopkErr := h.userIupopkService.CreateUserIupopk(userIdInt, iupopkIdInt)
+
+	status := 400
+	if createUserIupopkErr != nil {
+
+		if createUserIupopkErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"error": createUserIupopkErr.Error(),
+		})
+	}
+
+	return c.Status(201).JSON(createUserIupopk)
+}
+
+func (h *userHandler) DeleteUserIupopk(c *fiber.Ctx) error {
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	userId := c.Params("user_id")
+
+	userIdInt, userErr := strconv.Atoi(userId)
+
+	if err != nil || userErr != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "record not found",
+		})
+	}
+	deleteUserIupopkErr := h.userIupopkService.DeleteUserIupopk(userIdInt, iupopkIdInt)
+
+	status := 400
+	if deleteUserIupopkErr != nil {
+
+		if deleteUserIupopkErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"error": deleteUserIupopkErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"message": "user iupopk has been deleted",
 	})
 }

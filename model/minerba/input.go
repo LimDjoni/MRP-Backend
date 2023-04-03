@@ -1,8 +1,8 @@
 package minerba
 
 type InputCreateMinerba struct {
-	Period string `json:"period" validate:"PeriodValidation,required"`
-	ListDataDn []int `json:"list_data_dn" validate:"required,min=1"`
+	Period     string `json:"period" validate:"PeriodValidation,required"`
+	ListDataDn []int  `json:"list_data_dn" validate:"required,min=1"`
 }
 
 type InputUpdateMinerba struct {
@@ -14,11 +14,13 @@ type InputUpdateDocumentMinerba struct {
 }
 
 type FilterAndSortMinerba struct {
-	Quantity float64 `json:"quantity"`
-	CreatedStart string `json:"created_start"`
-	CreatedEnd string `json:"created_end"`
-	Field string `json:"field"`
-	Sort string `json:"sort"`
+	Quantity     string `json:"quantity"`
+	UpdatedStart string `json:"updated_start"`
+	UpdatedEnd   string `json:"updated_end"`
+	Field        string `json:"field"`
+	Sort         string `json:"sort"`
+	Month        string `json:"month"`
+	Year         string `json:"year"`
 }
 
 type CheckMinerbaPeriod struct {

@@ -4,7 +4,7 @@ import (
 	"ajebackend/helper"
 	"ajebackend/model/logs"
 	"ajebackend/model/transaction"
-	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
 	"ajebackend/validatorfunc"
 	"encoding/json"
 	"fmt"
@@ -20,17 +20,17 @@ import (
 
 type reportHandler struct {
 	transactionService transaction.Service
-	userService        user.Service
 	v                  *validator.Validate
 	logService         logs.Service
+	userIupopkService  useriupopk.Service
 }
 
-func NewReportHandler(transactionService transaction.Service, userService user.Service, v *validator.Validate, logService logs.Service) *reportHandler {
+func NewReportHandler(transactionService transaction.Service, v *validator.Validate, logService logs.Service, userIupopkService useriupopk.Service) *reportHandler {
 	return &reportHandler{
 		transactionService,
-		userService,
 		v,
 		logService,
+		userIupopkService,
 	}
 }
 
@@ -45,7 +45,17 @@ func (h *reportHandler) Report(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -74,7 +84,7 @@ func (h *reportHandler) Report(c *fiber.Ctx) error {
 		reportInput.Year = year
 	}
 
-	reportRecap, reportDetail, reportErr := h.transactionService.GetReport(reportInput.Year)
+	reportRecap, reportDetail, reportErr := h.transactionService.GetReport(reportInput.Year, iupopkIdInt)
 
 	if reportErr != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -110,7 +120,17 @@ func (h *reportHandler) DownloadReport(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, iupErr := strconv.Atoi(iupopkId)
+
+	if iupErr != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -122,14 +142,14 @@ func (h *reportHandler) DownloadReport(c *fiber.Ctx) error {
 
 	queryProductionPlanFloat, errProductionPlan := strconv.ParseFloat(queryProductionPlan, 64)
 	if errProductionPlan != nil {
-		fmt.Println(errProductionPlan, 1)
+		fmt.Println(errProductionPlan)
 	}
 
 	queryPercentageProductionObligation := c.Query("percentage_production_obligation")
 
 	queryPercentageProductionObligationFloat, errPercentageProductionObligationFloat := strconv.ParseFloat(queryPercentageProductionObligation, 64)
 	if errPercentageProductionObligationFloat != nil {
-		fmt.Println(errPercentageProductionObligationFloat, 2)
+		fmt.Println(errPercentageProductionObligationFloat)
 	}
 
 	if queryYear == "" {
@@ -147,7 +167,7 @@ func (h *reportHandler) DownloadReport(c *fiber.Ctx) error {
 		queryYearInt = intYear
 	}
 
-	reportRecap, reportDetail, reportErr := h.transactionService.GetReport(queryYearInt)
+	reportRecap, reportDetail, reportErr := h.transactionService.GetReport(queryYearInt, iupopkIdInt)
 
 	if reportErr != nil {
 		return c.Status(400).JSON(fiber.Map{

@@ -4,45 +4,57 @@ import (
 	"ajebackend/model/logs"
 	"ajebackend/model/notification"
 	"ajebackend/model/notificationuser"
-	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
 	"ajebackend/validatorfunc"
 	"encoding/json"
+	"reflect"
+	"strconv"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
-	"reflect"
 )
 
 type notificationHandler struct {
-	userService user.Service
-	notificationService notification.Service
+	notificationService     notification.Service
 	notificationUserService notificationuser.Service
-	logsService logs.Service
-	v *validator.Validate
+	logsService             logs.Service
+	v                       *validator.Validate
+	userIupopkService       useriupopk.Service
 }
 
-func NewNotificationHandler(userService user.Service, notificationService notification.Service, notificationUserService notificationuser.Service, logsService logs.Service, v *validator.Validate) *notificationHandler {
+func NewNotificationHandler(notificationService notification.Service, notificationUserService notificationuser.Service, logsService logs.Service, v *validator.Validate, userIupopkService useriupopk.Service) *notificationHandler {
 	return &notificationHandler{
-		userService,
 		notificationService,
 		notificationUserService,
 		logsService,
 		v,
+		userIupopkService,
 	}
 }
 
-func (h *notificationHandler) CreateNotification(c *fiber.Ctx) error  {
+func (h *notificationHandler) CreateNotification(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	responseUnauthorized := map[string]interface{}{
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -64,14 +76,14 @@ func (h *notificationHandler) CreateNotification(c *fiber.Ctx) error  {
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
 		inputMap["input"] = inputCreateNotification
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
-			"errors": dataErrors,
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"errors":  dataErrors,
 			"message": "failed to create notification",
 		})
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
+			Input:   inputJson,
 			Message: messageJson,
 		}
 
@@ -82,20 +94,20 @@ func (h *notificationHandler) CreateNotification(c *fiber.Ctx) error  {
 		})
 	}
 
-	createdNotification, createdNotificationErr := h.notificationUserService.CreateNotification(*inputCreateNotification, uint(claims["id"].(float64)))
+	createdNotification, createdNotificationErr := h.notificationUserService.CreateNotification(*inputCreateNotification, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createdNotificationErr != nil {
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
 		inputMap["input"] = inputCreateNotification
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
-			"errors": createdNotificationErr.Error(),
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"errors":  createdNotificationErr.Error(),
 			"message": "failed to create notification",
 		})
 
 		createdErrLog := logs.Logs{
-			Input: inputJson,
+			Input:   inputJson,
 			Message: messageJson,
 		}
 
@@ -116,17 +128,25 @@ func (h *notificationHandler) GetNotification(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
+	iupopkId := c.Params("iupopk_id")
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	listNotification, listNotificationErr := h.notificationUserService.GetNotification(uint(claims["id"].(float64)))
+	listNotification, listNotificationErr := h.notificationUserService.GetNotification(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if listNotificationErr != nil && listNotificationErr.Error() != "record not found" {
 		return c.Status(400).JSON(fiber.Map{
@@ -146,21 +166,30 @@ func (h *notificationHandler) UpdateNotification(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	updatedNotification, updatedNotificationErr := h.notificationUserService.UpdateReadNotification(uint(claims["id"].(float64)))
+	updatedNotification, updatedNotificationErr := h.notificationUserService.UpdateReadNotification(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if updatedNotificationErr != nil {
 		return c.Status(400).JSON(fiber.Map{
-			"error": updatedNotificationErr.Error(),
+			"error":   updatedNotificationErr.Error(),
 			"message": "failed to update notification",
 		})
 	}
@@ -177,26 +206,36 @@ func (h *notificationHandler) DeleteNotification(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	_, deletedNotificationErr := h.notificationService.DeleteNotification(uint(claims["id"].(float64)))
+	_, deletedNotificationErr := h.notificationService.DeleteNotification(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if deletedNotificationErr != nil {
 		return c.Status(400).JSON(fiber.Map{
-			"error": deletedNotificationErr.Error(),
+			"error":   deletedNotificationErr.Error(),
 			"message": "failed to delete notification",
 		})
 	}
 
 	return c.Status(200).JSON(fiber.Map{
-		"message" : "success delete notification",
+		"message": "success delete notification",
 	})
 }

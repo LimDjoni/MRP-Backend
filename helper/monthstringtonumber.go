@@ -1,10 +1,8 @@
 package helper
 
-import "strconv"
-
-func MonthStringToNumberString(month string) string {
+func MonthLongToNumber(month string) int {
 	var staticMonth []string
-	staticMonth = append(staticMonth, "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des")
+	staticMonth = append(staticMonth, "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 	var number int
 	for i, value := range staticMonth {
 		if value == month {
@@ -14,11 +12,5 @@ func MonthStringToNumberString(month string) string {
 
 	number += 1
 
-	numberString := strconv.Itoa(number)
-
-	if len(numberString) == 1 {
-		numberString = "0" + numberString
-	}
-
-	return numberString
+	return number
 }

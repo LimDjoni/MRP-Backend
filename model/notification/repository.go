@@ -5,7 +5,7 @@ import (
 )
 
 type Repository interface {
-	DeleteNotification(userId uint) (bool, error)
+	DeleteNotification(userId uint, iupopkId int) (bool, error)
 }
 
 type repository struct {
@@ -16,10 +16,10 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
-func (r *repository) DeleteNotification(userId uint) (bool, error) {
+func (r *repository) DeleteNotification(userId uint, iupopkId int) (bool, error) {
 	var listNotification []Notification
 
-	errFind := r.db.Where("user_id = ?", userId).Find(&listNotification).Error
+	errFind := r.db.Where("user_id = ? AND iupopk_id = ?", userId, iupopkId).Find(&listNotification).Error
 
 	if errFind != nil {
 		return false, errFind

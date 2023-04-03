@@ -5,7 +5,7 @@ import (
 	"ajebackend/helper"
 	"ajebackend/model/logs"
 	"ajebackend/model/transaction"
-	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -17,13 +17,13 @@ func ReportRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) 
 	transactionRepository := transaction.NewRepository(db)
 	transactionService := transaction.NewService(transactionRepository)
 
-	userRepository := user.NewRepository(db)
-	userService := user.NewService(userRepository)
-
 	logRepository := logs.NewRepository(db)
 	logService := logs.NewService(logRepository)
 
-	reportHandler := handler.NewReportHandler(transactionService, userService, validate, logService)
+	userIupopkRepository := useriupopk.NewRepository(db)
+	userIupopkService := useriupopk.NewService(userIupopkRepository)
+
+	reportHandler := handler.NewReportHandler(transactionService, validate, logService, userIupopkService)
 
 	reportRouting := app.Group("/report")
 
@@ -38,6 +38,6 @@ func ReportRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) 
 		},
 	}))
 
-	reportRouting.Post("/", reportHandler.Report)
-	reportRouting.Get("/download", reportHandler.DownloadReport)
+	reportRouting.Post("//:iupopk_id", reportHandler.Report)
+	reportRouting.Get("/download/:iupopk_id", reportHandler.DownloadReport)
 }

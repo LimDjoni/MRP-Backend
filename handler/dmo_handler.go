@@ -1,19 +1,19 @@
 package handler
 
 import (
-	"ajebackend/helper"
 	"ajebackend/model/awshelper"
-	"ajebackend/model/company"
+	"ajebackend/model/counter"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
+	"ajebackend/model/master/company"
+	"ajebackend/model/master/trader"
 	"ajebackend/model/notification"
 	"ajebackend/model/notificationuser"
-	"ajebackend/model/trader"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
-	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
 	"ajebackend/validatorfunc"
 	"encoding/json"
 	"fmt"
@@ -28,7 +28,6 @@ import (
 
 type dmoHandler struct {
 	transactionService      transaction.Service
-	userService             user.Service
 	historyService          history.Service
 	logService              logs.Service
 	dmoService              dmo.Service
@@ -38,12 +37,25 @@ type dmoHandler struct {
 	companyService          company.Service
 	v                       *validator.Validate
 	dmoVesselService        dmovessel.Service
+	userIupopkService       useriupopk.Service
+	counterService          counter.Service
 }
 
-func NewDmoHandler(transactionService transaction.Service, userService user.Service, historyService history.Service, logService logs.Service, dmoService dmo.Service, traderService trader.Service, traderDmoService traderdmo.Service, notificationUserService notificationuser.Service, companyService company.Service, v *validator.Validate, dmoVesselService dmovessel.Service) *dmoHandler {
+func NewDmoHandler(
+	transactionService transaction.Service,
+	historyService history.Service,
+	logService logs.Service,
+	dmoService dmo.Service,
+	traderService trader.Service,
+	traderDmoService traderdmo.Service,
+	notificationUserService notificationuser.Service,
+	companyService company.Service,
+	v *validator.Validate,
+	dmoVesselService dmovessel.Service,
+	userIupopkService useriupopk.Service,
+	counterService counter.Service) *dmoHandler {
 	return &dmoHandler{
 		transactionService,
-		userService,
 		historyService,
 		logService,
 		dmoService,
@@ -53,6 +65,8 @@ func NewDmoHandler(transactionService transaction.Service, userService user.Serv
 		companyService,
 		v,
 		dmoVesselService,
+		userIupopkService,
+		counterService,
 	}
 }
 
@@ -67,7 +81,17 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -76,9 +100,9 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	inputCreateDmo := new(dmo.CreateDmoInput)
 
 	// Binds the request body to the Person struct
-	err := c.BodyParser(inputCreateDmo)
+	errParsing := c.BodyParser(inputCreateDmo)
 
-	if err != nil {
+	if errParsing != nil {
 		inputCreateDmo.Period = strings.Replace(inputCreateDmo.Period, "\"", "", -1)
 
 		formPart, errFormPart := c.MultipartForm()
@@ -106,47 +130,13 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 			}
 		}
 
-		if len(inputCreateDmo.TransactionVessel) == 0 {
-			for _, vessel := range formPart.Value["transaction_vessel"] {
-				var bargeVesselInt []int
-				errUnmarshal := json.Unmarshal([]byte(vessel), &bargeVesselInt)
+		if len(inputCreateDmo.GroupingVessel) == 0 {
+			for _, vessel := range formPart.Value["grouping_vessel"] {
+				var groupingVesselInt []int
+				errUnmarshal := json.Unmarshal([]byte(vessel), &groupingVesselInt)
 				fmt.Println(errUnmarshal)
-				inputCreateDmo.TransactionVessel = bargeVesselInt
+				inputCreateDmo.GroupingVessel = groupingVesselInt
 			}
-		}
-
-		for _, vesselAdjustment := range formPart.Value["vessel_adjustment"] {
-			var newVesselAdjustmentArray []dmo.VesselAdjustmentInput
-
-			errUnmarshal := json.Unmarshal([]byte(vesselAdjustment), &newVesselAdjustmentArray)
-			fmt.Println(errUnmarshal)
-
-			inputCreateDmo.VesselAdjustment = newVesselAdjustmentArray
-		}
-	}
-
-	if len(inputCreateDmo.VesselAdjustment) == 0 && inputCreateDmo.TransactionVessel[0] != 0 {
-		formPart, errFormPart := c.MultipartForm()
-		if errFormPart != nil {
-			return c.Status(400).JSON(fiber.Map{
-				"error": "please check there is no data vessel adjustment",
-			})
-		}
-		for _, vesselAdjustment := range formPart.Value["vessel_adjustment"] {
-			var adjustReplace = strings.Replace(vesselAdjustment, "},{", "};{", -1)
-			var adjustSplit = strings.Split(adjustReplace, ";")
-
-			var newVesselAdjustmentArray []dmo.VesselAdjustmentInput
-
-			for _, adjustment := range adjustSplit {
-				var adjustmentVessel dmo.VesselAdjustmentInput
-				errUnmarshal := json.Unmarshal([]byte(adjustment), &adjustmentVessel)
-				fmt.Println(errUnmarshal)
-
-				newVesselAdjustmentArray = append(newVesselAdjustmentArray, adjustmentVessel)
-			}
-
-			inputCreateDmo.VesselAdjustment = newVesselAdjustmentArray
 		}
 	}
 
@@ -157,8 +147,9 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
 		inputMap["dmo_period"] = inputCreateDmo.Period
-		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-		inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+		inputMap["transaction_barge"] = inputCreateDmo.TransactionBarge
+		inputMap["grouping_vessel"] = inputCreateDmo.GroupingVessel
+		inputMap["input"] = inputCreateDmo
 		inputJson, _ := json.Marshal(inputMap)
 		messageJson, _ := json.Marshal(map[string]interface{}{
 			"errors": dataErrors,
@@ -177,16 +168,6 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	}
 	header := c.GetReqHeaders()
 
-	for _, valueVessel := range inputCreateDmo.TransactionVessel {
-		for _, valueBarge := range inputCreateDmo.TransactionBarge {
-			if valueVessel == valueBarge {
-				return c.Status(400).JSON(fiber.Map{
-					"error": "please check transaction is in vessel & barge",
-				})
-			}
-		}
-	}
-
 	if len(inputCreateDmo.TransactionBarge) == 1 {
 		if inputCreateDmo.TransactionBarge[0] == 0 {
 			var tempTransactionBarge []int
@@ -194,31 +175,34 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		}
 	}
 
-	if len(inputCreateDmo.TransactionVessel) == 1 {
-		if inputCreateDmo.TransactionVessel[0] == 0 {
-			var tempTransactionVessel []int
-			inputCreateDmo.TransactionVessel = tempTransactionVessel
+	if len(inputCreateDmo.GroupingVessel) == 1 {
+		if inputCreateDmo.GroupingVessel[0] == 0 {
+			var tempGroupingVessel []int
+			inputCreateDmo.GroupingVessel = tempGroupingVessel
 		}
 	}
 
-	if len(inputCreateDmo.TransactionVessel) > 0 && len(inputCreateDmo.VesselAdjustment) == 0 {
+	if len(inputCreateDmo.Trader) == 1 {
+		if inputCreateDmo.Trader[0] == 0 {
+			var tempTrader []int
+			inputCreateDmo.Trader = tempTrader
+		}
+	}
+
+	if len(inputCreateDmo.GroupingVessel) == 0 && len(inputCreateDmo.TransactionBarge) == 0 {
 		return c.Status(400).JSON(fiber.Map{
-			"error": "please check vessel adjustment",
+			"error": "please check there is no grouping vessel and transaction barge",
 		})
 	}
 
-	if len(inputCreateDmo.TransactionVessel) == 0 && len(inputCreateDmo.TransactionBarge) == 0 {
-		return c.Status(400).JSON(fiber.Map{
-			"error": "please check there is no transaction vessel and transaction barge",
-		})
-	}
+	if len(inputCreateDmo.Trader) > 0 {
+		_, checkListTraderErr := h.traderService.CheckListTrader(inputCreateDmo.Trader)
 
-	_, checkListTraderErr := h.traderService.CheckListTrader(inputCreateDmo.Trader)
-
-	if checkListTraderErr != nil {
-		return c.Status(404).JSON(fiber.Map{
-			"error": "trader " + checkListTraderErr.Error(),
-		})
+		if checkListTraderErr != nil {
+			return c.Status(404).JSON(fiber.Map{
+				"error": "trader " + checkListTraderErr.Error(),
+			})
+		}
 	}
 
 	_, checkEndUserErr := h.traderService.CheckEndUser(inputCreateDmo.EndUser)
@@ -230,16 +214,15 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	}
 
 	var dataTransactions []transaction.Transaction
-	var dataTransactionsVessel []transaction.Transaction
 	if len(inputCreateDmo.TransactionBarge) > 0 {
-		checkDmoBarge, checkDmoBargeErr := h.transactionService.CheckDataDnAndDmo(inputCreateDmo.TransactionBarge)
+		checkDmoBarge, checkDmoBargeErr := h.transactionService.CheckDataDnAndDmo(inputCreateDmo.TransactionBarge, iupopkIdInt)
 
 		if checkDmoBargeErr != nil {
 			inputMap := make(map[string]interface{})
 			inputMap["user_id"] = claims["id"]
 			inputMap["dmo_period"] = inputCreateDmo.Period
 			inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-			inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+			inputMap["list_group_vessel"] = inputCreateDmo.GroupingVessel
 			inputMap["input"] = inputCreateDmo
 
 			inputJson, _ := json.Marshal(inputMap)
@@ -270,15 +253,15 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		}
 	}
 
-	if len(inputCreateDmo.TransactionVessel) > 0 {
-		checkDmoVessel, checkDmoVesselErr := h.transactionService.CheckDataDnAndDmo(inputCreateDmo.TransactionVessel)
+	if len(inputCreateDmo.GroupingVessel) > 0 {
+		_, checkDmoVesselErr := h.transactionService.CheckGroupingVesselAndDmo(inputCreateDmo.GroupingVessel, iupopkIdInt)
 
 		if checkDmoVesselErr != nil {
 			inputMap := make(map[string]interface{})
 			inputMap["user_id"] = claims["id"]
 			inputMap["dmo_period"] = inputCreateDmo.Period
 			inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-			inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+			inputMap["list_group_vessel"] = inputCreateDmo.GroupingVessel
 			inputMap["input"] = inputCreateDmo
 			inputJson, _ := json.Marshal(inputMap)
 			messageJson, _ := json.Marshal(map[string]interface{}{
@@ -299,26 +282,22 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 			}
 
 			return c.Status(status).JSON(fiber.Map{
-				"error": "transaction vessel " + checkDmoVesselErr.Error(),
+				"error": "grouping vessel " + checkDmoVesselErr.Error(),
 			})
 		}
 
-		for _, v := range checkDmoVessel {
-			dataTransactionsVessel = append(dataTransactionsVessel, v)
-		}
 	}
 
 	splitPeriod := strings.Split(inputCreateDmo.Period, " ")
 
-	baseIdNumber := fmt.Sprintf("SR-%s-%s", helper.MonthStringToNumberString(splitPeriod[0]), splitPeriod[1])
-	createDmo, createDmoErr := h.historyService.CreateDmo(*inputCreateDmo, baseIdNumber, uint(claims["id"].(float64)))
+	createDmo, createDmoErr := h.historyService.CreateDmo(*inputCreateDmo, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createDmoErr != nil {
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
 		inputMap["dmo_period"] = inputCreateDmo.Period
 		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-		inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+		inputMap["list_group_vessel"] = inputCreateDmo.GroupingVessel
 		inputMap["input"] = inputCreateDmo
 		inputJson, _ := json.Marshal(inputMap)
 		messageJson, _ := json.Marshal(map[string]interface{}{
@@ -344,7 +323,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["dmo_period"] = inputCreateDmo.Period
 		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-		inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+		inputMap["list_group_vessel"] = inputCreateDmo.GroupingVessel
 		inputMap["input"] = inputCreateDmo
 		inputJson, _ := json.Marshal(inputMap)
 		messageJson, _ := json.Marshal(map[string]interface{}{
@@ -364,18 +343,18 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	listDmoVessel, listDmoVesselErr := h.dmoVesselService.GetDataDmoVessel(createDmo.ID)
+	listTransactionDmo, listTransactionDmoErr := h.transactionService.GetDataDmo(createDmo.ID, iupopkIdInt)
 
-	if listDmoVesselErr != nil {
+	if listTransactionDmoErr != nil {
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
 		inputMap["dmo_period"] = inputCreateDmo.Period
 		inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-		inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+		inputMap["list_group_vessel"] = inputCreateDmo.GroupingVessel
 		inputMap["input"] = inputCreateDmo
 		inputJson, _ := json.Marshal(inputMap)
 		messageJson, _ := json.Marshal(map[string]interface{}{
-			"error": listDmoVesselErr.Error(),
+			"error": listTransactionDmoErr.Error(),
 		})
 
 		createdErrLog := logs.Logs{
@@ -386,30 +365,98 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 		h.logService.CreateLogs(createdErrLog)
 
 		return c.Status(400).JSON(fiber.Map{
-			"message": "Dmo already has been created, but get list dmo vessel failed",
-			"error":   listDmoVesselErr.Error(),
+			"message": "Dmo already has been created, but get list transaction failed",
+			"error":   listTransactionDmoErr.Error(),
 		})
 	}
 
-	if !inputCreateDmo.IsDocumentCustom {
-		var reqInputCreateUploadDmo transaction.InputRequestCreateUploadDmo
+	var reqInputCreateUploadDmo transaction.InputRequestCreateUploadDmo
 
-		reqInputCreateUploadDmo.Authorization = header["Authorization"]
-		reqInputCreateUploadDmo.BastNumber = fmt.Sprintf("%s/BAST/AJE/%s", splitPeriod[1], helper.CreateIdNumber(int(createDmo.ID)))
-		reqInputCreateUploadDmo.DataDmo = createDmo
-		reqInputCreateUploadDmo.DataTransactions = dataTransactions
-		reqInputCreateUploadDmo.Trader = list
-		reqInputCreateUploadDmo.TraderEndUser = endUser
-		reqInputCreateUploadDmo.DataVessel = listDmoVessel
-		reqInputCreateUploadDmo.DataTransactionsVessel = dataTransactionsVessel
+	reqInputCreateUploadDmo.Authorization = header["Authorization"]
+	idNumberSplit := strings.Split(*createDmo.IdNumber, "-")
+
+	counterDetail, counterDetailErr := h.counterService.GetCounter(iupopkIdInt)
+
+	if counterDetailErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_period"] = inputCreateDmo.Period
+		inputMap["list_transaction_barge"] = inputCreateDmo.TransactionBarge
+		inputMap["list_grouping_vessel"] = inputCreateDmo.GroupingVessel
+		inputMap["input"] = inputCreateDmo
+		inputMap["input_job"] = reqInputCreateUploadDmo
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": counterDetailErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"message": "dmo created but job failed", "error": counterDetailErr.Error(),
+		})
+	}
+
+	var bastFormat string
+	bastFormatSplit := strings.Split(counterDetail.BastFormat, "/")
+
+	for i, v := range bastFormatSplit {
+		switch v {
+		case "BAST":
+			bastFormat += "BAST"
+			if i < len(bastFormatSplit)-1 {
+				bastFormat += "/"
+			}
+		case "CODE":
+			bastFormat += idNumberSplit[1]
+			if i < len(bastFormatSplit)-1 {
+				bastFormat += "/"
+			}
+		case "COUNTER":
+			if len(idNumberSplit) == 1 {
+				bastFormat += "0" + idNumberSplit[4]
+			} else {
+				bastFormat += idNumberSplit[4]
+			}
+			if i < len(bastFormatSplit)-1 {
+				bastFormat += "/"
+			}
+		case "MM":
+			bastFormat += idNumberSplit[2]
+			if i < len(bastFormatSplit)-1 {
+				bastFormat += "/"
+			}
+		case "YYYY":
+			bastFormat += splitPeriod[1]
+			if i < len(bastFormatSplit)-1 {
+				bastFormat += "/"
+			}
+		}
+	}
+
+	reqInputCreateUploadDmo.BastNumber = bastFormat
+	reqInputCreateUploadDmo.DataDmo = createDmo
+	reqInputCreateUploadDmo.Trader = list
+	reqInputCreateUploadDmo.TraderEndUser = endUser
+	reqInputCreateUploadDmo.ListTransactionBarge = listTransactionDmo.ListTransactionBarge
+	reqInputCreateUploadDmo.ListTransactionGroupingVessel = listTransactionDmo.ListTransactionGroupingVessel
+	reqInputCreateUploadDmo.ListGroupingVessel = listTransactionDmo.ListGroupingVessel
+	reqInputCreateUploadDmo.Iupopk = createDmo.Iupopk
+
+	if !inputCreateDmo.IsDocumentCustom {
 		_, requestJobDmoErr := h.transactionService.RequestCreateDmo(reqInputCreateUploadDmo)
 
 		if requestJobDmoErr != nil {
 			inputMap := make(map[string]interface{})
 			inputMap["user_id"] = claims["id"]
 			inputMap["dmo_period"] = inputCreateDmo.Period
-			inputMap["list_dn_barge"] = inputCreateDmo.TransactionBarge
-			inputMap["list_dn_vessel"] = inputCreateDmo.TransactionVessel
+			inputMap["list_transaction_barge"] = inputCreateDmo.TransactionBarge
+			inputMap["list_grouping_vessel"] = inputCreateDmo.GroupingVessel
 			inputMap["input"] = inputCreateDmo
 			inputMap["input_job"] = reqInputCreateUploadDmo
 			inputJson, _ := json.Marshal(inputMap)
@@ -441,9 +488,29 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 			})
 		}
 		reconciliationLetterFile := formPart.File["reconciliation_letter"][0]
-		_, reqJobDocumentCustomErr := h.transactionService.RequestCreateCustomDmo(createDmo, endUser, reconciliationLetterFile, header["Authorization"])
+
+		_, reqJobDocumentCustomErr := h.transactionService.RequestCreateCustomDmo(createDmo, endUser, reconciliationLetterFile, header["Authorization"], reqInputCreateUploadDmo)
 
 		if reqJobDocumentCustomErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["user_id"] = claims["id"]
+			inputMap["dmo_period"] = inputCreateDmo.Period
+			inputMap["list_transaction_barge"] = inputCreateDmo.TransactionBarge
+			inputMap["list_grouping_vessel"] = inputCreateDmo.GroupingVessel
+			inputMap["input"] = inputCreateDmo
+			inputMap["input_job"] = reqInputCreateUploadDmo
+			inputJson, _ := json.Marshal(inputMap)
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error": reqJobDocumentCustomErr.Error(),
+			})
+
+			createdErrLog := logs.Logs{
+				Input:   inputJson,
+				Message: messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
 			return c.Status(400).JSON(fiber.Map{
 				"message": "dmo created but job failed", "error": reqJobDocumentCustomErr.Error(),
 			})
@@ -451,6 +518,297 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 	}
 
 	return c.Status(201).JSON(createDmo)
+}
+
+func (h *dmoHandler) UpdateDmo(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	id := c.Params("id")
+
+	idInt, err := strconv.Atoi(id)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "record not found",
+		})
+	}
+
+	idDmo := uint(idInt)
+
+	inputUpdateDmo := new(dmo.UpdateDmoInput)
+
+	if err := c.BodyParser(inputUpdateDmo); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	detailDmo, detailDmoErr := h.transactionService.GetDetailDmo(idInt, iupopkIdInt)
+
+	if detailDmoErr != nil {
+		status := 400
+
+		if detailDmoErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"error": detailDmoErr.Error(),
+		})
+	}
+
+	errors := h.v.Struct(*inputUpdateDmo)
+
+	if errors != nil {
+		dataErrors := validatorfunc.ValidateStruct(errors)
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_id"] = idInt
+		inputMap["transaction_barge"] = inputUpdateDmo.TransactionBarge
+		inputMap["grouping_vessel"] = inputUpdateDmo.GroupingVessel
+		inputMap["input"] = inputUpdateDmo
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"errors": dataErrors,
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+			DmoId:   &idDmo,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": dataErrors,
+		})
+	}
+	header := c.GetReqHeaders()
+
+	if len(inputUpdateDmo.GroupingVessel) == 0 && len(inputUpdateDmo.TransactionBarge) == 0 {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "please check there is no grouping vessel and transaction barge",
+		})
+	}
+
+	updateDmo, updateDmoErr := h.historyService.UpdateDmo(*inputUpdateDmo, idInt, uint(claims["id"].(float64)), iupopkIdInt)
+
+	if updateDmoErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_id"] = id
+		inputMap["list_dn_barge"] = inputUpdateDmo.TransactionBarge
+		inputMap["list_group_vessel"] = inputUpdateDmo.GroupingVessel
+		inputMap["input"] = inputUpdateDmo
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": updateDmoErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+			DmoId:   &idDmo,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error": updateDmoErr.Error(),
+		})
+	}
+
+	list, endUser, listTraderDmoErr := h.traderDmoService.TraderListWithDmoId(int(updateDmo.ID))
+
+	if listTraderDmoErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_id"] = id
+		inputMap["list_dn_barge"] = inputUpdateDmo.TransactionBarge
+		inputMap["list_group_vessel"] = inputUpdateDmo.GroupingVessel
+		inputMap["input"] = inputUpdateDmo
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": listTraderDmoErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Dmo already has been created, but get list trader failed",
+			"error":   listTraderDmoErr.Error(),
+		})
+	}
+
+	listTransactionDmo, listTransactionDmoErr := h.transactionService.GetDataDmo(updateDmo.ID, iupopkIdInt)
+
+	if listTransactionDmoErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_id"] = id
+		inputMap["list_dn_barge"] = inputUpdateDmo.TransactionBarge
+		inputMap["list_group_vessel"] = inputUpdateDmo.GroupingVessel
+		inputMap["input"] = inputUpdateDmo
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": listTransactionDmoErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Dmo already has been created, but get list transaction failed",
+			"error":   listTransactionDmoErr.Error(),
+		})
+	}
+
+	splitPeriod := strings.Split(detailDmo.Detail.Period, " ")
+	idNumberSplit := strings.Split(*detailDmo.Detail.IdNumber, "-")
+
+	counterDetail, counterDetailErr := h.counterService.GetCounter(iupopkIdInt)
+
+	if counterDetailErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["dmo_period"] = detailDmo.Detail.Period
+		inputMap["list_transaction_barge"] = inputUpdateDmo.TransactionBarge
+		inputMap["list_grouping_vessel"] = inputUpdateDmo.GroupingVessel
+		inputMap["input"] = inputUpdateDmo
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": counterDetailErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+			DmoId:   &idDmo,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Dmo already has been updated, but job failed",
+			"error":   counterDetailErr.Error(),
+			"dmo":     updateDmo,
+		})
+	}
+
+	var bastFormat string
+	bastFormatSplit := strings.Split(counterDetail.BastFormat, "/")
+
+	for i, v := range bastFormatSplit {
+		switch v {
+		case "BAST":
+			bastFormat += "BAST"
+			if i < len(bastFormatSplit)-1 {
+				bastFormat += "/"
+			}
+		case "CODE":
+			bastFormat += idNumberSplit[1]
+			if i < len(bastFormatSplit)-1 {
+				bastFormat += "/"
+			}
+		case "COUNTER":
+			if len(idNumberSplit) == 1 {
+				bastFormat += "0" + idNumberSplit[4]
+			} else {
+				bastFormat += idNumberSplit[4]
+			}
+			if i < len(bastFormatSplit)-1 {
+				bastFormat += "/"
+			}
+		case "MM":
+			bastFormat += idNumberSplit[2]
+			if i < len(bastFormatSplit)-1 {
+				bastFormat += "/"
+			}
+		case "YYYY":
+			bastFormat += splitPeriod[1]
+			if i < len(bastFormatSplit)-1 {
+				bastFormat += "/"
+			}
+		}
+	}
+
+	var reqInputCreateUploadDmo transaction.InputRequestCreateUploadDmo
+
+	reqInputCreateUploadDmo.Authorization = header["Authorization"]
+	reqInputCreateUploadDmo.BastNumber = bastFormat
+	reqInputCreateUploadDmo.DataDmo = updateDmo
+	reqInputCreateUploadDmo.Trader = list
+	reqInputCreateUploadDmo.TraderEndUser = endUser
+	reqInputCreateUploadDmo.ListTransactionBarge = listTransactionDmo.ListTransactionBarge
+	reqInputCreateUploadDmo.ListGroupingVessel = listTransactionDmo.ListGroupingVessel
+	reqInputCreateUploadDmo.ListTransactionGroupingVessel = listTransactionDmo.ListTransactionGroupingVessel
+	reqInputCreateUploadDmo.Iupopk = updateDmo.Iupopk
+
+	if !detailDmo.Detail.IsDocumentCustom {
+		_, requestJobDmoErr := h.transactionService.RequestCreateDmo(reqInputCreateUploadDmo)
+
+		if requestJobDmoErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["user_id"] = claims["id"]
+			inputMap["dmo_period"] = detailDmo.Detail.Period
+			inputMap["list_transaction_barge"] = inputUpdateDmo.TransactionBarge
+			inputMap["list_grouping_vessel"] = inputUpdateDmo.GroupingVessel
+			inputMap["input"] = inputUpdateDmo
+			inputMap["input_job"] = reqInputCreateUploadDmo
+			inputJson, _ := json.Marshal(inputMap)
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error": requestJobDmoErr.Error(),
+			})
+
+			createdErrLog := logs.Logs{
+				Input:   inputJson,
+				Message: messageJson,
+				DmoId:   &idDmo,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			return c.Status(400).JSON(fiber.Map{
+				"message": "Dmo already has been updated, but job failed",
+				"error":   requestJobDmoErr.Error(),
+				"dmo":     updateDmo,
+			})
+		}
+	}
+	return c.Status(200).JSON(updateDmo)
 }
 
 func (h *dmoHandler) ListDmo(c *fiber.Ctx) error {
@@ -464,7 +822,17 @@ func (h *dmoHandler) ListDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -486,19 +854,14 @@ func (h *dmoHandler) ListDmo(c *fiber.Ctx) error {
 
 	var filterDmo dmo.FilterAndSortDmo
 
-	quantity, errParsing := strconv.ParseFloat(c.Query("quantity"), 64)
-	if errParsing != nil {
-		filterDmo.Quantity = 0
-	} else {
-		filterDmo.Quantity = quantity
-	}
-
-	filterDmo.CreatedStart = c.Query("created_start")
-	filterDmo.CreatedEnd = c.Query("created_end")
+	filterDmo.Quantity = c.Query("quantity")
+	filterDmo.Month = c.Query("month")
+	filterDmo.Year = c.Query("year")
+	filterDmo.BuyerId = c.Query("buyer_id")
 	filterDmo.Field = c.Query("field")
 	filterDmo.Sort = c.Query("sort")
 
-	listDmo, listDmoErr := h.dmoService.GetListReportDmoAll(pageNumber, filterDmo)
+	listDmo, listDmoErr := h.dmoService.GetListReportDmoAll(pageNumber, filterDmo, iupopkIdInt)
 
 	if listDmoErr != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -520,7 +883,17 @@ func (h *dmoHandler) DetailDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -536,7 +909,7 @@ func (h *dmoHandler) DetailDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	detailDmo, detailDmoErr := h.transactionService.GetDetailDmo(idInt)
+	detailDmo, detailDmoErr := h.transactionService.GetDetailDmo(idInt, iupopkIdInt)
 
 	if detailDmoErr != nil {
 		status := 400
@@ -552,7 +925,7 @@ func (h *dmoHandler) DetailDmo(c *fiber.Ctx) error {
 	return c.Status(200).JSON(detailDmo)
 }
 
-func (h *dmoHandler) ListDataDNWithoutDmo(c *fiber.Ctx) error {
+func (h *dmoHandler) ListTransactionForDmo(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	responseUnauthorized := map[string]interface{}{
@@ -563,21 +936,44 @@ func (h *dmoHandler) ListDataDNWithoutDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	listDataDNWithoutDmo, listDataDNWithoutDmoErr := h.transactionService.ListDataDNWithoutDmo()
+	var listTransactionForDmo transaction.ChooseTransactionDmo
 
-	if listDataDNWithoutDmoErr != nil {
+	listBarge, listBargeErr := h.transactionService.ListDataDNBargeWithoutVessel(iupopkIdInt)
+
+	if listBargeErr != nil {
 		return c.Status(400).JSON(fiber.Map{
-			"error": listDataDNWithoutDmoErr.Error(),
+			"error": listBargeErr.Error(),
 		})
 	}
 
-	return c.Status(200).JSON(listDataDNWithoutDmo)
+	listTransactionForDmo.BargeTransaction = listBarge
+
+	listGroupingVessel, listGroupingVesselErr := h.dmoVesselService.ListGroupingVesselWithoutDmo(iupopkIdInt)
+
+	if listGroupingVesselErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": listGroupingVesselErr.Error(),
+		})
+	}
+
+	listTransactionForDmo.GroupingVesselTransaction = listGroupingVessel
+	return c.Status(200).JSON(listTransactionForDmo)
 }
 
 func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
@@ -591,7 +987,17 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -608,7 +1014,7 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	findDmo, findDmoErr := h.transactionService.GetDetailDmo(idInt)
+	findDmo, findDmoErr := h.transactionService.GetDetailDmo(idInt, iupopkIdInt)
 
 	if findDmoErr != nil {
 		status := 400
@@ -623,43 +1029,62 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	if findDmo.Detail.IsBastDocumentSigned != false || findDmo.Detail.IsReconciliationLetterSigned != false || findDmo.Detail.IsStatementLetterSigned != false {
+	if findDmo.Detail.IsBastDocumentSigned != false || findDmo.Detail.IsReconciliationLetterSigned != false || findDmo.Detail.IsStatementLetterSigned != false || findDmo.Detail.IsReconciliationLetterEndUserSigned != false {
 		return c.Status(400).JSON(fiber.Map{
 			"message": "failed to delete dmo",
 			"error":   "document dmo is already signed",
 		})
 	}
 
-	fileName := fmt.Sprintf("SR/%s/", *findDmo.Detail.IdNumber)
-	_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
+	documentLink := findDmo.Detail.ReconciliationLetterDocumentLink
 
-	if deleteAwsErr != nil {
-		inputMap := make(map[string]interface{})
-		inputMap["user_id"] = claims["id"]
-		inputMap["dmo_id"] = idInt
+	if documentLink != nil {
+		documentLinkSplit := strings.Split(*documentLink, "/")
 
-		inputJson, _ := json.Marshal(inputMap)
-		messageJson, _ := json.Marshal(map[string]interface{}{
-			"error":     deleteAwsErr.Error(),
-			"id_number": findDmo.Detail.IdNumber,
-		})
+		fileName := ""
+		for i, v := range documentLinkSplit {
+			if i == 3 {
+				fileName += v + "/"
+			}
+			if i == 4 {
+				fileName += v + "/"
+			}
 
-		createdErrLog := logs.Logs{
-			Input:   inputJson,
-			Message: messageJson,
+			if i == 5 {
+				fileName += v
+			}
 		}
 
-		h.logService.CreateLogs(createdErrLog)
+		_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
 
-		return c.Status(400).JSON(fiber.Map{
-			"message": "failed to delete dmo aws",
-			"error":   deleteAwsErr.Error(),
-		})
+		if deleteAwsErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["user_id"] = claims["id"]
+			inputMap["dmo_id"] = idInt
+
+			inputJson, _ := json.Marshal(inputMap)
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error":     deleteAwsErr.Error(),
+				"id_number": findDmo.Detail.IdNumber,
+			})
+
+			createdErrLog := logs.Logs{
+				Input:   inputJson,
+				Message: messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			return c.Status(400).JSON(fiber.Map{
+				"message": "failed to delete dmo aws",
+				"error":   deleteAwsErr.Error(),
+			})
+		}
 	}
 
 	endUserDmo, _ := h.traderDmoService.GetTraderEndUserDmo(idInt)
 
-	_, deleteDmoErr := h.historyService.DeleteDmo(idInt, uint(claims["id"].(float64)))
+	_, deleteDmoErr := h.historyService.DeleteDmo(idInt, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if deleteDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -697,8 +1122,7 @@ func (h *dmoHandler) DeleteDmo(c *fiber.Ctx) error {
 	createNotif.Status = "menghapus"
 	createNotif.Period = findDmo.Detail.Period
 	createNotif.EndUser = endUserDmo.Company.CompanyName
-
-	_, createNotificationDeleteDmoErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)))
+	_, createNotificationDeleteDmoErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createNotificationDeleteDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -738,7 +1162,17 @@ func (h *dmoHandler) UpdateDocumentDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -793,7 +1227,7 @@ func (h *dmoHandler) UpdateDocumentDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	detailDmo, detailDmoErr := h.transactionService.GetDetailDmo(idInt)
+	detailDmo, detailDmoErr := h.transactionService.GetDetailDmo(idInt, iupopkIdInt)
 
 	if detailDmoErr != nil {
 		status := 400
@@ -806,13 +1240,7 @@ func (h *dmoHandler) UpdateDocumentDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	if detailDmo.Detail.BASTDocumentLink != nil || detailDmo.Detail.ReconciliationLetterDocumentLink != nil || detailDmo.Detail.StatementLetterDocumentLink != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"error": "document already has been created",
-		})
-	}
-
-	updateDocumentDmo, updateDocumentDmoErr := h.historyService.UpdateDocumentDmo(idInt, *inputUpdateDmo, uint(claims["id"].(float64)))
+	updateDocumentDmo, updateDocumentDmoErr := h.historyService.UpdateDocumentDmo(idInt, *inputUpdateDmo, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if updateDocumentDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -880,7 +1308,7 @@ func (h *dmoHandler) UpdateDocumentDmo(c *fiber.Ctx) error {
 	inputNotification.Status = "membuat"
 	inputNotification.EndUser = getEndUserDmo.Company.CompanyName
 	inputNotification.Period = detailDmo.Detail.Period
-	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createdNotificationErr != nil {
 		inputMap := make(map[string]interface{})
@@ -901,7 +1329,7 @@ func (h *dmoHandler) UpdateDocumentDmo(c *fiber.Ctx) error {
 
 		return c.Status(400).JSON(fiber.Map{
 			"error":   createdNotificationErr.Error(),
-			"message": "failed to create notification update dmo",
+			"message": "failed to create notification update document dmo",
 		})
 	}
 
@@ -919,7 +1347,17 @@ func (h *dmoHandler) UpdateIsDownloadedDocumentDmo(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -986,7 +1424,7 @@ func (h *dmoHandler) UpdateIsDownloadedDocumentDmo(c *fiber.Ctx) error {
 		isReconciliationLetterEndUser = true
 	}
 
-	updateDownloadedDocumentDmo, updateDownloadedDocumentDmoErr := h.historyService.UpdateIsDownloadedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, isReconciliationLetterEndUser, idInt, uint(claims["id"].(float64)))
+	updateDownloadedDocumentDmo, updateDownloadedDocumentDmoErr := h.historyService.UpdateIsDownloadedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, isReconciliationLetterEndUser, idInt, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if updateDownloadedDocumentDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -1031,7 +1469,17 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -1055,7 +1503,7 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 	var isReconciliationLetter bool
 	var isReconciliationLetterEndUser bool
 
-	dataDmo, dataDmoErr := h.dmoService.GetDataDmo(idInt)
+	dataDmo, dataDmoErr := h.dmoService.GetDataDmo(idInt, iupopkIdInt)
 
 	if dataDmoErr != nil {
 		status := 400
@@ -1072,7 +1520,8 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 	var fileName string
 
 	idNumber := *dataDmo.IdNumber
-	fileName = "SR/"
+	fileName = dataDmo.Iupopk.Code
+	fileName += "/LBU/"
 	fileName += idNumber
 
 	file, errFormFile := c.FormFile("document")
@@ -1159,7 +1608,7 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 		})
 	}
 
-	updateSignedDocumentDmo, updateSignedDocumentDmoErr := h.historyService.UpdateTrueIsSignedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, isReconciliationLetterEndUser, idInt, uint(claims["id"].(float64)), up.Location)
+	updateSignedDocumentDmo, updateSignedDocumentDmoErr := h.historyService.UpdateTrueIsSignedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, isReconciliationLetterEndUser, idInt, uint(claims["id"].(float64)), up.Location, iupopkIdInt)
 
 	if updateSignedDocumentDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -1199,7 +1648,7 @@ func (h *dmoHandler) UpdateTrueIsSignedDmoDocument(c *fiber.Ctx) error {
 	inputNotification.Document = typeDocument
 	inputNotification.EndUser = endUserDmo.Company.CompanyName
 
-	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createdNotificationErr != nil {
 		inputMap := make(map[string]interface{})
@@ -1239,7 +1688,17 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -1263,7 +1722,7 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 	var isReconciliationLetter bool
 	var isReconciliationLetterEndUser bool
 
-	dataDmo, dataDmoErr := h.dmoService.GetDataDmo(idInt)
+	dataDmo, dataDmoErr := h.dmoService.GetDataDmo(idInt, iupopkIdInt)
 
 	if dataDmoErr != nil {
 		status := 400
@@ -1279,8 +1738,12 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 
 	var fileName string
 
-	fileName = *dataDmo.IdNumber
-
+	fileName = dataDmo.Iupopk.Code
+	fileName += "/LBU/"
+	fileName += *dataDmo.IdNumber
+	fileName += "/"
+	fileName += *dataDmo.IdNumber
+	fileName += "_"
 	typeDocument := c.Params("type")
 
 	if typeDocument != "bast" && typeDocument != "statement_letter" && typeDocument != "reconciliation_letter" && typeDocument != "reconciliation_letter_end_user" {
@@ -1310,22 +1773,22 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 
 	if typeDocument == "bast" {
 		isBast = true
-		fileName += "/signed_bast.pdf"
+		fileName += "signed_bast.pdf"
 	}
 
 	if typeDocument == "statement_letter" {
 		isStatementLetter = true
-		fileName += "/signed_surat_pernyataan.pdf"
+		fileName += "signed_surat_pernyataan.pdf"
 	}
 
 	if typeDocument == "reconciliation_letter" {
 		isReconciliationLetter = true
-		fileName += "/signed_berita_acara.pdf"
+		fileName += "signed_berita_acara.pdf"
 	}
 
 	if typeDocument == "reconciliation_letter_end_user" {
 		isReconciliationLetterEndUser = true
-		fileName += "/signed_berita_acara_pengguna_akhir.pdf"
+		fileName += "signed_berita_acara_pengguna_akhir.pdf"
 	}
 
 	deleteUpload, deleteUploadErr := awshelper.DeleteDocument(fileName)
@@ -1355,7 +1818,7 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 		})
 	}
 
-	updateSignedDocumentDmo, updateSignedDocumentDmoErr := h.historyService.UpdateFalseIsSignedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, isReconciliationLetterEndUser, idInt, uint(claims["id"].(float64)))
+	updateSignedDocumentDmo, updateSignedDocumentDmoErr := h.historyService.UpdateFalseIsSignedDmoDocument(isBast, isStatementLetter, isReconciliationLetter, isReconciliationLetterEndUser, idInt, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if updateSignedDocumentDmoErr != nil {
 		inputMap := make(map[string]interface{})
@@ -1395,7 +1858,7 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 	inputNotification.Document = typeDocument
 	inputNotification.EndUser = endUserDmo.Company.CompanyName
 
-	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)))
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createdNotificationErr != nil {
 		inputMap := make(map[string]interface{})
@@ -1422,43 +1885,4 @@ func (h *dmoHandler) UpdateFalseIsSignedDmoDocument(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(updateSignedDocumentDmo)
-}
-
-func (h *dmoHandler) MasterCompanyTrader(c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	responseUnauthorized := map[string]interface{}{
-		"error": "unauthorized",
-	}
-
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
-		return c.Status(401).JSON(responseUnauthorized)
-	}
-
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
-
-	if checkUserErr != nil || checkUser.IsActive == false {
-		return c.Status(401).JSON(responseUnauthorized)
-	}
-
-	company, companyErr := h.companyService.ListCompany()
-
-	if companyErr != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"error": companyErr.Error(),
-		})
-	}
-
-	trader, traderErr := h.traderService.ListTrader()
-
-	if traderErr != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"error": traderErr.Error(),
-		})
-	}
-
-	return c.Status(200).JSON(fiber.Map{
-		"companies": company,
-		"traders":   trader,
-	})
 }

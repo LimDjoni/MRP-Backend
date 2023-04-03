@@ -4,31 +4,32 @@ import (
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
 	"ajebackend/model/production"
-	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
 	"ajebackend/validatorfunc"
 	"encoding/json"
+	"reflect"
+	"strconv"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
-	"reflect"
-	"strconv"
 )
 
 type productionHandler struct {
-	userService user.Service
-	historyService history.Service
+	historyService    history.Service
 	productionService production.Service
-	logsService logs.Service
-	v *validator.Validate
+	logsService       logs.Service
+	v                 *validator.Validate
+	userIupopkService useriupopk.Service
 }
 
-func NewProductionHandler(userService user.Service, historyService history.Service, productionService production.Service, logsService logs.Service, v *validator.Validate) *productionHandler {
+func NewProductionHandler(historyService history.Service, productionService production.Service, logsService logs.Service, v *validator.Validate, userIupopkService useriupopk.Service) *productionHandler {
 	return &productionHandler{
-		userService,
 		historyService,
 		productionService,
 		logsService,
 		v,
+		userIupopkService,
 	}
 }
 
@@ -39,11 +40,21 @@ func (h *productionHandler) ListProduction(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -69,15 +80,9 @@ func (h *productionHandler) ListProduction(c *fiber.Ctx) error {
 	filterProduction.ProductionDateEnd = c.Query("production_date_end")
 	filterProduction.Field = c.Query("field")
 	filterProduction.Sort = c.Query("sort")
+	filterProduction.Quantity = c.Query("quantity")
 
-	quantity, errParsing := strconv.ParseFloat(c.Query("quantity"), 64)
-	if errParsing != nil {
-		filterProduction.Quantity = 0
-	} else {
-		filterProduction.Quantity = quantity
-	}
-
-	listProduction, listProductionErr := h.productionService.GetListProduction(pageNumber, filterProduction)
+	listProduction, listProductionErr := h.productionService.GetListProduction(pageNumber, filterProduction, iupopkIdInt)
 
 	if listProductionErr != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -95,11 +100,21 @@ func (h *productionHandler) CreateProduction(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -122,7 +137,7 @@ func (h *productionHandler) CreateProduction(c *fiber.Ctx) error {
 		})
 	}
 
-	createProduction, createProductionErr := h.historyService.CreateProduction(*productionInput, uint(claims["id"].(float64)))
+	createProduction, createProductionErr := h.historyService.CreateProduction(*productionInput, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createProductionErr != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -140,11 +155,21 @@ func (h *productionHandler) UpdateProduction(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -177,7 +202,7 @@ func (h *productionHandler) UpdateProduction(c *fiber.Ctx) error {
 		})
 	}
 
-	updateProduction, updateProductionErr := h.historyService.UpdateProduction(*productionUpdateInput, idInt, uint(claims["id"].(float64)))
+	updateProduction, updateProductionErr := h.historyService.UpdateProduction(*productionUpdateInput, idInt, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if updateProductionErr != nil {
 		inputMap := make(map[string]interface{})
@@ -185,16 +210,16 @@ func (h *productionHandler) UpdateProduction(c *fiber.Ctx) error {
 		inputMap["user_id"] = claims["id"]
 		inputMap["production_id"] = id
 
-		inputJson , _ := json.Marshal(productionUpdateInput)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
+		inputJson, _ := json.Marshal(productionUpdateInput)
+		messageJson, _ := json.Marshal(map[string]interface{}{
 			"error": updateProductionErr.Error(),
 		})
 
 		productionId := uint(idInt)
 		createdErrLog := logs.Logs{
 			ProductionId: &productionId,
-			Input: inputJson,
-			Message: messageJson,
+			Input:        inputJson,
+			Message:      messageJson,
 		}
 
 		h.logsService.CreateLogs(createdErrLog)
@@ -220,11 +245,21 @@ func (h *productionHandler) DeleteProduction(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -240,36 +275,36 @@ func (h *productionHandler) DeleteProduction(c *fiber.Ctx) error {
 		})
 	}
 
-	_, deleteTransactionErr := h.historyService.DeleteProduction(idInt, uint(claims["id"].(float64)))
+	_, deleteTransactionErr := h.historyService.DeleteProduction(idInt, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if deleteTransactionErr != nil {
 		inputMap := make(map[string]interface{})
 		inputMap["user_id"] = claims["id"]
 		inputMap["production_id"] = idInt
 
-		inputJson ,_ := json.Marshal(inputMap)
-		messageJson ,_ := json.Marshal(map[string]interface{}{
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
 			"error": deleteTransactionErr.Error(),
 		})
 
 		productionId := uint(idInt)
 		createdErrLog := logs.Logs{
 			ProductionId: &productionId,
-			Input: inputJson,
-			Message: messageJson,
+			Input:        inputJson,
+			Message:      messageJson,
 		}
 
 		h.logsService.CreateLogs(createdErrLog)
 
 		status := 400
 
-		if  deleteTransactionErr.Error() == "record not found" {
+		if deleteTransactionErr.Error() == "record not found" {
 			status = 404
 		}
 
 		return c.Status(status).JSON(fiber.Map{
 			"message": "failed to delete production",
-			"error": deleteTransactionErr.Error(),
+			"error":   deleteTransactionErr.Error(),
 		})
 	}
 
@@ -285,11 +320,21 @@ func (h *productionHandler) DetailProduction(c *fiber.Ctx) error {
 		"error": "unauthorized",
 	}
 
-	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64  {
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
 		return c.Status(401).JSON(responseUnauthorized)
@@ -305,7 +350,7 @@ func (h *productionHandler) DetailProduction(c *fiber.Ctx) error {
 		})
 	}
 
-	detailProduction, detailProductionErr := h.productionService.DetailProduction(idInt)
+	detailProduction, detailProductionErr := h.productionService.DetailProduction(idInt, iupopkIdInt)
 
 	if detailProductionErr != nil {
 		status := 400

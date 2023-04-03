@@ -9,9 +9,9 @@ import (
 )
 
 type Repository interface {
-	CreateNotification(input notification.InputNotification, userId uint) (notification.Notification, error)
-	GetNotification(userId uint) ([]NotificationUser, error)
-	UpdateReadNotification(userId uint) ([]NotificationUser, error)
+	CreateNotification(input notification.InputNotification, userId uint, iupopkId int) (notification.Notification, error)
+	GetNotification(userId uint, iupopkId int) ([]NotificationUser, error)
+	UpdateReadNotification(userId uint, iupopkId int) ([]NotificationUser, error)
 }
 
 type repository struct {
@@ -22,7 +22,7 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
-func (r *repository) CreateNotification(input notification.InputNotification, userId uint) (notification.Notification, error) {
+func (r *repository) CreateNotification(input notification.InputNotification, userId uint, iupopkId int) (notification.Notification, error) {
 	var createdNotification notification.Notification
 
 	createdNotification.Status = input.Status
@@ -31,6 +31,7 @@ func (r *repository) CreateNotification(input notification.InputNotification, us
 	createdNotification.Document = input.Document
 	createdNotification.EndUser = input.EndUser
 	createdNotification.UserId = userId
+	createdNotification.IupopkId = uint(iupopkId)
 
 	tx := r.db.Begin()
 
@@ -70,10 +71,11 @@ func (r *repository) CreateNotification(input notification.InputNotification, us
 	return createdNotification, nil
 }
 
-func (r *repository) GetNotification(userId uint) ([]NotificationUser, error) {
+func (r *repository) GetNotification(userId uint, iupopkId int) ([]NotificationUser, error) {
 	var listNotification []NotificationUser
 
-	errFind := r.db.Preload("Notification.User").Preload(clause.Associations).Order("id desc").Where("user_id = ?", userId).Find(&listNotification).Error
+	// Will change to provide iupopk id filter
+	errFind := r.db.Preload("Notification.User").Preload(clause.Associations).Order("id desc").Select("notification_users.*").Joins("LEFT JOIN notifications notifications on notification_users.notification_id = notifications.id").Where("notification_users.user_id = ? AND notifications.iupopk_id = ?", userId, iupopkId).Find(&listNotification).Error
 
 	if errFind != nil {
 		return listNotification, errFind
@@ -82,7 +84,7 @@ func (r *repository) GetNotification(userId uint) ([]NotificationUser, error) {
 	return listNotification, nil
 }
 
-func (r *repository) UpdateReadNotification(userId uint) ([]NotificationUser, error) {
+func (r *repository) UpdateReadNotification(userId uint, iupopkId int) ([]NotificationUser, error) {
 	var listNotification []NotificationUser
 
 	updErr := r.db.Model(&listNotification).Where("user_id = ?", userId).Update("is_read", true).Error

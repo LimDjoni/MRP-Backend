@@ -1,7 +1,7 @@
 package notification
 
 type Service interface {
-	DeleteNotification(userId uint) (bool, error)
+	DeleteNotification(userId uint, iupopkId int) (bool, error)
 }
 
 type service struct {
@@ -12,8 +12,8 @@ func NewService(repository Repository) *service {
 	return &service{repository}
 }
 
-func (s *service) DeleteNotification(userId uint) (bool, error) {
-	isDeletedNotification, isDeletedNotificationErr := s.repository.DeleteNotification(userId)
+func (s *service) DeleteNotification(userId uint, iupopkId int) (bool, error) {
+	isDeletedNotification, isDeletedNotificationErr := s.repository.DeleteNotification(userId, iupopkId)
 
 	return isDeletedNotification, isDeletedNotificationErr
 }

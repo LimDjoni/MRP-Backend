@@ -1,9 +1,9 @@
 package minerba
 
 type Service interface {
-	GetReportMinerbaWithPeriod(period string) (Minerba, error)
-	GetListReportMinerbaAll(page int, filterMinerba FilterAndSortMinerba) (Pagination, error)
-	GetDataMinerba(id int)(Minerba, error)
+	GetReportMinerbaWithPeriod(period string, iupopkId int) (Minerba, error)
+	GetListReportMinerbaAll(page int, filterMinerba FilterAndSortMinerba, iupopkId int) (Pagination, error)
+	GetDataMinerba(id int, iupopkId int) (Minerba, error)
 }
 
 type service struct {
@@ -14,20 +14,20 @@ func NewService(repository Repository) *service {
 	return &service{repository}
 }
 
-func (s *service) GetReportMinerbaWithPeriod(period string) (Minerba, error) {
-	reportMinerba, reportMinerbaErr := s.repository.GetReportMinerbaWithPeriod(period)
+func (s *service) GetReportMinerbaWithPeriod(period string, iupopkId int) (Minerba, error) {
+	reportMinerba, reportMinerbaErr := s.repository.GetReportMinerbaWithPeriod(period, iupopkId)
 
 	return reportMinerba, reportMinerbaErr
 }
 
-func (s *service) GetListReportMinerbaAll(page int, filterMinerba FilterAndSortMinerba) (Pagination, error) {
-	listReportMinerba, listReportMinerbaErr := s.repository.GetListReportMinerbaAll(page, filterMinerba)
+func (s *service) GetListReportMinerbaAll(page int, filterMinerba FilterAndSortMinerba, iupopkId int) (Pagination, error) {
+	listReportMinerba, listReportMinerbaErr := s.repository.GetListReportMinerbaAll(page, filterMinerba, iupopkId)
 
 	return listReportMinerba, listReportMinerbaErr
 }
 
-func (s *service) GetDataMinerba(id int)(Minerba, error) {
-	dataMinerba, dataMinerbaErr := s.repository.GetDataMinerba(id)
+func (s *service) GetDataMinerba(id int, iupopkId int) (Minerba, error) {
+	dataMinerba, dataMinerbaErr := s.repository.GetDataMinerba(id, iupopkId)
 
 	return dataMinerba, dataMinerbaErr
 }

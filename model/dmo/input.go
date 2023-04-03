@@ -8,14 +8,18 @@ type VesselAdjustmentInput struct {
 }
 
 type CreateDmoInput struct {
-	Period            string                  `form:"period" json:"period" validate:"PeriodValidation,required"`
-	DocumentDate      string                  `form:"document_date" json:"document_date" validate:"DateValidation"`
-	TransactionBarge  []int                   `form:"transaction_barge" json:"transaction_barge"`
-	TransactionVessel []int                   `form:"transaction_vessel" json:"transaction_vessel"`
-	Trader            []int                   `form:"trader" json:"trader" validate:"required,min=1"`
-	EndUser           int                     `form:"end_user" json:"end_user" validate:"required"`
-	VesselAdjustment  []VesselAdjustmentInput `form:"vessel_adjustment" json:"vessel_adjustment"`
-	IsDocumentCustom  bool                    `form:"is_document_custom" json:"is_document_custom"`
+	Period           string `form:"period" json:"period" validate:"PeriodValidation,required"`
+	DocumentDate     string `form:"document_date" json:"document_date" validate:"DateValidation"`
+	TransactionBarge []int  `form:"transaction_barge" json:"transaction_barge"`
+	GroupingVessel   []int  `form:"grouping_vessel" json:"grouping_vessel"`
+	Trader           []int  `form:"trader" json:"trader"`
+	EndUser          int    `form:"end_user" json:"end_user" validate:"required"`
+	IsDocumentCustom bool   `form:"is_document_custom" json:"is_document_custom"`
+}
+
+type UpdateDmoInput struct {
+	TransactionBarge []int `form:"transaction_barge" json:"transaction_barge"`
+	GroupingVessel   []int `form:"grouping_vessel" json:"grouping_vessel"`
 }
 
 type InputUpdateDocumentDmo struct {
@@ -23,9 +27,10 @@ type InputUpdateDocumentDmo struct {
 }
 
 type FilterAndSortDmo struct {
-	Quantity     float64 `json:"quantity"`
-	CreatedStart string  `json:"created_start"`
-	CreatedEnd   string  `json:"created_end"`
-	Field        string  `json:"field"`
-	Sort         string  `json:"sort"`
+	Quantity string `json:"quantity"`
+	BuyerId  string `json:"buyer_id"`
+	Month    string `json:"month"`
+	Year     string `json:"year"`
+	Field    string `json:"field"`
+	Sort     string `json:"sort"`
 }

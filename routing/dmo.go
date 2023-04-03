@@ -3,16 +3,18 @@ package routing
 import (
 	"ajebackend/handler"
 	"ajebackend/helper"
-	"ajebackend/model/company"
+	"ajebackend/model/counter"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
+	"ajebackend/model/master/company"
+	"ajebackend/model/master/trader"
 	"ajebackend/model/notificationuser"
-	"ajebackend/model/trader"
+	"ajebackend/model/reportdmo"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
-	"ajebackend/model/user"
+	"ajebackend/model/useriupopk"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -23,9 +25,6 @@ import (
 func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	transactionRepository := transaction.NewRepository(db)
 	transactionService := transaction.NewService(transactionRepository)
-
-	userRepository := user.NewRepository(db)
-	userService := user.NewService(userRepository)
 
 	historyRepository := history.NewRepository(db)
 	historyService := history.NewService(historyRepository)
@@ -51,7 +50,18 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	dmoVesselRepository := dmovessel.NewRepository(db)
 	dmoVesselService := dmovessel.NewService(dmoVesselRepository)
 
-	dmoHandler := handler.NewDmoHandler(transactionService, userService, historyService, logService, dmoService, traderService, traderDmoService, notificationUserService, companyService, validate, dmoVesselService)
+	reportDmoRepository := reportdmo.NewRepository(db)
+	reportDmoService := reportdmo.NewService(reportDmoRepository)
+
+	userIupopkRepository := useriupopk.NewRepository(db)
+	userIupopkService := useriupopk.NewService(userIupopkRepository)
+
+	counterRepository := counter.NewRepository(db)
+	counterService := counter.NewService(counterRepository)
+
+	dmoHandler := handler.NewDmoHandler(transactionService, historyService, logService, dmoService, traderService, traderDmoService, notificationUserService, companyService, validate, dmoVesselService, userIupopkService, counterService)
+
+	reportDmoHandler := handler.NewReportDmoHandler(transactionService, historyService, logService, notificationUserService, validate, reportDmoService, userIupopkService)
 
 	dmoRouting := app.Group("/dmo")
 
@@ -66,14 +76,25 @@ func DmoRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 		},
 	}))
 
-	dmoRouting.Post("/create", dmoHandler.CreateDmo)
-	dmoRouting.Get("/list", dmoHandler.ListDmo)
-	dmoRouting.Get("/list/transaction", dmoHandler.ListDataDNWithoutDmo)
-	dmoRouting.Get("/detail/:id", dmoHandler.DetailDmo)
-	dmoRouting.Delete("/delete/:id", dmoHandler.DeleteDmo)
-	dmoRouting.Put("/update/document/:id", dmoHandler.UpdateDocumentDmo)
-	dmoRouting.Put("/update/document/downloaded/:id/:type", dmoHandler.UpdateIsDownloadedDocumentDmo)
-	dmoRouting.Put("/update/document/signed/:id/:type", dmoHandler.UpdateTrueIsSignedDmoDocument)
-	dmoRouting.Put("/update/document/not_signed/:id/:type", dmoHandler.UpdateFalseIsSignedDmoDocument)
-	dmoRouting.Get("/master", dmoHandler.MasterCompanyTrader)
+	dmoRouting.Post("/create/:iupopk_id", dmoHandler.CreateDmo)
+	dmoRouting.Get("/list/:iupopk_id", dmoHandler.ListDmo)
+	dmoRouting.Get("/list/transaction/:iupopk_id", dmoHandler.ListTransactionForDmo)
+	dmoRouting.Get("/detail/:id/:iupopk_id", dmoHandler.DetailDmo)
+	dmoRouting.Delete("/delete/:id/:iupopk_id", dmoHandler.DeleteDmo)
+	dmoRouting.Put("/update/document/:id/:iupopk_id", dmoHandler.UpdateDocumentDmo)
+	dmoRouting.Put("/update/document/downloaded/:id/:type/:iupopk_id", dmoHandler.UpdateIsDownloadedDocumentDmo)
+	dmoRouting.Put("/update/document/signed/:id/:type/:iupopk_id", dmoHandler.UpdateTrueIsSignedDmoDocument)
+	dmoRouting.Put("/update/document/not_signed/:id/:type/:iupopk_id", dmoHandler.UpdateFalseIsSignedDmoDocument)
+	dmoRouting.Put("/update/:id/:iupopk_id", dmoHandler.UpdateDmo)
+
+	// Report
+	dmoRouting.Post("/create/report/:iupopk_id", reportDmoHandler.CreateReportDmo)
+	dmoRouting.Put("/update/report/document/:id/:iupopk_id", reportDmoHandler.UpdateDocumentReportDmo)
+	dmoRouting.Put("/update/report/:id/:iupopk_id", reportDmoHandler.UpdateReportDmo)
+	dmoRouting.Delete("/delete/report/:id/:iupopk_id", reportDmoHandler.DeleteReportDmo)
+	dmoRouting.Post("/create/excel/:id/:iupopk_id", reportDmoHandler.RequestCreateExcelReportDmo)
+	dmoRouting.Get("/list/report/transaction/:iupopk_id", reportDmoHandler.GetListForReport)
+	dmoRouting.Post("/validate/report/:iupopk_id", reportDmoHandler.CheckValidPeriodReportDmo)
+	dmoRouting.Get("/detail/report/:id/:iupopk_id", reportDmoHandler.DetailReportDmo)
+	dmoRouting.Get("/list/report/:iupopk_id", reportDmoHandler.ListReportDmo)
 }

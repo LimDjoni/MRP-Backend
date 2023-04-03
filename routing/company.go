@@ -3,10 +3,11 @@ package routing
 import (
 	"ajebackend/handler"
 	"ajebackend/helper"
-	"ajebackend/model/company"
 	"ajebackend/model/logs"
-	"ajebackend/model/trader"
-	"ajebackend/model/user"
+	"ajebackend/model/master/company"
+	"ajebackend/model/master/trader"
+	"ajebackend/model/useriupopk"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	jwtware "github.com/gofiber/jwt/v3"
@@ -14,9 +15,6 @@ import (
 )
 
 func CompanyRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
-	userRepository := user.NewRepository(db)
-	userService := user.NewService(userRepository)
-
 	traderRepository := trader.NewRepository(db)
 	traderService := trader.NewService(traderRepository)
 
@@ -26,7 +24,10 @@ func CompanyRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate)
 	logRepository := logs.NewRepository(db)
 	logService := logs.NewService(logRepository)
 
-	companyHandler := handler.NewCompanyHandler(userService, companyService, traderService, logService, validate)
+	userIupopkRepository := useriupopk.NewRepository(db)
+	userIupopkService := useriupopk.NewService(userIupopkRepository)
+
+	companyHandler := handler.NewCompanyHandler(companyService, traderService, logService, validate, userIupopkService)
 
 	companyRouting := app.Group("/company")
 
@@ -36,7 +37,7 @@ func CompanyRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate)
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
 			return ctx.Status(401).JSON(fiber.Map{
 				"error": "unauthorized",
-				"err": err.Error(),
+				"err":   err.Error(),
 			})
 		},
 	}))

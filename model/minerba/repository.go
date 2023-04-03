@@ -8,9 +8,9 @@ import (
 )
 
 type Repository interface {
-	GetReportMinerbaWithPeriod(period string) (Minerba, error)
-	GetListReportMinerbaAll(page int, filterMinerba FilterAndSortMinerba) (Pagination, error)
-	GetDataMinerba(id int) (Minerba, error)
+	GetReportMinerbaWithPeriod(period string, iupopkId int) (Minerba, error)
+	GetListReportMinerbaAll(page int, filterMinerba FilterAndSortMinerba, iupopkId int) (Pagination, error)
+	GetDataMinerba(id int, iupopkId int) (Minerba, error)
 }
 
 type repository struct {
@@ -21,21 +21,21 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
-func (r *repository) GetReportMinerbaWithPeriod(period string) (Minerba, error) {
+func (r *repository) GetReportMinerbaWithPeriod(period string, iupopkId int) (Minerba, error) {
 	var reportMinerba Minerba
 
-	errFind := r.db.Where("period = ?", period).First(&reportMinerba).Error
+	errFind := r.db.Where("period = ? AND iupopk_id = ?", period, iupopkId).First(&reportMinerba).Error
 
 	return reportMinerba, errFind
 }
 
-func (r *repository) GetListReportMinerbaAll(page int, filterMinerba FilterAndSortMinerba) (Pagination, error) {
+func (r *repository) GetListReportMinerbaAll(page int, filterMinerba FilterAndSortMinerba, iupopkId int) (Pagination, error) {
 	var listReportMinerba []Minerba
 
 	var pagination Pagination
 	pagination.Limit = 7
 	pagination.Page = page
-	queryFilter := ""
+	queryFilter := fmt.Sprintf("iupopk_id = %v", iupopkId)
 	sortFilter := "id desc"
 
 	if filterMinerba.Field != "" && filterMinerba.Sort != "" {
@@ -46,25 +46,29 @@ func (r *repository) GetListReportMinerbaAll(page int, filterMinerba FilterAndSo
 		}
 	}
 
-	if filterMinerba.CreatedStart != "" {
-		queryFilter = queryFilter + "created_at >= '" + filterMinerba.CreatedStart + "'"
+	if filterMinerba.UpdatedStart != "" {
+		queryFilter = queryFilter + "AND updated_at >= '" + filterMinerba.UpdatedStart + "'"
 	}
 
-	if filterMinerba.CreatedEnd != "" {
-		if queryFilter != "" {
-			queryFilter = queryFilter + " AND created_at <= '" + filterMinerba.CreatedEnd + "T23:59:59'"
-		} else {
-			queryFilter = "created_at <= '" + filterMinerba.CreatedEnd + "T23:59:59'"
-		}
+	if filterMinerba.UpdatedEnd != "" {
+		queryFilter = queryFilter + " AND updated_at <= '" + filterMinerba.UpdatedEnd + "T23:59:59'"
 	}
 
-	if filterMinerba.Quantity != 0 {
+	if filterMinerba.Quantity != "" {
 		quantity := fmt.Sprintf("%v", filterMinerba.Quantity)
-		if queryFilter != "" {
-			queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" + quantity + "%'"
-		} else {
-			queryFilter = "cast(quantity AS TEXT) LIKE '%" + quantity + "%'"
-		}
+		queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" + quantity + "%'"
+	}
+
+	if filterMinerba.Month != "" && filterMinerba.Year != "" {
+		queryFilter = queryFilter + " AND period = '" + filterMinerba.Month + " " + filterMinerba.Year + "'"
+	}
+
+	if filterMinerba.Month != "" && filterMinerba.Year == "" {
+		queryFilter = queryFilter + " AND period LIKE '" + filterMinerba.Month + "%'"
+	}
+
+	if filterMinerba.Month == "" && filterMinerba.Year != "" {
+		queryFilter = queryFilter + " AND period LIKE '%" + filterMinerba.Year + "'"
 	}
 
 	errFind := r.db.Where(queryFilter).Order(sortFilter).Scopes(paginateMinerba(listReportMinerba, &pagination, r.db, queryFilter)).Find(&listReportMinerba).Error
@@ -78,10 +82,10 @@ func (r *repository) GetListReportMinerbaAll(page int, filterMinerba FilterAndSo
 	return pagination, nil
 }
 
-func (r *repository) GetDataMinerba(id int) (Minerba, error) {
+func (r *repository) GetDataMinerba(id int, iupopkId int) (Minerba, error) {
 	var minerba Minerba
 
-	errFind := r.db.Where("id = ?", id).First(&minerba).Error
+	errFind := r.db.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&minerba).Error
 
 	return minerba, errFind
 }

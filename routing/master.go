@@ -3,11 +3,14 @@ package routing
 import (
 	"ajebackend/handler"
 	"ajebackend/helper"
-	"ajebackend/model/destination"
+	"ajebackend/model/counter"
+	"ajebackend/model/master/allmaster"
+	"ajebackend/model/master/destination"
 	"ajebackend/model/user"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/basicauth"
 	jwtware "github.com/gofiber/jwt/v3"
 	"gorm.io/gorm"
 )
@@ -19,7 +22,13 @@ func MasterRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) 
 	userRepository := user.NewRepository(db)
 	userService := user.NewService(userRepository)
 
-	masterHandler := handler.NewMasterHandler(destinationService, userService)
+	allMasterRepository := allmaster.NewRepository(db)
+	allMasterService := allmaster.NewService(allMasterRepository)
+
+	counterRepository := counter.NewRepository(db)
+	counterService := counter.NewService(counterRepository)
+
+	masterHandler := handler.NewMasterHandler(destinationService, userService, allMasterService, counterService, validate)
 
 	masterRouting := app.Group("/master")
 
@@ -34,5 +43,16 @@ func MasterRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) 
 		},
 	}))
 
-	masterRouting.Get("/destination", masterHandler.GetDestination)
+	masterRouting.Get("/global", masterHandler.GetListMaster)
+
+	basicRouting := app.Group("/basic")
+
+	basicRouting.Use(basicauth.New(basicauth.Config{
+		Users: map[string]string{
+			helper.GetEnvWithKey("USERNAME_BASIC"): helper.GetEnvWithKey("PASSWORD_BASIC"),
+		},
+	}))
+
+	basicRouting.Post("/create/iupopk", masterHandler.CreateIupopk)
+	basicRouting.Put("/update/counter", masterHandler.UpdateCounter)
 }
