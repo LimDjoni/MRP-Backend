@@ -2,6 +2,7 @@ package history
 
 import (
 	"ajebackend/helper"
+	"ajebackend/model/coareport"
 	"ajebackend/model/counter"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
@@ -3605,4 +3606,46 @@ func (r *repository) DeleteReportDmo(idReportDmo int, userId uint, iupopkId int)
 
 	tx.Commit()
 	return true, nil
+}
+
+// COA Report
+
+func (r *repository) CreateCoaReport(dateFrom string, dateTo string, iupopkId int) (coareport.CoaReport, error) {
+	var coaReport coareport.CoaReport
+	var iup iupopk.Iupopk
+
+	var counterTransaction counter.Counter
+
+	tx := r.db.Begin()
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return coaReport, errFindIup
+	}
+
+	errFind := tx.Where("date_from = ? AND date_to = ? AND iupopk_id = ?", dateFrom, dateTo, iupopkId).Find(&coaReport).Error
+
+	if errFind == nil {
+		tx.Rollback()
+		return coaReport, errors.New("Report already has been created")
+	}
+
+	idNumber := "COA-" + iup.Code
+
+	coaReport.IdNumber = createIdNumber(idNumber, uint(counterTransaction.CoaReport))
+	coaReport.DateFrom = dateFrom
+	coaReport.DateTo = dateTo
+	coaReport.IupopkId = iup.Id
+
+	errCreate := tx.Create(&coaReport).Error
+
+	if errCreate != nil {
+		tx.Rollback()
+		return coaReport, errCreate
+	}
+
+	tx.Commit()
+	return coaReport, nil
 }

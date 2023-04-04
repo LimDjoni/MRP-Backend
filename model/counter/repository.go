@@ -40,6 +40,8 @@ func (r *repository) UpdateCounter() error {
 		"ba_end_user":    1,
 		"dmo":            1,
 		"production":     1,
+		"coa_report":     1,
+		"insw":           1,
 	}
 
 	updateCounterErr := r.db.Model(&Counter{}).Where("created_at <= ?", time.Now()).Updates(counterMap).Error
@@ -85,6 +87,9 @@ func (r *repository) CreateIupopk(input iupopk.InputIupopk) (iupopk.Iupopk, erro
 	createdCounter.BaEndUser = 1
 	createdCounter.Dmo = 1
 	createdCounter.Production = 1
+	createdCounter.Insw = 1
+	createdCounter.CoaReport = 1
+	createdCounter.BastFormat = input.BastFormat
 
 	createCounterErr := tx.Create(&createdCounter).Error
 

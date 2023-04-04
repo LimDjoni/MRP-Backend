@@ -1,6 +1,7 @@
 package history
 
 import (
+	"ajebackend/model/coareport"
 	"ajebackend/model/dmo"
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
@@ -44,4 +45,6 @@ type History struct {
 	AfterData          datatypes.JSON                    `json:"after_data"`
 	IupopkId           *uint                             `json:"iupopk_id"`
 	Iupopk             *iupopk.Iupopk                    `json:"iupopk" gorm:"constraint:OnDelete:CASCADE;"`
+	CoaReportId        *uint                             `json:"coa_report_id"`
+	CoaReport          *coareport.CoaReport              `json:"coa_report" gorm:"constraint:OnDelete:CASCADE;"`
 }
