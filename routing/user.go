@@ -40,8 +40,6 @@ func UserRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 		},
 	}))
 
-	userValidateRouting.Get("/", userHandler.Validate)
-
 	userIupopkRouting := app.Group("/user")
 
 	userIupopkRouting.Use(basicauth.New(basicauth.Config{
@@ -52,4 +50,21 @@ func UserRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 
 	userIupopkRouting.Post("/create/iupopk/:user_id/:iupopk_id", userHandler.CreateUserIupopk)
 	userIupopkRouting.Delete("/delete/iupopk/:user_id/:iupopk_id", userHandler.DeleteUserIupopk)
+
+	userIupopkRouting.Put("/reset/password", userHandler.ResetPassword)
+
+	userUpdateRouting := app.Group("/password")
+
+	userUpdateRouting.Use(jwtware.New(jwtware.Config{
+		SigningKey:    []byte(helper.GetEnvWithKey("JWT_SECRET_KEY")),
+		SigningMethod: jwtware.HS256,
+		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
+			return ctx.Status(401).JSON(fiber.Map{
+				"error": "unauthorized",
+				"err":   err.Error(),
+			})
+		},
+	}))
+
+	userUpdateRouting.Put("/update", userHandler.ChangePassword)
 }

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"ajebackend/helper"
 	"ajebackend/model/user"
 	"ajebackend/model/useriupopk"
 	"ajebackend/validatorfunc"
@@ -164,5 +165,75 @@ func (h *userHandler) DeleteUserIupopk(c *fiber.Ctx) error {
 
 	return c.Status(200).JSON(fiber.Map{
 		"message": "user iupopk has been deleted",
+	})
+}
+
+func (h *userHandler) ChangePassword(c *fiber.Ctx) error {
+	userchange := c.Locals("user").(*jwt.Token)
+
+	claims := userchange.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	changePasswordInput := new(user.ChangePasswordInput)
+
+	// Binds the request body to the Person struct
+	if err := c.BodyParser(changePasswordInput); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	checkUser, checkUserErr := h.userService.FindUser(uint(claims["id"].(float64)))
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	if changePasswordInput.NewPassword != changePasswordInput.ConfirmPassword || !helper.CheckPassword(changePasswordInput.OldPassword, checkUser.Password) {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "Password tidak cocok",
+		})
+	}
+
+	_, updUserErr := h.userService.ChangePassword(changePasswordInput.NewPassword, uint(claims["id"].(float64)))
+
+	if updUserErr != nil {
+		return c.Status(401).JSON(fiber.Map{
+			"error": updUserErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(fiber.Map{"message": "Sukses update password"})
+}
+
+func (h *userHandler) ResetPassword(c *fiber.Ctx) error {
+
+	resetPasswordInput := new(user.ResetPasswordInput)
+
+	// Binds the request body to the Person struct
+	if err := c.BodyParser(resetPasswordInput); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	newPassword := helper.CreateRandomPassword()
+
+	_, resetUserErr := h.userService.ResetPassword(resetPasswordInput.Email, newPassword)
+
+	if resetUserErr != nil {
+		return c.Status(401).JSON(fiber.Map{
+			"error": resetUserErr.Error(),
+		})
+	}
+
+	return c.Status(201).JSON(fiber.Map{
+		"message": newPassword,
 	})
 }
