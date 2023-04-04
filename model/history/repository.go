@@ -3125,6 +3125,13 @@ func (r *repository) CreateInsw(month string, year int, userId uint, iupopkId in
 		return createInsw, createHistoryErr
 	}
 
+	updateCounterErr := tx.Model(&counterTransaction).Where("iupopk_id = ?", iupopkId).Update("insw", counterTransaction.Insw+1).Error
+
+	if updateCounterErr != nil {
+		tx.Rollback()
+		return createInsw, updateCounterErr
+	}
+
 	tx.Commit()
 	return createInsw, nil
 }
@@ -3359,6 +3366,13 @@ func (r *repository) CreateReportDmo(input reportdmo.InputCreateReportDmo, userI
 	if createHistoryErr != nil {
 		tx.Rollback()
 		return createdReportDmo, createHistoryErr
+	}
+
+	updateCounterErr := tx.Model(&counterTransaction).Where("iupopk_id = ?", iupopkId).Update("dmo", counterTransaction.Dmo+1).Error
+
+	if updateCounterErr != nil {
+		tx.Rollback()
+		return createdReportDmo, updateCounterErr
 	}
 
 	tx.Commit()
