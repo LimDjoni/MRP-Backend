@@ -73,6 +73,9 @@ type Repository interface {
 	UpdateDocumentReportDmo(id int, documentLink reportdmo.InputUpdateDocumentReportDmo, userId uint, iupopkId int) (reportdmo.ReportDmo, error)
 	UpdateTransactionReportDmo(id int, inputUpdate reportdmo.InputUpdateReportDmo, userId uint, iupopkId int) (reportdmo.ReportDmo, error)
 	DeleteReportDmo(idReportDmo int, userId uint, iupopkId int) (bool, error)
+	CreateCoaReport(dateFrom string, dateTo string, iupopkId int, userId uint) (coareport.CoaReport, error)
+	DeleteCoaReport(id int, iupopkId int, userId uint) (bool, error)
+	UpdateDocumentCoaReport(id int, documentLink coareport.InputUpdateDocumentCoaReport, userId uint, iupopkId int) (coareport.CoaReport, error)
 }
 
 type repository struct {
@@ -3624,7 +3627,7 @@ func (r *repository) DeleteReportDmo(idReportDmo int, userId uint, iupopkId int)
 
 // COA Report
 
-func (r *repository) CreateCoaReport(dateFrom string, dateTo string, iupopkId int) (coareport.CoaReport, error) {
+func (r *repository) CreateCoaReport(dateFrom string, dateTo string, iupopkId int, userId uint) (coareport.CoaReport, error) {
 	var coaReport coareport.CoaReport
 	var iup iupopk.Iupopk
 
@@ -3639,25 +3642,149 @@ func (r *repository) CreateCoaReport(dateFrom string, dateTo string, iupopkId in
 		return coaReport, errFindIup
 	}
 
-	errFind := tx.Where("date_from = ? AND date_to = ? AND iupopk_id = ?", dateFrom, dateTo, iupopkId).Find(&coaReport).Error
+	errFindCounterTransaction := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
+
+	if errFindCounterTransaction != nil {
+		tx.Rollback()
+		return coaReport, errFindCounterTransaction
+	}
+
+	errFind := tx.Where("date_from = ? AND date_to = ? AND iupopk_id = ?", dateFrom, dateTo, iupopkId).First(&coaReport).Error
 
 	if errFind == nil {
 		tx.Rollback()
 		return coaReport, errors.New("Report already has been created")
 	}
 
-	idNumber := "COA-" + iup.Code
+	idNumber := "RCO-" + iup.Code
 
 	coaReport.IdNumber = createIdNumber(idNumber, uint(counterTransaction.CoaReport))
 	coaReport.DateFrom = dateFrom
 	coaReport.DateTo = dateTo
-	coaReport.IupopkId = iup.Id
+	coaReport.IupopkId = iup.ID
 
 	errCreate := tx.Create(&coaReport).Error
 
 	if errCreate != nil {
 		tx.Rollback()
 		return coaReport, errCreate
+	}
+
+	coaReportData, _ := json.Marshal(coaReport)
+
+	var history History
+
+	history.CoaReportId = &coaReport.ID
+	history.Status = "Created Coa Report"
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = coaReportData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return coaReport, createHistoryErr
+	}
+
+	updateCounterErr := tx.Model(&counterTransaction).Where("iupopk_id = ?", iupopkId).Update("coa_report", counterTransaction.CoaReport+1).Error
+
+	if updateCounterErr != nil {
+		tx.Rollback()
+		return coaReport, updateCounterErr
+	}
+
+	tx.Commit()
+	return coaReport, nil
+}
+
+func (r *repository) DeleteCoaReport(id int, iupopkId int, userId uint) (bool, error) {
+	var coaReport coareport.CoaReport
+	var iup iupopk.Iupopk
+
+	tx := r.db.Begin()
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return false, errFindIup
+	}
+
+	errFind := tx.Where("id = ?", id).First(&coaReport).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return false, errFind
+	}
+
+	coaReportData, _ := json.Marshal(coaReport)
+
+	errDelete := tx.Unscoped().Where("id = ? AND iupopk_id = ?", id, iupopkId).Delete(&coaReport).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+		return false, errDelete
+	}
+
+	var history History
+
+	history.Status = fmt.Sprintf("Deleted Coa Report with id number %s and id %v", &coaReport.IdNumber, coaReport.ID)
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = coaReportData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return false, createHistoryErr
+	}
+
+	tx.Commit()
+	return true, nil
+}
+
+func (r *repository) UpdateDocumentCoaReport(id int, documentLink coareport.InputUpdateDocumentCoaReport, userId uint, iupopkId int) (coareport.CoaReport, error) {
+	tx := r.db.Begin()
+	var coaReport coareport.CoaReport
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&coaReport).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return coaReport, errFind
+	}
+
+	editData := make(map[string]interface{})
+
+	for _, value := range documentLink.Data {
+		if value["Location"] != nil {
+			if strings.Contains(value["Location"].(string), "coa_report") {
+				editData["coa_report_document_link"] = value["Location"]
+			}
+		}
+	}
+
+	errEdit := tx.Model(&coaReport).Updates(editData).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return coaReport, errEdit
+	}
+
+	var history History
+
+	history.CoaReportId = &coaReport.ID
+	history.UserId = userId
+	history.Status = fmt.Sprintf("Update upload document coa report with id = %v", coaReport.ID)
+	history.IupopkId = &coaReport.IupopkId
+	dataInput, _ := json.Marshal(documentLink)
+	history.AfterData = dataInput
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return coaReport, createHistoryErr
 	}
 
 	tx.Commit()

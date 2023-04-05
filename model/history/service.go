@@ -1,6 +1,7 @@
 package history
 
 import (
+	"ajebackend/model/coareport"
 	"ajebackend/model/dmo"
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
@@ -52,6 +53,9 @@ type Service interface {
 	UpdateDocumentReportDmo(id int, documentLink reportdmo.InputUpdateDocumentReportDmo, userId uint, iupopkId int) (reportdmo.ReportDmo, error)
 	UpdateTransactionReportDmo(id int, inputUpdate reportdmo.InputUpdateReportDmo, userId uint, iupopkId int) (reportdmo.ReportDmo, error)
 	DeleteReportDmo(idReportDmo int, userId uint, iupopkId int) (bool, error)
+	CreateCoaReport(dateFrom string, dateTo string, iupopkId int, userId uint) (coareport.CoaReport, error)
+	DeleteCoaReport(id int, iupopkId int, userId uint) (bool, error)
+	UpdateDocumentCoaReport(id int, documentLink coareport.InputUpdateDocumentCoaReport, userId uint, iupopkId int) (coareport.CoaReport, error)
 }
 
 type service struct {
@@ -294,4 +298,22 @@ func (s *service) DeleteReportDmo(idReportDmo int, userId uint, iupopkId int) (b
 	deleteReportDmo, deleteReportDmoErr := s.repository.DeleteReportDmo(idReportDmo, userId, iupopkId)
 
 	return deleteReportDmo, deleteReportDmoErr
+}
+
+func (s *service) CreateCoaReport(dateFrom string, dateTo string, iupopkId int, userId uint) (coareport.CoaReport, error) {
+	coaReport, coaReportErr := s.repository.CreateCoaReport(dateFrom, dateTo, iupopkId, userId)
+
+	return coaReport, coaReportErr
+}
+
+func (s *service) DeleteCoaReport(id int, iupopkId int, userId uint) (bool, error) {
+	isDeletedCoaReport, isDeletedCoaReportErr := s.repository.DeleteCoaReport(id, iupopkId, userId)
+
+	return isDeletedCoaReport, isDeletedCoaReportErr
+}
+
+func (s *service) UpdateDocumentCoaReport(id int, documentLink coareport.InputUpdateDocumentCoaReport, userId uint, iupopkId int) (coareport.CoaReport, error) {
+	updDocumentCoaReport, updDocumentCoaReportErr := s.repository.UpdateDocumentCoaReport(id, documentLink, userId, iupopkId)
+
+	return updDocumentCoaReport, updDocumentCoaReportErr
 }

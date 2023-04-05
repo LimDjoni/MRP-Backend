@@ -1,6 +1,7 @@
 package logs
 
 import (
+	"ajebackend/model/coareport"
 	"ajebackend/model/dmo"
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
@@ -37,4 +38,6 @@ type Logs struct {
 	Insw               *insw.Insw                        `json:"insw" gorm:"constraint:OnDelete:CASCADE;"`
 	ReportDmoId        *uint                             `json:"report_dmo_id"`
 	ReportDmo          *reportdmo.ReportDmo              `json:"report_dmo"`
+	CoaReportId        *uint                             `json:"coa_report_id"`
+	CoaReport          *coareport.CoaReport              `json:"coa_report" gorm:"constraint:OnDelete:CASCADE;"`
 }

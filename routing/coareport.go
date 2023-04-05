@@ -4,7 +4,9 @@ import (
 	"ajebackend/handler"
 	"ajebackend/helper"
 	"ajebackend/model/coareport"
+	"ajebackend/model/history"
 	"ajebackend/model/logs"
+	"ajebackend/model/notificationuser"
 	"ajebackend/model/useriupopk"
 
 	"github.com/go-playground/validator/v10"
@@ -24,7 +26,13 @@ func CoaReportRouting(db *gorm.DB, app fiber.Router, validate *validator.Validat
 	userIupopkRepository := useriupopk.NewRepository(db)
 	userIupopkService := useriupopk.NewService(userIupopkRepository)
 
-	coaReportHandler := handler.NewCoaReportHandler(coaReportService, logService, userIupopkService, validate)
+	historyRepository := history.NewRepository(db)
+	historyService := history.NewService(historyRepository)
+
+	notificationUserRepository := notificationuser.NewRepository(db)
+	notificationUserService := notificationuser.NewService(notificationUserRepository)
+
+	coaReportHandler := handler.NewCoaReportHandler(coaReportService, logService, userIupopkService, historyService, notificationUserService, validate)
 
 	coaReportRouting := app.Group("/coareport")
 
@@ -39,6 +47,12 @@ func CoaReportRouting(db *gorm.DB, app fiber.Router, validate *validator.Validat
 		},
 	}))
 
+	coaReportRouting.Get("/list/:iupopk_id", coaReportHandler.ListCoaReport)
 	coaReportRouting.Post("/preview/:iupopk_id", coaReportHandler.ListCoaReportTransaction)
-
+	coaReportRouting.Post("/create/:iupopk_id", coaReportHandler.CreateCoaReport)
+	coaReportRouting.Delete("/delete/:id/:iupopk_id", coaReportHandler.DeleteCoaReport)
+	coaReportRouting.Get("/detail/:id/:iupopk_id", coaReportHandler.DetailCoaReport)
+	coaReportRouting.Post("/create/excel/:id/:iupopk_id", coaReportHandler.RequestCreateExcelCoaReport)
+	// update job document
+	coaReportRouting.Post("/update/document/:id/:iupopk_id", coaReportHandler.UpdateDocumentCoaReport)
 }
