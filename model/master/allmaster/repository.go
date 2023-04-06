@@ -29,6 +29,7 @@ import (
 
 type Repository interface {
 	ListMasterData() (MasterData, error)
+	FindIupopk(iupopkId int) (iupopk.Iupopk, error)
 }
 
 type repository struct {
@@ -213,4 +214,16 @@ func (r *repository) ListMasterData() (MasterData, error) {
 	masterData.Vessel = vessel
 
 	return masterData, nil
+}
+
+func (r *repository) FindIupopk(iupopkId int) (iupopk.Iupopk, error) {
+	var iupopk iupopk.Iupopk
+
+	errFind := r.db.Where("id = ?", iupopkId).First(&iupopk).Error
+
+	if errFind != nil {
+		return iupopk, errFind
+	}
+
+	return iupopk, nil
 }
