@@ -40,6 +40,8 @@ func UserRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 		},
 	}))
 
+	userValidateRouting.Get("/", userHandler.Validate)
+
 	userIupopkRouting := app.Group("/user")
 
 	userIupopkRouting.Use(basicauth.New(basicauth.Config{

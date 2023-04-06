@@ -39,7 +39,7 @@ func (s *service) RequestCreateExcelCoaReport(inputRequestCreateExcel InputReque
 	var res map[string]interface{}
 	baseURL := helper.GetEnvWithKey("BASE_JOB_URL")
 
-	urlPost := baseURL + "/create/coa_report"
+	urlPost := baseURL + "/create/report/coa"
 	body, bodyErr := json.Marshal(inputRequestCreateExcel)
 
 	if bodyErr != nil {

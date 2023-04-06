@@ -54,5 +54,5 @@ func CoaReportRouting(db *gorm.DB, app fiber.Router, validate *validator.Validat
 	coaReportRouting.Get("/detail/:id/:iupopk_id", coaReportHandler.DetailCoaReport)
 	coaReportRouting.Post("/create/excel/:id/:iupopk_id", coaReportHandler.RequestCreateExcelCoaReport)
 	// update job document
-	coaReportRouting.Post("/update/document/:id/:iupopk_id", coaReportHandler.UpdateDocumentCoaReport)
+	coaReportRouting.Put("/update/document/:id/:iupopk_id", coaReportHandler.UpdateDocumentCoaReport)
 }
