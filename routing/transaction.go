@@ -5,6 +5,7 @@ import (
 	"ajebackend/helper"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
+	"ajebackend/model/master/allmaster"
 	"ajebackend/model/master/destination"
 	"ajebackend/model/transaction"
 	"ajebackend/model/useriupopk"
@@ -31,7 +32,10 @@ func TransactionRouting(db *gorm.DB, app fiber.Router, validate *validator.Valid
 	userIupopkRepository := useriupopk.NewRepository(db)
 	userIupopkService := useriupopk.NewService(userIupopkRepository)
 
-	transactionHandler := handler.NewTransactionHandler(transactionService, historyService, validate, logService, destinationService, userIupopkService)
+	allMasterRepository := allmaster.NewRepository(db)
+	allMasterService := allmaster.NewService(allMasterRepository)
+
+	transactionHandler := handler.NewTransactionHandler(transactionService, historyService, validate, logService, destinationService, userIupopkService, allMasterService)
 
 	transactionRouting := app.Group("/transaction")
 

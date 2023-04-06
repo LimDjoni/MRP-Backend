@@ -4,6 +4,7 @@ import (
 	"ajebackend/model/awshelper"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
+	"ajebackend/model/master/allmaster"
 	"ajebackend/model/master/destination"
 	"ajebackend/model/transaction"
 	"ajebackend/model/useriupopk"
@@ -26,9 +27,10 @@ type transactionHandler struct {
 	logService         logs.Service
 	destinationService destination.Service
 	userIupopkService  useriupopk.Service
+	allMasterService   allmaster.Service
 }
 
-func NewTransactionHandler(transactionService transaction.Service, historyService history.Service, v *validator.Validate, logService logs.Service, destinationService destination.Service, userIupopkService useriupopk.Service) *transactionHandler {
+func NewTransactionHandler(transactionService transaction.Service, historyService history.Service, v *validator.Validate, logService logs.Service, destinationService destination.Service, userIupopkService useriupopk.Service, allMasterService allmaster.Service) *transactionHandler {
 	return &transactionHandler{
 		transactionService,
 		historyService,
@@ -36,6 +38,7 @@ func NewTransactionHandler(transactionService transaction.Service, historyServic
 		logService,
 		destinationService,
 		userIupopkService,
+		allMasterService,
 	}
 }
 
@@ -514,6 +517,14 @@ func (h *transactionHandler) UpdateDocumentTransaction(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
+	iupopkData, iupopkDataErr := h.allMasterService.FindIupopk(iupopkIdInt)
+
+	if iupopkDataErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": iupopkDataErr.Error(),
+		})
+	}
+
 	documentType := c.Params("type")
 	responseErr := fiber.Map{
 		"message": "failed to upload document",
@@ -550,7 +561,7 @@ func (h *transactionHandler) UpdateDocumentTransaction(c *fiber.Ctx) error {
 		})
 	}
 
-	fileName := fmt.Sprintf("AJE/T%s/%v/%v_%s.pdf", typeTransaction, *detailTransaction.IdNumber, *detailTransaction.IdNumber, documentType)
+	fileName := fmt.Sprintf("%s/T%s/%v/%v_%s.pdf", iupopkData.Code, typeTransaction, *detailTransaction.IdNumber, *detailTransaction.IdNumber, documentType)
 
 	up, uploadErr := awshelper.UploadDocument(file, fileName)
 
