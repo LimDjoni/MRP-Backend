@@ -9,6 +9,8 @@ import (
 
 type Repository interface {
 	ListRkab(page int, sortFilter SortFilterRkab, iupopkId int) (Pagination, error)
+	DetailRkabWithYear(year int, iupopkId int) ([]Rkab, error)
+	DetailRkabWithId(id int, iupopkId int) (Rkab, error)
 }
 
 type repository struct {
@@ -59,4 +61,28 @@ func (r *repository) ListRkab(page int, sortFilter SortFilterRkab, iupopkId int)
 	pagination.Data = listRkab
 
 	return pagination, nil
+}
+
+func (r *repository) DetailRkabWithYear(year int, iupopkId int) ([]Rkab, error) {
+	var listRkabDetail []Rkab
+
+	errFind := r.db.Where("year = ? AND iupopk_id = ?", year, iupopkId).Order("created_at desc").Find(&listRkabDetail).Error
+
+	if errFind != nil {
+		return listRkabDetail, errFind
+	}
+
+	return listRkabDetail, nil
+}
+
+func (r *repository) DetailRkabWithId(id int, iupopkId int) (Rkab, error) {
+	var detailRkab Rkab
+
+	errFind := r.db.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&detailRkab).Error
+
+	if errFind != nil {
+		return detailRkab, errFind
+	}
+
+	return detailRkab, nil
 }

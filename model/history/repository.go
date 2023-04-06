@@ -79,6 +79,7 @@ type Repository interface {
 	UpdateDocumentCoaReport(id int, documentLink coareport.InputUpdateDocumentCoaReport, userId uint, iupopkId int) (coareport.CoaReport, error)
 	CreateRkab(input rkab.RkabInput, iupopkId int, userId uint) (rkab.Rkab, error)
 	DeleteRkab(id int, iupopkId int, userId uint) (bool, error)
+	UploadDocumentRkab(id uint, urlS3 string, userId uint, iupopkId int) (rkab.Rkab, error)
 }
 
 type repository struct {
@@ -3820,10 +3821,11 @@ func (r *repository) CreateRkab(input rkab.RkabInput, iupopkId int, userId uint)
 
 	idNumber := "RKB-" + iup.Code
 	createdRkab.IdNumber = createIdNumber(idNumber, uint(counterTransaction.Rkab))
-	createdRkab.LetterNumber = input.LetterNumber
+	createdRkab.LetterNumber = strings.ToUpper(input.LetterNumber)
 	createdRkab.DateOfIssue = input.DateOfIssue
 	createdRkab.Year = input.Year
 	createdRkab.ProductionQuota = input.ProductionQuota
+	createdRkab.IupopkId = uint(iupopkId)
 
 	errCreate := tx.Create(&createdRkab).Error
 
@@ -3903,4 +3905,40 @@ func (r *repository) DeleteRkab(id int, iupopkId int, userId uint) (bool, error)
 
 	tx.Commit()
 	return true, nil
+}
+
+func (r *repository) UploadDocumentRkab(id uint, urlS3 string, userId uint, iupopkId int) (rkab.Rkab, error) {
+	var rkab rkab.Rkab
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&rkab).Error
+
+	if errFind != nil {
+		return rkab, errFind
+	}
+
+	errEdit := tx.Model(&rkab).Update("rkab_document_link", urlS3).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return rkab, errEdit
+	}
+
+	var history History
+
+	history.RkabId = &rkab.ID
+	history.UserId = userId
+	history.Status = "Uploaded document rkab"
+
+	history.IupopkId = &rkab.IupopkId
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return rkab, createHistoryErr
+	}
+
+	tx.Commit()
+	return rkab, nil
 }

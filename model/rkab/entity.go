@@ -1,13 +1,19 @@
 package rkab
 
-import "gorm.io/gorm"
+import (
+	"ajebackend/model/master/iupopk"
+
+	"gorm.io/gorm"
+)
 
 type Rkab struct {
 	gorm.Model
-	IdNumber         string  `json:"id_number" gorm:"UNIQUE"`
-	LetterNumber     string  `json:"letter_number"`
-	DateOfIssue      string  `json:"date_of_issue" gorm:"type:DATE"`
-	Year             string  `json:"year"`
-	ProductionQuota  float64 `json:"production_quota"`
-	RkabDocumentLink string  `json:"rkab_document_link"`
+	IdNumber         string        `json:"id_number" gorm:"UNIQUE"`
+	LetterNumber     string        `json:"letter_number"`
+	DateOfIssue      string        `json:"date_of_issue" gorm:"type:DATE"`
+	Year             string        `json:"year"`
+	ProductionQuota  float64       `json:"production_quota"`
+	RkabDocumentLink string        `json:"rkab_document_link"`
+	IupopkId         uint          `json:"iupopk_id"`
+	Iupopk           iupopk.Iupopk `json:"iupopk"`
 }

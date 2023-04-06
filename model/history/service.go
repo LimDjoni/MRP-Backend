@@ -59,6 +59,7 @@ type Service interface {
 	UpdateDocumentCoaReport(id int, documentLink coareport.InputUpdateDocumentCoaReport, userId uint, iupopkId int) (coareport.CoaReport, error)
 	CreateRkab(input rkab.RkabInput, iupopkId int, userId uint) (rkab.Rkab, error)
 	DeleteRkab(id int, iupopkId int, userId uint) (bool, error)
+	UploadDocumentRkab(id uint, urlS3 string, userId uint, iupopkId int) (rkab.Rkab, error)
 }
 
 type service struct {
@@ -331,4 +332,10 @@ func (s *service) DeleteRkab(id int, iupopkId int, userId uint) (bool, error) {
 	isDeletedRkab, isDeletedRkabErr := s.repository.DeleteRkab(id, iupopkId, userId)
 
 	return isDeletedRkab, isDeletedRkabErr
+}
+
+func (s *service) UploadDocumentRkab(id uint, urlS3 string, userId uint, iupopkId int) (rkab.Rkab, error) {
+	updateRkab, updateRkabErr := s.repository.UploadDocumentRkab(id, urlS3, userId, iupopkId)
+
+	return updateRkab, updateRkabErr
 }
