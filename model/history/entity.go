@@ -11,6 +11,7 @@ import (
 	"ajebackend/model/minerbaln"
 	"ajebackend/model/production"
 	"ajebackend/model/reportdmo"
+	"ajebackend/model/rkab"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 
@@ -47,4 +48,6 @@ type History struct {
 	Iupopk             *iupopk.Iupopk                    `json:"iupopk" gorm:"constraint:OnDelete:CASCADE;"`
 	CoaReportId        *uint                             `json:"coa_report_id"`
 	CoaReport          *coareport.CoaReport              `json:"coa_report" gorm:"constraint:OnDelete:CASCADE;"`
+	RkabId             *uint                             `json:"rkab_id"`
+	Rkab               *rkab.Rkab                        `json:"rkab" gorm:"constraint:OnDelete:CASCADE;"`
 }

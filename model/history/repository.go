@@ -19,6 +19,7 @@ import (
 	"ajebackend/model/minerbaln"
 	"ajebackend/model/production"
 	"ajebackend/model/reportdmo"
+	"ajebackend/model/rkab"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
 	"encoding/json"
@@ -76,6 +77,8 @@ type Repository interface {
 	CreateCoaReport(dateFrom string, dateTo string, iupopkId int, userId uint) (coareport.CoaReport, error)
 	DeleteCoaReport(id int, iupopkId int, userId uint) (bool, error)
 	UpdateDocumentCoaReport(id int, documentLink coareport.InputUpdateDocumentCoaReport, userId uint, iupopkId int) (coareport.CoaReport, error)
+	CreateRkab(input rkab.RkabInput, iupopkId int, userId uint) (rkab.Rkab, error)
+	DeleteRkab(id int, iupopkId int, userId uint) (bool, error)
 }
 
 type repository struct {
@@ -3789,4 +3792,115 @@ func (r *repository) UpdateDocumentCoaReport(id int, documentLink coareport.Inpu
 
 	tx.Commit()
 	return coaReport, nil
+}
+
+// RKAB
+
+func (r *repository) CreateRkab(input rkab.RkabInput, iupopkId int, userId uint) (rkab.Rkab, error) {
+	var createdRkab rkab.Rkab
+	var iup iupopk.Iupopk
+
+	var counterTransaction counter.Counter
+
+	tx := r.db.Begin()
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return createdRkab, errFindIup
+	}
+
+	errFindCounterTransaction := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
+
+	if errFindCounterTransaction != nil {
+		tx.Rollback()
+		return createdRkab, errFindCounterTransaction
+	}
+
+	idNumber := "RKB-" + iup.Code
+	createdRkab.IdNumber = createIdNumber(idNumber, uint(counterTransaction.Rkab))
+	createdRkab.LetterNumber = input.LetterNumber
+	createdRkab.DateOfIssue = input.DateOfIssue
+	createdRkab.Year = input.Year
+	createdRkab.ProductionQuota = input.ProductionQuota
+
+	errCreate := tx.Create(&createdRkab).Error
+
+	if errCreate != nil {
+		tx.Rollback()
+		return createdRkab, errCreate
+	}
+
+	rkabData, _ := json.Marshal(createdRkab)
+
+	var history History
+
+	history.RkabId = &createdRkab.ID
+	history.Status = "Created Rkab"
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = rkabData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return createdRkab, createHistoryErr
+	}
+
+	updateCounterErr := tx.Model(&counterTransaction).Where("iupopk_id = ?", iupopkId).Update("rkab", counterTransaction.Rkab+1).Error
+
+	if updateCounterErr != nil {
+		tx.Rollback()
+		return createdRkab, updateCounterErr
+	}
+
+	tx.Commit()
+	return createdRkab, nil
+}
+
+func (r *repository) DeleteRkab(id int, iupopkId int, userId uint) (bool, error) {
+	var rkab rkab.Rkab
+	var iup iupopk.Iupopk
+
+	tx := r.db.Begin()
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return false, errFindIup
+	}
+
+	errFind := tx.Where("id = ?", id).First(&rkab).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return false, errFind
+	}
+
+	rkabData, _ := json.Marshal(rkab)
+
+	errDelete := tx.Unscoped().Where("id = ? AND iupopk_id = ?", id, iupopkId).Delete(&rkab).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+		return false, errDelete
+	}
+
+	var history History
+
+	history.Status = fmt.Sprintf("Deleted Rkab with id number %s and id %v", &rkab.IdNumber, rkab.ID)
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = rkabData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return false, createHistoryErr
+	}
+
+	tx.Commit()
+	return true, nil
 }

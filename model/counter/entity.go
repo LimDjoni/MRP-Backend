@@ -22,4 +22,5 @@ type Counter struct {
 	Insw          int            `json:"insw"`
 	BastFormat    string         `json:"bast_format"`
 	CoaReport     int            `json:"coa_report"`
+	Rkab          int            `json:"rkab"`
 }

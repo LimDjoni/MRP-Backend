@@ -10,6 +10,7 @@ import (
 	"ajebackend/model/minerbaln"
 	"ajebackend/model/production"
 	"ajebackend/model/reportdmo"
+	"ajebackend/model/rkab"
 	"ajebackend/model/transaction"
 )
 
@@ -56,6 +57,8 @@ type Service interface {
 	CreateCoaReport(dateFrom string, dateTo string, iupopkId int, userId uint) (coareport.CoaReport, error)
 	DeleteCoaReport(id int, iupopkId int, userId uint) (bool, error)
 	UpdateDocumentCoaReport(id int, documentLink coareport.InputUpdateDocumentCoaReport, userId uint, iupopkId int) (coareport.CoaReport, error)
+	CreateRkab(input rkab.RkabInput, iupopkId int, userId uint) (rkab.Rkab, error)
+	DeleteRkab(id int, iupopkId int, userId uint) (bool, error)
 }
 
 type service struct {
@@ -316,4 +319,16 @@ func (s *service) UpdateDocumentCoaReport(id int, documentLink coareport.InputUp
 	updDocumentCoaReport, updDocumentCoaReportErr := s.repository.UpdateDocumentCoaReport(id, documentLink, userId, iupopkId)
 
 	return updDocumentCoaReport, updDocumentCoaReportErr
+}
+
+func (s *service) CreateRkab(input rkab.RkabInput, iupopkId int, userId uint) (rkab.Rkab, error) {
+	createdRkab, createdRkabErr := s.repository.CreateRkab(input, iupopkId, userId)
+
+	return createdRkab, createdRkabErr
+}
+
+func (s *service) DeleteRkab(id int, iupopkId int, userId uint) (bool, error) {
+	isDeletedRkab, isDeletedRkabErr := s.repository.DeleteRkab(id, iupopkId, userId)
+
+	return isDeletedRkab, isDeletedRkabErr
 }
