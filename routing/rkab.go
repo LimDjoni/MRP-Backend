@@ -54,4 +54,5 @@ func RkabRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	rkabRouting.Get("/list/:iupopk_id", rkabHandler.ListRkab)
 	rkabRouting.Post("/create/:iupopk_id", rkabHandler.CreateRkab)
 	rkabRouting.Delete("delete/:id/:iupopk_id", rkabHandler.DeleteRkab)
+	rkabRouting.Get("/detail/:year/:iupopk_id", rkabHandler.DetailRkab)
 }

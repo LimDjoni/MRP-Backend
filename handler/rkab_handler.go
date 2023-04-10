@@ -404,3 +404,43 @@ func (h *rkabHandler) DeleteRkab(c *fiber.Ctx) error {
 		"message": "success delete rkab",
 	})
 }
+
+func (h *rkabHandler) DetailRkab(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := fiber.Map{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	year := c.Params("year")
+	iupopkId := c.Params("iupopk_id")
+
+	yearInt, err := strconv.Atoi(year)
+	iupopkIdInt, iupopkErr := strconv.Atoi(iupopkId)
+
+	if err != nil || iupopkErr != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	detailRkab, detailRkabErr := h.rkabService.DetailRkabWithYear(yearInt, iupopkIdInt)
+
+	if detailRkabErr != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": detailRkabErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(detailRkab)
+}

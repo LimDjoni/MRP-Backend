@@ -14,6 +14,7 @@ type Rkab struct {
 	Year             string        `json:"year"`
 	ProductionQuota  float64       `json:"production_quota"`
 	RkabDocumentLink string        `json:"rkab_document_link"`
+	IsRevision       bool          `json:"is_revision"`
 	IupopkId         uint          `json:"iupopk_id"`
 	Iupopk           iupopk.Iupopk `json:"iupopk"`
 }

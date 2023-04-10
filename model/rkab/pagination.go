@@ -4,7 +4,6 @@ import (
 	"math"
 
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type Pagination struct {
@@ -35,7 +34,7 @@ func (p *Pagination) GetPage() int {
 
 func paginateData(value interface{}, pagination *Pagination, db *gorm.DB, queryFilter string) func(db *gorm.DB) *gorm.DB {
 	var totalRows int64
-	db.Preload(clause.Associations).Where(queryFilter).Model(value).Count(&totalRows)
+	db.Select("DISTINCT ON (year) year, id, created_at, id_number, letter_number, date_of_issue, production_quota, rkab_document_link, iupopk_id, is_revision").Where(queryFilter).Model(value).Count(&totalRows)
 
 	pagination.TotalRows = totalRows
 	totalPages := int(math.Ceil(float64(totalRows) / float64(pagination.Limit)))

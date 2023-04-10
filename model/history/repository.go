@@ -3800,6 +3800,7 @@ func (r *repository) UpdateDocumentCoaReport(id int, documentLink coareport.Inpu
 func (r *repository) CreateRkab(input rkab.RkabInput, iupopkId int, userId uint) (rkab.Rkab, error) {
 	var createdRkab rkab.Rkab
 	var iup iupopk.Iupopk
+	var findRkab []rkab.Rkab
 
 	var counterTransaction counter.Counter
 
@@ -3810,6 +3811,13 @@ func (r *repository) CreateRkab(input rkab.RkabInput, iupopkId int, userId uint)
 	if errFindIup != nil {
 		tx.Rollback()
 		return createdRkab, errFindIup
+	}
+
+	errFindRkab := tx.Where("year = ?", input.Year).Find(&findRkab).Error
+
+	if errFindRkab != nil {
+		tx.Rollback()
+		return createdRkab, nil
 	}
 
 	errFindCounterTransaction := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
@@ -3826,6 +3834,10 @@ func (r *repository) CreateRkab(input rkab.RkabInput, iupopkId int, userId uint)
 	createdRkab.Year = input.Year
 	createdRkab.ProductionQuota = input.ProductionQuota
 	createdRkab.IupopkId = uint(iupopkId)
+
+	if len(findRkab) > 0 {
+		createdRkab.IsRevision = true
+	}
 
 	errCreate := tx.Create(&createdRkab).Error
 
@@ -3862,8 +3874,10 @@ func (r *repository) CreateRkab(input rkab.RkabInput, iupopkId int, userId uint)
 }
 
 func (r *repository) DeleteRkab(id int, iupopkId int, userId uint) (bool, error) {
-	var rkab rkab.Rkab
+	var rkabDeleted rkab.Rkab
 	var iup iupopk.Iupopk
+
+	var rkabYear string
 
 	tx := r.db.Begin()
 
@@ -3874,25 +3888,48 @@ func (r *repository) DeleteRkab(id int, iupopkId int, userId uint) (bool, error)
 		return false, errFindIup
 	}
 
-	errFind := tx.Where("id = ?", id).First(&rkab).Error
+	errFind := tx.Where("id = ?", id).First(&rkabDeleted).Error
 
 	if errFind != nil {
 		tx.Rollback()
 		return false, errFind
 	}
 
-	rkabData, _ := json.Marshal(rkab)
+	rkabYear = rkabDeleted.Year
+	rkabData, _ := json.Marshal(rkabDeleted)
 
-	errDelete := tx.Unscoped().Where("id = ? AND iupopk_id = ?", id, iupopkId).Delete(&rkab).Error
+	errDelete := tx.Unscoped().Where("id = ? AND iupopk_id = ?", id, iupopkId).Delete(&rkabDeleted).Error
 
 	if errDelete != nil {
 		tx.Rollback()
 		return false, errDelete
 	}
 
+	var listRkab []rkab.Rkab
+
+	errFindRkabWithYear := tx.Where("year = ?", rkabYear).Order("created_at desc").Find(&listRkab).Error
+
+	if errFindRkabWithYear == nil {
+		var newUpdRkab rkab.Rkab
+		var isRevision = false
+		if len(listRkab) > 0 {
+			if len(listRkab) > 1 {
+				isRevision = true
+			}
+			newUpdRkab = listRkab[0]
+
+			errUpd := tx.Model(&newUpdRkab).Update("is_revision", isRevision).Error
+
+			if errUpd != nil {
+				tx.Rollback()
+				return false, errUpd
+			}
+		}
+	}
+
 	var history History
 
-	history.Status = fmt.Sprintf("Deleted Rkab with id number %s and id %v", &rkab.IdNumber, rkab.ID)
+	history.Status = fmt.Sprintf("Deleted Rkab with id number %s and id %v", &rkabDeleted.IdNumber, rkabDeleted.ID)
 	history.UserId = userId
 	history.IupopkId = &iup.ID
 	history.BeforeData = rkabData

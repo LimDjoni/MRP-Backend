@@ -2,7 +2,7 @@ package rkab
 
 type Service interface {
 	ListRkab(page int, sortFilter SortFilterRkab, iupopkId int) (Pagination, error)
-	DetailRkabWithYear(year int, iupopkId int) ([]Rkab, error)
+	DetailRkabWithYear(year int, iupopkId int) (DetailRkab, error)
 	DetailRkabWithId(id int, iupopkId int) (Rkab, error)
 }
 
@@ -20,7 +20,7 @@ func (s *service) ListRkab(page int, sortFilter SortFilterRkab, iupopkId int) (P
 	return listRkab, listRkabErr
 }
 
-func (s *service) DetailRkabWithYear(year int, iupopkId int) ([]Rkab, error) {
+func (s *service) DetailRkabWithYear(year int, iupopkId int) (DetailRkab, error) {
 	detailRkab, detailRkabErr := s.repository.DetailRkabWithYear(year, iupopkId)
 
 	return detailRkab, detailRkabErr
