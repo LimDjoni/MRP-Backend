@@ -1,6 +1,7 @@
 package logs
 
 import (
+	"ajebackend/model/coareport"
 	"ajebackend/model/dmo"
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
@@ -9,6 +10,7 @@ import (
 	"ajebackend/model/minerbaln"
 	"ajebackend/model/production"
 	"ajebackend/model/reportdmo"
+	"ajebackend/model/rkab"
 	"ajebackend/model/transaction"
 
 	"gorm.io/datatypes"
@@ -37,4 +39,8 @@ type Logs struct {
 	Insw               *insw.Insw                        `json:"insw" gorm:"constraint:OnDelete:CASCADE;"`
 	ReportDmoId        *uint                             `json:"report_dmo_id"`
 	ReportDmo          *reportdmo.ReportDmo              `json:"report_dmo"`
+	CoaReportId        *uint                             `json:"coa_report_id"`
+	CoaReport          *coareport.CoaReport              `json:"coa_report" gorm:"constraint:OnDelete:CASCADE;"`
+	RkabId             *uint                             `json:"rkab_id"`
+	Rkab               *rkab.Rkab                        `json:"rkab" gorm:"constraint:OnDelete:CASCADE;"`
 }

@@ -21,4 +21,6 @@ type Counter struct {
 	Production    int            `json:"production`
 	Insw          int            `json:"insw"`
 	BastFormat    string         `json:"bast_format"`
+	CoaReport     int            `json:"coa_report"`
+	Rkab          int            `json:"rkab"`
 }

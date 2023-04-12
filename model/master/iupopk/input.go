@@ -10,4 +10,5 @@ type InputIupopk struct {
 	DirectorName string  `json:"director_name" validate:"required"`
 	Position     string  `json:"position" validate:"required"`
 	Code         string  `json:"code" validate:"required"`
+	BastFormat   string  `json:"bast_format"`
 }
