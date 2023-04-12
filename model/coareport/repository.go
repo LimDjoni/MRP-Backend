@@ -25,7 +25,7 @@ func NewRepository(db *gorm.DB) *repository {
 func (r *repository) GetTransactionCoaReport(dateFrom string, dateTo string, iupopkId int) ([]transaction.Transaction, error) {
 	var listTransaction []transaction.Transaction
 
-	errFind := r.db.Preload(clause.Associations).Where("shipping_date >= ? AND shipping_date <= ? AND seller_id = ?", dateFrom, dateTo, iupopkId).Order("shipping_date desc").Find(&listTransaction).Error
+	errFind := r.db.Preload(clause.Associations).Where("shipping_date >= ? AND shipping_date <= ? AND seller_id = ? AND transaction_type = ?", dateFrom, dateTo, iupopkId, "DN").Order("shipping_date desc").Find(&listTransaction).Error
 
 	if errFind != nil {
 		return listTransaction, errFind
@@ -47,7 +47,7 @@ func (r *repository) GetDetailTransactionCoaReport(id int, iupopkId int) (CoaRep
 
 	detailCoaReport.Detail = coaReport
 
-	errFind := r.db.Preload(clause.Associations).Where("shipping_date >= ? AND shipping_date <= ? AND seller_id = ?", coaReport.DateFrom, coaReport.DateTo, iupopkId).Order("shipping_date desc").Find(&listTransaction).Error
+	errFind := r.db.Preload(clause.Associations).Where("shipping_date >= ? AND shipping_date <= ? AND seller_id = ? AND transaction_type = ?", coaReport.DateFrom, coaReport.DateTo, iupopkId, "DN").Order("shipping_date desc").Find(&listTransaction).Error
 
 	if errFind != nil {
 		return detailCoaReport, errFind
