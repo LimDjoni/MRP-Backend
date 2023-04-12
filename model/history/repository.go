@@ -3837,6 +3837,12 @@ func (r *repository) CreateRkab(input rkab.RkabInput, iupopkId int, userId uint)
 
 	if len(findRkab) > 0 {
 		createdRkab.IsRevision = true
+
+		errUpd := tx.Model(&findRkab).Where("year = ? AND iupopk_id = ?", input.Year, iupopkId).Update("is_revision", true).Error
+
+		if errUpd != nil {
+			return createdRkab, errUpd
+		}
 	}
 
 	errCreate := tx.Create(&createdRkab).Error
@@ -3911,10 +3917,10 @@ func (r *repository) DeleteRkab(id int, iupopkId int, userId uint) (bool, error)
 
 	if errFindRkabWithYear == nil {
 		var newUpdRkab rkab.Rkab
-		var isRevision = false
+		var isRevision = true
 		if len(listRkab) > 0 {
-			if len(listRkab) > 1 {
-				isRevision = true
+			if len(listRkab) == 1 {
+				isRevision = false
 			}
 			newUpdRkab = listRkab[0]
 

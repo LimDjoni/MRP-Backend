@@ -25,7 +25,7 @@ func NewRepository(db *gorm.DB) *repository {
 func (r *repository) GetTransactionCoaReport(dateFrom string, dateTo string, iupopkId int) ([]transaction.Transaction, error) {
 	var listTransaction []transaction.Transaction
 
-	errFind := r.db.Where("shipping_date >= ? AND shipping_date <= ? AND seller_id = ?", dateFrom, dateTo, iupopkId).Find(&listTransaction).Error
+	errFind := r.db.Preload(clause.Associations).Where("shipping_date >= ? AND shipping_date <= ? AND seller_id = ? AND transaction_type = ?", dateFrom, dateTo, iupopkId, "DN").Order("shipping_date desc").Find(&listTransaction).Error
 
 	if errFind != nil {
 		return listTransaction, errFind
@@ -47,7 +47,7 @@ func (r *repository) GetDetailTransactionCoaReport(id int, iupopkId int) (CoaRep
 
 	detailCoaReport.Detail = coaReport
 
-	errFind := r.db.Preload(clause.Associations).Where("shipping_date >= ? AND shipping_date <= ? AND seller_id = ?", coaReport.DateFrom, coaReport.DateTo, iupopkId).Find(&listTransaction).Error
+	errFind := r.db.Preload(clause.Associations).Where("shipping_date >= ? AND shipping_date <= ? AND seller_id = ? AND transaction_type = ?", coaReport.DateFrom, coaReport.DateTo, iupopkId, "DN").Order("shipping_date desc").Find(&listTransaction).Error
 
 	if errFind != nil {
 		return detailCoaReport, errFind
@@ -74,12 +74,12 @@ func (r *repository) ListCoaReport(page int, sortFilter SortFilterCoaReport, iup
 
 	queryFilter := fmt.Sprintf("iupopk_id = %v", iupopkId)
 
-	if sortFilter.DateFrom != "" {
-		queryFilter += " AND date_from = '" + sortFilter.DateFrom + "'"
+	if sortFilter.DateStart != "" {
+		queryFilter += " AND date_from = '" + sortFilter.DateStart + "'"
 	}
 
-	if sortFilter.DateTo != "" {
-		queryFilter += " AND date_to = '" + sortFilter.DateTo + "'"
+	if sortFilter.DateEnd != "" {
+		queryFilter += " AND date_to = '" + sortFilter.DateEnd + "'"
 	}
 
 	errFind := r.db.Preload(clause.Associations).Where(queryFilter).Order(sortString).Scopes(paginateData(coaReports, &pagination, r.db, queryFilter)).Find(&coaReports).Error

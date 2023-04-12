@@ -10,8 +10,8 @@ type RkabInput struct {
 type SortFilterRkab struct {
 	Field           string
 	Sort            string
-	DateFrom        string
-	DateTo          string
+	DateOfIssue     string
 	Year            string
 	ProductionQuota string
+	Status          string
 }

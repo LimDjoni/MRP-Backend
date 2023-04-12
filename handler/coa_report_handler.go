@@ -10,6 +10,7 @@ import (
 	"ajebackend/model/useriupopk"
 	"ajebackend/validatorfunc"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -417,7 +418,7 @@ func (h *coaReportHandler) UpdateDocumentCoaReport(c *fiber.Ctx) error {
 		})
 	}
 
-	_, detailCoaReportErr := h.coaReportService.GetDetailTransactionCoaReport(idInt, iupopkIdInt)
+	detailCoaReport, detailCoaReportErr := h.coaReportService.GetDetailTransactionCoaReport(idInt, iupopkIdInt)
 
 	if detailCoaReportErr != nil {
 		status := 400
@@ -465,7 +466,8 @@ func (h *coaReportHandler) UpdateDocumentCoaReport(c *fiber.Ctx) error {
 
 	var inputNotification notification.InputNotification
 	inputNotification.Type = "coa report"
-	inputNotification.Status = "membuat"
+	inputNotification.Period = fmt.Sprintf("%v/%v", detailCoaReport.Detail.DateFrom, detailCoaReport.Detail.DateTo)
+	inputNotification.Status = "membuat dokumen"
 	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createdNotificationErr != nil {
@@ -608,8 +610,8 @@ func (h *coaReportHandler) ListCoaReport(c *fiber.Ctx) error {
 
 	filterCoaReport.Field = c.Query("field")
 	filterCoaReport.Sort = c.Query("sort")
-	filterCoaReport.DateFrom = c.Query("date_from")
-	filterCoaReport.DateTo = c.Query("date_to")
+	filterCoaReport.DateStart = c.Query("date_start")
+	filterCoaReport.DateEnd = c.Query("date_end")
 
 	listCoaReport, listCoaReportErr := h.coaReportService.ListCoaReport(pageNumber, filterCoaReport, iupopkIdInt)
 
