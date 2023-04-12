@@ -40,12 +40,8 @@ func (r *repository) ListRkab(page int, sortFilter SortFilterRkab, iupopkId int)
 
 	queryFilter := fmt.Sprintf("iupopk_id = %v", iupopkId)
 
-	if sortFilter.DateFrom != "" {
-		queryFilter += " AND date_of_issue >= '" + sortFilter.DateFrom + "'"
-	}
-
-	if sortFilter.DateTo != "" {
-		queryFilter += " AND date_of_issue <= '" + sortFilter.DateTo + "'"
+	if sortFilter.DateOfIssue != "" {
+		queryFilter += " AND date_of_issue = '" + sortFilter.DateOfIssue + "'"
 	}
 
 	if sortFilter.Year != "" {
@@ -56,6 +52,20 @@ func (r *repository) ListRkab(page int, sortFilter SortFilterRkab, iupopkId int)
 
 	if sortFilter.ProductionQuota != "" {
 		queryFilter = queryFilter + " AND cast(production_quota AS TEXT) LIKE '%" + sortFilter.ProductionQuota + "%'"
+	}
+
+	if sortFilter.Status != "" {
+		var status bool
+
+		if sortFilter.Status == "Revisi" {
+			status = true
+		}
+
+		if sortFilter.Status == "Non-Revisi" {
+			status = false
+		}
+
+		queryFilter = fmt.Sprintf("%s AND is_revision = %v", queryFilter, status)
 	}
 
 	errFind := r.db.Table("rkabs").Preload(clause.Associations).Select("DISTINCT ON (rkabs.year) rkabs.year, rkabs.id, rkabs.created_at, rkabs.id_number, rkabs.letter_number, rkabs.date_of_issue, rkabs.production_quota, rkabs.rkab_document_link, rkabs.iupopk_id, rkabs.is_revision").Where(queryFilter).Order(sortString).Joins("left join iupopks on rkabs.iupopk_id = iupopks.id").Scopes(paginateData(listRkab, &pagination, r.db, queryFilter)).Find(&listRkab).Error

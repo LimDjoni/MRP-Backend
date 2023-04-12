@@ -22,8 +22,8 @@ type InputRequestCreateUploadCoaReport struct {
 }
 
 type SortFilterCoaReport struct {
-	Field    string
-	Sort     string
-	DateFrom string
-	DateTo   string
+	Field     string
+	Sort      string
+	DateStart string
+	DateEnd   string
 }

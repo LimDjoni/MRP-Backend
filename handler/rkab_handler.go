@@ -263,11 +263,10 @@ func (h *rkabHandler) ListRkab(c *fiber.Ctx) error {
 
 	filterRkab.Field = c.Query("field")
 	filterRkab.Sort = c.Query("sort")
-	filterRkab.DateFrom = c.Query("date_from")
-	filterRkab.DateTo = c.Query("date_to")
+	filterRkab.DateOfIssue = c.Query("date_of_issue")
 	filterRkab.Year = c.Query("year")
 	filterRkab.ProductionQuota = c.Query("production_quota")
-
+	filterRkab.Status = c.Query("status")
 	listRkab, listRkabErr := h.rkabService.ListRkab(pageNumber, filterRkab, iupopkIdInt)
 
 	if listRkabErr != nil {
