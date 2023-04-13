@@ -44,8 +44,6 @@ import (
 	"ajebackend/model/user"
 	"ajebackend/model/useriupopk"
 	routing2 "ajebackend/routing"
-	"ajebackend/seeding"
-	seedingmaster "ajebackend/seeding/master"
 	"ajebackend/validatorfunc"
 	"fmt"
 	"os"
@@ -128,28 +126,28 @@ func main() {
 			&cafassignmentenduser.CafAssignmentEndUser{},
 		)
 
-		seeding.UpdateTransactionsRoyalty(db)
-		seeding.SeedingTraderAndCompanyData(db)
-		seeding.SeedingDestination(db)
-		seeding.UpdateNaming(db)
-		seeding.UpdateTransactionsQuantity(db)
-		seedingmaster.SeedingBarge(db)
-		seedingmaster.SeedingCountry(db)
-		seedingmaster.SeedingCurrency(db)
-		seedingmaster.SeedingDocumentType(db)
-		seedingmaster.SeedingIndustryType(db)
-		seedingmaster.SeedingInsuranceCompany(db)
-		seedingmaster.SeedingIupopk(db)
-		seedingmaster.SeedingPabeanOffice(db)
-		seedingmaster.SeedingPortInsw(db)
-		seedingmaster.SeedingPortsAndLocation(db)
-		seedingmaster.SeedingSalesSystem(db)
-		seedingmaster.SeedingSurveyor(db)
-		seedingmaster.SeedingTugboat(db)
-		seedingmaster.SeedingUnit(db)
-		seedingmaster.SeedingVessel(db)
-		seedingmaster.SeedingCounter(db)
-		seeding.UpdateIupopk(db)
+		// seeding.UpdateTransactionsRoyalty(db)
+		// seeding.SeedingTraderAndCompanyData(db)
+		// seeding.SeedingDestination(db)
+		// seeding.UpdateNaming(db)
+		// seeding.UpdateTransactionsQuantity(db)
+		// seedingmaster.SeedingBarge(db)
+		// seedingmaster.SeedingCountry(db)
+		// seedingmaster.SeedingCurrency(db)
+		// seedingmaster.SeedingDocumentType(db)
+		// seedingmaster.SeedingIndustryType(db)
+		// seedingmaster.SeedingInsuranceCompany(db)
+		// seedingmaster.SeedingIupopk(db)
+		// seedingmaster.SeedingPabeanOffice(db)
+		// seedingmaster.SeedingPortInsw(db)
+		// seedingmaster.SeedingPortsAndLocation(db)
+		// seedingmaster.SeedingSalesSystem(db)
+		// seedingmaster.SeedingSurveyor(db)
+		// seedingmaster.SeedingTugboat(db)
+		// seedingmaster.SeedingUnit(db)
+		// seedingmaster.SeedingVessel(db)
+		// seedingmaster.SeedingCounter(db)
+		// seeding.UpdateIupopk(db)
 		fmt.Println(errMigrate)
 	}
 

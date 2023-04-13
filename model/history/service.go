@@ -66,6 +66,7 @@ type Service interface {
 	UploadCreateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
 	UploadUpdateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
 	UpdateElectricAssignment(id int, input electricassignmentenduser.UpdateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
+	DeleteElectricAssignment(id int, iupopkId int, userId uint) (bool, error)
 }
 
 type service struct {
@@ -368,4 +369,10 @@ func (s *service) UpdateElectricAssignment(id int, input electricassignmentendus
 	updateElectricAssigment, updateElectricAssigmentErr := s.repository.UpdateElectricAssignment(id, input, userId, iupopkId)
 
 	return updateElectricAssigment, updateElectricAssigmentErr
+}
+
+func (s *service) DeleteElectricAssignment(id int, iupopkId int, userId uint) (bool, error) {
+	isDeleted, isDeletedErr := s.repository.DeleteElectricAssignment(id, iupopkId, userId)
+
+	return isDeleted, isDeletedErr
 }

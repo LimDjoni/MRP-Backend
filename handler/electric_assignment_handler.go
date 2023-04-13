@@ -403,7 +403,7 @@ func (h *electrictAssignmentHandler) UpdateElectricAssignment(c *fiber.Ctx) erro
 		})
 	}
 
-	file, errFormFile := c.FormFile("letter_assignment")
+	file, errFormFile := c.FormFile("revision_letter_assignment")
 
 	if errFormFile == nil {
 
@@ -486,4 +486,130 @@ func (h *electrictAssignmentHandler) UpdateElectricAssignment(c *fiber.Ctx) erro
 		}
 	}
 	return c.Status(200).JSON(updateElectricAssignment)
+}
+
+func (h *electrictAssignmentHandler) DeleteElectricAssignment(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := fiber.Map{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+	id := c.Params("id")
+	idInt, err := strconv.Atoi(id)
+	iupopkId := c.Params("iupopk_id")
+	iupopkIdInt, iupopkErr := strconv.Atoi(iupopkId)
+
+	if err != nil || iupopkErr != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	detailElectricAssignment, detailElectricAssignmentErr := h.electricAssignmentEndUserService.DetailElectricAssignment(idInt, iupopkIdInt)
+
+	if detailElectricAssignmentErr != nil {
+		status := 400
+
+		if detailElectricAssignmentErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"message": "failed to delete electric assigment",
+			"error":   detailElectricAssignmentErr.Error(),
+		})
+	}
+
+	_, isDeletedElectricAssignmentErr := h.historyService.DeleteElectricAssignment(idInt, iupopkIdInt, uint(claims["id"].(float64)))
+
+	if isDeletedElectricAssignmentErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["electric_assignment_id"] = idInt
+
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": isDeletedElectricAssignmentErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			ElectricAssignmentId: &detailElectricAssignment.Detail.ID,
+			Input:                inputJson,
+			Message:              messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		status := 400
+
+		if isDeletedElectricAssignmentErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"message": "failed to delete electric assignment",
+			"error":   isDeletedElectricAssignmentErr.Error(),
+		})
+	}
+
+	if detailElectricAssignment.Detail.AssignmentLetterLink != "" || detailElectricAssignment.Detail.RevisionAssignmentLetterLink != "" {
+		documentLink := detailElectricAssignment.Detail.AssignmentLetterLink
+
+		documentLinkSplit := strings.Split(documentLink, "/")
+
+		fileName := ""
+
+		for i, v := range documentLinkSplit {
+			if i == 3 {
+				fileName += v + "/"
+			}
+
+			if i == 4 {
+				fileName += v + "/"
+			}
+
+			if i == 5 {
+				fileName += v
+			}
+		}
+		_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
+
+		if deleteAwsErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["user_id"] = claims["id"]
+			inputMap["rkab_id"] = idInt
+
+			inputJson, _ := json.Marshal(inputMap)
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error": deleteAwsErr.Error(),
+			})
+
+			createdErrLog := logs.Logs{
+				ElectricAssignmentId: &detailElectricAssignment.Detail.ID,
+				Input:                inputJson,
+				Message:              messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			return c.Status(400).JSON(fiber.Map{
+				"message": "failed to delete electric assignment aws",
+				"error":   deleteAwsErr.Error(),
+			})
+		}
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"message": "success delete electric assignment",
+	})
 }

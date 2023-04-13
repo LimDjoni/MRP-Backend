@@ -86,6 +86,7 @@ type Repository interface {
 	UploadCreateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
 	UploadUpdateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
 	UpdateElectricAssignment(id int, input electricassignmentenduser.UpdateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
+	DeleteElectricAssignment(id int, iupopkId int, userId uint) (bool, error)
 }
 
 type repository struct {
@@ -3900,7 +3901,7 @@ func (r *repository) DeleteRkab(id int, iupopkId int, userId uint) (bool, error)
 		return false, errFindIup
 	}
 
-	errFind := tx.Where("id = ?", id).First(&rkabDeleted).Error
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&rkabDeleted).Error
 
 	if errFind != nil {
 		tx.Rollback()
@@ -4291,4 +4292,66 @@ func (r *repository) UpdateElectricAssignment(id int, input electricassignmenten
 
 	tx.Commit()
 	return updatedElectricAssignment, nil
+}
+
+func (r *repository) DeleteElectricAssignment(id int, iupopkId int, userId uint) (bool, error) {
+	var electricAssignmentDeleted electricassignment.ElectricAssignment
+	var iup iupopk.Iupopk
+	var listElectricAssignmentEndUser []electricassignmentenduser.ElectricAssignmentEndUser
+
+	tx := r.db.Begin()
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return false, errFindIup
+	}
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&electricAssignmentDeleted).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return false, errFind
+	}
+
+	errFindList := tx.Where("electric_assignment_id = ?", id).Find(&listElectricAssignmentEndUser).Error
+
+	if errFindList != nil {
+
+		if errFindList != nil {
+			tx.Rollback()
+			return false, errFindList
+		}
+	}
+
+	beforeMap := make(map[string]interface{})
+
+	beforeMap["electric_assigment"] = electricAssignmentDeleted
+	beforeMap["list_electric_assigment"] = listElectricAssignmentEndUser
+
+	beforeData, _ := json.Marshal(beforeMap)
+
+	errDelete := tx.Unscoped().Where("id = ? AND iupopk_id = ?", id, iupopkId).Delete(&electricAssignmentDeleted).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+		return false, errDelete
+	}
+
+	var history History
+
+	history.Status = fmt.Sprintf("Deleted Electric Assignment with id number %s and id %v", &electricAssignmentDeleted.IdNumber, electricAssignmentDeleted.ID)
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = beforeData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return false, createHistoryErr
+	}
+
+	tx.Commit()
+	return true, nil
 }

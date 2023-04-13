@@ -54,4 +54,5 @@ func ElectricAssignmentRouting(db *gorm.DB, app fiber.Router, validate *validato
 	electricAssignmentRouting.Post("/create/:iupopk_id", electricAssignmentHandler.CreateElectricAssignment)
 	electricAssignmentRouting.Get("/detail/:id/:iupopk_id", electricAssignmentHandler.DetailElectricAssignment)
 	electricAssignmentRouting.Put("/update/:id/:iupopk_id", electricAssignmentHandler.UpdateElectricAssignment)
+	electricAssignmentRouting.Delete("/delete/:id/:iupopk_id", electricAssignmentHandler.DeleteElectricAssignment)
 }
