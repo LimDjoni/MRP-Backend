@@ -3,6 +3,8 @@ package history
 import (
 	"ajebackend/model/coareport"
 	"ajebackend/model/dmo"
+	"ajebackend/model/electricassignment"
+	"ajebackend/model/electricassignmentenduser"
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/insw"
@@ -60,6 +62,10 @@ type Service interface {
 	CreateRkab(input rkab.RkabInput, iupopkId int, userId uint) (rkab.Rkab, error)
 	DeleteRkab(id int, iupopkId int, userId uint) (bool, error)
 	UploadDocumentRkab(id uint, urlS3 string, userId uint, iupopkId int) (rkab.Rkab, error)
+	CreateElectricAssignment(input electricassignmentenduser.CreateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
+	UploadCreateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
+	UploadUpdateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
+	UpdateElectricAssignment(id int, input electricassignmentenduser.UpdateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
 }
 
 type service struct {
@@ -338,4 +344,28 @@ func (s *service) UploadDocumentRkab(id uint, urlS3 string, userId uint, iupopkI
 	updateRkab, updateRkabErr := s.repository.UploadDocumentRkab(id, urlS3, userId, iupopkId)
 
 	return updateRkab, updateRkabErr
+}
+
+func (s *service) CreateElectricAssignment(input electricassignmentenduser.CreateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error) {
+	createElectricAssignment, createElectricAssignmentErr := s.repository.CreateElectricAssignment(input, userId, iupopkId)
+
+	return createElectricAssignment, createElectricAssignmentErr
+}
+
+func (s *service) UploadCreateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error) {
+	uploadElectricAssignment, uploadElectricAssignmentErr := s.repository.UploadCreateDocumentElectricAssignment(id, urlS3, userId, iupopkId)
+
+	return uploadElectricAssignment, uploadElectricAssignmentErr
+}
+
+func (s *service) UploadUpdateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error) {
+	uploadElectricAssignment, uploadElectricAssignmentErr := s.repository.UploadUpdateDocumentElectricAssignment(id, urlS3, userId, iupopkId)
+
+	return uploadElectricAssignment, uploadElectricAssignmentErr
+}
+
+func (s *service) UpdateElectricAssignment(id int, input electricassignmentenduser.UpdateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error) {
+	updateElectricAssigment, updateElectricAssigmentErr := s.repository.UpdateElectricAssignment(id, input, userId, iupopkId)
+
+	return updateElectricAssigment, updateElectricAssigmentErr
 }

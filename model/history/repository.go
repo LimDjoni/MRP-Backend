@@ -6,6 +6,8 @@ import (
 	"ajebackend/model/counter"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
+	"ajebackend/model/electricassignment"
+	"ajebackend/model/electricassignmentenduser"
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/insw"
@@ -80,6 +82,10 @@ type Repository interface {
 	CreateRkab(input rkab.RkabInput, iupopkId int, userId uint) (rkab.Rkab, error)
 	DeleteRkab(id int, iupopkId int, userId uint) (bool, error)
 	UploadDocumentRkab(id uint, urlS3 string, userId uint, iupopkId int) (rkab.Rkab, error)
+	CreateElectricAssignment(input electricassignmentenduser.CreateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
+	UploadCreateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
+	UploadUpdateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
+	UpdateElectricAssignment(id int, input electricassignmentenduser.UpdateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
 }
 
 type repository struct {
@@ -3984,4 +3990,305 @@ func (r *repository) UploadDocumentRkab(id uint, urlS3 string, userId uint, iupo
 
 	tx.Commit()
 	return rkab, nil
+}
+
+// Electric Assignment
+func (r *repository) CreateElectricAssignment(input electricassignmentenduser.CreateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error) {
+	var createdElectricAssignment electricassignment.ElectricAssignment
+
+	var electricAssignmentEndUser []electricassignmentenduser.ElectricAssignmentEndUser
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("year = ? AND iupopk_id = ?", input.Year, iupopkId).First(&createdElectricAssignment).Error
+
+	if errFind == nil {
+		tx.Rollback()
+		return createdElectricAssignment, errors.New("Surat Penugasan Tahun ini sudah pernah dibuat")
+	}
+
+	var counterTransaction counter.Counter
+	var iup iupopk.Iupopk
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return createdElectricAssignment, errFindIup
+	}
+
+	errFindCounterTransaction := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
+
+	if errFindCounterTransaction != nil {
+		tx.Rollback()
+		return createdElectricAssignment, errFindCounterTransaction
+	}
+
+	idElectric := counterTransaction.ElectricAssignment
+
+	if idElectric == 0 {
+		idElectric = 1
+	}
+
+	idNumber := "SPL-" + iup.Code
+	createdElectricAssignment.IdNumber = createIdNumber(idNumber, uint(idElectric))
+	createdElectricAssignment.LetterNumber = strings.ToUpper(input.LetterNumber)
+	createdElectricAssignment.GrandTotalQuantity = input.GrandTotalQuantity
+	createdElectricAssignment.Year = input.Year
+	createdElectricAssignment.IupopkId = iup.ID
+
+	errCreate := tx.Create(&createdElectricAssignment).Error
+
+	if errCreate != nil {
+		tx.Rollback()
+		return createdElectricAssignment, errCreate
+	}
+
+	for _, v := range input.ListElectricAssignment {
+		var tempElecEndUser electricassignmentenduser.ElectricAssignmentEndUser
+
+		tempElecEndUser.ElectricAssignmentId = createdElectricAssignment.ID
+		tempElecEndUser.PortId = v.PortId
+		tempElecEndUser.Supplier = v.Supplier
+		tempElecEndUser.AverageCalories = v.AverageCalories
+		tempElecEndUser.Quantity = v.Quantity
+		tempElecEndUser.EndUserId = v.EndUserId
+
+		electricAssignmentEndUser = append(electricAssignmentEndUser, tempElecEndUser)
+	}
+
+	errBulkCreate := tx.Create(&electricAssignmentEndUser).Error
+
+	if errBulkCreate != nil {
+		tx.Rollback()
+		return createdElectricAssignment, errBulkCreate
+	}
+
+	beforeData := make(map[string]interface{})
+
+	beforeData["electric_assignment"] = createdElectricAssignment
+	beforeData["list_electric_assigment_end_user"] = electricAssignmentEndUser
+
+	beforeJson, _ := json.Marshal(beforeData)
+
+	var history History
+
+	history.ElectricAssignmentId = &createdElectricAssignment.ID
+	history.Status = "Created Electric Assignment"
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = beforeJson
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return createdElectricAssignment, createHistoryErr
+	}
+
+	updateCounterErr := tx.Model(&counterTransaction).Where("iupopk_id = ?", iupopkId).Update("electric_assignment", idElectric+1).Error
+
+	if updateCounterErr != nil {
+		tx.Rollback()
+		return createdElectricAssignment, updateCounterErr
+	}
+
+	tx.Commit()
+	return createdElectricAssignment, nil
+}
+
+func (r *repository) UploadCreateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error) {
+	var electricAssignment electricassignment.ElectricAssignment
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&electricAssignment).Error
+
+	if errFind != nil {
+		return electricAssignment, errFind
+	}
+
+	errEdit := tx.Model(&electricAssignment).Update("assignment_letter_link", urlS3).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return electricAssignment, errEdit
+	}
+
+	var history History
+
+	history.ElectricAssignmentId = &electricAssignment.ID
+	history.UserId = userId
+	history.Status = "Uploaded document electric assignment"
+
+	history.IupopkId = &electricAssignment.IupopkId
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return electricAssignment, createHistoryErr
+	}
+
+	tx.Commit()
+	return electricAssignment, nil
+}
+
+func (r *repository) UploadUpdateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error) {
+	var electricAssignment electricassignment.ElectricAssignment
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&electricAssignment).Error
+
+	if errFind != nil {
+		return electricAssignment, errFind
+	}
+
+	errEdit := tx.Model(&electricAssignment).Update("revision_assignment_letter_link", urlS3).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return electricAssignment, errEdit
+	}
+
+	var history History
+
+	history.ElectricAssignmentId = &electricAssignment.ID
+	history.UserId = userId
+	history.Status = "Uploaded document revision electric assignment"
+
+	history.IupopkId = &electricAssignment.IupopkId
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return electricAssignment, createHistoryErr
+	}
+
+	tx.Commit()
+	return electricAssignment, nil
+}
+
+func (r *repository) UpdateElectricAssignment(id int, input electricassignmentenduser.UpdateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error) {
+	var updatedElectricAssignment electricassignment.ElectricAssignment
+
+	var electricAssigmentEndUser []electricassignmentenduser.ElectricAssignmentEndUser
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&updatedElectricAssignment).Error
+
+	if errFind != nil {
+		tx.Rollback()
+
+		return updatedElectricAssignment, errFind
+	}
+
+	errFindList := tx.Where("electric_assignment_id = ?", id).Find(&electricAssigmentEndUser).Error
+
+	if errFindList != nil {
+		tx.Rollback()
+
+		return updatedElectricAssignment, errFindList
+	}
+
+	beforeMap := make(map[string]interface{})
+
+	beforeMap["detail"] = updatedElectricAssignment
+	beforeMap["list"] = electricAssigmentEndUser
+
+	updateMap := make(map[string]interface{})
+
+	updateMap["grand_total_quantity"] = input.GrandTotalQuantity
+	updateMap["revision_letter_number"] = input.RevisionLetterNumber
+
+	errUpd := tx.Model(&updatedElectricAssignment).Where("id = ? AND iupopk_id = ?", id, iupopkId).Updates(updateMap).Error
+
+	if errUpd != nil {
+		tx.Rollback()
+
+		return updatedElectricAssignment, errUpd
+	}
+
+	var idUpdated []uint
+
+	for _, values := range input.ListElectricAssignment {
+		var tempElectricAssignment electricassignmentenduser.ElectricAssignmentEndUser
+		isExist := helper.IsExistElectricAssignment(values.ID, electricAssigmentEndUser)
+
+		tempElectricAssignment = values
+
+		if !isExist {
+			tempElectricAssignment.ElectricAssignmentId = updatedElectricAssignment.ID
+
+			errCreate := tx.Create(&tempElectricAssignment).Error
+
+			if errCreate != nil {
+				return updatedElectricAssignment, errCreate
+			}
+
+		} else {
+			errUpd := tx.Model(&tempElectricAssignment).Updates(&tempElectricAssignment).Error
+
+			if errUpd != nil {
+				return updatedElectricAssignment, errUpd
+			}
+
+		}
+
+		idUpdated = append(idUpdated, tempElectricAssignment.ID)
+	}
+
+	var deletedElectricAssignment []electricassignmentenduser.ElectricAssignmentEndUser
+
+	errFindDeleted := tx.Where("electric_assignment_id = ? AND id NOT IN ?", id, idUpdated).Find(&deletedElectricAssignment).Error
+
+	if errFindDeleted != nil {
+		tx.Rollback()
+
+		return updatedElectricAssignment, errFindDeleted
+	}
+
+	errDelete := tx.Unscoped().Where("electric_assignment_id = ? AND id NOT IN ?", id, idUpdated).Delete(&deletedElectricAssignment).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+
+		return updatedElectricAssignment, errDelete
+	}
+
+	var newElectricAssigmentEndUser []electricassignmentenduser.ElectricAssignmentEndUser
+
+	errFindListNew := tx.Where("electric_assignment_id = ?", id).Find(&newElectricAssigmentEndUser).Error
+
+	if errFindListNew != nil {
+		tx.Rollback()
+
+		return updatedElectricAssignment, errFindListNew
+	}
+
+	afterMap := make(map[string]interface{})
+
+	afterMap["detail"] = updatedElectricAssignment
+	afterMap["list"] = newElectricAssigmentEndUser
+
+	beforeJson, _ := json.Marshal(beforeMap)
+	afterJson, _ := json.Marshal(afterMap)
+
+	var history History
+
+	history.ElectricAssignmentId = &updatedElectricAssignment.ID
+	history.Status = "Updated Electric Assignment"
+	history.UserId = userId
+	history.IupopkId = &updatedElectricAssignment.IupopkId
+	history.BeforeData = beforeJson
+	history.AfterData = afterJson
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return updatedElectricAssignment, createHistoryErr
+	}
+
+	tx.Commit()
+	return updatedElectricAssignment, nil
 }
