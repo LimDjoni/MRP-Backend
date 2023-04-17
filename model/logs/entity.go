@@ -1,6 +1,7 @@
 package logs
 
 import (
+	"ajebackend/model/cafassignment"
 	"ajebackend/model/coareport"
 	"ajebackend/model/dmo"
 	"ajebackend/model/electricassignment"
@@ -46,4 +47,6 @@ type Logs struct {
 	Rkab                 *rkab.Rkab                             `json:"rkab" gorm:"constraint:OnDelete:CASCADE;"`
 	ElectricAssignmentId *uint                                  `json:"electric_assignment_id"`
 	ElectricAssignment   *electricassignment.ElectricAssignment `json:"electric_assignments" gorm:"constraint:OnDelete:CASCADE;"`
+	CafAssignmentId      *uint                                  `json:"caf_assignment_id"`
+	CafAssignment        *cafassignment.CafAssignment           `json:"caf_assignments" gorm:"constraint:OnDelete:CASCADE;"`
 }

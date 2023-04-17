@@ -2,6 +2,8 @@ package history
 
 import (
 	"ajebackend/helper"
+	"ajebackend/model/cafassignment"
+	"ajebackend/model/cafassignmentenduser"
 	"ajebackend/model/coareport"
 	"ajebackend/model/counter"
 	"ajebackend/model/dmo"
@@ -11,6 +13,7 @@ import (
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/insw"
+	"ajebackend/model/master/company"
 	"ajebackend/model/master/currency"
 	"ajebackend/model/master/iupopk"
 	"ajebackend/model/master/navycompany"
@@ -87,6 +90,11 @@ type Repository interface {
 	UploadUpdateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
 	UpdateElectricAssignment(id int, input electricassignmentenduser.UpdateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
 	DeleteElectricAssignment(id int, iupopkId int, userId uint) (bool, error)
+	CreateCafAssignment(input cafassignmentenduser.CreateCafAssignmentInput, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
+	UploadCreateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
+	UploadUpdateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
+	DeleteCafAssignment(id int, iupopkId int, userId uint) (bool, error)
+	UpdateCafAssignment(id int, input cafassignmentenduser.UpdateCafAssignmentInput, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
 }
 
 type repository struct {
@@ -4354,4 +4362,384 @@ func (r *repository) DeleteElectricAssignment(id int, iupopkId int, userId uint)
 
 	tx.Commit()
 	return true, nil
+}
+
+// Caf Assignment -> Cement and Fertilizer Assignment
+
+func (r *repository) CreateCafAssignment(input cafassignmentenduser.CreateCafAssignmentInput, userId uint, iupopkId int) (cafassignment.CafAssignment, error) {
+	var createdCafAssignment cafassignment.CafAssignment
+
+	var cafAssignmentEndUser []cafassignmentenduser.CafAssignmentEndUser
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("year = ? AND iupopk_id = ?", input.Year, iupopkId).First(&createdCafAssignment).Error
+
+	if errFind == nil {
+		tx.Rollback()
+		return createdCafAssignment, errors.New("Surat Penugasan Tahun ini sudah pernah dibuat")
+	}
+
+	var counterTransaction counter.Counter
+	var iup iupopk.Iupopk
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return createdCafAssignment, errFindIup
+	}
+
+	errFindCounterTransaction := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
+
+	if errFindCounterTransaction != nil {
+		tx.Rollback()
+		return createdCafAssignment, errFindCounterTransaction
+	}
+
+	idCaf := counterTransaction.CafAssignment
+
+	if idCaf == 0 {
+		idCaf = 1
+	}
+
+	idNumber := "SPC-" + iup.Code
+	createdCafAssignment.IdNumber = createIdNumber(idNumber, uint(idCaf))
+	createdCafAssignment.LetterNumber = strings.ToUpper(input.LetterNumber)
+	createdCafAssignment.GrandTotalQuantity = input.GrandTotalQuantity
+	createdCafAssignment.Year = input.Year
+	createdCafAssignment.IupopkId = iup.ID
+
+	errCreate := tx.Create(&createdCafAssignment).Error
+
+	if errCreate != nil {
+		tx.Rollback()
+		return createdCafAssignment, errCreate
+	}
+
+	for _, v := range input.ListCafAssignment {
+		var tempCafEndUser cafassignmentenduser.CafAssignmentEndUser
+		var tempEndUser company.Company
+
+		errTempEndUser := tx.Where("id = ?", v.EndUserId).First(&tempEndUser).Error
+
+		if errTempEndUser != nil {
+			tx.Rollback()
+			return createdCafAssignment, errTempEndUser
+		}
+
+		tempCafEndUser.CafAssignmentId = createdCafAssignment.ID
+		tempCafEndUser.AverageCalories = v.AverageCalories
+		tempCafEndUser.Quantity = v.Quantity
+		tempCafEndUser.EndUserId = v.EndUserId
+		tempCafEndUser.EndUserString = tempEndUser.CompanyName
+
+		cafAssignmentEndUser = append(cafAssignmentEndUser, tempCafEndUser)
+	}
+
+	errBulkCreate := tx.Create(&cafAssignmentEndUser).Error
+
+	if errBulkCreate != nil {
+		tx.Rollback()
+		return createdCafAssignment, errBulkCreate
+	}
+
+	beforeData := make(map[string]interface{})
+
+	beforeData["caf_assignment"] = createdCafAssignment
+	beforeData["list_caf_assigment_end_user"] = cafAssignmentEndUser
+
+	beforeJson, _ := json.Marshal(beforeData)
+
+	var history History
+
+	history.CafAssignmentId = &createdCafAssignment.ID
+	history.Status = "Created Caf Assignment"
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = beforeJson
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return createdCafAssignment, createHistoryErr
+	}
+
+	updateCounterErr := tx.Model(&counterTransaction).Where("iupopk_id = ?", iupopkId).Update("caf_assignment", idCaf+1).Error
+
+	if updateCounterErr != nil {
+		tx.Rollback()
+		return createdCafAssignment, updateCounterErr
+	}
+
+	tx.Commit()
+	return createdCafAssignment, nil
+}
+
+func (r *repository) UploadCreateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int) (cafassignment.CafAssignment, error) {
+	var cafAssignment cafassignment.CafAssignment
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&cafAssignment).Error
+
+	if errFind != nil {
+		return cafAssignment, errFind
+	}
+
+	errEdit := tx.Model(&cafAssignment).Update("assignment_letter_link", urlS3).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return cafAssignment, errEdit
+	}
+
+	var history History
+
+	history.CafAssignmentId = &cafAssignment.ID
+	history.UserId = userId
+	history.Status = "Uploaded document caf assignment"
+
+	history.IupopkId = &cafAssignment.IupopkId
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return cafAssignment, createHistoryErr
+	}
+
+	tx.Commit()
+	return cafAssignment, nil
+}
+
+func (r *repository) UploadUpdateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int) (cafassignment.CafAssignment, error) {
+	var cafAssignment cafassignment.CafAssignment
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&cafAssignment).Error
+
+	if errFind != nil {
+		return cafAssignment, errFind
+	}
+
+	errEdit := tx.Model(&cafAssignment).Update("revision_assignment_letter_link", urlS3).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return cafAssignment, errEdit
+	}
+
+	var history History
+
+	history.CafAssignmentId = &cafAssignment.ID
+	history.UserId = userId
+	history.Status = "Uploaded document revision caf assignment"
+
+	history.IupopkId = &cafAssignment.IupopkId
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return cafAssignment, createHistoryErr
+	}
+
+	tx.Commit()
+	return cafAssignment, nil
+}
+
+func (r *repository) DeleteCafAssignment(id int, iupopkId int, userId uint) (bool, error) {
+	var cafAssignmentDeleted cafassignment.CafAssignment
+	var iup iupopk.Iupopk
+	var listCafAssignmentEndUser []cafassignmentenduser.CafAssignmentEndUser
+
+	tx := r.db.Begin()
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return false, errFindIup
+	}
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&cafAssignmentDeleted).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return false, errFind
+	}
+
+	errFindList := tx.Where("caf_assignment_id = ?", id).Find(&listCafAssignmentEndUser).Error
+
+	if errFindList != nil {
+
+		if errFindList != nil {
+			tx.Rollback()
+			return false, errFindList
+		}
+	}
+
+	beforeMap := make(map[string]interface{})
+
+	beforeMap["caf_assigment"] = cafAssignmentDeleted
+	beforeMap["list_caf_assigment"] = listCafAssignmentEndUser
+
+	beforeData, _ := json.Marshal(beforeMap)
+
+	errDelete := tx.Unscoped().Where("id = ? AND iupopk_id = ?", id, iupopkId).Delete(&cafAssignmentDeleted).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+		return false, errDelete
+	}
+
+	var history History
+
+	history.Status = fmt.Sprintf("Deleted Caf Assignment with id number %s and id %v", &cafAssignmentDeleted.IdNumber, cafAssignmentDeleted.ID)
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = beforeData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return false, createHistoryErr
+	}
+
+	tx.Commit()
+	return true, nil
+}
+
+func (r *repository) UpdateCafAssignment(id int, input cafassignmentenduser.UpdateCafAssignmentInput, userId uint, iupopkId int) (cafassignment.CafAssignment, error) {
+	var updatedCafAssignment cafassignment.CafAssignment
+
+	var cafAssigmentEndUser []cafassignmentenduser.CafAssignmentEndUser
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&updatedCafAssignment).Error
+
+	if errFind != nil {
+		tx.Rollback()
+
+		return updatedCafAssignment, errFind
+	}
+
+	errFindList := tx.Where("caf_assignment_id = ?", id).Find(&cafAssigmentEndUser).Error
+
+	if errFindList != nil {
+		tx.Rollback()
+
+		return updatedCafAssignment, errFindList
+	}
+
+	beforeMap := make(map[string]interface{})
+
+	beforeMap["detail"] = updatedCafAssignment
+	beforeMap["list"] = cafAssigmentEndUser
+
+	updateMap := make(map[string]interface{})
+
+	updateMap["grand_total_quantity"] = input.GrandTotalQuantity
+	updateMap["revision_letter_number"] = input.RevisionLetterNumber
+
+	errUpd := tx.Model(&updatedCafAssignment).Where("id = ? AND iupopk_id = ?", id, iupopkId).Updates(updateMap).Error
+
+	if errUpd != nil {
+		tx.Rollback()
+
+		return updatedCafAssignment, errUpd
+	}
+
+	var idUpdated []uint
+
+	for _, values := range input.ListCafAssignment {
+		var tempCafAssignment cafassignmentenduser.CafAssignmentEndUser
+		isExist := helper.IsExistCafAssignment(values.ID, cafAssigmentEndUser)
+
+		var tempEndUser company.Company
+
+		errFindEndUser := tx.Where("id = ?", values.EndUserId).First(&tempEndUser).Error
+
+		if errFindEndUser != nil {
+			tx.Rollback()
+
+			return updatedCafAssignment, errFindEndUser
+		}
+		tempCafAssignment = values
+		tempCafAssignment.EndUserString = tempEndUser.CompanyName
+		if !isExist {
+			tempCafAssignment.CafAssignmentId = updatedCafAssignment.ID
+
+			errCreate := tx.Create(&tempCafAssignment).Error
+
+			if errCreate != nil {
+				return updatedCafAssignment, errCreate
+			}
+
+		} else {
+			errUpd := tx.Model(&tempCafAssignment).Updates(&tempCafAssignment).Error
+
+			if errUpd != nil {
+				return updatedCafAssignment, errUpd
+			}
+
+		}
+
+		idUpdated = append(idUpdated, tempCafAssignment.ID)
+	}
+
+	var deletedCafAssignment []cafassignmentenduser.CafAssignmentEndUser
+
+	errFindDeleted := tx.Where("caf_assignment_id = ? AND id NOT IN ?", id, idUpdated).Find(&deletedCafAssignment).Error
+
+	if errFindDeleted != nil {
+		tx.Rollback()
+
+		return updatedCafAssignment, errFindDeleted
+	}
+
+	errDelete := tx.Unscoped().Where("caf_assignment_id = ? AND id NOT IN ?", id, idUpdated).Delete(&deletedCafAssignment).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+
+		return updatedCafAssignment, errDelete
+	}
+
+	var newCafAssigmentEndUser []cafassignmentenduser.CafAssignmentEndUser
+
+	errFindListNew := tx.Where("caf_assignment_id = ?", id).Find(&newCafAssigmentEndUser).Error
+
+	if errFindListNew != nil {
+		tx.Rollback()
+
+		return updatedCafAssignment, errFindListNew
+	}
+
+	afterMap := make(map[string]interface{})
+
+	afterMap["detail"] = updatedCafAssignment
+	afterMap["list"] = newCafAssigmentEndUser
+
+	beforeJson, _ := json.Marshal(beforeMap)
+	afterJson, _ := json.Marshal(afterMap)
+
+	var history History
+
+	history.CafAssignmentId = &updatedCafAssignment.ID
+	history.Status = "Updated Caf Assignment"
+	history.UserId = userId
+	history.IupopkId = &updatedCafAssignment.IupopkId
+	history.BeforeData = beforeJson
+	history.AfterData = afterJson
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return updatedCafAssignment, createHistoryErr
+	}
+
+	tx.Commit()
+	return updatedCafAssignment, nil
 }

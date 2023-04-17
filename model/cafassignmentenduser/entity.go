@@ -2,6 +2,7 @@ package cafassignmentenduser
 
 import (
 	"ajebackend/model/cafassignment"
+	"ajebackend/model/master/company"
 
 	"gorm.io/gorm"
 )
@@ -12,5 +13,7 @@ type CafAssignmentEndUser struct {
 	CafAssignment   cafassignment.CafAssignment `json:"caf_assignment" gorm:"constraint:OnDelete:CASCADE;"`
 	AverageCalories float64                     `json:"average_calories"`
 	Quantity        float64                     `json:"quantity"`
-	EndUser         string                      `json:"end_user"`
+	EndUserString   string                      `json:"end_user_string"`
+	EndUserId       uint                        `json:"end_user_id"`
+	EndUser         company.Company             `json:"end_user"`
 }

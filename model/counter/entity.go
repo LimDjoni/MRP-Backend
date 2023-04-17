@@ -24,5 +24,5 @@ type Counter struct {
 	CoaReport          int            `json:"coa_report"`
 	Rkab               int            `json:"rkab"`
 	ElectricAssignment int            `json:"electric_assignment"`
-	CafAssigment       int            `json:"caf_assigment"`
+	CafAssignment      int            `json:"caf_assignment"`
 }

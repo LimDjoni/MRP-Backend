@@ -240,4 +240,5 @@ func Setup(db *gorm.DB, validate *validator.Validate, route fiber.Router) {
 	routing2.CoaReportRouting(db, route, validate)
 	routing2.RkabRouting(db, route, validate)
 	routing2.ElectricAssignmentRouting(db, route, validate)
+	routing2.CafAssignmentRouting(db, route, validate)
 }
