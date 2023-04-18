@@ -4039,7 +4039,7 @@ func (r *repository) CreateElectricAssignment(input electricassignmentenduser.Cr
 		idElectric = 1
 	}
 
-	idNumber := "SPL-" + iup.Code
+	idNumber := "SPK-" + iup.Code
 	createdElectricAssignment.IdNumber = createIdNumber(idNumber, uint(idElectric))
 	createdElectricAssignment.LetterNumber = strings.ToUpper(input.LetterNumber)
 	createdElectricAssignment.GrandTotalQuantity = input.GrandTotalQuantity

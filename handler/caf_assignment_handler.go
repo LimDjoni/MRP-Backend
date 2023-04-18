@@ -179,7 +179,7 @@ func (h *cafAssignmentHandler) CreateCafAssignment(c *fiber.Ctx) error {
 		return c.Status(400).JSON(responseErr)
 	}
 
-	fileName := fmt.Sprintf("%s/SPCgit st/%v/%v_letter_assignment.pdf", iupopkData.Code, createCafAssignment.IdNumber, createCafAssignment.IdNumber)
+	fileName := fmt.Sprintf("%s/SPC/%v/%v_letter_assignment.pdf", iupopkData.Code, createCafAssignment.IdNumber, createCafAssignment.IdNumber)
 
 	up, uploadErr := awshelper.UploadDocument(file, fileName)
 

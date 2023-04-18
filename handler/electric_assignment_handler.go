@@ -2,6 +2,7 @@ package handler
 
 import (
 	"ajebackend/model/awshelper"
+	"ajebackend/model/electricassignment"
 	"ajebackend/model/electricassignmentenduser"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
@@ -21,6 +22,7 @@ import (
 )
 
 type electrictAssignmentHandler struct {
+	electricAssignmentService        electricassignment.Service
 	electricAssignmentEndUserService electricassignmentenduser.Service
 	logService                       logs.Service
 	userIupopkService                useriupopk.Service
@@ -31,6 +33,7 @@ type electrictAssignmentHandler struct {
 }
 
 func NewElectrictAssignmentHandler(
+	electricAssignmentService electricassignment.Service,
 	electricAssignmentEndUserService electricassignmentenduser.Service,
 	logService logs.Service,
 	userIupopkService useriupopk.Service,
@@ -40,6 +43,7 @@ func NewElectrictAssignmentHandler(
 	allMasterService allmaster.Service,
 ) *electrictAssignmentHandler {
 	return &electrictAssignmentHandler{
+		electricAssignmentService,
 		electricAssignmentEndUserService,
 		logService,
 		userIupopkService,
@@ -48,6 +52,65 @@ func NewElectrictAssignmentHandler(
 		v,
 		allMasterService,
 	}
+}
+
+func (h *electrictAssignmentHandler) ListElectricAssignment(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	page := c.Query("page")
+
+	pageNumber, err := strconv.Atoi(page)
+
+	if err != nil && page != "" {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	if page == "" {
+		pageNumber = 1
+	}
+
+	var filterElectricAssignment electricassignment.SortFilterElectricAssignment
+
+	filterElectricAssignment.Quantity = c.Query("quantity")
+	filterElectricAssignment.Year = c.Query("year")
+	filterElectricAssignment.Field = c.Query("field")
+	filterElectricAssignment.Sort = c.Query("sort")
+
+	listElectricAssignment, listElectricAssignmentErr := h.electricAssignmentService.ListElectricAssignment(pageNumber, filterElectricAssignment, iupopkIdInt)
+
+	if listElectricAssignmentErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": listElectricAssignmentErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(listElectricAssignment)
 }
 
 func (h *electrictAssignmentHandler) CreateElectricAssignment(c *fiber.Ctx) error {
@@ -140,6 +203,22 @@ func (h *electrictAssignmentHandler) CreateElectricAssignment(c *fiber.Ctx) erro
 		})
 	}
 
+	file, errFormFile := c.FormFile("letter_assignment")
+
+	responseErr := fiber.Map{
+		"message": "failed to create electric assignment",
+	}
+
+	if errFormFile != nil {
+		responseErr["error"] = errFormFile.Error()
+		return c.Status(400).JSON(responseErr)
+	}
+
+	if !strings.Contains(file.Filename, ".pdf") {
+		responseErr["error"] = "document must be pdf"
+		return c.Status(400).JSON(responseErr)
+	}
+
 	createElectricAssignment, createElectricAssignmentErr := h.historyService.CreateElectricAssignment(*inputCreateElectricAssignment, uint(claims["id"].(float64)), iupopkIdInt)
 
 	if createElectricAssignmentErr != nil {
@@ -163,23 +242,7 @@ func (h *electrictAssignmentHandler) CreateElectricAssignment(c *fiber.Ctx) erro
 		})
 	}
 
-	file, errFormFile := c.FormFile("letter_assignment")
-
-	responseErr := fiber.Map{
-		"message": "failed to create electric assignment",
-	}
-
-	if errFormFile != nil {
-		responseErr["error"] = errFormFile.Error()
-		return c.Status(400).JSON(responseErr)
-	}
-
-	if !strings.Contains(file.Filename, ".pdf") {
-		responseErr["error"] = "document must be pdf"
-		return c.Status(400).JSON(responseErr)
-	}
-
-	fileName := fmt.Sprintf("%s/SPL/%v/%v_letter_assignment.pdf", iupopkData.Code, createElectricAssignment.IdNumber, createElectricAssignment.IdNumber)
+	fileName := fmt.Sprintf("%s/SPK/%v/%v_letter_assignment.pdf", iupopkData.Code, createElectricAssignment.IdNumber, createElectricAssignment.IdNumber)
 
 	up, uploadErr := awshelper.UploadDocument(file, fileName)
 
@@ -421,7 +484,7 @@ func (h *electrictAssignmentHandler) UpdateElectricAssignment(c *fiber.Ctx) erro
 			return c.Status(400).JSON(responseErr)
 		}
 
-		fileName := fmt.Sprintf("%s/SPL/%v/%v_revision_letter_assignment.pdf", iupopkData.Code, updateElectricAssignment.IdNumber, updateElectricAssignment.IdNumber)
+		fileName := fmt.Sprintf("%s/SPK/%v/%v_revision_letter_assignment.pdf", iupopkData.Code, updateElectricAssignment.IdNumber, updateElectricAssignment.IdNumber)
 
 		up, uploadErr := awshelper.UploadDocument(file, fileName)
 

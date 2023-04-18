@@ -3,6 +3,7 @@ package routing
 import (
 	"ajebackend/handler"
 	"ajebackend/helper"
+	"ajebackend/model/electricassignment"
 	"ajebackend/model/electricassignmentenduser"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
@@ -17,6 +18,9 @@ import (
 )
 
 func ElectricAssignmentRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
+
+	electricAssignmentRepository := electricassignment.NewRepository(db)
+	electricAssignmentService := electricassignment.NewService(electricAssignmentRepository)
 
 	electricAssignmentEndUserRepository := electricassignmentenduser.NewRepository(db)
 	electricAssignmentEndUserService := electricassignmentenduser.NewService(electricAssignmentEndUserRepository)
@@ -36,7 +40,7 @@ func ElectricAssignmentRouting(db *gorm.DB, app fiber.Router, validate *validato
 	allMasterRepository := allmaster.NewRepository(db)
 	allMasterService := allmaster.NewService(allMasterRepository)
 
-	electricAssignmentHandler := handler.NewElectrictAssignmentHandler(electricAssignmentEndUserService, logService, userIupopkService, historyService, notificationUserService, validate, allMasterService)
+	electricAssignmentHandler := handler.NewElectrictAssignmentHandler(electricAssignmentService, electricAssignmentEndUserService, logService, userIupopkService, historyService, notificationUserService, validate, allMasterService)
 
 	electricAssignmentRouting := app.Group("/electricassignment")
 
@@ -50,6 +54,8 @@ func ElectricAssignmentRouting(db *gorm.DB, app fiber.Router, validate *validato
 			})
 		},
 	}))
+
+	electricAssignmentRouting.Get("/list/:iupopk_id", electricAssignmentHandler.ListElectricAssignment)
 
 	electricAssignmentRouting.Post("/create/:iupopk_id", electricAssignmentHandler.CreateElectricAssignment)
 	electricAssignmentRouting.Get("/detail/:id/:iupopk_id", electricAssignmentHandler.DetailElectricAssignment)
