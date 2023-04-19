@@ -50,7 +50,6 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 		realization.Supplier = value.Supplier
 		realization.AverageCalories = value.AverageCalories
 		realization.Quantity = value.Quantity
-		realization.EndUserId = value.EndUserId
 		realization.EndUser = value.EndUser
 		realization.ID = value.ID
 		var transactionRealization Realization

@@ -4061,7 +4061,7 @@ func (r *repository) CreateElectricAssignment(input electricassignmentenduser.Cr
 		tempElecEndUser.Supplier = v.Supplier
 		tempElecEndUser.AverageCalories = v.AverageCalories
 		tempElecEndUser.Quantity = v.Quantity
-		tempElecEndUser.EndUserId = v.EndUserId
+		tempElecEndUser.EndUser = v.EndUser
 
 		electricAssignmentEndUser = append(electricAssignmentEndUser, tempElecEndUser)
 	}
