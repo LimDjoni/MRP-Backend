@@ -2,7 +2,6 @@ package electricassignmentenduser
 
 import (
 	"ajebackend/model/electricassignment"
-	"ajebackend/model/master/company"
 	"ajebackend/model/master/ports"
 )
 
@@ -13,16 +12,15 @@ type DetailElectricAssignment struct {
 }
 
 type RealizationEndUser struct {
-	ID                         uint            `json:"ID"`
-	PortId                     uint            `json:"port_id"`
-	Port                       ports.Port      `json:"port"`
-	Supplier                   string          `json:"supplier"`
-	AverageCalories            float64         `json:"average_calories"`
-	RealizationAverageCalories float64         `json:"realization_average_calories"`
-	Quantity                   float64         `json:"quantity"`
-	RealizationQuantity        float64         `json:"realization_quantity"`
-	EndUserId                  uint            `json:"end_user_id"`
-	EndUser                    company.Company `json:"end_user"`
+	ID                         uint       `json:"ID"`
+	PortId                     uint       `json:"port_id"`
+	Port                       ports.Port `json:"port"`
+	Supplier                   string     `json:"supplier"`
+	AverageCalories            float64    `json:"average_calories"`
+	RealizationAverageCalories float64    `json:"realization_average_calories"`
+	Quantity                   float64    `json:"quantity"`
+	RealizationQuantity        float64    `json:"realization_quantity"`
+	EndUser                    string     `json:"end_user"`
 }
 
 type Realization struct {

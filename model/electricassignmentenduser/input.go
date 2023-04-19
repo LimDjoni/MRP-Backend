@@ -12,7 +12,7 @@ type ElectricAssignmentInput struct {
 	Supplier        string  `form:"supplier" json:"supplier"`
 	AverageCalories float64 `form:"average_calories" json:"average_calories"`
 	Quantity        float64 `form:"quantity" json:"quantity"`
-	EndUserId       uint    `form:"end_user_id" json:"end_user_id"`
+	EndUser         string  `form:"end_user" json:"end_user"`
 }
 
 type UpdateElectricAssignmentInput struct {

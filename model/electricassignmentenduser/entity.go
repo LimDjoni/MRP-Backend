@@ -2,7 +2,6 @@ package electricassignmentenduser
 
 import (
 	"ajebackend/model/electricassignment"
-	"ajebackend/model/master/company"
 	"ajebackend/model/master/ports"
 
 	"gorm.io/gorm"
@@ -17,6 +16,5 @@ type ElectricAssignmentEndUser struct {
 	Supplier             string                                `json:"supplier"`
 	AverageCalories      float64                               `json:"average_calories"`
 	Quantity             float64                               `json:"quantity"`
-	EndUserId            uint                                  `json:"end_user_id"`
-	EndUser              company.Company                       `json:"end_user"`
+	EndUser              string                                `json:"end_user"`
 }
