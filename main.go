@@ -2,9 +2,13 @@ package main
 
 import (
 	"ajebackend/helper"
+	"ajebackend/model/cafassignment"
+	"ajebackend/model/cafassignmentenduser"
 	"ajebackend/model/counter"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
+	"ajebackend/model/electricassignment"
+	"ajebackend/model/electricassignmentenduser"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/history"
 	"ajebackend/model/insw"
@@ -118,6 +122,10 @@ func main() {
 			&vessel.Vessel{},
 			&tugboat.Tugboat{},
 			&counter.Counter{},
+			&electricassignment.ElectricAssignment{},
+			&electricassignmentenduser.ElectricAssignmentEndUser{},
+			&cafassignment.CafAssignment{},
+			&cafassignmentenduser.CafAssignmentEndUser{},
 		)
 
 		seeding.UpdateTransactionsRoyalty(db)
@@ -233,4 +241,6 @@ func Setup(db *gorm.DB, validate *validator.Validate, route fiber.Router) {
 	routing2.InswRouting(db, route, validate)
 	routing2.CoaReportRouting(db, route, validate)
 	routing2.RkabRouting(db, route, validate)
+	routing2.ElectricAssignmentRouting(db, route, validate)
+	routing2.CafAssignmentRouting(db, route, validate)
 }
