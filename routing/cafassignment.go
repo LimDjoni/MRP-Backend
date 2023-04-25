@@ -3,6 +3,7 @@ package routing
 import (
 	"ajebackend/handler"
 	"ajebackend/helper"
+	"ajebackend/model/cafassignment"
 	"ajebackend/model/cafassignmentenduser"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
@@ -17,6 +18,9 @@ import (
 )
 
 func CafAssignmentRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
+
+	cafAssignmentRepository := cafassignment.NewRepository(db)
+	cafAssignmentService := cafassignment.NewService(cafAssignmentRepository)
 
 	cafAssignmentEndUserRepository := cafassignmentenduser.NewRepository(db)
 	cafAssignmentEndUserService := cafassignmentenduser.NewService(cafAssignmentEndUserRepository)
@@ -36,7 +40,7 @@ func CafAssignmentRouting(db *gorm.DB, app fiber.Router, validate *validator.Val
 	allMasterRepository := allmaster.NewRepository(db)
 	allMasterService := allmaster.NewService(allMasterRepository)
 
-	cafAssignmentHandler := handler.NewCafAssignmentHandler(cafAssignmentEndUserService, logService, userIupopkService, historyService, notificationUserService, validate, allMasterService)
+	cafAssignmentHandler := handler.NewCafAssignmentHandler(cafAssignmentService, cafAssignmentEndUserService, logService, userIupopkService, historyService, notificationUserService, validate, allMasterService)
 
 	cafAssignmentRouting := app.Group("/cafassignment")
 
@@ -50,6 +54,8 @@ func CafAssignmentRouting(db *gorm.DB, app fiber.Router, validate *validator.Val
 			})
 		},
 	}))
+
+	cafAssignmentRouting.Get("/list/:iupopk_id", cafAssignmentHandler.ListCafAssignment)
 
 	cafAssignmentRouting.Post("/create/:iupopk_id", cafAssignmentHandler.CreateCafAssignment)
 	cafAssignmentRouting.Get("/detail/:id/:iupopk_id", cafAssignmentHandler.DetailCafAssignment)

@@ -35,7 +35,7 @@ func (r *repository) DetailCafAssignment(id int, iupopkId int) (DetailCafAssignm
 
 	detailCafAssignment.Detail = cafAssignment
 
-	errFindList := r.db.Preload(clause.Associations).Preload("Port.PortLocation").Where("Caf_assignment_id = ?", id).Find(&listCafAssignment).Error
+	errFindList := r.db.Preload(clause.Associations).Where("caf_assignment_id = ?", id).Find(&listCafAssignment).Error
 
 	if errFindList != nil {
 		return detailCafAssignment, errFindList
@@ -58,7 +58,7 @@ func (r *repository) DetailCafAssignment(id int, iupopkId int) (DetailCafAssignm
 
 		query := fmt.Sprintf("transactions.transaction_type = '%s' AND transactions.seller_id = %v AND transactions.is_not_claim = false AND transactions.shipping_date >= '%s' AND transactions.shipping_date <= '%s' AND company.company_name = '%s'", "DN", iupopkId, shippingDateFrom, shippingDateTo, value.EndUserString)
 
-		errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity_unloading) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("left join companies company on company.id = transactions.seller_id").Where(query).Scan(&transactionRealization).Error
+		errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity_unloading) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("left join companies company on company.id = transactions.dmo_buyer_id").Where(query).Scan(&transactionRealization).Error
 
 		if errTrRealization != nil {
 			return detailCafAssignment, errTrRealization
