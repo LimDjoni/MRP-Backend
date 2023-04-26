@@ -4403,7 +4403,7 @@ func (r *repository) CreateCafAssignment(input cafassignmentenduser.CreateCafAss
 		idCaf = 1
 	}
 
-	idNumber := "SPC-" + iup.Code
+	idNumber := "SPS-" + iup.Code
 	createdCafAssignment.IdNumber = createIdNumber(idNumber, uint(idCaf))
 	createdCafAssignment.LetterNumber = strings.ToUpper(input.LetterNumber)
 	createdCafAssignment.GrandTotalQuantity = input.GrandTotalQuantity
@@ -4641,7 +4641,7 @@ func (r *repository) UpdateCafAssignment(id int, input cafassignmentenduser.Upda
 	updateMap := make(map[string]interface{})
 
 	updateMap["grand_total_quantity"] = input.GrandTotalQuantity
-	updateMap["revision_letter_number"] = input.RevisionLetterNumber
+	updateMap["revision_letter_number"] = strings.ToUpper(input.RevisionLetterNumber)
 
 	errUpd := tx.Model(&updatedCafAssignment).Where("id = ? AND iupopk_id = ?", id, iupopkId).Updates(updateMap).Error
 

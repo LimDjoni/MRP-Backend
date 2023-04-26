@@ -2,6 +2,7 @@ package handler
 
 import (
 	"ajebackend/model/awshelper"
+	"ajebackend/model/cafassignment"
 	"ajebackend/model/cafassignmentenduser"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
@@ -21,6 +22,7 @@ import (
 )
 
 type cafAssignmentHandler struct {
+	cafAssignmentService        cafassignment.Service
 	cafAssignmentEndUserService cafassignmentenduser.Service
 	logService                  logs.Service
 	userIupopkService           useriupopk.Service
@@ -31,6 +33,7 @@ type cafAssignmentHandler struct {
 }
 
 func NewCafAssignmentHandler(
+	cafAssignmentService cafassignment.Service,
 	cafAssignmentEndUserService cafassignmentenduser.Service,
 	logService logs.Service,
 	userIupopkService useriupopk.Service,
@@ -40,6 +43,7 @@ func NewCafAssignmentHandler(
 	allMasterService allmaster.Service,
 ) *cafAssignmentHandler {
 	return &cafAssignmentHandler{
+		cafAssignmentService,
 		cafAssignmentEndUserService,
 		logService,
 		userIupopkService,
@@ -48,6 +52,65 @@ func NewCafAssignmentHandler(
 		v,
 		allMasterService,
 	}
+}
+
+func (h *cafAssignmentHandler) ListCafAssignment(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	page := c.Query("page")
+
+	pageNumber, err := strconv.Atoi(page)
+
+	if err != nil && page != "" {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	if page == "" {
+		pageNumber = 1
+	}
+
+	var filterCafAssignment cafassignment.SortFilterCafAssignment
+
+	filterCafAssignment.Quantity = c.Query("quantity")
+	filterCafAssignment.Year = c.Query("year")
+	filterCafAssignment.Field = c.Query("field")
+	filterCafAssignment.Sort = c.Query("sort")
+
+	listCafAssignment, listCafAssignmentErr := h.cafAssignmentService.ListCafAssignment(pageNumber, filterCafAssignment, iupopkIdInt)
+
+	if listCafAssignmentErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": listCafAssignmentErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(listCafAssignment)
 }
 
 func (h *cafAssignmentHandler) CreateCafAssignment(c *fiber.Ctx) error {
@@ -179,7 +242,7 @@ func (h *cafAssignmentHandler) CreateCafAssignment(c *fiber.Ctx) error {
 		return c.Status(400).JSON(responseErr)
 	}
 
-	fileName := fmt.Sprintf("%s/SPC/%v/%v_letter_assignment.pdf", iupopkData.Code, createCafAssignment.IdNumber, createCafAssignment.IdNumber)
+	fileName := fmt.Sprintf("%s/SPS/%v/%v_letter_assignment.pdf", iupopkData.Code, createCafAssignment.IdNumber, createCafAssignment.IdNumber)
 
 	up, uploadErr := awshelper.UploadDocument(file, fileName)
 
@@ -421,7 +484,7 @@ func (h *cafAssignmentHandler) UpdateCafAssignment(c *fiber.Ctx) error {
 			return c.Status(400).JSON(responseErr)
 		}
 
-		fileName := fmt.Sprintf("%s/SPCgit st/%v/%v_revision_letter_assignment.pdf", iupopkData.Code, updateCafAssignment.IdNumber, updateCafAssignment.IdNumber)
+		fileName := fmt.Sprintf("%s/SPS/%v/%v_revision_letter_assignment.pdf", iupopkData.Code, updateCafAssignment.IdNumber, updateCafAssignment.IdNumber)
 
 		up, uploadErr := awshelper.UploadDocument(file, fileName)
 
