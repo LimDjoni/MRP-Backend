@@ -3,8 +3,8 @@ package routing
 import (
 	"ajebackend/handler"
 	"ajebackend/helper"
-	"ajebackend/model/logs"
-	"ajebackend/model/transaction"
+	"ajebackend/model/master/allmaster"
+	"ajebackend/model/masterreport"
 	"ajebackend/model/useriupopk"
 
 	"github.com/go-playground/validator/v10"
@@ -14,16 +14,16 @@ import (
 )
 
 func ReportRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
-	transactionRepository := transaction.NewRepository(db)
-	transactionService := transaction.NewService(transactionRepository)
-
-	logRepository := logs.NewRepository(db)
-	logService := logs.NewService(logRepository)
+	masterReportRepository := masterreport.NewRepository(db)
+	masterReportService := masterreport.NewService(masterReportRepository)
 
 	userIupopkRepository := useriupopk.NewRepository(db)
 	userIupopkService := useriupopk.NewService(userIupopkRepository)
 
-	reportHandler := handler.NewReportHandler(transactionService, validate, logService, userIupopkService)
+	allMasterRepository := allmaster.NewRepository(db)
+	allMasterService := allmaster.NewService(allMasterRepository)
+
+	reportHandler := handler.NewMasterReportHandler(masterReportService, userIupopkService, validate, allMasterService)
 
 	reportRouting := app.Group("/report")
 
@@ -38,6 +38,9 @@ func ReportRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) 
 		},
 	}))
 
-	reportRouting.Post("//:iupopk_id", reportHandler.Report)
-	reportRouting.Get("/download/:iupopk_id", reportHandler.DownloadReport)
+	reportRouting.Get("/recap/:year/:iupopk_id", reportHandler.RecapDmo)
+	reportRouting.Get("/realization/:year/:iupopk_id", reportHandler.RealizationReport)
+	reportRouting.Get("/detail/:year/:iupopk_id", reportHandler.SaleDetailReport)
+
+	reportRouting.Get("/download/recap/:year/:iupopk_id", reportHandler.DownloadRecapDmo)
 }
