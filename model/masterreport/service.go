@@ -6,7 +6,10 @@ import (
 
 	"ajebackend/model/master/iupopk"
 
+	"github.com/nleeper/goment"
 	"github.com/xuri/excelize/v2"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 type Service interface {
@@ -539,6 +542,16 @@ func (s *service) CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutp
 		CustomNumFmt: &custFmt,
 	})
 
+	boldNumberOnlyStyle, _ := file.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold: true,
+		},
+		CustomNumFmt: &custFmt,
+		Alignment: &excelize.Alignment{
+			Horizontal: "right",
+		},
+	})
+
 	customNumberRightStyle, _ := file.NewStyle(&excelize.Style{
 		Border:       border,
 		CustomNumFmt: &custFmt,
@@ -614,7 +627,7 @@ func (s *service) CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutp
 
 	file.SetCellValue(sheetName, "A20", "% Pemenuhan DMO terhadap REALISASI PRODUKSI")
 
-	file.SetCellValue(sheetName, "D20", (reportRecapDmo.RecapElectricity.Total+reportRecapDmo.RecapNonElectricity.Total)/reportRecapDmo.Production.Total)
+	file.SetCellFormula(sheetName, "D20", "D18/F18")
 
 	percentageBoldStyle, _ := file.NewStyle(&excelize.Style{
 		Font: &excelize.Font{
@@ -623,19 +636,59 @@ func (s *service) CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutp
 		NumFmt: 10,
 	})
 
-	errPercentageBoldStyle := file.SetCellStyle(sheetName, "D20", "D60", percentageBoldStyle)
+	errPercentageBoldStyle := file.SetCellStyle(sheetName, "A20", "G60", percentageBoldStyle)
+	errBoldNmbrOnly1 := file.SetCellStyle(sheetName, "F20", "F60", boldNumberOnlyStyle)
 
 	if errPercentageBoldStyle != nil {
 		return file, errPercentageBoldStyle
 	}
 
+	if errBoldNmbrOnly1 != nil {
+		return file, errBoldNmbrOnly1
+	}
+
+	var color []string
+
+	color = append(color, "#FFFF01")
+
+	normalStyle, _ := file.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold: false,
+		},
+		Fill: excelize.Fill{Color: color},
+	})
+
+	goment.SetLocale("id")
+
 	for idx, rkab := range reportRecapDmo.Rkabs {
 
 		dateFormat, errDate := goment.New(rkab.DateOfIssue)
-			if errDate != nil {
+		if errDate != nil {
 			return file, errDate
 		}
-		file.SetCellValue(sheetName, fmt.Sprintf("A%v", 23 + (8 * idx), fmt.Sprintf("Rencana Produksi	Disetujui Tanggal %s", dateFormat.Format("DD MMMM YYYY") ))
+
+		file.SetCellValue(sheetName, fmt.Sprintf("A%v", 23+(8*idx)), fmt.Sprintf("Rencana Produksi	Disetujui Tanggal %s", dateFormat.Format("DD MMMM YYYY", "id")))
+
+		numberCommas := message.NewPrinter(language.Indonesian)
+
+		withCommaThousandSep := numberCommas.Sprintf("RKAB: %.0f", rkab.ProductionQuota)
+		file.SetCellValue(sheetName, fmt.Sprintf("D%v", 23+(8*idx)), withCommaThousandSep)
+		file.SetCellStyle(sheetName, fmt.Sprintf("A%v", 23+(8*idx)), fmt.Sprintf("G%v", 23+(8*idx)), normalStyle)
+
+		file.SetCellValue(sheetName, fmt.Sprintf("A%v", 24+(8*idx)), "% Pemenuhan DMO terhadap RENCANA PRODUKSI")
+		file.SetCellFormula(sheetName, fmt.Sprintf("D%v", 24+(8*idx)), fmt.Sprintf("D18/F%v", 24+(8*idx)))
+		file.SetCellValue(sheetName, fmt.Sprintf("F%v", 24+(8*idx)), rkab.ProductionQuota)
+		file.SetCellValue(sheetName, fmt.Sprintf("G%v", 24+(8*idx)), "Quota RKAB")
+
+		file.SetCellValue(sheetName, fmt.Sprintf("A%v", 25+(8*idx)), fmt.Sprintf("disetujui tgl %s", dateFormat.Format("DD MMMM YYYY", "id")))
+
+		file.SetCellValue(sheetName, fmt.Sprintf("A%v", 27+(8*idx)), fmt.Sprintf("%% Pemenuhan DMO terhadap kewajiban pemenuhan DMO %.0f%%", rkab.DmoObligation))
+		file.SetCellFormula(sheetName, fmt.Sprintf("D%v", 27+(8*idx)), fmt.Sprintf("D%v/%.2f%%", 24+(8*idx), rkab.DmoObligation))
+
+		file.SetCellValue(sheetName, fmt.Sprintf("A%v", 29+(8*idx)), "% Pemenuhan DMO terhadap Rencana Produksi (Prorata 12 bulan)")
+		file.SetCellFormula(sheetName, fmt.Sprintf("D%v", 29+(8*idx)), fmt.Sprintf("D18/F%v", 29+(8*idx)))
+		file.SetCellValue(sheetName, fmt.Sprintf("F%v", 29+(8*idx)), rkab.ProductionQuota)
+		file.SetCellValue(sheetName, fmt.Sprintf("G%v", 29+(8*idx)), "prorata 12 bulan")
 
 	}
 

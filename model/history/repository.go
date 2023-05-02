@@ -3848,6 +3848,7 @@ func (r *repository) CreateRkab(input rkab.RkabInput, iupopkId int, userId uint)
 	createdRkab.DateOfIssue = input.DateOfIssue
 	createdRkab.Year = input.Year
 	createdRkab.ProductionQuota = input.ProductionQuota
+	createdRkab.DmoObligation = input.DmoObligation
 	createdRkab.IupopkId = uint(iupopkId)
 
 	if len(findRkab) > 0 {
