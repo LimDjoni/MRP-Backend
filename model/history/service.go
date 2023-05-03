@@ -1,8 +1,12 @@
 package history
 
 import (
+	"ajebackend/model/cafassignment"
+	"ajebackend/model/cafassignmentenduser"
 	"ajebackend/model/coareport"
 	"ajebackend/model/dmo"
+	"ajebackend/model/electricassignment"
+	"ajebackend/model/electricassignmentenduser"
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/insw"
@@ -60,6 +64,16 @@ type Service interface {
 	CreateRkab(input rkab.RkabInput, iupopkId int, userId uint) (rkab.Rkab, error)
 	DeleteRkab(id int, iupopkId int, userId uint) (bool, error)
 	UploadDocumentRkab(id uint, urlS3 string, userId uint, iupopkId int) (rkab.Rkab, error)
+	CreateElectricAssignment(input electricassignmentenduser.CreateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
+	UploadCreateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
+	UploadUpdateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
+	UpdateElectricAssignment(id int, input electricassignmentenduser.UpdateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
+	DeleteElectricAssignment(id int, iupopkId int, userId uint) (bool, error)
+	CreateCafAssignment(input cafassignmentenduser.CreateCafAssignmentInput, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
+	UploadCreateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
+	UploadUpdateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
+	DeleteCafAssignment(id int, iupopkId int, userId uint) (bool, error)
+	UpdateCafAssignment(id int, input cafassignmentenduser.UpdateCafAssignmentInput, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
 }
 
 type service struct {
@@ -338,4 +352,64 @@ func (s *service) UploadDocumentRkab(id uint, urlS3 string, userId uint, iupopkI
 	updateRkab, updateRkabErr := s.repository.UploadDocumentRkab(id, urlS3, userId, iupopkId)
 
 	return updateRkab, updateRkabErr
+}
+
+func (s *service) CreateElectricAssignment(input electricassignmentenduser.CreateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error) {
+	createElectricAssignment, createElectricAssignmentErr := s.repository.CreateElectricAssignment(input, userId, iupopkId)
+
+	return createElectricAssignment, createElectricAssignmentErr
+}
+
+func (s *service) UploadCreateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error) {
+	uploadElectricAssignment, uploadElectricAssignmentErr := s.repository.UploadCreateDocumentElectricAssignment(id, urlS3, userId, iupopkId)
+
+	return uploadElectricAssignment, uploadElectricAssignmentErr
+}
+
+func (s *service) UploadUpdateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error) {
+	uploadElectricAssignment, uploadElectricAssignmentErr := s.repository.UploadUpdateDocumentElectricAssignment(id, urlS3, userId, iupopkId)
+
+	return uploadElectricAssignment, uploadElectricAssignmentErr
+}
+
+func (s *service) UpdateElectricAssignment(id int, input electricassignmentenduser.UpdateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error) {
+	updateElectricAssigment, updateElectricAssigmentErr := s.repository.UpdateElectricAssignment(id, input, userId, iupopkId)
+
+	return updateElectricAssigment, updateElectricAssigmentErr
+}
+
+func (s *service) DeleteElectricAssignment(id int, iupopkId int, userId uint) (bool, error) {
+	isDeleted, isDeletedErr := s.repository.DeleteElectricAssignment(id, iupopkId, userId)
+
+	return isDeleted, isDeletedErr
+}
+
+func (s *service) CreateCafAssignment(input cafassignmentenduser.CreateCafAssignmentInput, userId uint, iupopkId int) (cafassignment.CafAssignment, error) {
+	cafAssignment, cafAssignmentErr := s.repository.CreateCafAssignment(input, userId, iupopkId)
+
+	return cafAssignment, cafAssignmentErr
+}
+
+func (s *service) UploadCreateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int) (cafassignment.CafAssignment, error) {
+	cafAssignment, cafAssignmentErr := s.repository.UploadCreateDocumentCafAssignment(id, urlS3, userId, iupopkId)
+
+	return cafAssignment, cafAssignmentErr
+}
+
+func (s *service) UploadUpdateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int) (cafassignment.CafAssignment, error) {
+	cafAssignment, cafAssignmentErr := s.repository.UploadUpdateDocumentCafAssignment(id, urlS3, userId, iupopkId)
+
+	return cafAssignment, cafAssignmentErr
+}
+
+func (s *service) DeleteCafAssignment(id int, iupopkId int, userId uint) (bool, error) {
+	isDeletedCafAssignment, isDeletedCafAssignmentErr := s.repository.DeleteCafAssignment(id, iupopkId, userId)
+
+	return isDeletedCafAssignment, isDeletedCafAssignmentErr
+}
+
+func (s *service) UpdateCafAssignment(id int, input cafassignmentenduser.UpdateCafAssignmentInput, userId uint, iupopkId int) (cafassignment.CafAssignment, error) {
+	cafAssignment, cafAssignmentErr := s.repository.UpdateCafAssignment(id, input, userId, iupopkId)
+
+	return cafAssignment, cafAssignmentErr
 }
