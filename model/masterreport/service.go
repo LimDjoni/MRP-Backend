@@ -17,6 +17,7 @@ type Service interface {
 	RealizationReport(year string, iupopkId int) (RealizationOutput, error)
 	SaleDetailReport(year string, iupopkId int) (SaleDetail, error)
 	CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutput, iupopk iupopk.Iupopk, file *excelize.File, sheetName string) (*excelize.File, error)
+	CreateReportRealization(year string, reportRealization RealizationOutput, iupopk iupopk.Iupopk, file *excelize.File) (*excelize.File, error)
 }
 
 type service struct {
@@ -25,6 +26,136 @@ type service struct {
 
 func NewService(repository Repository) *service {
 	return &service{repository}
+}
+
+func createTemplateRealization(file *excelize.File, sheetName []string, year string) (*excelize.File, error) {
+	boldStyleCenter, _ := file.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold: true,
+		},
+		Alignment: &excelize.Alignment{
+			Horizontal: "center",
+			Vertical:   "center",
+			WrapText:   true,
+		},
+	})
+
+	border := []excelize.Border{
+		{Type: "left", Color: "000000", Style: 1},
+		{Type: "top", Color: "000000", Style: 1},
+		{Type: "bottom", Color: "000000", Style: 1},
+		{Type: "right", Color: "000000", Style: 1},
+	}
+
+	boldStyleBorder, _ := file.NewStyle(&excelize.Style{
+		Border: border,
+		Font: &excelize.Font{
+			Bold: true,
+		},
+		Alignment: &excelize.Alignment{
+			Horizontal: "center",
+			Vertical:   "center",
+		},
+	})
+
+	for _, v := range sheetName {
+		mergeErr1 := file.MergeCell(v, "B2", "H2")
+		if mergeErr1 != nil {
+			return file, mergeErr1
+		}
+
+		mergeErr2 := file.MergeCell(v, "B3", "H3")
+		if mergeErr2 != nil {
+			return file, mergeErr2
+		}
+
+		mergeErr3 := file.MergeCell(v, "D5", "F5")
+		if mergeErr3 != nil {
+			return file, mergeErr3
+		}
+
+		mergeErr4 := file.MergeCell(v, "B5", "B6")
+		if mergeErr4 != nil {
+			return file, mergeErr4
+		}
+
+		mergeErr5 := file.MergeCell(v, "C5", "C6")
+		if mergeErr5 != nil {
+			return file, mergeErr5
+		}
+
+		mergeErr6 := file.MergeCell(v, "G5", "G6")
+		if mergeErr6 != nil {
+			return file, mergeErr6
+		}
+
+		mergeErr7 := file.MergeCell(v, "H5", "H6")
+		if mergeErr7 != nil {
+			return file, mergeErr7
+		}
+
+		mergeErr8 := file.MergeCell(v, "J5", "J6")
+		if mergeErr8 != nil {
+			return file, mergeErr8
+		}
+
+		var bulan string
+		switch v {
+		case "JAN":
+			bulan = "Januari"
+		case "FEB":
+			bulan = "Februari"
+		case "MAR":
+			bulan = "Maret"
+		case "APR":
+			bulan = "April"
+		case "MEI":
+			bulan = "Mei"
+		case "JUN":
+			bulan = "Juni"
+		case "JUL":
+			bulan = "Juli"
+		case "AGU":
+			bulan = "Agustus"
+		case "SEP":
+			bulan = "September"
+		case "OKT":
+			bulan = "Oktober"
+		case "NOV":
+			bulan = "November"
+		case "DES":
+			bulan = "Desember"
+		}
+
+		file.SetColWidth(v, "A", "B", float64(3))
+		file.SetColWidth(v, "I", "I", float64(3))
+
+		file.SetColWidth(v, "C", "C", float64(15))
+		file.SetColWidth(v, "F", "F", float64(20))
+
+		file.SetColWidth(v, "D", "E", float64(40))
+		file.SetColWidth(v, "G", "H", float64(15))
+
+		file.SetColWidth(v, "J", "J", float64(10))
+
+		file.SetCellValue(v, "B2", "REALISASI PEMENUHAN KEBUTUHAN BATUBARA DALAM NEGERI PT ANGSANA JAYA ENERGI")
+		file.SetCellValue(v, "B3", fmt.Sprintf("Bulan %s Tahun %s", bulan, year))
+		file.SetCellStyle(v, "B2", "H3", boldStyleCenter)
+		file.SetCellStyle(v, "J5", "J6", boldStyleCenter)
+		file.SetCellStyle(v, "B5", "H6", boldStyleBorder)
+
+		file.SetCellValue(v, "B5", "No")
+		file.SetCellValue(v, "C5", "Tanggal")
+		file.SetCellValue(v, "D5", "Pembeli")
+		file.SetCellValue(v, "D6", "Trader")
+		file.SetCellValue(v, "E6", "End User")
+		file.SetCellValue(v, "F6", "Bidang Usaha")
+		file.SetCellValue(v, "G5", "Kalori CV (Gar)")
+		file.SetCellValue(v, "H5", "Jumlah (Ton)")
+		file.SetCellValue(v, "J5", "Berita Acara")
+	}
+
+	return file, nil
 }
 
 func (s *service) RecapDmo(year string, iupopkId int) (ReportDmoOutput, error) {
@@ -693,4 +824,61 @@ func (s *service) CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutp
 	}
 
 	return file, nil
+}
+
+func (s *service) CreateReportRealization(year string, reportRealization RealizationOutput, iupopk iupopk.Iupopk, file *excelize.File) (*excelize.File, error) {
+	var sheetName []string
+
+	sheetName = append(sheetName,
+		"JAN",
+		"FEB",
+		"MAR",
+		"APR",
+		"MEI",
+		"JUN",
+		"JUL",
+		"AGU",
+		"SEP",
+		"OKT",
+		"NOV",
+		"DES",
+	)
+
+	newFile, err := createTemplateRealization(file, sheetName, year)
+
+	if err != nil {
+		return file, err
+	}
+	// for _, v := range sheetName {
+
+	// 	switch v {
+	// 	case "JAN":
+
+	// 	case "FEB":
+
+	// 	case "MAR":
+
+	// 	case "APR":
+
+	// 	case "MEI":
+
+	// 	case "JUN":
+
+	// 	case "JUL":
+
+	// 	case "AGU":
+
+	// 	case "SEP":
+
+	// 	case "OKT":
+
+	// 	case "NOV":
+
+	// 	case "DES":
+
+	// 	}
+
+	// }
+
+	return newFile, nil
 }

@@ -68,7 +68,7 @@ func (r *repository) ListRkab(page int, sortFilter SortFilterRkab, iupopkId int)
 		queryFilter = fmt.Sprintf("%s AND is_revision = %v", queryFilter, status)
 	}
 
-	errFind := r.db.Table("rkabs").Preload(clause.Associations).Select("DISTINCT ON (rkabs.year) rkabs.year, rkabs.id, rkabs.created_at, rkabs.id_number, rkabs.letter_number, rkabs.date_of_issue, rkabs.production_quota, rkabs.rkab_document_link, rkabs.iupopk_id, rkabs.is_revision").Where(queryFilter).Order(sortString).Joins("left join iupopks on rkabs.iupopk_id = iupopks.id").Scopes(paginateData(listRkab, &pagination, r.db, queryFilter)).Find(&listRkab).Error
+	errFind := r.db.Table("rkabs").Preload(clause.Associations).Select("DISTINCT ON (rkabs.year) rkabs.year, rkabs.id, rkabs.dmo_obligation, rkabs.created_at, rkabs.id_number, rkabs.letter_number, rkabs.date_of_issue, rkabs.production_quota, rkabs.rkab_document_link, rkabs.iupopk_id, rkabs.is_revision").Where(queryFilter).Order(sortString).Joins("left join iupopks on rkabs.iupopk_id = iupopks.id").Scopes(paginateData(listRkab, &pagination, r.db, queryFilter)).Find(&listRkab).Error
 
 	if errFind != nil {
 		return pagination, errFind
