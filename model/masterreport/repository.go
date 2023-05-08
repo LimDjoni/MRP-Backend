@@ -9,6 +9,7 @@ import (
 	"ajebackend/model/rkab"
 	"ajebackend/model/transaction"
 	"fmt"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -524,13 +525,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				for _, caf := range cafAssignmentEndUser {
 					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -548,13 +552,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoDestinationPortId != nil {
 				for _, elec := range electricAssignmentEndUser {
 					if elec.PortId == *v.DmoDestinationPortId {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -572,13 +579,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				for _, caf := range cafAssignmentEndUser {
 					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -596,13 +606,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoDestinationPortId != nil {
 				for _, elec := range electricAssignmentEndUser {
 					if elec.PortId == *v.DmoDestinationPortId {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -620,13 +633,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				for _, caf := range cafAssignmentEndUser {
 					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -644,13 +660,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoDestinationPortId != nil {
 				for _, elec := range electricAssignmentEndUser {
 					if elec.PortId == *v.DmoDestinationPortId {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -668,13 +687,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				for _, caf := range cafAssignmentEndUser {
 					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -692,13 +714,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoDestinationPortId != nil {
 				for _, elec := range electricAssignmentEndUser {
 					if elec.PortId == *v.DmoDestinationPortId {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -716,13 +741,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				for _, caf := range cafAssignmentEndUser {
 					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -740,13 +768,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoDestinationPortId != nil {
 				for _, elec := range electricAssignmentEndUser {
 					if elec.PortId == *v.DmoDestinationPortId {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -764,13 +795,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				for _, caf := range cafAssignmentEndUser {
 					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -788,13 +822,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoDestinationPortId != nil {
 				for _, elec := range electricAssignmentEndUser {
 					if elec.PortId == *v.DmoDestinationPortId {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -812,13 +849,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				for _, caf := range cafAssignmentEndUser {
 					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -836,13 +876,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoDestinationPortId != nil {
 				for _, elec := range electricAssignmentEndUser {
 					if elec.PortId == *v.DmoDestinationPortId {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -860,13 +903,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				for _, caf := range cafAssignmentEndUser {
 					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -884,13 +930,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoDestinationPortId != nil {
 				for _, elec := range electricAssignmentEndUser {
 					if elec.PortId == *v.DmoDestinationPortId {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -908,13 +957,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				for _, caf := range cafAssignmentEndUser {
 					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -932,13 +984,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoDestinationPortId != nil {
 				for _, elec := range electricAssignmentEndUser {
 					if elec.PortId == *v.DmoDestinationPortId {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -956,13 +1011,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				for _, caf := range cafAssignmentEndUser {
 					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -980,13 +1038,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoDestinationPortId != nil {
 				for _, elec := range electricAssignmentEndUser {
 					if elec.PortId == *v.DmoDestinationPortId {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -1004,13 +1065,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				for _, caf := range cafAssignmentEndUser {
 					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -1028,13 +1092,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoDestinationPortId != nil {
 				for _, elec := range electricAssignmentEndUser {
 					if elec.PortId == *v.DmoDestinationPortId {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -1052,13 +1119,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				for _, caf := range cafAssignmentEndUser {
 					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -1076,13 +1146,16 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoDestinationPortId != nil {
 				for _, elec := range electricAssignmentEndUser {
 					if elec.PortId == *v.DmoDestinationPortId {
-						transactionTemp.ShippingDate = *v.ShippingDate
+						var shippingDate string
+						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+						shippingDate = shippingDateSplit[0]
+						transactionTemp.ShippingDate = shippingDate
 						if v.Customer != nil {
-							transactionTemp.Trader = *v.Customer
+							transactionTemp.Trader = v.Customer
 						}
 
 						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = *v.DmoBuyer
+							transactionTemp.EndUser = v.DmoBuyer
 						}
 						transactionTemp.Quantity = v.QuantityUnloading
 						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
@@ -1108,8 +1181,8 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 	startFilter := fmt.Sprintf("%v-01-01", year)
 	endFilter := fmt.Sprintf("%v-12-31", year)
 
-	var companyElectricity []string
-	var companyNonElectricity []string
+	companyElectricity := make(map[string][]string)
+	companyNonElectricity := make(map[string][]string)
 
 	var realizationCompanyElectricity []string
 	var realizationCompanyCaf []string
@@ -1230,31 +1303,31 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 
 	saleDetail.Rkabs = rkabs
 
-	saleDetail.Electricity.January = make(map[string]float64)
-	saleDetail.Electricity.February = make(map[string]float64)
-	saleDetail.Electricity.March = make(map[string]float64)
-	saleDetail.Electricity.April = make(map[string]float64)
-	saleDetail.Electricity.May = make(map[string]float64)
-	saleDetail.Electricity.June = make(map[string]float64)
-	saleDetail.Electricity.July = make(map[string]float64)
-	saleDetail.Electricity.August = make(map[string]float64)
-	saleDetail.Electricity.September = make(map[string]float64)
-	saleDetail.Electricity.October = make(map[string]float64)
-	saleDetail.Electricity.November = make(map[string]float64)
-	saleDetail.Electricity.December = make(map[string]float64)
+	saleDetail.Electricity.January = make(map[string]map[string]float64)
+	saleDetail.Electricity.February = make(map[string]map[string]float64)
+	saleDetail.Electricity.March = make(map[string]map[string]float64)
+	saleDetail.Electricity.April = make(map[string]map[string]float64)
+	saleDetail.Electricity.May = make(map[string]map[string]float64)
+	saleDetail.Electricity.June = make(map[string]map[string]float64)
+	saleDetail.Electricity.July = make(map[string]map[string]float64)
+	saleDetail.Electricity.August = make(map[string]map[string]float64)
+	saleDetail.Electricity.September = make(map[string]map[string]float64)
+	saleDetail.Electricity.October = make(map[string]map[string]float64)
+	saleDetail.Electricity.November = make(map[string]map[string]float64)
+	saleDetail.Electricity.December = make(map[string]map[string]float64)
 
-	saleDetail.NonElectricity.January = make(map[string]float64)
-	saleDetail.NonElectricity.February = make(map[string]float64)
-	saleDetail.NonElectricity.March = make(map[string]float64)
-	saleDetail.NonElectricity.April = make(map[string]float64)
-	saleDetail.NonElectricity.May = make(map[string]float64)
-	saleDetail.NonElectricity.June = make(map[string]float64)
-	saleDetail.NonElectricity.July = make(map[string]float64)
-	saleDetail.NonElectricity.August = make(map[string]float64)
-	saleDetail.NonElectricity.September = make(map[string]float64)
-	saleDetail.NonElectricity.October = make(map[string]float64)
-	saleDetail.NonElectricity.November = make(map[string]float64)
-	saleDetail.NonElectricity.December = make(map[string]float64)
+	saleDetail.NonElectricity.January = make(map[string]map[string]float64)
+	saleDetail.NonElectricity.February = make(map[string]map[string]float64)
+	saleDetail.NonElectricity.March = make(map[string]map[string]float64)
+	saleDetail.NonElectricity.April = make(map[string]map[string]float64)
+	saleDetail.NonElectricity.May = make(map[string]map[string]float64)
+	saleDetail.NonElectricity.June = make(map[string]map[string]float64)
+	saleDetail.NonElectricity.July = make(map[string]map[string]float64)
+	saleDetail.NonElectricity.August = make(map[string]map[string]float64)
+	saleDetail.NonElectricity.September = make(map[string]map[string]float64)
+	saleDetail.NonElectricity.October = make(map[string]map[string]float64)
+	saleDetail.NonElectricity.November = make(map[string]map[string]float64)
+	saleDetail.NonElectricity.December = make(map[string]map[string]float64)
 
 	saleDetail.DetailRealizationCafAssignment.January = make(map[string]float64)
 	saleDetail.DetailRealizationCafAssignment.February = make(map[string]float64)
@@ -1304,14 +1377,38 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.January[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.Electricity.January[v.DmoBuyer.CompanyName] += v.QuantityUnloading
 						saleDetail.Electricity.Total += v.QuantityUnloading
-					} else {
-						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+
+							if _, okDestination := saleDetail.Electricity.January[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
+								saleDetail.Electricity.January[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.Electricity.January[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.Electricity.January[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+					} else {
+						saleDetail.Electricity.January[v.DmoBuyer.CompanyName] = make(map[string]float64)
 						saleDetail.Electricity.Total += v.QuantityUnloading
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+							saleDetail.Electricity.January[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+						}
+
 					}
 					saleDetail.RecapElectricity.January += v.QuantityUnloading
 					saleDetail.RecapElectricity.Total += v.QuantityUnloading
@@ -1329,13 +1426,40 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 					}
 				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.January[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.NonElectricity.January[v.DmoBuyer.CompanyName] += v.QuantityUnloading
+
+						if v.DmoBuyer.IndustryType != nil {
+							if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+							} else {
+								companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+							}
+
+							if _, ok := saleDetail.NonElectricity.January[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name]; ok {
+								saleDetail.NonElectricity.January[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.NonElectricity.January[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
+						}
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
+						if v.DmoBuyer != nil {
+							saleDetail.NonElectricity.January[v.DmoBuyer.CompanyName] = make(map[string]float64)
+
+							if v.DmoBuyer.IndustryType != nil {
+								if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+									if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+										companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+									}
+								} else {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+								saleDetail.NonElectricity.January[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.NonElectricity.January[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					}
 					saleDetail.RecapNonElectricity.January += v.QuantityUnloading
@@ -1360,14 +1484,38 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.February[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.Electricity.February[v.DmoBuyer.CompanyName] += v.QuantityUnloading
 						saleDetail.Electricity.Total += v.QuantityUnloading
-					} else {
-						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+
+							if _, okDestination := saleDetail.Electricity.February[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
+								saleDetail.Electricity.February[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.Electricity.February[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.Electricity.February[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+					} else {
+						saleDetail.Electricity.February[v.DmoBuyer.CompanyName] = make(map[string]float64)
 						saleDetail.Electricity.Total += v.QuantityUnloading
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+							saleDetail.Electricity.February[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+						}
+
 					}
 					saleDetail.RecapElectricity.February += v.QuantityUnloading
 					saleDetail.RecapElectricity.Total += v.QuantityUnloading
@@ -1384,14 +1532,41 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						}
 					}
 				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
-					if _, ok := saleDetail.Electricity.February[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.NonElectricity.February[v.DmoBuyer.CompanyName] += v.QuantityUnloading
+					if _, ok := saleDetail.NonElectricity.February[v.DmoBuyer.CompanyName]; ok {
+
+						if v.DmoBuyer.IndustryType != nil {
+							if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+							} else {
+								companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+							}
+
+							if _, ok := saleDetail.Electricity.February[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name]; ok {
+								saleDetail.NonElectricity.February[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.NonElectricity.February[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
+						}
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
+						if v.DmoBuyer != nil {
+							saleDetail.NonElectricity.February[v.DmoBuyer.CompanyName] = make(map[string]float64)
+
+							if v.DmoBuyer.IndustryType != nil {
+								if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+									if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+										companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+									}
+								} else {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+								saleDetail.NonElectricity.February[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.NonElectricity.February[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					}
 					saleDetail.RecapNonElectricity.February += v.QuantityUnloading
@@ -1416,14 +1591,38 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.March[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.Electricity.March[v.DmoBuyer.CompanyName] += v.QuantityUnloading
 						saleDetail.Electricity.Total += v.QuantityUnloading
-					} else {
-						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+
+							if _, okDestination := saleDetail.Electricity.March[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
+								saleDetail.Electricity.March[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.Electricity.March[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.Electricity.March[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+					} else {
+						saleDetail.Electricity.March[v.DmoBuyer.CompanyName] = make(map[string]float64)
 						saleDetail.Electricity.Total += v.QuantityUnloading
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+							saleDetail.Electricity.March[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+						}
+
 					}
 					saleDetail.RecapElectricity.March += v.QuantityUnloading
 					saleDetail.RecapElectricity.Total += v.QuantityUnloading
@@ -1440,14 +1639,41 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						}
 					}
 				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
-					if _, ok := saleDetail.Electricity.March[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.NonElectricity.March[v.DmoBuyer.CompanyName] += v.QuantityUnloading
+					if _, ok := saleDetail.NonElectricity.March[v.DmoBuyer.CompanyName]; ok {
+
+						if v.DmoBuyer.IndustryType != nil {
+							if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+							} else {
+								companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+							}
+
+							if _, ok := saleDetail.Electricity.March[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name]; ok {
+								saleDetail.NonElectricity.March[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.NonElectricity.March[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
+						}
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
+						if v.DmoBuyer != nil {
+							saleDetail.NonElectricity.March[v.DmoBuyer.CompanyName] = make(map[string]float64)
+
+							if v.DmoBuyer.IndustryType != nil {
+								if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+									if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+										companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+									}
+								} else {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+								saleDetail.NonElectricity.March[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.NonElectricity.March[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					}
 					saleDetail.RecapNonElectricity.March += v.QuantityUnloading
@@ -1472,14 +1698,38 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.April[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.Electricity.April[v.DmoBuyer.CompanyName] += v.QuantityUnloading
 						saleDetail.Electricity.Total += v.QuantityUnloading
-					} else {
-						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+
+							if _, okDestination := saleDetail.Electricity.April[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
+								saleDetail.Electricity.April[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.Electricity.April[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.Electricity.April[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+					} else {
+						saleDetail.Electricity.April[v.DmoBuyer.CompanyName] = make(map[string]float64)
 						saleDetail.Electricity.Total += v.QuantityUnloading
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+							saleDetail.Electricity.April[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+						}
+
 					}
 					saleDetail.RecapElectricity.April += v.QuantityUnloading
 					saleDetail.RecapElectricity.Total += v.QuantityUnloading
@@ -1496,14 +1746,41 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						}
 					}
 				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
-					if _, ok := saleDetail.Electricity.April[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.NonElectricity.April[v.DmoBuyer.CompanyName] += v.QuantityUnloading
+					if _, ok := saleDetail.NonElectricity.April[v.DmoBuyer.CompanyName]; ok {
+
+						if v.DmoBuyer.IndustryType != nil {
+							if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+							} else {
+								companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+							}
+
+							if _, ok := saleDetail.NonElectricity.April[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name]; ok {
+								saleDetail.NonElectricity.April[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.NonElectricity.April[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
+						}
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
+						if v.DmoBuyer != nil {
+							saleDetail.NonElectricity.April[v.DmoBuyer.CompanyName] = make(map[string]float64)
+
+							if v.DmoBuyer.IndustryType != nil {
+								if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+									if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+										companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+									}
+								} else {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+								saleDetail.NonElectricity.April[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.NonElectricity.April[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					}
 					saleDetail.RecapNonElectricity.April += v.QuantityUnloading
@@ -1511,7 +1788,6 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 
 					for _, caf := range cafAssignmentEndUser {
 						if caf.EndUserString == v.DmoBuyer.CompanyName {
-
 							if _, ok := saleDetail.DetailRealizationCafAssignment.April[caf.EndUserString]; ok {
 								saleDetail.DetailRealizationCafAssignment.April[caf.EndUserString] += v.QuantityUnloading
 							} else {
@@ -1529,14 +1805,38 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.May[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.Electricity.May[v.DmoBuyer.CompanyName] += v.QuantityUnloading
 						saleDetail.Electricity.Total += v.QuantityUnloading
-					} else {
-						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+
+							if _, okDestination := saleDetail.Electricity.May[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
+								saleDetail.Electricity.May[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.Electricity.May[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.Electricity.May[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+					} else {
+						saleDetail.Electricity.May[v.DmoBuyer.CompanyName] = make(map[string]float64)
 						saleDetail.Electricity.Total += v.QuantityUnloading
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+							saleDetail.Electricity.May[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+						}
+
 					}
 					saleDetail.RecapElectricity.May += v.QuantityUnloading
 					saleDetail.RecapElectricity.Total += v.QuantityUnloading
@@ -1553,14 +1853,41 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						}
 					}
 				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
-					if _, ok := saleDetail.Electricity.May[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.NonElectricity.May[v.DmoBuyer.CompanyName] += v.QuantityUnloading
+					if _, ok := saleDetail.NonElectricity.May[v.DmoBuyer.CompanyName]; ok {
+
+						if v.DmoBuyer.IndustryType != nil {
+							if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+							} else {
+								companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+							}
+
+							if _, ok := saleDetail.Electricity.May[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name]; ok {
+								saleDetail.NonElectricity.May[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.NonElectricity.May[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
+						}
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
+						if v.DmoBuyer != nil {
+							saleDetail.NonElectricity.May[v.DmoBuyer.CompanyName] = make(map[string]float64)
+
+							if v.DmoBuyer.IndustryType != nil {
+								if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+									if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+										companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+									}
+								} else {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+								saleDetail.NonElectricity.May[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.NonElectricity.May[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					}
 					saleDetail.RecapNonElectricity.May += v.QuantityUnloading
@@ -1568,7 +1895,6 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 
 					for _, caf := range cafAssignmentEndUser {
 						if caf.EndUserString == v.DmoBuyer.CompanyName {
-
 							if _, ok := saleDetail.DetailRealizationCafAssignment.May[caf.EndUserString]; ok {
 								saleDetail.DetailRealizationCafAssignment.May[caf.EndUserString] += v.QuantityUnloading
 							} else {
@@ -1586,14 +1912,38 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.June[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.Electricity.June[v.DmoBuyer.CompanyName] += v.QuantityUnloading
 						saleDetail.Electricity.Total += v.QuantityUnloading
-					} else {
-						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+
+							if _, okDestination := saleDetail.Electricity.June[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
+								saleDetail.Electricity.June[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.Electricity.June[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.Electricity.June[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+					} else {
+						saleDetail.Electricity.June[v.DmoBuyer.CompanyName] = make(map[string]float64)
 						saleDetail.Electricity.Total += v.QuantityUnloading
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+							saleDetail.Electricity.June[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+						}
+
 					}
 					saleDetail.RecapElectricity.June += v.QuantityUnloading
 					saleDetail.RecapElectricity.Total += v.QuantityUnloading
@@ -1610,14 +1960,41 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						}
 					}
 				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
-					if _, ok := saleDetail.Electricity.June[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.NonElectricity.June[v.DmoBuyer.CompanyName] += v.QuantityUnloading
+					if _, ok := saleDetail.NonElectricity.June[v.DmoBuyer.CompanyName]; ok {
+
+						if v.DmoBuyer.IndustryType != nil {
+							if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+							} else {
+								companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+							}
+
+							if _, ok := saleDetail.Electricity.June[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name]; ok {
+								saleDetail.NonElectricity.June[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.NonElectricity.June[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
+						}
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
+						if v.DmoBuyer != nil {
+							saleDetail.NonElectricity.June[v.DmoBuyer.CompanyName] = make(map[string]float64)
+
+							if v.DmoBuyer.IndustryType != nil {
+								if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+									if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+										companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+									}
+								} else {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+								saleDetail.NonElectricity.June[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.NonElectricity.June[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					}
 					saleDetail.RecapNonElectricity.June += v.QuantityUnloading
@@ -1625,7 +2002,6 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 
 					for _, caf := range cafAssignmentEndUser {
 						if caf.EndUserString == v.DmoBuyer.CompanyName {
-
 							if _, ok := saleDetail.DetailRealizationCafAssignment.June[caf.EndUserString]; ok {
 								saleDetail.DetailRealizationCafAssignment.June[caf.EndUserString] += v.QuantityUnloading
 							} else {
@@ -1643,14 +2019,38 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.July[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.Electricity.July[v.DmoBuyer.CompanyName] += v.QuantityUnloading
 						saleDetail.Electricity.Total += v.QuantityUnloading
-					} else {
-						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+
+							if _, okDestination := saleDetail.Electricity.July[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
+								saleDetail.Electricity.July[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.Electricity.July[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.Electricity.July[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+					} else {
+						saleDetail.Electricity.July[v.DmoBuyer.CompanyName] = make(map[string]float64)
 						saleDetail.Electricity.Total += v.QuantityUnloading
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+							saleDetail.Electricity.July[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+						}
+
 					}
 					saleDetail.RecapElectricity.July += v.QuantityUnloading
 					saleDetail.RecapElectricity.Total += v.QuantityUnloading
@@ -1667,14 +2067,41 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						}
 					}
 				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
-					if _, ok := saleDetail.Electricity.July[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.NonElectricity.July[v.DmoBuyer.CompanyName] += v.QuantityUnloading
+					if _, ok := saleDetail.NonElectricity.July[v.DmoBuyer.CompanyName]; ok {
+
+						if v.DmoBuyer.IndustryType != nil {
+							if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+							} else {
+								companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+							}
+
+							if _, ok := saleDetail.Electricity.July[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name]; ok {
+								saleDetail.NonElectricity.July[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.NonElectricity.July[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
+						}
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
+						if v.DmoBuyer != nil {
+							saleDetail.NonElectricity.July[v.DmoBuyer.CompanyName] = make(map[string]float64)
+
+							if v.DmoBuyer.IndustryType != nil {
+								if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+									if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+										companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+									}
+								} else {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+								saleDetail.NonElectricity.July[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.NonElectricity.July[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					}
 					saleDetail.RecapNonElectricity.July += v.QuantityUnloading
@@ -1682,7 +2109,6 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 
 					for _, caf := range cafAssignmentEndUser {
 						if caf.EndUserString == v.DmoBuyer.CompanyName {
-
 							if _, ok := saleDetail.DetailRealizationCafAssignment.July[caf.EndUserString]; ok {
 								saleDetail.DetailRealizationCafAssignment.July[caf.EndUserString] += v.QuantityUnloading
 							} else {
@@ -1700,14 +2126,38 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.August[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.Electricity.August[v.DmoBuyer.CompanyName] += v.QuantityUnloading
 						saleDetail.Electricity.Total += v.QuantityUnloading
-					} else {
-						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+
+							if _, okDestination := saleDetail.Electricity.August[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
+								saleDetail.Electricity.August[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.Electricity.August[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.Electricity.August[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+					} else {
+						saleDetail.Electricity.August[v.DmoBuyer.CompanyName] = make(map[string]float64)
 						saleDetail.Electricity.Total += v.QuantityUnloading
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+							saleDetail.Electricity.August[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+						}
+
 					}
 					saleDetail.RecapElectricity.August += v.QuantityUnloading
 					saleDetail.RecapElectricity.Total += v.QuantityUnloading
@@ -1724,14 +2174,41 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						}
 					}
 				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
-					if _, ok := saleDetail.Electricity.August[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.NonElectricity.August[v.DmoBuyer.CompanyName] += v.QuantityUnloading
+					if _, ok := saleDetail.NonElectricity.August[v.DmoBuyer.CompanyName]; ok {
+
+						if v.DmoBuyer.IndustryType != nil {
+							if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+							} else {
+								companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+							}
+
+							if _, ok := saleDetail.Electricity.August[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name]; ok {
+								saleDetail.NonElectricity.August[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.NonElectricity.August[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
+						}
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
+						if v.DmoBuyer != nil {
+							saleDetail.NonElectricity.August[v.DmoBuyer.CompanyName] = make(map[string]float64)
+
+							if v.DmoBuyer.IndustryType != nil {
+								if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+									if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+										companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+									}
+								} else {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+								saleDetail.NonElectricity.August[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.NonElectricity.August[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					}
 					saleDetail.RecapNonElectricity.August += v.QuantityUnloading
@@ -1739,7 +2216,6 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 
 					for _, caf := range cafAssignmentEndUser {
 						if caf.EndUserString == v.DmoBuyer.CompanyName {
-
 							if _, ok := saleDetail.DetailRealizationCafAssignment.August[caf.EndUserString]; ok {
 								saleDetail.DetailRealizationCafAssignment.August[caf.EndUserString] += v.QuantityUnloading
 							} else {
@@ -1757,14 +2233,38 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.September[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.Electricity.September[v.DmoBuyer.CompanyName] += v.QuantityUnloading
 						saleDetail.Electricity.Total += v.QuantityUnloading
-					} else {
-						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+
+							if _, okDestination := saleDetail.Electricity.September[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
+								saleDetail.Electricity.September[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.Electricity.September[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.Electricity.September[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+					} else {
+						saleDetail.Electricity.September[v.DmoBuyer.CompanyName] = make(map[string]float64)
 						saleDetail.Electricity.Total += v.QuantityUnloading
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+							saleDetail.Electricity.September[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+						}
+
 					}
 					saleDetail.RecapElectricity.September += v.QuantityUnloading
 					saleDetail.RecapElectricity.Total += v.QuantityUnloading
@@ -1781,14 +2281,41 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						}
 					}
 				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
-					if _, ok := saleDetail.Electricity.September[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.NonElectricity.September[v.DmoBuyer.CompanyName] += v.QuantityUnloading
+					if _, ok := saleDetail.NonElectricity.September[v.DmoBuyer.CompanyName]; ok {
+
+						if v.DmoBuyer.IndustryType != nil {
+							if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+							} else {
+								companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+							}
+
+							if _, ok := saleDetail.Electricity.September[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name]; ok {
+								saleDetail.NonElectricity.September[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.NonElectricity.September[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
+						}
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
+						if v.DmoBuyer != nil {
+							saleDetail.NonElectricity.September[v.DmoBuyer.CompanyName] = make(map[string]float64)
+
+							if v.DmoBuyer.IndustryType != nil {
+								if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+									if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+										companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+									}
+								} else {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+								saleDetail.NonElectricity.September[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.NonElectricity.September[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					}
 					saleDetail.RecapNonElectricity.September += v.QuantityUnloading
@@ -1796,7 +2323,6 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 
 					for _, caf := range cafAssignmentEndUser {
 						if caf.EndUserString == v.DmoBuyer.CompanyName {
-
 							if _, ok := saleDetail.DetailRealizationCafAssignment.September[caf.EndUserString]; ok {
 								saleDetail.DetailRealizationCafAssignment.September[caf.EndUserString] += v.QuantityUnloading
 							} else {
@@ -1814,14 +2340,38 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.October[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.Electricity.October[v.DmoBuyer.CompanyName] += v.QuantityUnloading
 						saleDetail.Electricity.Total += v.QuantityUnloading
-					} else {
-						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+
+							if _, okDestination := saleDetail.Electricity.October[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
+								saleDetail.Electricity.October[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.Electricity.October[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.Electricity.October[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+					} else {
+						saleDetail.Electricity.October[v.DmoBuyer.CompanyName] = make(map[string]float64)
 						saleDetail.Electricity.Total += v.QuantityUnloading
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+							saleDetail.Electricity.October[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+						}
+
 					}
 					saleDetail.RecapElectricity.October += v.QuantityUnloading
 					saleDetail.RecapElectricity.Total += v.QuantityUnloading
@@ -1838,14 +2388,41 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						}
 					}
 				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
-					if _, ok := saleDetail.Electricity.October[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.NonElectricity.October[v.DmoBuyer.CompanyName] += v.QuantityUnloading
+					if _, ok := saleDetail.NonElectricity.October[v.DmoBuyer.CompanyName]; ok {
+
+						if v.DmoBuyer.IndustryType != nil {
+							if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+							} else {
+								companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+							}
+
+							if _, ok := saleDetail.Electricity.October[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name]; ok {
+								saleDetail.NonElectricity.October[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.NonElectricity.October[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
+						}
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
+						if v.DmoBuyer != nil {
+							saleDetail.NonElectricity.October[v.DmoBuyer.CompanyName] = make(map[string]float64)
+
+							if v.DmoBuyer.IndustryType != nil {
+								if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+									if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+										companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+									}
+								} else {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+								saleDetail.NonElectricity.October[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.NonElectricity.October[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					}
 					saleDetail.RecapNonElectricity.October += v.QuantityUnloading
@@ -1853,7 +2430,6 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 
 					for _, caf := range cafAssignmentEndUser {
 						if caf.EndUserString == v.DmoBuyer.CompanyName {
-
 							if _, ok := saleDetail.DetailRealizationCafAssignment.October[caf.EndUserString]; ok {
 								saleDetail.DetailRealizationCafAssignment.October[caf.EndUserString] += v.QuantityUnloading
 							} else {
@@ -1871,14 +2447,38 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.November[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.Electricity.November[v.DmoBuyer.CompanyName] += v.QuantityUnloading
 						saleDetail.Electricity.Total += v.QuantityUnloading
-					} else {
-						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+
+							if _, okDestination := saleDetail.Electricity.November[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
+								saleDetail.Electricity.November[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.Electricity.November[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.Electricity.November[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+					} else {
+						saleDetail.Electricity.November[v.DmoBuyer.CompanyName] = make(map[string]float64)
 						saleDetail.Electricity.Total += v.QuantityUnloading
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+							saleDetail.Electricity.November[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+						}
+
 					}
 					saleDetail.RecapElectricity.November += v.QuantityUnloading
 					saleDetail.RecapElectricity.Total += v.QuantityUnloading
@@ -1895,14 +2495,41 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						}
 					}
 				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
-					if _, ok := saleDetail.Electricity.November[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.NonElectricity.November[v.DmoBuyer.CompanyName] += v.QuantityUnloading
+					if _, ok := saleDetail.NonElectricity.November[v.DmoBuyer.CompanyName]; ok {
+
+						if v.DmoBuyer.IndustryType != nil {
+							if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+							} else {
+								companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+							}
+
+							if _, ok := saleDetail.Electricity.November[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name]; ok {
+								saleDetail.NonElectricity.November[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.NonElectricity.November[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
+						}
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
+						if v.DmoBuyer != nil {
+							saleDetail.NonElectricity.November[v.DmoBuyer.CompanyName] = make(map[string]float64)
+
+							if v.DmoBuyer.IndustryType != nil {
+								if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+									if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+										companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+									}
+								} else {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+								saleDetail.NonElectricity.November[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.NonElectricity.November[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					}
 					saleDetail.RecapNonElectricity.November += v.QuantityUnloading
@@ -1910,7 +2537,6 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 
 					for _, caf := range cafAssignmentEndUser {
 						if caf.EndUserString == v.DmoBuyer.CompanyName {
-
 							if _, ok := saleDetail.DetailRealizationCafAssignment.November[caf.EndUserString]; ok {
 								saleDetail.DetailRealizationCafAssignment.November[caf.EndUserString] += v.QuantityUnloading
 							} else {
@@ -1928,14 +2554,38 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.December[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.Electricity.December[v.DmoBuyer.CompanyName] += v.QuantityUnloading
 						saleDetail.Electricity.Total += v.QuantityUnloading
-					} else {
-						if !helperString(companyElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyElectricity = append(companyElectricity, v.DmoBuyer.CompanyName)
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+
+							if _, okDestination := saleDetail.Electricity.December[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
+								saleDetail.Electricity.December[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.Electricity.December[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.Electricity.December[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+					} else {
+						saleDetail.Electricity.December[v.DmoBuyer.CompanyName] = make(map[string]float64)
 						saleDetail.Electricity.Total += v.QuantityUnloading
+
+						if v.DmoDestinationPort != nil {
+							if _, ok := companyElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+								}
+							} else {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
+							}
+							saleDetail.Electricity.December[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
+						}
+
 					}
 					saleDetail.RecapElectricity.December += v.QuantityUnloading
 					saleDetail.RecapElectricity.Total += v.QuantityUnloading
@@ -1952,14 +2602,41 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						}
 					}
 				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
-					if _, ok := saleDetail.Electricity.December[v.DmoBuyer.CompanyName]; ok {
-						saleDetail.NonElectricity.December[v.DmoBuyer.CompanyName] += v.QuantityUnloading
+					if _, ok := saleDetail.NonElectricity.December[v.DmoBuyer.CompanyName]; ok {
+
+						if v.DmoBuyer.IndustryType != nil {
+							if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+								if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+							} else {
+								companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+							}
+
+							if _, ok := saleDetail.Electricity.December[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name]; ok {
+								saleDetail.NonElectricity.December[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] += v.QuantityUnloading
+							} else {
+								saleDetail.NonElectricity.December[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
+						}
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					} else {
-						if !helperString(companyNonElectricity, v.DmoBuyer.CompanyName) && v.DmoBuyer.CompanyName != "" {
-							companyNonElectricity = append(companyNonElectricity, v.DmoBuyer.CompanyName)
+						if v.DmoBuyer != nil {
+							saleDetail.NonElectricity.December[v.DmoBuyer.CompanyName] = make(map[string]float64)
+
+							if v.DmoBuyer.IndustryType != nil {
+								if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
+									if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
+										companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+									}
+								} else {
+									companyNonElectricity[v.DmoBuyer.CompanyName] = append(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name)
+								}
+								saleDetail.NonElectricity.December[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
+							}
 						}
-						saleDetail.NonElectricity.December[v.DmoBuyer.CompanyName] = v.QuantityUnloading
+
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					}
 					saleDetail.RecapNonElectricity.December += v.QuantityUnloading
@@ -1967,7 +2644,6 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 
 					for _, caf := range cafAssignmentEndUser {
 						if caf.EndUserString == v.DmoBuyer.CompanyName {
-
 							if _, ok := saleDetail.DetailRealizationCafAssignment.December[caf.EndUserString]; ok {
 								saleDetail.DetailRealizationCafAssignment.December[caf.EndUserString] += v.QuantityUnloading
 							} else {

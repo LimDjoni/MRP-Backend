@@ -3,6 +3,8 @@ package masterreport
 import (
 	"fmt"
 	"reflect"
+	"strings"
+	"time"
 
 	"ajebackend/model/master/iupopk"
 
@@ -18,6 +20,7 @@ type Service interface {
 	SaleDetailReport(year string, iupopkId int) (SaleDetail, error)
 	CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutput, iupopk iupopk.Iupopk, file *excelize.File, sheetName string) (*excelize.File, error)
 	CreateReportRealization(year string, reportRealization RealizationOutput, iupopk iupopk.Iupopk, file *excelize.File) (*excelize.File, error)
+	CreateReportSalesDetail(year string, reportSaleDetail SaleDetail, iupopk iupopk.Iupopk, file *excelize.File, sheetName string) (*excelize.File, error)
 }
 
 type service struct {
@@ -28,7 +31,7 @@ func NewService(repository Repository) *service {
 	return &service{repository}
 }
 
-func createTemplateRealization(file *excelize.File, sheetName []string, year string) (*excelize.File, error) {
+func createTemplateRealization(file *excelize.File, sheetName []string, year string, iupopkName string) (*excelize.File, error) {
 	boldStyleCenter, _ := file.NewStyle(&excelize.Style{
 		Font: &excelize.Font{
 			Bold: true,
@@ -138,7 +141,7 @@ func createTemplateRealization(file *excelize.File, sheetName []string, year str
 
 		file.SetColWidth(v, "J", "J", float64(10))
 
-		file.SetCellValue(v, "B2", "REALISASI PEMENUHAN KEBUTUHAN BATUBARA DALAM NEGERI PT ANGSANA JAYA ENERGI")
+		file.SetCellValue(v, "B2", fmt.Sprintf("REALISASI PEMENUHAN KEBUTUHAN BATUBARA DALAM NEGERI %s", strings.ToUpper(iupopkName)))
 		file.SetCellValue(v, "B3", fmt.Sprintf("Bulan %s Tahun %s", bulan, year))
 		file.SetCellStyle(v, "B2", "H3", boldStyleCenter)
 		file.SetCellStyle(v, "J5", "J6", boldStyleCenter)
@@ -153,6 +156,142 @@ func createTemplateRealization(file *excelize.File, sheetName []string, year str
 		file.SetCellValue(v, "G5", "Kalori CV (Gar)")
 		file.SetCellValue(v, "H5", "Jumlah (Ton)")
 		file.SetCellValue(v, "J5", "Berita Acara")
+	}
+
+	return file, nil
+}
+
+func insertTransactionRealization(file *excelize.File, sheetName string, transactionElectric []RealizationTransaction, transactionNonElectric []RealizationTransaction) (*excelize.File, error) {
+	custFmt := "#,##0.000"
+
+	custDateFmt := "d-mmm-yyyy"
+
+	border := []excelize.Border{
+		{Type: "left", Color: "000000", Style: 1},
+		{Type: "top", Color: "000000", Style: 1},
+		{Type: "bottom", Color: "000000", Style: 1},
+		{Type: "right", Color: "000000", Style: 1},
+	}
+
+	borderStyle, _ := file.NewStyle(&excelize.Style{
+		Border:       border,
+		CustomNumFmt: &custFmt,
+	})
+
+	borderCenterStyle, _ := file.NewStyle(&excelize.Style{
+		Border: border,
+		Alignment: &excelize.Alignment{
+			Horizontal: "center",
+		},
+	})
+
+	borderCenterDateStyle, _ := file.NewStyle(&excelize.Style{
+		Border: border,
+		Alignment: &excelize.Alignment{
+			Horizontal: "center",
+		},
+		CustomNumFmt: &custDateFmt,
+	})
+
+	centerStyle, _ := file.NewStyle(&excelize.Style{
+		Alignment: &excelize.Alignment{
+			Horizontal: "center",
+		},
+	})
+
+	file.SetCellStyle(sheetName, "B7", fmt.Sprintf("F%v", 7+len(transactionElectric)+len(transactionNonElectric)), borderCenterStyle)
+
+	file.SetCellStyle(sheetName, "C7", fmt.Sprintf("C%v", 7+len(transactionElectric)+len(transactionNonElectric)), borderCenterDateStyle)
+
+	file.SetCellStyle(sheetName, "G7", fmt.Sprintf("H%v", 7+len(transactionElectric)+len(transactionNonElectric)), borderStyle)
+
+	file.SetCellStyle(sheetName, "J7", fmt.Sprintf("J%v", 7+len(transactionElectric)+len(transactionNonElectric)), centerStyle)
+
+	for idx, nonElectric := range transactionNonElectric {
+		file.SetCellValue(sheetName, fmt.Sprintf("B%v", idx+7), idx+1)
+		date, err := time.Parse("2006-01-02", nonElectric.ShippingDate)
+
+		if err != nil {
+			return file, err
+		}
+
+		file.SetCellValue(sheetName, fmt.Sprintf("C%v", idx+7), date)
+		if nonElectric.Trader != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", idx+7), strings.ToUpper(nonElectric.Trader.CompanyName))
+		} else {
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", idx+7), "-")
+		}
+
+		if nonElectric.EndUser != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", idx+7), strings.ToUpper(nonElectric.EndUser.CompanyName))
+		} else {
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", idx+7), "-")
+		}
+
+		if nonElectric.EndUser != nil {
+			if nonElectric.EndUser.IndustryType != nil {
+				if nonElectric.EndUser.IndustryType.Category == "NON ELECTRICITY" {
+					file.SetCellValue(sheetName, fmt.Sprintf("F%v", idx+7), "NON KELISTRIKAN")
+				}
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("F%v", idx+7), "-")
+			}
+		} else {
+			file.SetCellValue(sheetName, fmt.Sprintf("F%v", idx+7), "-")
+		}
+
+		file.SetCellValue(sheetName, fmt.Sprintf("G%v", idx+7), nonElectric.QualityCaloriesAr)
+		file.SetCellValue(sheetName, fmt.Sprintf("H%v", idx+7), nonElectric.Quantity)
+
+		if nonElectric.IsBastOk {
+			file.SetCellValue(sheetName, fmt.Sprintf("J%v", idx+7), "OK")
+		} else {
+			file.SetCellValue(sheetName, fmt.Sprintf("J%v", idx+7), "-")
+		}
+	}
+
+	for idx, electric := range transactionElectric {
+		file.SetCellValue(sheetName, fmt.Sprintf("B%v", idx+7+len(transactionNonElectric)), idx+1+len(transactionNonElectric))
+		date, err := time.Parse("2006-01-02", electric.ShippingDate)
+
+		if err != nil {
+			return file, err
+		}
+		file.SetCellValue(sheetName, fmt.Sprintf("C%v", idx+7+len(transactionNonElectric)), date)
+		if electric.Trader != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", idx+7+len(transactionNonElectric)), strings.ToUpper(electric.Trader.CompanyName))
+		} else {
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", idx+7+len(transactionNonElectric)), "-")
+		}
+
+		if electric.EndUser != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", idx+7+len(transactionNonElectric)), strings.ToUpper(electric.EndUser.CompanyName))
+		} else {
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", idx+7+len(transactionNonElectric)), "-")
+		}
+
+		if electric.EndUser != nil {
+			if electric.EndUser.IndustryType != nil {
+				if electric.EndUser.IndustryType.Category == "ELECTRICITY" {
+					file.SetCellValue(sheetName, fmt.Sprintf("F%v", idx+7+len(transactionNonElectric)), "KELISTRIKAN")
+				} else if electric.EndUser.IndustryType.Category == "NON ELECTRICITY" {
+					file.SetCellValue(sheetName, fmt.Sprintf("F%v", idx+7+len(transactionNonElectric)), "NON KELISTRIKAN")
+				}
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("F%v", idx+7+len(transactionNonElectric)), "-")
+			}
+		} else {
+			file.SetCellValue(sheetName, fmt.Sprintf("F%v", idx+7+len(transactionNonElectric)), "-")
+		}
+
+		file.SetCellValue(sheetName, fmt.Sprintf("G%v", idx+7+len(transactionNonElectric)), electric.QualityCaloriesAr)
+		file.SetCellValue(sheetName, fmt.Sprintf("H%v", idx+7+len(transactionNonElectric)), electric.Quantity)
+
+		if electric.IsBastOk {
+			file.SetCellValue(sheetName, fmt.Sprintf("J%v", idx+7+len(transactionNonElectric)), "OK")
+		} else {
+			file.SetCellValue(sheetName, fmt.Sprintf("J%v", idx+7+len(transactionNonElectric)), "-")
+		}
 	}
 
 	return file, nil
@@ -844,41 +983,1129 @@ func (s *service) CreateReportRealization(year string, reportRealization Realiza
 		"DES",
 	)
 
-	newFile, err := createTemplateRealization(file, sheetName, year)
+	newFile, err := createTemplateRealization(file, sheetName, year, iupopk.Name)
 
 	if err != nil {
 		return file, err
 	}
-	// for _, v := range sheetName {
 
-	// 	switch v {
-	// 	case "JAN":
+	var insertedFile *excelize.File
+	var errFile error
 
-	// 	case "FEB":
+	insertedFile = newFile
+	for _, v := range sheetName {
 
-	// 	case "MAR":
+		switch v {
+		case "JAN":
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.January, reportRealization.Caf.January)
 
-	// 	case "APR":
+			if errFile != nil {
+				return insertedFile, errFile
+			}
+		case "FEB":
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.February, reportRealization.Caf.February)
+			if errFile != nil {
+				return insertedFile, errFile
+			}
+		case "MAR":
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.March, reportRealization.Caf.March)
+			if errFile != nil {
+				return insertedFile, errFile
+			}
+		case "APR":
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.April, reportRealization.Caf.April)
+			if errFile != nil {
+				return insertedFile, errFile
+			}
+		case "MEI":
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.May, reportRealization.Caf.May)
+			if errFile != nil {
+				return insertedFile, errFile
+			}
+		case "JUN":
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.June, reportRealization.Caf.June)
+			if errFile != nil {
+				return insertedFile, errFile
+			}
+		case "JUL":
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.July, reportRealization.Caf.July)
+			if errFile != nil {
+				return insertedFile, errFile
+			}
+		case "AGU":
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.August, reportRealization.Caf.August)
+			if errFile != nil {
+				return insertedFile, errFile
+			}
+		case "SEP":
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.September, reportRealization.Caf.September)
+			if errFile != nil {
+				return insertedFile, errFile
+			}
+		case "OKT":
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.October, reportRealization.Caf.October)
+			if errFile != nil {
+				return insertedFile, errFile
+			}
+		case "NOV":
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.November, reportRealization.Caf.November)
+			if errFile != nil {
+				return insertedFile, errFile
+			}
+		case "DES":
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.December, reportRealization.Caf.December)
+			if errFile != nil {
+				return insertedFile, errFile
+			}
+		}
 
-	// 	case "MEI":
+	}
 
-	// 	case "JUN":
+	return insertedFile, nil
+}
 
-	// 	case "JUL":
+func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDetail, iupopk iupopk.Iupopk, file *excelize.File, sheetName string) (*excelize.File, error) {
 
-	// 	case "AGU":
+	custFmt := "_(* #,##0_);_(* \\(#,##0\\);_(* \"-\"_);_(@_)"
+	custMtFmt := "#,##0\\ \"mt\""
 
-	// 	case "SEP":
+	custDateFmt := "d-mmm-yyyy"
+	border := []excelize.Border{
+		{Type: "left", Color: "000000", Style: 1},
+		{Type: "top", Color: "000000", Style: 1},
+		{Type: "bottom", Color: "000000", Style: 1},
+		{Type: "right", Color: "000000", Style: 1},
+	}
 
-	// 	case "OKT":
+	mtFmtStyle, _ := file.NewStyle(&excelize.Style{
+		CustomNumFmt: &custMtFmt,
+		Alignment: &excelize.Alignment{
+			Horizontal: "left",
+		},
+	})
 
-	// 	case "NOV":
+	boldTitleStyle, _ := file.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold: true,
+			Size: 14,
+		},
+	})
 
-	// 	case "DES":
+	dateStyle, _ := file.NewStyle(&excelize.Style{
+		CustomNumFmt: &custDateFmt,
+	})
 
-	// 	}
+	boldOnlyStyle, _ := file.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold: true,
+		},
+	})
 
-	// }
+	boldPercentStyle, _ := file.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold: true,
+		},
+		NumFmt: 10,
+	})
 
-	return newFile, nil
+	borderStyle, _ := file.NewStyle(&excelize.Style{
+		Border: border,
+	})
+
+	centerStyle, _ := file.NewStyle(&excelize.Style{
+		Border: border,
+		Alignment: &excelize.Alignment{
+			Horizontal: "center",
+			Vertical:   "center",
+		},
+	})
+
+	boldTitleTableStyle, _ := file.NewStyle(&excelize.Style{
+		Border: border,
+		Font: &excelize.Font{
+			Bold: true,
+		},
+		Alignment: &excelize.Alignment{
+			Horizontal: "center",
+			Vertical:   "center",
+		},
+	})
+
+	boldNumberStyle, _ := file.NewStyle(&excelize.Style{
+		Border: border,
+		Font: &excelize.Font{
+			Bold: true,
+		},
+		CustomNumFmt: &custFmt,
+		Alignment: &excelize.Alignment{
+			Vertical: "center",
+		},
+	})
+
+	formatNumberStyle, _ := file.NewStyle(&excelize.Style{
+		Border:       border,
+		CustomNumFmt: &custFmt,
+		Alignment: &excelize.Alignment{
+			Horizontal: "right",
+		},
+	})
+
+	var monthString []string
+
+	monthString = append(monthString,
+		"January",
+		"February",
+		"March",
+		"April",
+		"May",
+		"June",
+		"July",
+		"August",
+		"September",
+		"October",
+		"November",
+		"December",
+	)
+
+	var maxProductionQuota float64
+
+	file.SetColWidth(sheetName, "A", "A", float64(5))
+	file.SetColWidth(sheetName, "B", "B", float64(25))
+	file.SetColWidth(sheetName, "C", "C", float64(2))
+	file.SetColWidth(sheetName, "D", "D", float64(25))
+	file.SetColWidth(sheetName, "E", "E", float64(20))
+	file.SetColWidth(sheetName, "F", "Q", float64(16))
+	file.SetColWidth(sheetName, "H", "H", float64(20))
+
+	file.SetCellValue(sheetName, "A1", iupopk.Name)
+	errTitleIupopk := file.SetCellStyle(sheetName, "A1", "A1", boldTitleStyle)
+	if errTitleIupopk != nil {
+		return file, errTitleIupopk
+	}
+
+	errYearStyle := file.SetCellStyle(sheetName, "A2", "A2", boldOnlyStyle)
+	if errYearStyle != nil {
+		return file, errYearStyle
+	}
+
+	file.SetCellValue(sheetName, "A2", fmt.Sprintf("Tahun %s", year))
+
+	file.SetCellValue(sheetName, "A5", "RKAB")
+	errTitleRkab := file.SetCellStyle(sheetName, "A5", "A5", boldTitleStyle)
+
+	if errTitleRkab != nil {
+		return file, errTitleRkab
+	}
+	goment.SetLocale("id")
+
+	for idx, v := range reportSaleDetail.Rkabs {
+
+		if maxProductionQuota < v.ProductionQuota {
+			maxProductionQuota = v.ProductionQuota
+		}
+
+		file.SetCellValue(sheetName, fmt.Sprintf("B%v", 6+(idx*4)), "No. Surat")
+		file.SetCellValue(sheetName, fmt.Sprintf("C%v", 6+(idx*4)), ":")
+		file.SetCellValue(sheetName, fmt.Sprintf("D%v", 6+(idx*4)), v.LetterNumber)
+
+		dateFormat, errDate := goment.New(v.DateOfIssue)
+		if errDate != nil {
+			return file, errDate
+		}
+
+		file.SetCellValue(sheetName, fmt.Sprintf("B%v", 7+(idx*4)), "Tanggal")
+		file.SetCellValue(sheetName, fmt.Sprintf("C%v", 7+(idx*4)), ":")
+		file.SetCellValue(sheetName, fmt.Sprintf("D%v", 7+(idx*4)), dateFormat.Format("DD MMMM YYYY", "id"))
+
+		errDateRkab := file.SetCellStyle(sheetName, fmt.Sprintf("D%v", 7+(idx*4)), fmt.Sprintf("D%v", 7+(idx*4)), dateStyle)
+
+		if errDateRkab != nil {
+			return file, errDateRkab
+		}
+
+		file.SetCellValue(sheetName, fmt.Sprintf("B%v", 8+(idx*4)), "Quota Produksi")
+		file.SetCellValue(sheetName, fmt.Sprintf("C%v", 8+(idx*4)), ":")
+
+		errProductionQuota := file.SetCellStyle(sheetName, fmt.Sprintf("D%v", 8+(idx*4)), fmt.Sprintf("D%v", 8+(idx*4)), mtFmtStyle)
+
+		if errProductionQuota != nil {
+			return file, errProductionQuota
+		}
+		file.SetCellValue(sheetName, fmt.Sprintf("D%v", 8+(idx*4)), v.ProductionQuota)
+	}
+
+	var startRkab int
+
+	startRkab = 5 + 2 + (len(reportSaleDetail.Rkabs) * 4)
+
+	file.SetCellValue(sheetName, fmt.Sprintf("A%v", startRkab), "DMO")
+
+	errTitleDmo := file.SetCellStyle(sheetName, fmt.Sprintf("A%v", startRkab), fmt.Sprintf("A%v", startRkab), boldTitleStyle)
+
+	if errTitleDmo != nil {
+		return file, errTitleDmo
+	}
+
+	file.SetCellValue(sheetName, fmt.Sprintf("B%v", startRkab+1), "Kewajiban DMO")
+	file.SetCellValue(sheetName, fmt.Sprintf("C%v", startRkab+1), ":")
+	file.SetCellValue(sheetName, fmt.Sprintf("D%v", startRkab+1), maxProductionQuota*reportSaleDetail.Rkabs[0].DmoObligation/100)
+
+	errDmoObligation := file.SetCellStyle(sheetName, fmt.Sprintf("D%v", startRkab+1), fmt.Sprintf("D%v", startRkab+1), mtFmtStyle)
+
+	if errDmoObligation != nil {
+		return file, errDmoObligation
+	}
+
+	var startProduction int
+
+	startProduction = startRkab + 4
+
+	file.SetCellValue(sheetName, fmt.Sprintf("A%v", startProduction), "PRODUKSI")
+	errTitleProduction := file.SetCellStyle(sheetName, fmt.Sprintf("A%v", startProduction), fmt.Sprintf("A%v", startProduction), boldTitleStyle)
+
+	if errTitleProduction != nil {
+		return file, errTitleProduction
+	}
+
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startProduction+1), fmt.Sprintf("C%v", startProduction+1))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startProduction+2), fmt.Sprintf("C%v", startProduction+2))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startProduction+3), fmt.Sprintf("C%v", startProduction+3))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startProduction+4), fmt.Sprintf("C%v", startProduction+4))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startProduction+5), fmt.Sprintf("C%v", startProduction+5))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startProduction+6), fmt.Sprintf("C%v", startProduction+6))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startProduction+7), fmt.Sprintf("C%v", startProduction+7))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startProduction+8), fmt.Sprintf("C%v", startProduction+8))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startProduction+9), fmt.Sprintf("C%v", startProduction+9))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startProduction+10), fmt.Sprintf("C%v", startProduction+10))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startProduction+11), fmt.Sprintf("C%v", startProduction+11))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startProduction+12), fmt.Sprintf("C%v", startProduction+12))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startProduction+13), fmt.Sprintf("C%v", startProduction+13))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startProduction+14), fmt.Sprintf("C%v", startProduction+14))
+	file.MergeCell(sheetName, fmt.Sprintf("E%v", startProduction+2), fmt.Sprintf("E%v", startProduction+14))
+
+	file.SetCellValue(sheetName, fmt.Sprintf("B%v", startProduction+1), "Bulan")
+	file.SetCellValue(sheetName, fmt.Sprintf("D%v", startProduction+1), "Produksi")
+	file.SetCellValue(sheetName, fmt.Sprintf("E%v", startProduction+1), "RKAB")
+
+	errTitleTable1 := file.SetCellStyle(sheetName, fmt.Sprintf("B%v", startProduction+1), fmt.Sprintf("E%v", startProduction+1), boldTitleTableStyle)
+
+	if errTitleTable1 != nil {
+		return file, errTitleTable1
+	}
+
+	file.SetCellValue(sheetName, fmt.Sprintf("E%v", startProduction+2), maxProductionQuota)
+
+	for idx, v := range monthString {
+		file.SetCellValue(sheetName, fmt.Sprintf("B%v", startProduction+2+idx), v)
+		switch v {
+		case "January":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startProduction+2+idx), reportSaleDetail.Production.January)
+		case "February":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startProduction+2+idx), reportSaleDetail.Production.February)
+		case "March":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startProduction+2+idx), reportSaleDetail.Production.March)
+		case "April":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startProduction+2+idx), reportSaleDetail.Production.April)
+		case "May":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startProduction+2+idx), reportSaleDetail.Production.May)
+		case "June":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startProduction+2+idx), reportSaleDetail.Production.June)
+		case "July":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startProduction+2+idx), reportSaleDetail.Production.July)
+		case "August":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startProduction+2+idx), reportSaleDetail.Production.August)
+		case "September":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startProduction+2+idx), reportSaleDetail.Production.September)
+		case "October":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startProduction+2+idx), reportSaleDetail.Production.October)
+		case "November":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startProduction+2+idx), reportSaleDetail.Production.November)
+		case "December":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startProduction+2+idx), reportSaleDetail.Production.December)
+
+		}
+	}
+	file.SetCellValue(sheetName, fmt.Sprintf("B%v", startProduction+14), "TOTAL")
+	file.SetCellValue(sheetName, fmt.Sprintf("D%v", startProduction+14), reportSaleDetail.Production.Total)
+
+	errProductionMonthStyleTable := file.SetCellStyle(sheetName, fmt.Sprintf("B%v", startProduction+2), fmt.Sprintf("B%v", startProduction+13), borderStyle)
+
+	if errProductionMonthStyleTable != nil {
+		return file, errProductionMonthStyleTable
+	}
+
+	errProductionStyleTable := file.SetCellStyle(sheetName, fmt.Sprintf("D%v", startProduction+2), fmt.Sprintf("D%v", startProduction+13), formatNumberStyle)
+
+	if errProductionStyleTable != nil {
+		return file, errProductionStyleTable
+	}
+
+	errProductionTotalStyle := file.SetCellStyle(sheetName, fmt.Sprintf("B%v", startProduction+14), fmt.Sprintf("B%v", startProduction+14), boldNumberStyle)
+
+	if errProductionTotalStyle != nil {
+		return file, errProductionTotalStyle
+	}
+
+	errProductionTotalNumberStyle := file.SetCellStyle(sheetName, fmt.Sprintf("D%v", startProduction+14), fmt.Sprintf("D%v", startProduction+14), boldNumberStyle)
+
+	if errProductionTotalNumberStyle != nil {
+		return file, errProductionTotalNumberStyle
+	}
+
+	errProductionRkabStyle := file.SetCellStyle(sheetName, fmt.Sprintf("E%v", startProduction+2), fmt.Sprintf("E%v", startProduction+14), boldNumberStyle)
+
+	if errProductionRkabStyle != nil {
+		return file, errProductionRkabStyle
+	}
+
+	var startSale int
+
+	startSale = startProduction + 18
+
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSale+1), fmt.Sprintf("C%v", startSale+1))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSale+2), fmt.Sprintf("C%v", startSale+2))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSale+3), fmt.Sprintf("C%v", startSale+3))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSale+4), fmt.Sprintf("C%v", startSale+4))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSale+5), fmt.Sprintf("C%v", startSale+5))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSale+6), fmt.Sprintf("C%v", startSale+6))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSale+7), fmt.Sprintf("C%v", startSale+7))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSale+8), fmt.Sprintf("C%v", startSale+8))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSale+9), fmt.Sprintf("C%v", startSale+9))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSale+10), fmt.Sprintf("C%v", startSale+10))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSale+11), fmt.Sprintf("C%v", startSale+11))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSale+12), fmt.Sprintf("C%v", startSale+12))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSale+13), fmt.Sprintf("C%v", startSale+13))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSale+14), fmt.Sprintf("C%v", startSale+14))
+
+	file.SetCellValue(sheetName, fmt.Sprintf("A%v", startSale), "PENJUALAN")
+
+	errTitlePenjualan := file.SetCellStyle(sheetName, fmt.Sprintf("A%v", startSale), fmt.Sprintf("A%v", startSale), boldTitleStyle)
+
+	if errTitlePenjualan != nil {
+		return file, errTitlePenjualan
+	}
+
+	file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSale+1), "Bulan")
+	file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSale+1), "Kelistrikan")
+	file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSale+1), "Non Kelistrikan")
+	file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+1), "Jumlah")
+	file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+1), "Tidak Bisa Claim DMO")
+
+	errTitleTablePenjualan := file.SetCellStyle(sheetName, fmt.Sprintf("B%v", startSale+1), fmt.Sprintf("F%v", startSale+1), boldTitleTableStyle)
+
+	if errTitleTablePenjualan != nil {
+		return file, errTitleTablePenjualan
+	}
+
+	errTitleTablePenjualan2 := file.SetCellStyle(sheetName, fmt.Sprintf("H%v", startSale+1), fmt.Sprintf("H%v", startSale+1), boldTitleTableStyle)
+
+	if errTitleTablePenjualan2 != nil {
+		return file, errTitleTablePenjualan2
+	}
+
+	for idx, v := range monthString {
+		file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSale+2+idx), v)
+		switch v {
+		case "January":
+
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSale+2+idx), reportSaleDetail.RecapElectricity.January)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.January)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.January+reportSaleDetail.RecapElectricity.January)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.January)
+
+		case "February":
+
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSale+2+idx), reportSaleDetail.RecapElectricity.February)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.February)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.February+reportSaleDetail.RecapElectricity.February)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.February)
+
+		case "March":
+
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSale+2+idx), reportSaleDetail.RecapElectricity.March)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.March)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.March+reportSaleDetail.RecapElectricity.March)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.March)
+
+		case "April":
+
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSale+2+idx), reportSaleDetail.RecapElectricity.April)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.April)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.April+reportSaleDetail.RecapElectricity.April)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.April)
+
+		case "May":
+
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSale+2+idx), reportSaleDetail.RecapElectricity.May)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.May)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.May+reportSaleDetail.RecapElectricity.May)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.May)
+
+		case "June":
+
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSale+2+idx), reportSaleDetail.RecapElectricity.June)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.June)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.June+reportSaleDetail.RecapElectricity.June)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.June)
+
+		case "July":
+
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSale+2+idx), reportSaleDetail.RecapElectricity.July)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.July)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.July+reportSaleDetail.RecapElectricity.July)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.July)
+
+		case "August":
+
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSale+2+idx), reportSaleDetail.RecapElectricity.August)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.August)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.August+reportSaleDetail.RecapElectricity.August)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.August)
+
+		case "September":
+
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSale+2+idx), reportSaleDetail.RecapElectricity.September)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.September)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.September+reportSaleDetail.RecapElectricity.September)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.September)
+
+		case "October":
+
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSale+2+idx), reportSaleDetail.RecapElectricity.October)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.October)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.October+reportSaleDetail.RecapElectricity.October)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.October)
+
+		case "November":
+
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSale+2+idx), reportSaleDetail.RecapElectricity.November)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.November)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.November+reportSaleDetail.RecapElectricity.November)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.November)
+
+		case "December":
+
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSale+2+idx), reportSaleDetail.RecapElectricity.December)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.December)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.December+reportSaleDetail.RecapElectricity.December)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.December)
+
+		}
+	}
+
+	file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSale+14), "TOTAL")
+	file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSale+14), reportSaleDetail.RecapElectricity.Total)
+	file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSale+14), reportSaleDetail.RecapNonElectricity.Total)
+	file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+14), reportSaleDetail.RecapElectricity.Total+reportSaleDetail.RecapNonElectricity.Total)
+	file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+14), reportSaleDetail.NotClaimable.Total)
+
+	errPenjualanTotalStyle := file.SetCellStyle(sheetName, fmt.Sprintf("B%v", startSale+14), fmt.Sprintf("B%v", startSale+14), boldNumberStyle)
+
+	if errPenjualanTotalStyle != nil {
+		return file, errPenjualanTotalStyle
+	}
+
+	errPenjualanTotalNumberStyle := file.SetCellStyle(sheetName, fmt.Sprintf("D%v", startSale+14), fmt.Sprintf("F%v", startSale+14), boldNumberStyle)
+
+	if errPenjualanTotalNumberStyle != nil {
+		return file, errPenjualanTotalNumberStyle
+	}
+
+	errPenjualanTotalNumberStyle2 := file.SetCellStyle(sheetName, fmt.Sprintf("H%v", startSale+14), fmt.Sprintf("H%v", startSale+14), boldNumberStyle)
+
+	if errPenjualanTotalNumberStyle2 != nil {
+		return file, errPenjualanTotalNumberStyle2
+	}
+
+	erPenjualanMonthStyleTable := file.SetCellStyle(sheetName, fmt.Sprintf("B%v", startSale+2), fmt.Sprintf("B%v", startSale+13), borderStyle)
+
+	if erPenjualanMonthStyleTable != nil {
+		return file, erPenjualanMonthStyleTable
+	}
+
+	errPenjualanNumberStyle := file.SetCellStyle(sheetName, fmt.Sprintf("D%v", startSale+2), fmt.Sprintf("F%v", startSale+13), formatNumberStyle)
+
+	if errPenjualanNumberStyle != nil {
+		return file, errPenjualanNumberStyle
+	}
+
+	errPenjualanNumberStyle2 := file.SetCellStyle(sheetName, fmt.Sprintf("H%v", startSale+2), fmt.Sprintf("H%v", startSale+13), formatNumberStyle)
+
+	if errPenjualanNumberStyle2 != nil {
+		return file, errPenjualanNumberStyle2
+	}
+
+	for idx, rkab := range reportSaleDetail.Rkabs {
+		dateFormat, errDate := goment.New(rkab.DateOfIssue)
+		if errDate != nil {
+			return file, errDate
+		}
+		file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSale+16+(idx*10)), "% Pemenuhan DMO terhadap REALISASI PRODUKSI")
+		file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSale+18+(idx*10)), "% Pemenuhan DMO terhadap RENCANA PRODUKSI")
+		file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSale+19+(idx*10)), fmt.Sprintf("disetujui tgl %s", dateFormat.Format("DD MMMM YYYY", "id")))
+		file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSale+21+(idx*10)), fmt.Sprintf("%% Pemenuhan DMO terhadap kewajiban pemenuhan DMO %.0f%%", rkab.DmoObligation))
+		file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSale+23+(idx*10)), "% Pemenuhan DMO terhadap Rencana Produksi (Prorata 12 bulan)")
+
+		errBoldOnlyStyle := file.SetCellStyle(sheetName, fmt.Sprintf("B%v", startSale+16+(idx*10)), fmt.Sprintf("B%v", startSale+23+(idx*10)), boldOnlyStyle)
+
+		if errBoldOnlyStyle != nil {
+			return file, errBoldOnlyStyle
+		}
+
+		file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startSale+16+(idx*10)), fmt.Sprintf("F%v/D%v", startSale+14, startProduction+14))
+		file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startSale+18+(idx*10)), fmt.Sprintf("F%v/%.0f", startSale+14, rkab.ProductionQuota))
+		file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startSale+21+(idx*10)), fmt.Sprintf("F%v/%.2f%%", startSale+18+(idx*10), rkab.DmoObligation))
+		file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startSale+23+(idx*10)), fmt.Sprintf("F%v/%.0f", startSale+14, rkab.ProductionQuota))
+
+		errBoldPercentStyle := file.SetCellStyle(sheetName, fmt.Sprintf("F%v", startSale+16+(idx*10)), fmt.Sprintf("F%v", startSale+23+(idx*10)), boldPercentStyle)
+
+		if errBoldPercentStyle != nil {
+			return file, errBoldPercentStyle
+		}
+
+	}
+
+	var startDetail int
+
+	startDetail = startSale + 17 + (len(reportSaleDetail.Rkabs) * 10)
+
+	file.SetCellValue(sheetName, fmt.Sprintf("A%v", startDetail), "DETAIL PENJUALAN")
+
+	errTitleDetailPenjualan := file.SetCellStyle(sheetName, fmt.Sprintf("A%v", startDetail), fmt.Sprintf("A%v", startDetail), boldTitleStyle)
+
+	if errTitleDetailPenjualan != nil {
+		return file, errTitleDetailPenjualan
+	}
+
+	file.SetCellValue(sheetName, fmt.Sprintf("A%v", startDetail+1), "Data Realisasi Penjualan Batubara Untuk Memenuhi Kebutuhan Batubara Bagi Penyediaan Tenaga Listrik Untuk Kepentingan Umum / Kelistrikan")
+
+	file.MergeCell(sheetName, fmt.Sprintf("A%v", startDetail+2), fmt.Sprintf("A%v", startDetail+3))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startDetail+2), fmt.Sprintf("D%v", startDetail+3))
+
+	file.MergeCell(sheetName, fmt.Sprintf("E%v", startDetail+2), fmt.Sprintf("Q%v", startDetail+2))
+
+	file.SetCellValue(sheetName, fmt.Sprintf("E%v", startDetail+2), "Realisasi Penjualan Batubara (Pengguna Akhir Batubara) (Ton)")
+
+	file.SetCellValue(sheetName, fmt.Sprintf("A%v", startDetail+2), "No.")
+	file.SetCellValue(sheetName, fmt.Sprintf("B%v", startDetail+2), "END USER")
+	file.SetCellValue(sheetName, fmt.Sprintf("E%v", startDetail+3), "January")
+	file.SetCellValue(sheetName, fmt.Sprintf("F%v", startDetail+3), "February")
+	file.SetCellValue(sheetName, fmt.Sprintf("G%v", startDetail+3), "March")
+	file.SetCellValue(sheetName, fmt.Sprintf("H%v", startDetail+3), "April")
+	file.SetCellValue(sheetName, fmt.Sprintf("I%v", startDetail+3), "May")
+	file.SetCellValue(sheetName, fmt.Sprintf("J%v", startDetail+3), "June")
+	file.SetCellValue(sheetName, fmt.Sprintf("K%v", startDetail+3), "July")
+	file.SetCellValue(sheetName, fmt.Sprintf("L%v", startDetail+3), "August")
+	file.SetCellValue(sheetName, fmt.Sprintf("M%v", startDetail+3), "September")
+	file.SetCellValue(sheetName, fmt.Sprintf("N%v", startDetail+3), "October")
+	file.SetCellValue(sheetName, fmt.Sprintf("O%v", startDetail+3), "November")
+	file.SetCellValue(sheetName, fmt.Sprintf("P%v", startDetail+3), "December")
+	file.SetCellValue(sheetName, fmt.Sprintf("Q%v", startDetail+3), "TOTAL")
+
+	var numberElectric int = 1
+	for k, value := range reportSaleDetail.CompanyElectricity {
+
+		file.SetCellValue(sheetName, fmt.Sprintf("B%v", startDetail+(4+numberElectric-1)), k)
+
+		for _, v := range value {
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startDetail+(4+numberElectric-1)), v)
+			file.SetCellValue(sheetName, fmt.Sprintf("A%v", startDetail+(4+numberElectric-1)), numberElectric)
+
+			if _, ok := reportSaleDetail.Electricity.January[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("E%v", startDetail+(4+numberElectric-1)), reportSaleDetail.Electricity.January[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("E%v", startDetail+(4+numberElectric-1)), 0)
+			}
+
+			if _, ok := reportSaleDetail.Electricity.February[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("F%v", startDetail+(4+numberElectric-1)), reportSaleDetail.Electricity.February[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("F%v", startDetail+(4+numberElectric-1)), 0)
+			}
+
+			if _, ok := reportSaleDetail.Electricity.March[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("G%v", startDetail+(4+numberElectric-1)), reportSaleDetail.Electricity.March[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("G%v", startDetail+(4+numberElectric-1)), 0)
+			}
+
+			if _, ok := reportSaleDetail.Electricity.April[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("H%v", startDetail+(4+numberElectric-1)), reportSaleDetail.Electricity.April[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("H%v", startDetail+(4+numberElectric-1)), 0)
+			}
+
+			if _, ok := reportSaleDetail.Electricity.May[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("I%v", startDetail+(4+numberElectric-1)), reportSaleDetail.Electricity.May[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("I%v", startDetail+(4+numberElectric-1)), 0)
+			}
+
+			if _, ok := reportSaleDetail.Electricity.June[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("J%v", startDetail+(4+numberElectric-1)), reportSaleDetail.Electricity.June[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("J%v", startDetail+(4+numberElectric-1)), 0)
+			}
+
+			if _, ok := reportSaleDetail.Electricity.July[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("K%v", startDetail+(4+numberElectric-1)), reportSaleDetail.Electricity.July[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("K%v", startDetail+(4+numberElectric-1)), 0)
+			}
+
+			if _, ok := reportSaleDetail.Electricity.August[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("L%v", startDetail+(4+numberElectric-1)), reportSaleDetail.Electricity.August[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("L%v", startDetail+(4+numberElectric-1)), 0)
+			}
+
+			if _, ok := reportSaleDetail.Electricity.September[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("M%v", startDetail+(4+numberElectric-1)), reportSaleDetail.Electricity.September[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("M%v", startDetail+(4+numberElectric-1)), 0)
+			}
+
+			if _, ok := reportSaleDetail.Electricity.October[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("N%v", startDetail+(4+numberElectric-1)), reportSaleDetail.Electricity.October[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("N%v", startDetail+(4+numberElectric-1)), 0)
+			}
+
+			if _, ok := reportSaleDetail.Electricity.November[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("O%v", startDetail+(4+numberElectric-1)), reportSaleDetail.Electricity.November[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("O%v", startDetail+(4+numberElectric-1)), 0)
+			}
+
+			if _, ok := reportSaleDetail.Electricity.December[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("P%v", startDetail+(4+numberElectric-1)), reportSaleDetail.Electricity.December[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("P%v", startDetail+(4+numberElectric-1)), 0)
+			}
+
+			file.SetCellFormula(sheetName, fmt.Sprintf("Q%v", startDetail+(4+numberElectric-1)), fmt.Sprintf("SUM(E%v:P%v)", startDetail+(4+numberElectric-1), startDetail+(4+numberElectric-1)))
+			numberElectric += 1
+		}
+
+		file.MergeCell(sheetName, fmt.Sprintf("B%v", startDetail+numberElectric+1), fmt.Sprintf("C%v", startDetail+numberElectric+len(value)))
+
+	}
+
+	errNoStyle := file.SetCellStyle(sheetName, fmt.Sprintf("A%v", startDetail+4), fmt.Sprintf("A%v", startDetail+3+numberElectric), centerStyle)
+
+	if errNoStyle != nil {
+		return file, errNoStyle
+	}
+
+	errTitleTableElectricStyle := file.SetCellStyle(sheetName, fmt.Sprintf("A%v", startDetail+2), fmt.Sprintf("Q%v", startDetail+3), boldTitleTableStyle)
+
+	if errTitleTableElectricStyle != nil {
+		return file, errTitleTableElectricStyle
+	}
+
+	errNumberElectricStyle := file.SetCellStyle(sheetName, fmt.Sprintf("E%v", startDetail+4), fmt.Sprintf("P%v", startDetail+3+numberElectric-1), formatNumberStyle)
+
+	if errNumberElectricStyle != nil {
+		return file, errNumberElectricStyle
+	}
+
+	errNumberTotalElectricStyle := file.SetCellStyle(sheetName, fmt.Sprintf("Q%v", startDetail+4), fmt.Sprintf("Q%v", startDetail+3+numberElectric-1), boldNumberStyle)
+
+	if errNumberTotalElectricStyle != nil {
+		return file, errNumberTotalElectricStyle
+	}
+
+	errCompanyElectricStyle := file.SetCellStyle(sheetName, fmt.Sprintf("B%v", startDetail+3), fmt.Sprintf("D%v", startDetail+3+numberElectric-1), boldTitleTableStyle)
+
+	if errCompanyElectricStyle != nil {
+		return file, errCompanyElectricStyle
+	}
+
+	file.SetCellValue(sheetName, fmt.Sprintf("B%v", startDetail+3+numberElectric), "TOTAL")
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startDetail+3+numberElectric), fmt.Sprintf("D%v", startDetail+3+numberElectric))
+
+	errSaleDetailElectricTotalStyle := file.SetCellStyle(sheetName, fmt.Sprintf("B%v", startDetail+3+numberElectric), fmt.Sprintf("B%v", startDetail+3+numberElectric), boldNumberStyle)
+
+	if errSaleDetailElectricTotalStyle != nil {
+		return file, errSaleDetailElectricTotalStyle
+	}
+
+	errSaleDetailElectricTotalNumberStyle := file.SetCellStyle(sheetName, fmt.Sprintf("E%v", startDetail+3+numberElectric), fmt.Sprintf("Q%v", startDetail+3+numberElectric), boldNumberStyle)
+
+	if errSaleDetailElectricTotalNumberStyle != nil {
+		return file, errSaleDetailElectricTotalNumberStyle
+	}
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("E%v", startDetail+3+numberElectric), fmt.Sprintf("SUM(E%v:E%v)", startDetail+3, startDetail+2+numberElectric))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startDetail+3+numberElectric), fmt.Sprintf("SUM(F%v:F%v)", startDetail+3, startDetail+2+numberElectric))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("G%v", startDetail+3+numberElectric), fmt.Sprintf("SUM(G%v:G%v)", startDetail+3, startDetail+2+numberElectric))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("H%v", startDetail+3+numberElectric), fmt.Sprintf("SUM(H%v:H%v)", startDetail+3, startDetail+2+numberElectric))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("I%v", startDetail+3+numberElectric), fmt.Sprintf("SUM(I%v:I%v)", startDetail+3, startDetail+2+numberElectric))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("J%v", startDetail+3+numberElectric), fmt.Sprintf("SUM(J%v:J%v)", startDetail+3, startDetail+2+numberElectric))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("K%v", startDetail+3+numberElectric), fmt.Sprintf("SUM(K%v:K%v)", startDetail+3, startDetail+2+numberElectric))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("L%v", startDetail+3+numberElectric), fmt.Sprintf("SUM(L%v:L%v)", startDetail+3, startDetail+2+numberElectric))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("M%v", startDetail+3+numberElectric), fmt.Sprintf("SUM(M%v:M%v)", startDetail+3, startDetail+2+numberElectric))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("N%v", startDetail+3+numberElectric), fmt.Sprintf("SUM(N%v:N%v)", startDetail+3, startDetail+2+numberElectric))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("O%v", startDetail+3+numberElectric), fmt.Sprintf("SUM(O%v:O%v)", startDetail+3, startDetail+2+numberElectric))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("P%v", startDetail+3+numberElectric), fmt.Sprintf("SUM(P%v:P%v)", startDetail+3, startDetail+2+numberElectric))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("Q%v", startDetail+3+numberElectric), fmt.Sprintf("SUM(Q%v:Q%v)", startDetail+3, startDetail+2+numberElectric))
+
+	var startDetailNonElectric int
+	startDetailNonElectric = startDetail + 3 + numberElectric + 3
+
+	file.SetCellValue(sheetName, fmt.Sprintf("A%v", startDetailNonElectric), "Data Realisasi Penjualan Batubara Untuk Memenuhi Kebutuhan Batubara Untuk Industri / Non Kelistrikan Umum")
+
+	file.MergeCell(sheetName, fmt.Sprintf("A%v", startDetailNonElectric+1), fmt.Sprintf("A%v", startDetailNonElectric+2))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startDetailNonElectric+1), fmt.Sprintf("D%v", startDetailNonElectric+2))
+
+	file.MergeCell(sheetName, fmt.Sprintf("E%v", startDetailNonElectric+1), fmt.Sprintf("Q%v", startDetailNonElectric+1))
+
+	file.SetCellValue(sheetName, fmt.Sprintf("E%v", startDetailNonElectric+1), "Realisasi Penjualan Batubara (Pengguna Akhir Batubara) (Ton)")
+
+	file.SetCellValue(sheetName, fmt.Sprintf("A%v", startDetailNonElectric+2), "No.")
+	file.SetCellValue(sheetName, fmt.Sprintf("B%v", startDetailNonElectric+2), "END USER")
+	file.SetCellValue(sheetName, fmt.Sprintf("E%v", startDetailNonElectric+2), "January")
+	file.SetCellValue(sheetName, fmt.Sprintf("F%v", startDetailNonElectric+2), "February")
+	file.SetCellValue(sheetName, fmt.Sprintf("G%v", startDetailNonElectric+2), "March")
+	file.SetCellValue(sheetName, fmt.Sprintf("H%v", startDetailNonElectric+2), "April")
+	file.SetCellValue(sheetName, fmt.Sprintf("I%v", startDetailNonElectric+2), "May")
+	file.SetCellValue(sheetName, fmt.Sprintf("J%v", startDetailNonElectric+2), "June")
+	file.SetCellValue(sheetName, fmt.Sprintf("K%v", startDetailNonElectric+2), "July")
+	file.SetCellValue(sheetName, fmt.Sprintf("L%v", startDetailNonElectric+2), "August")
+	file.SetCellValue(sheetName, fmt.Sprintf("M%v", startDetailNonElectric+2), "September")
+	file.SetCellValue(sheetName, fmt.Sprintf("N%v", startDetailNonElectric+2), "October")
+	file.SetCellValue(sheetName, fmt.Sprintf("O%v", startDetailNonElectric+2), "November")
+	file.SetCellValue(sheetName, fmt.Sprintf("P%v", startDetailNonElectric+2), "December")
+	file.SetCellValue(sheetName, fmt.Sprintf("Q%v", startDetailNonElectric+2), "TOTAL")
+
+	var numberNonElectric int = 1
+
+	for k, value := range reportSaleDetail.CompanyNonElectricity {
+
+		file.SetCellValue(sheetName, fmt.Sprintf("B%v", startDetailNonElectric+(3+numberNonElectric-1)), k)
+
+		for _, v := range value {
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startDetailNonElectric+(3+numberNonElectric-1)), v)
+			file.SetCellValue(sheetName, fmt.Sprintf("A%v", startDetailNonElectric+(3+numberNonElectric-1)), numberNonElectric)
+
+			if _, ok := reportSaleDetail.NonElectricity.January[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("E%v", startDetailNonElectric+(3+numberNonElectric-1)), reportSaleDetail.NonElectricity.January[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("E%v", startDetailNonElectric+(3+numberNonElectric-1)), 0)
+			}
+
+			if _, ok := reportSaleDetail.NonElectricity.February[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("F%v", startDetailNonElectric+(3+numberNonElectric-1)), reportSaleDetail.NonElectricity.February[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("F%v", startDetailNonElectric+(3+numberNonElectric-1)), 0)
+			}
+
+			if _, ok := reportSaleDetail.NonElectricity.March[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("G%v", startDetailNonElectric+(3+numberNonElectric-1)), reportSaleDetail.NonElectricity.March[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("G%v", startDetailNonElectric+(3+numberNonElectric-1)), 0)
+			}
+
+			if _, ok := reportSaleDetail.NonElectricity.April[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("H%v", startDetailNonElectric+(3+numberNonElectric-1)), reportSaleDetail.NonElectricity.April[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("H%v", startDetailNonElectric+(3+numberNonElectric-1)), 0)
+			}
+
+			if _, ok := reportSaleDetail.NonElectricity.May[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("I%v", startDetailNonElectric+(3+numberNonElectric-1)), reportSaleDetail.NonElectricity.May[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("I%v", startDetailNonElectric+(3+numberNonElectric-1)), 0)
+			}
+
+			if _, ok := reportSaleDetail.NonElectricity.June[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("J%v", startDetailNonElectric+(3+numberNonElectric-1)), reportSaleDetail.NonElectricity.June[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("J%v", startDetailNonElectric+(3+numberNonElectric-1)), 0)
+			}
+
+			if _, ok := reportSaleDetail.NonElectricity.July[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("K%v", startDetailNonElectric+(3+numberNonElectric-1)), reportSaleDetail.NonElectricity.July[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("K%v", startDetailNonElectric+(3+numberNonElectric-1)), 0)
+			}
+
+			if _, ok := reportSaleDetail.NonElectricity.August[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("L%v", startDetailNonElectric+(3+numberNonElectric-1)), reportSaleDetail.NonElectricity.August[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("L%v", startDetailNonElectric+(3+numberNonElectric-1)), 0)
+			}
+
+			if _, ok := reportSaleDetail.NonElectricity.September[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("M%v", startDetailNonElectric+(3+numberNonElectric-1)), reportSaleDetail.NonElectricity.September[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("M%v", startDetailNonElectric+(3+numberNonElectric-1)), 0)
+			}
+
+			if _, ok := reportSaleDetail.NonElectricity.October[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("N%v", startDetailNonElectric+(3+numberNonElectric-1)), reportSaleDetail.NonElectricity.October[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("N%v", startDetailNonElectric+(3+numberNonElectric-1)), 0)
+			}
+
+			if _, ok := reportSaleDetail.NonElectricity.November[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("O%v", startDetailNonElectric+(3+numberNonElectric-1)), reportSaleDetail.NonElectricity.November[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("O%v", startDetailNonElectric+(3+numberNonElectric-1)), 0)
+			}
+
+			if _, ok := reportSaleDetail.NonElectricity.December[k]; ok {
+				file.SetCellValue(sheetName, fmt.Sprintf("P%v", startDetailNonElectric+(3+numberNonElectric-1)), reportSaleDetail.NonElectricity.December[k][v])
+			} else {
+				file.SetCellValue(sheetName, fmt.Sprintf("P%v", startDetailNonElectric+(3+numberNonElectric-1)), 0)
+			}
+
+			file.SetCellFormula(sheetName, fmt.Sprintf("Q%v", startDetailNonElectric+(3+numberNonElectric-1)), fmt.Sprintf("SUM(E%v:P%v)", startDetailNonElectric+(3+numberNonElectric-1), startDetailNonElectric+(3+numberNonElectric-1)))
+			numberNonElectric += 1
+
+		}
+
+		file.MergeCell(sheetName, fmt.Sprintf("B%v", startDetailNonElectric+numberNonElectric), fmt.Sprintf("C%v", startDetailNonElectric+numberNonElectric+len(value)-1))
+	}
+
+	errNoNonElectricStyle := file.SetCellStyle(sheetName, fmt.Sprintf("A%v", startDetailNonElectric+3), fmt.Sprintf("A%v", startDetailNonElectric+3+numberNonElectric-1), centerStyle)
+
+	if errNoNonElectricStyle != nil {
+		return file, errNoNonElectricStyle
+	}
+
+	errTitleTableNonElectricStyle := file.SetCellStyle(sheetName, fmt.Sprintf("A%v", startDetailNonElectric+1), fmt.Sprintf("Q%v", startDetailNonElectric+2), boldTitleTableStyle)
+
+	if errTitleTableNonElectricStyle != nil {
+		return file, errTitleTableNonElectricStyle
+	}
+
+	errNumberNonElectricStyle := file.SetCellStyle(sheetName, fmt.Sprintf("E%v", startDetailNonElectric+3), fmt.Sprintf("P%v", startDetailNonElectric+3+numberNonElectric-1), formatNumberStyle)
+
+	if errNumberNonElectricStyle != nil {
+		return file, errNumberNonElectricStyle
+	}
+
+	errNumberTotalNonElectricStyle := file.SetCellStyle(sheetName, fmt.Sprintf("Q%v", startDetailNonElectric+3), fmt.Sprintf("Q%v", startDetailNonElectric+3+numberNonElectric-1), boldNumberStyle)
+
+	if errNumberTotalNonElectricStyle != nil {
+		return file, errNumberTotalNonElectricStyle
+	}
+
+	errCompanyNonElectricStyle := file.SetCellStyle(sheetName, fmt.Sprintf("B%v", startDetailNonElectric+3), fmt.Sprintf("D%v", startDetailNonElectric+3+numberNonElectric-1), boldTitleTableStyle)
+
+	if errCompanyNonElectricStyle != nil {
+		return file, errCompanyNonElectricStyle
+	}
+
+	file.SetCellValue(sheetName, fmt.Sprintf("B%v", startDetail+3+numberNonElectric), "TOTAL")
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startDetail+3+numberNonElectric), fmt.Sprintf("D%v", startDetail+3+numberNonElectric))
+
+	file.SetCellValue(sheetName, fmt.Sprintf("B%v", startDetailNonElectric+2+numberNonElectric), "TOTAL")
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startDetailNonElectric+2+numberNonElectric), fmt.Sprintf("D%v", startDetailNonElectric+2+numberNonElectric))
+
+	errSaleDetailNonElectricTotalStyle := file.SetCellStyle(sheetName, fmt.Sprintf("B%v", startDetailNonElectric+2+numberNonElectric), fmt.Sprintf("B%v", startDetailNonElectric+2+numberNonElectric), boldNumberStyle)
+
+	if errSaleDetailNonElectricTotalStyle != nil {
+		return file, errSaleDetailNonElectricTotalStyle
+	}
+
+	errSaleDetailNonElectricTotalNumberStyle := file.SetCellStyle(sheetName, fmt.Sprintf("E%v", startDetailNonElectric+2+numberNonElectric), fmt.Sprintf("Q%v", startDetailNonElectric+2+numberNonElectric), boldNumberStyle)
+
+	if errSaleDetailNonElectricTotalNumberStyle != nil {
+		return file, errSaleDetailNonElectricTotalNumberStyle
+	}
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("E%v", startDetailNonElectric+2+numberNonElectric), fmt.Sprintf("SUM(E%v:E%v)", startDetailNonElectric+3, startDetailNonElectric+numberNonElectric+1))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startDetailNonElectric+2+numberNonElectric), fmt.Sprintf("SUM(F%v:F%v)", startDetailNonElectric+3, startDetailNonElectric+numberNonElectric+1))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("G%v", startDetailNonElectric+2+numberNonElectric), fmt.Sprintf("SUM(G%v:G%v)", startDetailNonElectric+3, startDetailNonElectric+numberNonElectric+1))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("H%v", startDetailNonElectric+2+numberNonElectric), fmt.Sprintf("SUM(H%v:H%v)", startDetailNonElectric+3, startDetailNonElectric+numberNonElectric+1))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("I%v", startDetailNonElectric+2+numberNonElectric), fmt.Sprintf("SUM(I%v:I%v)", startDetailNonElectric+3, startDetailNonElectric+numberNonElectric+1))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("J%v", startDetailNonElectric+2+numberNonElectric), fmt.Sprintf("SUM(J%v:J%v)", startDetailNonElectric+3, startDetailNonElectric+numberNonElectric+1))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("K%v", startDetailNonElectric+2+numberNonElectric), fmt.Sprintf("SUM(K%v:K%v)", startDetailNonElectric+3, startDetailNonElectric+numberNonElectric+1))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("L%v", startDetailNonElectric+2+numberNonElectric), fmt.Sprintf("SUM(L%v:L%v)", startDetailNonElectric+3, startDetailNonElectric+numberNonElectric+1))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("M%v", startDetailNonElectric+2+numberNonElectric), fmt.Sprintf("SUM(M%v:M%v)", startDetailNonElectric+3, startDetailNonElectric+numberNonElectric+1))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("N%v", startDetailNonElectric+2+numberNonElectric), fmt.Sprintf("SUM(N%v:N%v)", startDetailNonElectric+3, startDetailNonElectric+numberNonElectric+1))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("O%v", startDetailNonElectric+2+numberNonElectric), fmt.Sprintf("SUM(O%v:O%v)", startDetailNonElectric+3, startDetailNonElectric+numberNonElectric+1))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("P%v", startDetailNonElectric+2+numberNonElectric), fmt.Sprintf("SUM(P%v:P%v)", startDetailNonElectric+3, startDetailNonElectric+numberNonElectric+1))
+
+	file.SetCellFormula(sheetName, fmt.Sprintf("Q%v", startDetailNonElectric+2+numberNonElectric), fmt.Sprintf("SUM(Q%v:Q%v)", startDetailNonElectric+3, startDetailNonElectric+numberNonElectric+1))
+
+	var startSaleExportImport int
+	startSaleExportImport = startDetailNonElectric + 6 + numberNonElectric
+
+	file.SetCellValue(sheetName, fmt.Sprintf("A%v", startSaleExportImport), "PENJUALAN BATUBARA")
+	errTitleDetailPenjualanBatubara := file.SetCellStyle(sheetName, fmt.Sprintf("A%v", startSaleExportImport), fmt.Sprintf("A%v", startSaleExportImport), boldTitleStyle)
+
+	if errTitleDetailPenjualanBatubara != nil {
+		return file, errTitleDetailPenjualanBatubara
+	}
+
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSaleExportImport+1), fmt.Sprintf("C%v", startSaleExportImport+1))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSaleExportImport+2), fmt.Sprintf("C%v", startSaleExportImport+2))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSaleExportImport+3), fmt.Sprintf("C%v", startSaleExportImport+3))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSaleExportImport+4), fmt.Sprintf("C%v", startSaleExportImport+4))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSaleExportImport+5), fmt.Sprintf("C%v", startSaleExportImport+5))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSaleExportImport+6), fmt.Sprintf("C%v", startSaleExportImport+6))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSaleExportImport+7), fmt.Sprintf("C%v", startSaleExportImport+7))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSaleExportImport+8), fmt.Sprintf("C%v", startSaleExportImport+8))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSaleExportImport+9), fmt.Sprintf("C%v", startSaleExportImport+9))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSaleExportImport+10), fmt.Sprintf("C%v", startSaleExportImport+10))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSaleExportImport+11), fmt.Sprintf("C%v", startSaleExportImport+11))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSaleExportImport+12), fmt.Sprintf("C%v", startSaleExportImport+12))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSaleExportImport+13), fmt.Sprintf("C%v", startSaleExportImport+13))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startSaleExportImport+14), fmt.Sprintf("C%v", startSaleExportImport+14))
+
+	file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSaleExportImport+1), "Periode")
+	file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSaleExportImport+1), "Domestik (MT)")
+	file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSaleExportImport+1), "Ekspor (MT)")
+
+	errTitleTable2 := file.SetCellStyle(sheetName, fmt.Sprintf("B%v", startSaleExportImport+1), fmt.Sprintf("E%v", startSaleExportImport+1), boldTitleTableStyle)
+
+	if errTitleTable2 != nil {
+		return file, errTitleTable2
+	}
+
+	for idx, v := range monthString {
+		file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSaleExportImport+2+idx), v)
+		switch v {
+		case "January":
+
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSaleExportImport+2+idx), reportSaleDetail.Domestic.January)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSaleExportImport+2+idx), reportSaleDetail.Export.January)
+		case "February":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSaleExportImport+2+idx), reportSaleDetail.Domestic.February)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSaleExportImport+2+idx), reportSaleDetail.Export.February)
+
+		case "March":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSaleExportImport+2+idx), reportSaleDetail.Domestic.March)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSaleExportImport+2+idx), reportSaleDetail.Export.March)
+		case "April":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSaleExportImport+2+idx), reportSaleDetail.Domestic.April)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSaleExportImport+2+idx), reportSaleDetail.Export.April)
+		case "May":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSaleExportImport+2+idx), reportSaleDetail.Domestic.May)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSaleExportImport+2+idx), reportSaleDetail.Export.May)
+
+		case "June":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSaleExportImport+2+idx), reportSaleDetail.Domestic.June)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSaleExportImport+2+idx), reportSaleDetail.Export.June)
+
+		case "July":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSaleExportImport+2+idx), reportSaleDetail.Domestic.July)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSaleExportImport+2+idx), reportSaleDetail.Export.July)
+		case "August":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSaleExportImport+2+idx), reportSaleDetail.Domestic.August)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSaleExportImport+2+idx), reportSaleDetail.Export.August)
+
+		case "September":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSaleExportImport+2+idx), reportSaleDetail.Domestic.September)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSaleExportImport+2+idx), reportSaleDetail.Export.September)
+		case "October":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSaleExportImport+2+idx), reportSaleDetail.Domestic.October)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSaleExportImport+2+idx), reportSaleDetail.Export.October)
+
+		case "November":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSaleExportImport+2+idx), reportSaleDetail.Domestic.November)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSaleExportImport+2+idx), reportSaleDetail.Export.November)
+		case "December":
+			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSaleExportImport+2+idx), reportSaleDetail.Domestic.December)
+
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSaleExportImport+2+idx), reportSaleDetail.Export.December)
+		}
+	}
+
+	erBorderDomesticExportStyle := file.SetCellStyle(sheetName, fmt.Sprintf("B%v", startSaleExportImport+2), fmt.Sprintf("B%v", startSaleExportImport+13), borderStyle)
+
+	if erBorderDomesticExportStyle != nil {
+		return file, erBorderDomesticExportStyle
+	}
+
+	errDomesticExportNumberStyle := file.SetCellStyle(sheetName, fmt.Sprintf("D%v", startSaleExportImport+2), fmt.Sprintf("E%v", startSaleExportImport+13), formatNumberStyle)
+
+	if errDomesticExportNumberStyle != nil {
+		return file, errDomesticExportNumberStyle
+	}
+
+	file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSaleExportImport+14), "TOTAL")
+	file.SetCellFormula(sheetName, fmt.Sprintf("D%v", startSaleExportImport+14), fmt.Sprintf("SUM(D%v:D%v)", startSaleExportImport+1, startSaleExportImport+13))
+	file.SetCellFormula(sheetName, fmt.Sprintf("E%v", startSaleExportImport+14), fmt.Sprintf("SUM(E%v:E%v)", startSaleExportImport+1, startSaleExportImport+13))
+
+	errDomesticExportTotalStyle := file.SetCellStyle(sheetName, fmt.Sprintf("B%v", startSaleExportImport+14), fmt.Sprintf("E%v", startSaleExportImport+14), boldNumberStyle)
+
+	if errDomesticExportTotalStyle != nil {
+		return file, errDomesticExportTotalStyle
+	}
+
+	return file, nil
 }

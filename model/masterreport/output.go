@@ -123,12 +123,12 @@ type RealizationCaf struct {
 }
 
 type RealizationTransaction struct {
-	ShippingDate      string          `json:"shipping_date"`
-	Trader            company.Company `json:"trader"`
-	EndUser           company.Company `json:"end_user"`
-	QualityCaloriesAr float64         `json:"quality_calories_ar"`
-	Quantity          float64         `json:"quantity"`
-	IsBastOk          bool            `json:"is_bast_ok"`
+	ShippingDate      string           `json:"shipping_date"`
+	Trader            *company.Company `json:"trader"`
+	EndUser           *company.Company `json:"end_user"`
+	QualityCaloriesAr float64          `json:"quality_calories_ar"`
+	Quantity          float64          `json:"quantity"`
+	IsBastOk          bool             `json:"is_bast_ok"`
 }
 
 // Report Detail Output
@@ -147,8 +147,8 @@ type SaleDetail struct {
 	RealizationCafAssignment            float64                               `json:"realization_caf_assignment"`
 	ElectricAssignment                  electricassignment.ElectricAssignment `json:"electric_assignment"`
 	RealizationElectricAssignment       float64                               `json:"realization_electric_assignment"`
-	CompanyElectricity                  []string                              `json:"company_electricity"`
-	CompanyNonElectricity               []string                              `json:"company_non_electricity"`
+	CompanyElectricity                  map[string][]string                   `json:"company_electricity"`
+	CompanyNonElectricity               map[string][]string                   `json:"company_non_electricity"`
 	DetailRealizationCafAssignment      DetailRealizationCafAssignment        `json:"detail_realization_caf_assignment"`
 	DetailRealizationElectricAssignment DetailRealizationElectricAssignment   `json:"detail_realization_electric_assignment"`
 	RealizationCompanyElectricity       []string                              `json:"realization_company_electricity"`
@@ -188,35 +188,35 @@ type DetailRealizationElectricAssignment struct {
 }
 
 type Electricity struct {
-	January   map[string]float64 `json:"january"`
-	February  map[string]float64 `json:"february"`
-	March     map[string]float64 `json:"march"`
-	April     map[string]float64 `json:"april"`
-	May       map[string]float64 `json:"may"`
-	June      map[string]float64 `json:"june"`
-	July      map[string]float64 `json:"july"`
-	August    map[string]float64 `json:"august"`
-	September map[string]float64 `json:"september"`
-	October   map[string]float64 `json:"october"`
-	November  map[string]float64 `json:"november"`
-	December  map[string]float64 `json:"december"`
-	Total     float64            `json:"total"`
+	January   map[string]map[string]float64 `json:"january"`
+	February  map[string]map[string]float64 `json:"february"`
+	March     map[string]map[string]float64 `json:"march"`
+	April     map[string]map[string]float64 `json:"april"`
+	May       map[string]map[string]float64 `json:"may"`
+	June      map[string]map[string]float64 `json:"june"`
+	July      map[string]map[string]float64 `json:"july"`
+	August    map[string]map[string]float64 `json:"august"`
+	September map[string]map[string]float64 `json:"september"`
+	October   map[string]map[string]float64 `json:"october"`
+	November  map[string]map[string]float64 `json:"november"`
+	December  map[string]map[string]float64 `json:"december"`
+	Total     float64                       `json:"total"`
 }
 
 type NonElectricity struct {
-	January   map[string]float64 `json:"january"`
-	February  map[string]float64 `json:"february"`
-	March     map[string]float64 `json:"march"`
-	April     map[string]float64 `json:"april"`
-	May       map[string]float64 `json:"may"`
-	June      map[string]float64 `json:"june"`
-	July      map[string]float64 `json:"july"`
-	August    map[string]float64 `json:"august"`
-	September map[string]float64 `json:"september"`
-	October   map[string]float64 `json:"october"`
-	November  map[string]float64 `json:"november"`
-	December  map[string]float64 `json:"december"`
-	Total     float64            `json:"total"`
+	January   map[string]map[string]float64 `json:"january"`
+	February  map[string]map[string]float64 `json:"february"`
+	March     map[string]map[string]float64 `json:"march"`
+	April     map[string]map[string]float64 `json:"april"`
+	May       map[string]map[string]float64 `json:"may"`
+	June      map[string]map[string]float64 `json:"june"`
+	July      map[string]map[string]float64 `json:"july"`
+	August    map[string]map[string]float64 `json:"august"`
+	September map[string]map[string]float64 `json:"september"`
+	October   map[string]map[string]float64 `json:"october"`
+	November  map[string]map[string]float64 `json:"november"`
+	December  map[string]map[string]float64 `json:"december"`
+	Total     float64                       `json:"total"`
 }
 
 type Domestic struct {
