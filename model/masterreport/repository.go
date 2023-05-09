@@ -118,7 +118,7 @@ func (r *repository) RecapDmo(year string, iupopkId int) (ReportDmoOutput, error
 
 	queryFilter := fmt.Sprintf("seller_id = %v AND transaction_type = 'DN' AND shipping_date >= '%s' AND shipping_date <= '%s'", iupopkId, startFilter, endFilter)
 
-	errFind := r.db.Preload("DmoBuyer.IndustryType").Where(queryFilter).Order("id ASC").Find(&listTransactions).Error
+	errFind := r.db.Preload("DmoBuyer.IndustryType").Where(queryFilter).Order("shipping_date ASC").Find(&listTransactions).Error
 
 	if errFind != nil {
 		return reportDmoOuput, errFind
@@ -475,7 +475,7 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 
 	queryFilter := fmt.Sprintf("seller_id = %v AND transaction_type = 'DN' AND shipping_date >= '%s' AND shipping_date <= '%s' AND is_not_claim = false", iupopkId, startFilter, endFilter)
 
-	errFind := r.db.Preload(clause.Associations).Preload("Customer.IndustryType").Preload("DmoBuyer.IndustryType").Where(queryFilter).Order("id ASC").Find(&listTransactions).Error
+	errFind := r.db.Preload(clause.Associations).Preload("Customer.IndustryType").Preload("DmoBuyer.IndustryType").Where(queryFilter).Order("shipping_date ASC").Find(&listTransactions).Error
 
 	if errFind != nil {
 		return realizationOutput, errFind
@@ -1246,7 +1246,7 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 
 	queryFilter := fmt.Sprintf("seller_id = %v AND transaction_type = 'DN' AND shipping_date >= '%s' AND shipping_date <= '%s'", iupopkId, startFilter, endFilter)
 
-	errFind := r.db.Preload(clause.Associations).Preload("Customer.IndustryType").Preload("DmoBuyer.IndustryType").Where(queryFilter).Order("id ASC").Find(&listTransactions).Error
+	errFind := r.db.Preload(clause.Associations).Preload("Customer.IndustryType").Preload("DmoBuyer.IndustryType").Where(queryFilter).Order("shipping_date ASC").Find(&listTransactions).Error
 
 	if errFind != nil {
 		return saleDetail, errFind
