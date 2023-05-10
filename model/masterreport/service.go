@@ -162,7 +162,7 @@ func createTemplateRealization(file *excelize.File, sheetName []string, year str
 }
 
 func insertTransactionRealization(file *excelize.File, sheetName string, transactionElectric []RealizationTransaction, transactionNonElectric []RealizationTransaction) (*excelize.File, error) {
-	custFmt := "#,##0.000"
+	custFmt := "_(* #,##0_);_(* \\(#,##0\\);_(* \"-\"_);_(@_)"
 
 	custDateFmt := "d-mmm-yyyy"
 
@@ -370,96 +370,56 @@ func (s *service) CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutp
 	for i := 0; i < recapElectricity.NumField(); i++ {
 		switch recapElectricity.Type().Field(i).Name {
 		case "January":
-			if recapElectricity.Field(i).Interface().(float64) > 0 {
-				values["B6"] = recapElectricity.Field(i).Interface().(float64)
-				values["D6"] = recapElectricity.Field(i).Interface().(float64)
-			} else {
-				values["B6"] = "-"
-			}
+			values["B6"] = recapElectricity.Field(i).Interface().(float64)
+			values["D6"] = recapElectricity.Field(i).Interface().(float64)
 		case "February":
-			if recapElectricity.Field(i).Interface().(float64) > 0 {
-				values["B7"] = recapElectricity.Field(i).Interface().(float64)
-				values["D7"] = recapElectricity.Field(i).Interface().(float64)
-			} else {
-				values["B7"] = "-"
-			}
+			values["B7"] = recapElectricity.Field(i).Interface().(float64)
+			values["D7"] = recapElectricity.Field(i).Interface().(float64)
+
 		case "March":
-			if recapElectricity.Field(i).Interface().(float64) > 0 {
-				values["B8"] = recapElectricity.Field(i).Interface().(float64)
-				values["D8"] = recapElectricity.Field(i).Interface().(float64)
-			} else {
-				values["B8"] = "-"
-			}
+			values["B8"] = recapElectricity.Field(i).Interface().(float64)
+			values["D8"] = recapElectricity.Field(i).Interface().(float64)
+
 		case "April":
-			if recapElectricity.Field(i).Interface().(float64) > 0 {
-				values["B9"] = recapElectricity.Field(i).Interface().(float64)
-				values["D9"] = recapElectricity.Field(i).Interface().(float64)
-			} else {
-				values["B9"] = "-"
-			}
+			values["B9"] = recapElectricity.Field(i).Interface().(float64)
+			values["D9"] = recapElectricity.Field(i).Interface().(float64)
+
 		case "May":
-			if recapElectricity.Field(i).Interface().(float64) > 0 {
-				values["B10"] = recapElectricity.Field(i).Interface().(float64)
-				values["D10"] = recapElectricity.Field(i).Interface().(float64)
-			} else {
-				values["B10"] = "-"
-			}
+			values["B10"] = recapElectricity.Field(i).Interface().(float64)
+			values["D10"] = recapElectricity.Field(i).Interface().(float64)
+
 		case "June":
-			if recapElectricity.Field(i).Interface().(float64) > 0 {
-				values["B11"] = recapElectricity.Field(i).Interface().(float64)
-				values["D11"] = recapElectricity.Field(i).Interface().(float64)
-			} else {
-				values["B11"] = "-"
-			}
+			values["B11"] = recapElectricity.Field(i).Interface().(float64)
+			values["D11"] = recapElectricity.Field(i).Interface().(float64)
+
 		case "July":
-			if recapElectricity.Field(i).Interface().(float64) > 0 {
-				values["B12"] = recapElectricity.Field(i).Interface().(float64)
-				values["D12"] = recapElectricity.Field(i).Interface().(float64)
-			} else {
-				values["B12"] = "-"
-			}
+			values["B12"] = recapElectricity.Field(i).Interface().(float64)
+			values["D12"] = recapElectricity.Field(i).Interface().(float64)
+
 		case "August":
-			if recapElectricity.Field(i).Interface().(float64) > 0 {
-				values["B13"] = recapElectricity.Field(i).Interface().(float64)
-				values["D13"] = recapElectricity.Field(i).Interface().(float64)
-			} else {
-				values["B13"] = "-"
-			}
+			values["B13"] = recapElectricity.Field(i).Interface().(float64)
+			values["D13"] = recapElectricity.Field(i).Interface().(float64)
+
 		case "September":
-			if recapElectricity.Field(i).Interface().(float64) > 0 {
-				values["B14"] = recapElectricity.Field(i).Interface().(float64)
-				values["D14"] = recapElectricity.Field(i).Interface().(float64)
-			} else {
-				values["B14"] = "-"
-			}
+			values["B14"] = recapElectricity.Field(i).Interface().(float64)
+			values["D14"] = recapElectricity.Field(i).Interface().(float64)
+
 		case "October":
-			if recapElectricity.Field(i).Interface().(float64) > 0 {
-				values["B15"] = recapElectricity.Field(i).Interface().(float64)
-				values["D15"] = recapElectricity.Field(i).Interface().(float64)
-			} else {
-				values["B15"] = "-"
-			}
+			values["B15"] = recapElectricity.Field(i).Interface().(float64)
+			values["D15"] = recapElectricity.Field(i).Interface().(float64)
+
 		case "November":
-			if recapElectricity.Field(i).Interface().(float64) > 0 {
-				values["B16"] = recapElectricity.Field(i).Interface().(float64)
-				values["D16"] = recapElectricity.Field(i).Interface().(float64)
-			} else {
-				values["B16"] = "-"
-			}
+			values["B16"] = recapElectricity.Field(i).Interface().(float64)
+			values["D16"] = recapElectricity.Field(i).Interface().(float64)
+
 		case "December":
-			if recapElectricity.Field(i).Interface().(float64) > 0 {
-				values["B17"] = recapElectricity.Field(i).Interface().(float64)
-				values["D17"] = recapElectricity.Field(i).Interface().(float64)
-			} else {
-				values["B17"] = "-"
-			}
+			values["B17"] = recapElectricity.Field(i).Interface().(float64)
+			values["D17"] = recapElectricity.Field(i).Interface().(float64)
+
 		case "Total":
-			if recapElectricity.Field(i).Interface().(float64) > 0 {
-				values["B18"] = recapElectricity.Field(i).Interface().(float64)
-				values["D18"] = recapElectricity.Field(i).Interface().(float64)
-			} else {
-				values["B18"] = "-"
-			}
+			values["B18"] = recapElectricity.Field(i).Interface().(float64)
+			values["D18"] = recapElectricity.Field(i).Interface().(float64)
+
 		}
 	}
 
@@ -468,135 +428,55 @@ func (s *service) CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutp
 	for i := 0; i < recapNonElectricity.NumField(); i++ {
 		switch recapNonElectricity.Type().Field(i).Name {
 		case "January":
-			if recapNonElectricity.Field(i).Interface().(float64) > 0 {
-				values["C6"] = recapNonElectricity.Field(i).Interface().(float64)
-				values["D6"] = values["D6"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
-			} else {
-				if values["D6"] == nil {
-					values["D6"] = "-"
-				}
-				values["C6"] = "-"
-			}
+			values["C6"] = recapNonElectricity.Field(i).Interface().(float64)
+			values["D6"] = values["D6"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
+
 		case "February":
-			if recapNonElectricity.Field(i).Interface().(float64) > 0 {
-				values["C7"] = recapNonElectricity.Field(i).Interface().(float64)
-				values["D7"] = values["D7"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
-			} else {
-				if values["D7"] == nil {
-					values["D7"] = "-"
-				}
-				values["C7"] = "-"
-			}
+			values["C7"] = recapNonElectricity.Field(i).Interface().(float64)
+			values["D7"] = values["D7"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
+
 		case "March":
-			if recapNonElectricity.Field(i).Interface().(float64) > 0 {
-				values["C8"] = recapNonElectricity.Field(i).Interface().(float64)
-				values["D8"] = values["D8"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
-			} else {
-				if values["D8"] == nil {
-					values["D8"] = "-"
-				}
-				values["C8"] = "-"
-			}
+			values["C8"] = recapNonElectricity.Field(i).Interface().(float64)
+			values["D8"] = values["D8"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
+
 		case "April":
-			if recapNonElectricity.Field(i).Interface().(float64) > 0 {
-				values["C9"] = recapNonElectricity.Field(i).Interface().(float64)
-				values["D9"] = values["D9"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
-			} else {
-				if values["D9"] == nil {
-					values["D9"] = "-"
-				}
-				values["C9"] = "-"
-			}
+			values["C9"] = recapNonElectricity.Field(i).Interface().(float64)
+			values["D9"] = values["D9"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
+
 		case "May":
-			if recapNonElectricity.Field(i).Interface().(float64) > 0 {
-				values["C10"] = recapNonElectricity.Field(i).Interface().(float64)
-				values["D10"] = values["D10"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
-			} else {
-				if values["D10"] == nil {
-					values["D10"] = "-"
-				}
-				values["C10"] = "-"
-			}
+			values["C10"] = recapNonElectricity.Field(i).Interface().(float64)
+			values["D10"] = values["D10"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
+
 		case "June":
-			if recapNonElectricity.Field(i).Interface().(float64) > 0 {
-				values["C11"] = recapNonElectricity.Field(i).Interface().(float64)
-				values["D11"] = values["D11"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
-			} else {
-				if values["D11"] == nil {
-					values["D11"] = "-"
-				}
-				values["C11"] = "-"
-			}
+			values["C11"] = recapNonElectricity.Field(i).Interface().(float64)
+			values["D11"] = values["D11"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
+
 		case "July":
-			if recapNonElectricity.Field(i).Interface().(float64) > 0 {
-				values["C12"] = recapNonElectricity.Field(i).Interface().(float64)
-				values["D12"] = values["D12"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
-			} else {
-				if values["D12"] == nil {
-					values["D12"] = "-"
-				}
-				values["C12"] = "-"
-			}
+			values["C12"] = recapNonElectricity.Field(i).Interface().(float64)
+			values["D12"] = values["D12"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
+
 		case "August":
-			if recapNonElectricity.Field(i).Interface().(float64) > 0 {
-				values["C13"] = recapNonElectricity.Field(i).Interface().(float64)
-				values["D13"] = values["D13"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
-			} else {
-				if values["D13"] == nil {
-					values["D13"] = "-"
-				}
-				values["C13"] = "-"
-			}
+			values["C13"] = recapNonElectricity.Field(i).Interface().(float64)
+			values["D13"] = values["D13"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
+
 		case "September":
-			if recapNonElectricity.Field(i).Interface().(float64) > 0 {
-				values["C14"] = recapNonElectricity.Field(i).Interface().(float64)
-				values["D14"] = values["D14"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
-			} else {
-				if values["D14"] == nil {
-					values["D14"] = "-"
-				}
-				values["C14"] = "-"
-			}
+			values["C14"] = recapNonElectricity.Field(i).Interface().(float64)
+			values["D14"] = values["D14"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
+
 		case "October":
-			if recapNonElectricity.Field(i).Interface().(float64) > 0 {
-				values["C15"] = recapNonElectricity.Field(i).Interface().(float64)
-				values["D15"] = values["D15"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
-			} else {
-				if values["D15"] == nil {
-					values["D15"] = "-"
-				}
-				values["C15"] = "-"
-			}
+			values["C15"] = recapNonElectricity.Field(i).Interface().(float64)
+			values["D15"] = values["D15"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
+
 		case "November":
-			if recapNonElectricity.Field(i).Interface().(float64) > 0 {
-				values["C16"] = recapNonElectricity.Field(i).Interface().(float64)
-				values["D16"] = values["D16"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
-			} else {
-				if values["D16"] == nil {
-					values["D16"] = "-"
-				}
-				values["C16"] = "-"
-			}
+			values["C16"] = recapNonElectricity.Field(i).Interface().(float64)
+			values["D16"] = values["D16"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
+
 		case "December":
-			if recapNonElectricity.Field(i).Interface().(float64) > 0 {
-				values["C17"] = recapNonElectricity.Field(i).Interface().(float64)
-				values["D17"] = values["D17"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
-			} else {
-				if values["D17"] == nil {
-					values["D17"] = "-"
-				}
-				values["C17"] = "-"
-			}
+			values["C17"] = recapNonElectricity.Field(i).Interface().(float64)
+			values["D17"] = values["D17"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
 		case "Total":
-			if recapNonElectricity.Field(i).Interface().(float64) > 0 {
-				values["C18"] = recapNonElectricity.Field(i).Interface().(float64)
-				values["D18"] = values["D18"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
-			} else {
-				if values["D18"] == nil {
-					values["D18"] = "-"
-				}
-				values["C18"] = "-"
-			}
+			values["C18"] = recapNonElectricity.Field(i).Interface().(float64)
+			values["D18"] = values["D18"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
 		}
 	}
 
@@ -605,83 +485,31 @@ func (s *service) CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutp
 	for i := 0; i < recapProduction.NumField(); i++ {
 		switch recapProduction.Type().Field(i).Name {
 		case "January":
-			if recapProduction.Field(i).Interface().(float64) > 0 {
-				values["F6"] = recapProduction.Field(i).Interface().(float64)
-			} else {
-				values["F6"] = "-"
-			}
+			values["F6"] = recapProduction.Field(i).Interface().(float64)
 		case "February":
-			if recapProduction.Field(i).Interface().(float64) > 0 {
-				values["F7"] = recapProduction.Field(i).Interface().(float64)
-			} else {
-				values["F7"] = "-"
-			}
+			values["F7"] = recapProduction.Field(i).Interface().(float64)
 		case "March":
-			if recapProduction.Field(i).Interface().(float64) > 0 {
-				values["F8"] = recapProduction.Field(i).Interface().(float64)
-			} else {
-				values["F8"] = "-"
-			}
+			values["F8"] = recapProduction.Field(i).Interface().(float64)
 		case "April":
-			if recapProduction.Field(i).Interface().(float64) > 0 {
-				values["F9"] = recapProduction.Field(i).Interface().(float64)
-			} else {
-				values["F9"] = "-"
-			}
+			values["F9"] = recapProduction.Field(i).Interface().(float64)
 		case "May":
-			if recapProduction.Field(i).Interface().(float64) > 0 {
-				values["F10"] = recapProduction.Field(i).Interface().(float64)
-			} else {
-				values["F10"] = "-"
-			}
+			values["F10"] = recapProduction.Field(i).Interface().(float64)
 		case "June":
-			if recapProduction.Field(i).Interface().(float64) > 0 {
-				values["F11"] = recapProduction.Field(i).Interface().(float64)
-			} else {
-				values["F11"] = "-"
-			}
+			values["F11"] = recapProduction.Field(i).Interface().(float64)
 		case "July":
-			if recapProduction.Field(i).Interface().(float64) > 0 {
-				values["F12"] = recapProduction.Field(i).Interface().(float64)
-			} else {
-				values["F12"] = "-"
-			}
+			values["F12"] = recapProduction.Field(i).Interface().(float64)
 		case "August":
-			if recapProduction.Field(i).Interface().(float64) > 0 {
-				values["F13"] = recapProduction.Field(i).Interface().(float64)
-			} else {
-				values["F13"] = "-"
-			}
+			values["F13"] = recapProduction.Field(i).Interface().(float64)
 		case "September":
-			if recapProduction.Field(i).Interface().(float64) > 0 {
-				values["F14"] = recapProduction.Field(i).Interface().(float64)
-			} else {
-				values["F14"] = "-"
-			}
+			values["F14"] = recapProduction.Field(i).Interface().(float64)
 		case "October":
-			if recapProduction.Field(i).Interface().(float64) > 0 {
-				values["F15"] = recapProduction.Field(i).Interface().(float64)
-			} else {
-				values["F15"] = "-"
-			}
+			values["F15"] = recapProduction.Field(i).Interface().(float64)
 		case "November":
-			if recapProduction.Field(i).Interface().(float64) > 0 {
-				values["F16"] = recapProduction.Field(i).Interface().(float64)
-			} else {
-				values["F16"] = "-"
-			}
+			values["F16"] = recapProduction.Field(i).Interface().(float64)
 		case "December":
-			if recapProduction.Field(i).Interface().(float64) > 0 {
-				values["F17"] = recapProduction.Field(i).Interface().(float64)
-			} else {
-				values["F17"] = "-"
-			}
+			values["F17"] = recapProduction.Field(i).Interface().(float64)
 		case "Total":
-			if recapProduction.Field(i).Interface().(float64) > 0 {
-				values["F18"] = recapProduction.Field(i).Interface().(float64)
-			} else {
-				values["F18"] = "-"
-			}
+			values["F18"] = recapProduction.Field(i).Interface().(float64)
 		}
 	}
 
@@ -690,90 +518,38 @@ func (s *service) CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutp
 	for i := 0; i < recapNotClaim.NumField(); i++ {
 		switch recapNotClaim.Type().Field(i).Name {
 		case "January":
-			if recapNotClaim.Field(i).Interface().(float64) > 0 {
-				values["G6"] = recapNotClaim.Field(i).Interface().(float64)
-			} else {
-				values["G6"] = "-"
-			}
+			values["G6"] = recapNotClaim.Field(i).Interface().(float64)
 		case "February":
-			if recapNotClaim.Field(i).Interface().(float64) > 0 {
-				values["G7"] = recapNotClaim.Field(i).Interface().(float64)
-			} else {
-				values["G7"] = "-"
-			}
+			values["G7"] = recapNotClaim.Field(i).Interface().(float64)
 		case "March":
-			if recapNotClaim.Field(i).Interface().(float64) > 0 {
-				values["G8"] = recapNotClaim.Field(i).Interface().(float64)
-			} else {
-				values["G8"] = "-"
-			}
+			values["G8"] = recapNotClaim.Field(i).Interface().(float64)
 		case "April":
-			if recapNotClaim.Field(i).Interface().(float64) > 0 {
-				values["G9"] = recapNotClaim.Field(i).Interface().(float64)
-			} else {
-				values["G9"] = "-"
-			}
+			values["G9"] = recapNotClaim.Field(i).Interface().(float64)
 		case "May":
-			if recapNotClaim.Field(i).Interface().(float64) > 0 {
-				values["G10"] = recapNotClaim.Field(i).Interface().(float64)
-			} else {
-				values["G10"] = "-"
-			}
+			values["G10"] = recapNotClaim.Field(i).Interface().(float64)
 		case "June":
-			if recapNotClaim.Field(i).Interface().(float64) > 0 {
-				values["G11"] = recapNotClaim.Field(i).Interface().(float64)
-			} else {
-				values["G11"] = "-"
-			}
+			values["G11"] = recapNotClaim.Field(i).Interface().(float64)
 		case "July":
-			if recapNotClaim.Field(i).Interface().(float64) > 0 {
-				values["G12"] = recapNotClaim.Field(i).Interface().(float64)
-			} else {
-				values["G12"] = "-"
-			}
+			values["G12"] = recapNotClaim.Field(i).Interface().(float64)
 		case "August":
-			if recapNotClaim.Field(i).Interface().(float64) > 0 {
-				values["G13"] = recapNotClaim.Field(i).Interface().(float64)
-			} else {
-				values["G13"] = "-"
-			}
+			values["G13"] = recapNotClaim.Field(i).Interface().(float64)
 		case "September":
-			if recapNotClaim.Field(i).Interface().(float64) > 0 {
-				values["G14"] = recapNotClaim.Field(i).Interface().(float64)
-			} else {
-				values["G14"] = "-"
-			}
+			values["G14"] = recapNotClaim.Field(i).Interface().(float64)
 		case "October":
-			if recapNotClaim.Field(i).Interface().(float64) > 0 {
-				values["G15"] = recapNotClaim.Field(i).Interface().(float64)
-			} else {
-				values["G15"] = "-"
-			}
+			values["G15"] = recapNotClaim.Field(i).Interface().(float64)
 		case "November":
-			if recapNotClaim.Field(i).Interface().(float64) > 0 {
-				values["G16"] = recapNotClaim.Field(i).Interface().(float64)
-			} else {
-				values["G16"] = "-"
-			}
+			values["G16"] = recapNotClaim.Field(i).Interface().(float64)
 		case "December":
-			if recapNotClaim.Field(i).Interface().(float64) > 0 {
-				values["G17"] = recapNotClaim.Field(i).Interface().(float64)
-			} else {
-				values["G17"] = "-"
-			}
+			values["G17"] = recapNotClaim.Field(i).Interface().(float64)
 		case "Total":
-			if recapNotClaim.Field(i).Interface().(float64) > 0 {
-				values["G18"] = recapNotClaim.Field(i).Interface().(float64)
-			} else {
-				values["G18"] = "-"
-			}
+			values["G18"] = recapNotClaim.Field(i).Interface().(float64)
 		}
 	}
 
 	for k, v := range values {
 		file.SetCellValue(sheetName, k, v)
 	}
-	custFmt := "#,##0.000"
+	custFmt := "_(* #,##0_);_(* \\(#,##0\\);_(* \"-\"_);_(@_)"
 
 	border := []excelize.Border{
 		{Type: "left", Color: "000000", Style: 1},
