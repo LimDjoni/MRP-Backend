@@ -2007,6 +2007,7 @@ func (r *repository) CreateGroupingVesselDN(inputGrouping groupingvesseldn.Input
 	createdGroupingVesselDn.IsCoaFinish = inputGrouping.IsCoaFinish
 	createdGroupingVesselDn.SalesSystem = inputGrouping.SalesSystem
 	createdGroupingVesselDn.DestinationId = inputGrouping.DestinationId
+	createdGroupingVesselDn.LoadingPortId = inputGrouping.LoadingPortId
 	createdGroupingVesselDn.DestinationCountryId = inputGrouping.DestinationCountryId
 	createdGroupingVesselDn.DmoDestinationPortId = inputGrouping.DmoDestinationPortId
 	createdGroupingVesselDn.BuyerId = inputGrouping.BuyerId
@@ -2157,6 +2158,7 @@ func (r *repository) EditGroupingVesselDn(id int, editGrouping groupingvesseldn.
 
 	updateTransactions["vessel_id"] = editGrouping.VesselId
 	updateTransactions["dmo_buyer_id"] = editGrouping.BuyerId
+	updateTransactions["loading_port_id"] = editGrouping.LoadingPortId
 	updateTransactions["dmo_destination_port_id"] = editGrouping.DmoDestinationPortId
 	updateTransactions["destination_country_id"] = editGrouping.DestinationCountryId
 	updateTransactions["destination_id"] = editGrouping.DestinationId
