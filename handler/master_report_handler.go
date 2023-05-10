@@ -389,6 +389,7 @@ func (h *masterReportHandler) DownloadSaleDetailReport(c *fiber.Ctx) error {
 
 	excelFile, errSaleDetail := h.masterReportService.CreateReportSalesDetail(year, saleDetailReport, iupopkData, excelFile, "Detail")
 
+	fmt.Println(errSaleDetail)
 	if errSaleDetail != nil {
 		return c.Status(400).JSON(fiber.Map{
 			"error": errSaleDetail.Error(),

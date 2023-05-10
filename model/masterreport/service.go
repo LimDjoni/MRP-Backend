@@ -1104,6 +1104,51 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	file.SetCellValue(sheetName, fmt.Sprintf("B%v", startProduction+14), "TOTAL")
 	file.SetCellValue(sheetName, fmt.Sprintf("D%v", startProduction+14), reportSaleDetail.Production.Total)
 
+	file.SetCellFormula(sheetName, fmt.Sprintf("D%v", startProduction+15), fmt.Sprintf("D%v", startProduction+14))
+	file.SetCellFormula(sheetName, fmt.Sprintf("E%v", startProduction+15), fmt.Sprintf("E%v", startProduction+2))
+	var seriesProduction string
+
+	seriesProduction += fmt.Sprintf(`{
+						"name": "%v!$D$%v",
+						"categories": "%v!$D$%v:$E$%v",
+						"values": "%v!$D$%v:$E$%v",
+						"marker": {
+									"symbol": "square"
+								} 
+				}`, sheetName, startProduction+1, sheetName, startProduction+1, startProduction+1, sheetName, startProduction+15, startProduction+15)
+
+	valueProduction := fmt.Sprintf(`{
+	    "type": "col",
+	    "series": [%v],
+			"dimension": {	
+				"width": 720
+			},
+	    "format":
+	    {
+	        "x_scale": 1.0,
+	        "y_scale": 1.0,
+	        "x_offset": 15,
+	        "y_offset": 10,
+	        "print_obj": true,
+	        "lock_aspect_ratio": false,
+	        "locked": false
+	    },
+	    "legend":
+	    {
+	        "position": "top",
+	        "show_legend_key": true
+	    },
+	    "title":
+	    {
+	        "name": "RENCANA PRODUKSI DAN REALISASI PRODUKSI"
+	    },
+	    "show_blanks_as": "zero"
+	}`, seriesProduction)
+
+	if err := file.AddChart(sheetName, fmt.Sprintf("H%v", startProduction+1), valueProduction); err != nil {
+		return file, err
+	}
+
 	errProductionMonthStyleTable := file.SetCellStyle(sheetName, fmt.Sprintf("B%v", startProduction+2), fmt.Sprintf("B%v", startProduction+13), borderStyle)
 
 	if errProductionMonthStyleTable != nil {
@@ -1310,6 +1355,58 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSale+14), reportSaleDetail.RecapNonElectricity.Total)
 	file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+14), reportSaleDetail.RecapElectricity.Total+reportSaleDetail.RecapNonElectricity.Total)
 	file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+14), reportSaleDetail.NotClaimable.Total)
+
+	var seriesRecapSale string
+
+	seriesRecapSale += fmt.Sprintf(`{
+						"name": "%v!$D$%v",
+						"categories": "%v!$B$%v:$B$%v",
+						"values": "%v!$D$%v:$D$%v",
+						"marker": {
+									"symbol": "square"
+								} 
+				},`, sheetName, startSale+1, sheetName, startSale+2, startSale+13, sheetName, startSale+2, startSale+13)
+
+	seriesRecapSale += fmt.Sprintf(`{
+						"name": "%v!$E$%v",
+						"categories": "%v!$B$%v:$B$%v",
+						"values": "%v!$E$%v:$E$%v",
+						"marker": {
+									"symbol": "square"
+								} 
+				}`, sheetName, startSale+1, sheetName, startSale+2, startSale+13, sheetName, startSale+2, startSale+13)
+
+	valueRecapSale := fmt.Sprintf(`{
+	    "type": "col",
+	    "series": [%v],
+			"dimension": {	
+				"width": 720
+			},
+	    "format":
+	    {
+	        "x_scale": 1.0,
+	        "y_scale": 1.0,
+	        "x_offset": 15,
+	        "y_offset": 10,
+	        "print_obj": true,
+	        "lock_aspect_ratio": false,
+	        "locked": false
+	    },
+	    "legend":
+	    {
+	        "position": "top",
+	        "show_legend_key": true
+	    },
+	    "title":
+	    {
+	        "name": "REKAP DMO PER BULAN BERDASARKAN JENIS INDUSTRI"
+	    },
+	    "show_blanks_as": "zero"
+	}`, seriesRecapSale)
+
+	if err := file.AddChart(sheetName, fmt.Sprintf("K%v", startSale+1), valueRecapSale); err != nil {
+		return file, err
+	}
 
 	errPenjualanTotalStyle := file.SetCellStyle(sheetName, fmt.Sprintf("B%v", startSale+14), fmt.Sprintf("B%v", startSale+14), boldNumberStyle)
 
@@ -1881,6 +1978,53 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 
 	if errDomesticExportTotalStyle != nil {
 		return file, errDomesticExportTotalStyle
+	}
+
+	var seriesDomesticExport string
+
+	seriesDomesticExport += fmt.Sprintf(`{
+						"name": "Amount",
+						"categories": "%v!$D$%v:$E$%v",
+						"values": "%v!$D$%v:$E$%v",
+						"marker": {
+									"symbol": "square"
+								} 
+				}`, sheetName, startSaleExportImport+1, startSaleExportImport+1, sheetName, startSaleExportImport+14, startSaleExportImport+14)
+
+	valueDomesticExport := fmt.Sprintf(`{
+	    "type": "pie",
+	    "series": [%v],
+			"dimension": {	
+				"width": 720
+			},
+	    "format":
+	    {
+	        "x_scale": 1.0,
+	        "y_scale": 1.0,
+	        "x_offset": 15,
+	        "y_offset": 10,
+	        "print_obj": true,
+	        "lock_aspect_ratio": false,
+	        "locked": false
+	    },
+	    "legend":
+	    {
+	        "position": "top",
+	        "show_legend_key": true
+	    },
+			"plot_area": 
+			{
+					"ShowPercent": true
+			},
+	    "title":
+	    {
+	        "name": "Penjualan Dalam & Luar Negeri"
+	    },
+	    "show_blanks_as": "zero"
+	}`, seriesDomesticExport)
+
+	if err := file.AddChart(sheetName, fmt.Sprintf("H%v", startSaleExportImport+1), valueDomesticExport); err != nil {
+		return file, err
 	}
 
 	return file, nil
