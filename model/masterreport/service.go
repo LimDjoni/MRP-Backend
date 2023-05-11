@@ -20,7 +20,7 @@ type Service interface {
 	SaleDetailReport(year string, iupopkId int) (SaleDetail, error)
 	CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutput, iupopk iupopk.Iupopk, file *excelize.File, sheetName string) (*excelize.File, error)
 	CreateReportRealization(year string, reportRealization RealizationOutput, iupopk iupopk.Iupopk, file *excelize.File) (*excelize.File, error)
-	CreateReportSalesDetail(year string, reportSaleDetail SaleDetail, iupopk iupopk.Iupopk, file *excelize.File, sheetName string) (*excelize.File, error)
+	CreateReportSalesDetail(year string, reportSaleDetail SaleDetail, iupopk iupopk.Iupopk, file *excelize.File, sheetName string, chartSheetName string) (*excelize.File, error)
 }
 
 type service struct {
@@ -840,7 +840,7 @@ func (s *service) CreateReportRealization(year string, reportRealization Realiza
 	return insertedFile, nil
 }
 
-func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDetail, iupopk iupopk.Iupopk, file *excelize.File, sheetName string) (*excelize.File, error) {
+func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDetail, iupopk iupopk.Iupopk, file *excelize.File, sheetName string, chartSheetName string) (*excelize.File, error) {
 
 	custFmt := "_(* #,##0_);_(* \\(#,##0\\);_(* \"-\"_);_(@_)"
 	custMtFmt := "#,##0\\ \"mt\""
@@ -875,6 +875,11 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 		Font: &excelize.Font{
 			Bold: true,
 		},
+	})
+
+	percentTableStyle, _ := file.NewStyle(&excelize.Style{
+		Border: border,
+		NumFmt: 10,
 	})
 
 	boldPercentStyle, _ := file.NewStyle(&excelize.Style{
@@ -922,7 +927,7 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 		Border:       border,
 		CustomNumFmt: &custFmt,
 		Alignment: &excelize.Alignment{
-			Horizontal: "right",
+			WrapText: true,
 		},
 	})
 
@@ -954,15 +959,33 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	file.SetColWidth(sheetName, "H", "H", float64(20))
 
 	file.SetCellValue(sheetName, "A1", iupopk.Name)
+
+	file.SetColWidth(chartSheetName, "A", "A", float64(5))
+	file.SetColWidth(chartSheetName, "B", "B", float64(25))
+	file.SetColWidth(chartSheetName, "C", "E", float64(20))
+
+	file.SetCellValue(chartSheetName, "A1", iupopk.Name)
 	errTitleIupopk := file.SetCellStyle(sheetName, "A1", "A1", boldTitleStyle)
 	if errTitleIupopk != nil {
 		return file, errTitleIupopk
+	}
+
+	errChartTitleIupopk := file.SetCellStyle(chartSheetName, "A1", "A1", boldTitleStyle)
+	if errChartTitleIupopk != nil {
+		return file, errChartTitleIupopk
 	}
 
 	errYearStyle := file.SetCellStyle(sheetName, "A2", "A2", boldOnlyStyle)
 	if errYearStyle != nil {
 		return file, errYearStyle
 	}
+
+	errChartYearStyle := file.SetCellStyle(chartSheetName, "A2", "A2", boldOnlyStyle)
+	if errChartYearStyle != nil {
+		return file, errChartYearStyle
+	}
+
+	file.SetCellValue(chartSheetName, "A2", fmt.Sprintf("Tahun %s", year))
 
 	file.SetCellValue(sheetName, "A2", fmt.Sprintf("Tahun %s", year))
 
@@ -1106,6 +1129,66 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 
 	file.SetCellFormula(sheetName, fmt.Sprintf("D%v", startProduction+15), fmt.Sprintf("D%v", startProduction+14))
 	file.SetCellFormula(sheetName, fmt.Sprintf("E%v", startProduction+15), fmt.Sprintf("E%v", startProduction+2))
+
+	file.SetCellValue(chartSheetName, "A4", "PRODUKSI")
+
+	errChartTitle := file.SetColStyle(chartSheetName, "A", boldTitleStyle)
+	if errChartTitle != nil {
+		return file, errChartTitle
+	}
+
+	file.SetCellValue(chartSheetName, "B5", "RKAB")
+	file.SetCellValue(chartSheetName, "B6", "PRODUKSI")
+
+	file.SetCellFormula(chartSheetName, "C5", fmt.Sprintf("%v!D%v", sheetName, startProduction+14))
+	file.SetCellFormula(chartSheetName, "C6", fmt.Sprintf("%v!E%v", sheetName, startProduction+2))
+
+	errChartProductionRkabStyleTable := file.SetCellStyle(chartSheetName, "B5", "C6", formatNumberStyle)
+
+	if errChartProductionRkabStyleTable != nil {
+		return file, errChartProductionRkabStyleTable
+	}
+
+	var seriesChartProduction string
+
+	seriesChartProduction += fmt.Sprintf(`{
+						"name": "RKAB and Production",
+						"categories": "%v!$B$5:$B$6",
+						"values": "%v!$C$5:$C$6",
+						"marker": {
+									"symbol": "square"
+								} 
+				}`, chartSheetName, chartSheetName)
+
+	valueChartProduction := fmt.Sprintf(`{
+	    "type": "col",
+	    "series": [%v],
+	    "format":
+	    {
+	        "x_scale": 1.0,
+	        "y_scale": 1.0,
+	        "x_offset": 15,
+	        "y_offset": 10,
+	        "print_obj": true,
+	        "lock_aspect_ratio": false,
+	        "locked": false
+	    },
+	    "legend":
+	    {
+	        "position": "top",
+	        "show_legend_key": true
+	    },
+	    "title":
+	    {
+	        "name": "RENCANA PRODUKSI DAN REALISASI PRODUKSI"
+	    },
+	    "show_blanks_as": "zero"
+	}`, seriesChartProduction)
+
+	if err := file.AddChart(chartSheetName, "G4", valueChartProduction); err != nil {
+		return file, err
+	}
+
 	var seriesProduction string
 
 	seriesProduction += fmt.Sprintf(`{
@@ -1120,9 +1203,6 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	valueProduction := fmt.Sprintf(`{
 	    "type": "col",
 	    "series": [%v],
-			"dimension": {	
-				"width": 720
-			},
 	    "format":
 	    {
 	        "x_scale": 1.0,
@@ -1200,6 +1280,8 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 
 	file.SetCellValue(sheetName, fmt.Sprintf("A%v", startSale), "PENJUALAN")
 
+	file.SetCellValue(chartSheetName, "A40", "REKAP DMO PER BULAN BERDASARKAN JENIS INDUSTRI")
+
 	errTitlePenjualan := file.SetCellStyle(sheetName, fmt.Sprintf("A%v", startSale), fmt.Sprintf("A%v", startSale), boldTitleStyle)
 
 	if errTitlePenjualan != nil {
@@ -1211,6 +1293,17 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSale+1), "Non Kelistrikan")
 	file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+1), "Jumlah")
 	file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+1), "Tidak Bisa Claim DMO")
+
+	file.SetCellValue(chartSheetName, "B41", "Bulan")
+	file.SetCellValue(chartSheetName, "C41", "Kelistrikan")
+	file.SetCellValue(chartSheetName, "D41", "Non Kelistrikan")
+	file.SetCellValue(chartSheetName, "E41", "Jumlah")
+
+	errChartTitleRecap := file.SetCellStyle(chartSheetName, "B41", "E41", boldTitleTableStyle)
+
+	if errChartTitleRecap != nil {
+		return file, errChartTitleRecap
+	}
 
 	errTitleTablePenjualan := file.SetCellStyle(sheetName, fmt.Sprintf("B%v", startSale+1), fmt.Sprintf("F%v", startSale+1), boldTitleTableStyle)
 
@@ -1226,6 +1319,7 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 
 	for idx, v := range monthString {
 		file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSale+2+idx), v)
+		file.SetCellValue(chartSheetName, fmt.Sprintf("B%v", 42+idx), v)
 		switch v {
 		case "January":
 
@@ -1237,6 +1331,12 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 
 			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.January)
 
+			file.SetCellValue(chartSheetName, fmt.Sprintf("C%v", 42+idx), reportSaleDetail.RecapElectricity.January)
+
+			file.SetCellValue(chartSheetName, fmt.Sprintf("D%v", 42+idx), reportSaleDetail.RecapNonElectricity.January)
+
+			file.SetCellFormula(chartSheetName, fmt.Sprintf("E%v", 42+idx), fmt.Sprintf("SUM(C%v:D%v)", 42+idx, 42+idx))
+
 		case "February":
 
 			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSale+2+idx), reportSaleDetail.RecapElectricity.February)
@@ -1246,6 +1346,12 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 			file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.February+reportSaleDetail.RecapElectricity.February)
 
 			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.February)
+
+			file.SetCellValue(chartSheetName, fmt.Sprintf("C%v", 42+idx), reportSaleDetail.RecapElectricity.February)
+
+			file.SetCellValue(chartSheetName, fmt.Sprintf("D%v", 42+idx), reportSaleDetail.RecapNonElectricity.February)
+
+			file.SetCellFormula(chartSheetName, fmt.Sprintf("E%v", 42+idx), fmt.Sprintf("SUM(C%v:D%v)", 42+idx, 42+idx))
 
 		case "March":
 
@@ -1257,6 +1363,12 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 
 			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.March)
 
+			file.SetCellValue(chartSheetName, fmt.Sprintf("C%v", 42+idx), reportSaleDetail.RecapElectricity.March)
+
+			file.SetCellValue(chartSheetName, fmt.Sprintf("D%v", 42+idx), reportSaleDetail.RecapNonElectricity.March)
+
+			file.SetCellFormula(chartSheetName, fmt.Sprintf("E%v", 42+idx), fmt.Sprintf("SUM(C%v:D%v)", 42+idx, 42+idx))
+
 		case "April":
 
 			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSale+2+idx), reportSaleDetail.RecapElectricity.April)
@@ -1266,6 +1378,12 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 			file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.April+reportSaleDetail.RecapElectricity.April)
 
 			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.April)
+
+			file.SetCellValue(chartSheetName, fmt.Sprintf("C%v", 42+idx), reportSaleDetail.RecapElectricity.April)
+
+			file.SetCellValue(chartSheetName, fmt.Sprintf("D%v", 42+idx), reportSaleDetail.RecapNonElectricity.April)
+
+			file.SetCellFormula(chartSheetName, fmt.Sprintf("E%v", 42+idx), fmt.Sprintf("SUM(C%v:D%v)", 42+idx, 42+idx))
 
 		case "May":
 
@@ -1277,6 +1395,12 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 
 			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.May)
 
+			file.SetCellValue(chartSheetName, fmt.Sprintf("C%v", 42+idx), reportSaleDetail.RecapElectricity.May)
+
+			file.SetCellValue(chartSheetName, fmt.Sprintf("D%v", 42+idx), reportSaleDetail.RecapNonElectricity.May)
+
+			file.SetCellFormula(chartSheetName, fmt.Sprintf("E%v", 42+idx), fmt.Sprintf("SUM(C%v:D%v)", 42+idx, 42+idx))
+
 		case "June":
 
 			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSale+2+idx), reportSaleDetail.RecapElectricity.June)
@@ -1286,6 +1410,12 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 			file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.June+reportSaleDetail.RecapElectricity.June)
 
 			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.June)
+
+			file.SetCellValue(chartSheetName, fmt.Sprintf("C%v", 42+idx), reportSaleDetail.RecapElectricity.June)
+
+			file.SetCellValue(chartSheetName, fmt.Sprintf("D%v", 42+idx), reportSaleDetail.RecapNonElectricity.June)
+
+			file.SetCellFormula(chartSheetName, fmt.Sprintf("E%v", 42+idx), fmt.Sprintf("SUM(C%v:D%v)", 42+idx, 42+idx))
 
 		case "July":
 
@@ -1297,6 +1427,12 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 
 			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.July)
 
+			file.SetCellValue(chartSheetName, fmt.Sprintf("C%v", 42+idx), reportSaleDetail.RecapElectricity.July)
+
+			file.SetCellValue(chartSheetName, fmt.Sprintf("D%v", 42+idx), reportSaleDetail.RecapNonElectricity.July)
+
+			file.SetCellFormula(chartSheetName, fmt.Sprintf("E%v", 42+idx), fmt.Sprintf("SUM(C%v:D%v)", 42+idx, 42+idx))
+
 		case "August":
 
 			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSale+2+idx), reportSaleDetail.RecapElectricity.August)
@@ -1306,6 +1442,12 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 			file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.August+reportSaleDetail.RecapElectricity.August)
 
 			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.August)
+
+			file.SetCellValue(chartSheetName, fmt.Sprintf("C%v", 42+idx), reportSaleDetail.RecapElectricity.August)
+
+			file.SetCellValue(chartSheetName, fmt.Sprintf("D%v", 42+idx), reportSaleDetail.RecapNonElectricity.August)
+
+			file.SetCellFormula(chartSheetName, fmt.Sprintf("E%v", 42+idx), fmt.Sprintf("SUM(C%v:D%v)", 42+idx, 42+idx))
 
 		case "September":
 
@@ -1317,6 +1459,12 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 
 			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.September)
 
+			file.SetCellValue(chartSheetName, fmt.Sprintf("C%v", 42+idx), reportSaleDetail.RecapElectricity.September)
+
+			file.SetCellValue(chartSheetName, fmt.Sprintf("D%v", 42+idx), reportSaleDetail.RecapNonElectricity.September)
+
+			file.SetCellFormula(chartSheetName, fmt.Sprintf("E%v", 42+idx), fmt.Sprintf("SUM(C%v:D%v)", 42+idx, 42+idx))
+
 		case "October":
 
 			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSale+2+idx), reportSaleDetail.RecapElectricity.October)
@@ -1326,6 +1474,12 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 			file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+2+idx), reportSaleDetail.RecapNonElectricity.October+reportSaleDetail.RecapElectricity.October)
 
 			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.October)
+
+			file.SetCellValue(chartSheetName, fmt.Sprintf("C%v", 42+idx), reportSaleDetail.RecapElectricity.October)
+
+			file.SetCellValue(chartSheetName, fmt.Sprintf("D%v", 42+idx), reportSaleDetail.RecapNonElectricity.October)
+
+			file.SetCellFormula(chartSheetName, fmt.Sprintf("E%v", 42+idx), fmt.Sprintf("SUM(C%v:D%v)", 42+idx, 42+idx))
 
 		case "November":
 
@@ -1337,6 +1491,12 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 
 			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.November)
 
+			file.SetCellValue(chartSheetName, fmt.Sprintf("C%v", 42+idx), reportSaleDetail.RecapElectricity.November)
+
+			file.SetCellValue(chartSheetName, fmt.Sprintf("D%v", 42+idx), reportSaleDetail.RecapNonElectricity.November)
+
+			file.SetCellFormula(chartSheetName, fmt.Sprintf("E%v", 42+idx), fmt.Sprintf("SUM(C%v:D%v)", 42+idx, 42+idx))
+
 		case "December":
 
 			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSale+2+idx), reportSaleDetail.RecapElectricity.December)
@@ -1347,6 +1507,11 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 
 			file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+2+idx), reportSaleDetail.NotClaimable.December)
 
+			file.SetCellValue(chartSheetName, fmt.Sprintf("C%v", 42+idx), reportSaleDetail.RecapElectricity.December)
+
+			file.SetCellValue(chartSheetName, fmt.Sprintf("D%v", 42+idx), reportSaleDetail.RecapNonElectricity.December)
+
+			file.SetCellFormula(chartSheetName, fmt.Sprintf("E%v", 42+idx), fmt.Sprintf("SUM(C%v:D%v)", 42+idx, 42+idx))
 		}
 	}
 
@@ -1355,6 +1520,72 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSale+14), reportSaleDetail.RecapNonElectricity.Total)
 	file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+14), reportSaleDetail.RecapElectricity.Total+reportSaleDetail.RecapNonElectricity.Total)
 	file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+14), reportSaleDetail.NotClaimable.Total)
+
+	file.SetCellValue(chartSheetName, "B54", "TOTAL")
+	file.SetCellFormula(chartSheetName, "C54", "SUM(C42:C53)")
+	file.SetCellFormula(chartSheetName, "D54", "SUM(D42:D53)")
+	file.SetCellFormula(chartSheetName, "E54", "SUM(E42:E53)")
+
+	errChartRecapStyleTable := file.SetCellStyle(chartSheetName, "B42", "E53", formatNumberStyle)
+
+	if errChartRecapStyleTable != nil {
+		return file, errChartRecapStyleTable
+	}
+
+	errChartTotalRecapStyleTable := file.SetCellStyle(chartSheetName, "B54", "E54", boldNumberStyle)
+
+	if errChartTotalRecapStyleTable != nil {
+		return file, errChartTotalRecapStyleTable
+	}
+
+	var seriesChartRecapSale string
+
+	seriesChartRecapSale += fmt.Sprintf(`{
+						"name": "%v!$C$%v",
+						"categories": "%v!$B$42:$B$53",
+						"values": "%v!$C$42:$C$53",
+						"marker": {
+									"symbol": "square"
+								} 
+				},`, chartSheetName, 41, chartSheetName, chartSheetName)
+
+	seriesChartRecapSale += fmt.Sprintf(`{
+						"name": "%v!$D$%v",
+						"categories": "%v!$B$42:$B$53",
+						"values": "%v!$D$42:$D$53",
+						"marker": {
+									"symbol": "square"
+								} 
+				}`, chartSheetName, 41, chartSheetName, chartSheetName)
+
+	valueChartRecapSale := fmt.Sprintf(`{
+	    "type": "col",
+	    "series": [%v],
+	    "format":
+	    {
+	        "x_scale": 1.0,
+	        "y_scale": 1.0,
+	        "x_offset": 15,
+	        "y_offset": 10,
+	        "print_obj": true,
+	        "lock_aspect_ratio": false,
+	        "locked": false
+	    },
+	    "legend":
+	    {
+	        "position": "top",
+	        "show_legend_key": true
+	    },
+	    "title":
+	    {
+	        "name": "REKAP DMO PER BULAN BERDASARKAN JENIS INDUSTRI"
+	    },
+	    "show_blanks_as": "zero"
+	}`, seriesChartRecapSale)
+
+	if err := file.AddChart(chartSheetName, "G40", valueChartRecapSale); err != nil {
+		return file, err
+	}
 
 	var seriesRecapSale string
 
@@ -1379,9 +1610,6 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	valueRecapSale := fmt.Sprintf(`{
 	    "type": "col",
 	    "series": [%v],
-			"dimension": {	
-				"width": 720
-			},
 	    "format":
 	    {
 	        "x_scale": 1.0,
@@ -1474,6 +1702,404 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 
 	}
 
+	file.SetCellValue(chartSheetName, "A61", "KEWAJIBAN DMO")
+	file.SetCellValue(chartSheetName, "B62", fmt.Sprintf("Kewajiban DMO(%v%%)", reportSaleDetail.Rkabs[0].DmoObligation))
+	file.SetCellValue(chartSheetName, "B63", "Pemenuhan DMO")
+
+	file.SetCellValue(chartSheetName, "C62", 1)
+	file.SetCellFormula(chartSheetName, "C63", "C79/C78")
+
+	var seriesChartRecap string
+
+	seriesChartRecap += fmt.Sprintf(`{
+						"name": "Kewajiban DMO",
+						"categories": "%v!$B$62:$B$63",
+						"values": "%v!$C$62:$C$63",
+						"marker": {
+									"symbol": "square"
+								} 
+				}`, chartSheetName, chartSheetName)
+
+	valueChartRecap := fmt.Sprintf(`{
+	    "type": "col",
+	    "series": [%v],
+	    "format":
+	    {
+	        "x_scale": 1.0,
+	        "y_scale": 1.0,
+	        "x_offset": 15,
+	        "y_offset": 10,
+	        "print_obj": true,
+	        "lock_aspect_ratio": false,
+	        "locked": false
+	    },
+	    "legend":
+	    {
+	        "position": "top",
+	        "show_legend_key": true
+	    },
+	    "title":
+	    {
+	        "name": "Pemenuhan DMO Tahun %s"
+	    },
+	    "show_blanks_as": "zero"
+	}`, seriesChartRecap, year)
+
+	if err := file.AddChart(chartSheetName, "G61", valueChartRecap); err != nil {
+		return file, err
+	}
+
+	errPercentStyle := file.SetCellStyle(chartSheetName, "B62", "C63", percentTableStyle)
+
+	if errPercentStyle != nil {
+		return file, errPercentStyle
+	}
+
+	file.SetCellValue(chartSheetName, "B77", fmt.Sprintf("Pemenuhan DMO terhadap kewajiban pemenuhan DMO %v%", reportSaleDetail.Rkabs[0].DmoObligation))
+
+	errTitleDmo1 := file.SetCellStyle(chartSheetName, "B77", "B77", boldOnlyStyle)
+
+	if errTitleDmo1 != nil {
+		return file, errTitleDmo1
+	}
+
+	file.SetCellValue(chartSheetName, "B78", "Kewajiban DMO")
+	file.SetCellValue(chartSheetName, "B79", "Realisasi DMO")
+	file.SetCellValue(chartSheetName, "B80", "% Pemenuhan DMO")
+
+	file.SetCellFormula(chartSheetName, "C78", fmt.Sprintf("Detail!D16"))
+	file.SetCellFormula(chartSheetName, "C79", fmt.Sprintf("E54"))
+	file.SetCellFormula(chartSheetName, "C80", fmt.Sprintf("C79/C78"))
+
+	errChartPemenuhanDmo := file.SetCellStyle(chartSheetName, "B78", "C80", formatNumberStyle)
+
+	if errChartPemenuhanDmo != nil {
+		return file, errChartPemenuhanDmo
+	}
+
+	errChartPemenuhanPercentDmo := file.SetCellStyle(chartSheetName, "C80", "C80", percentTableStyle)
+
+	if errChartPemenuhanPercentDmo != nil {
+		return file, errChartPemenuhanPercentDmo
+	}
+
+	var seriesChartPemenuhanDmoTerhadapKewajibanDmo string
+
+	seriesChartPemenuhanDmoTerhadapKewajibanDmo += fmt.Sprintf(`{
+						"name": "Pemenuhan DMO Terhadap Kewajiban DMO",
+						"categories": "%v!$B$78:$B$79",
+						"values": "%v!$C$78:$C$79",
+						"marker": {
+									"symbol": "square"
+								} 
+				}`, chartSheetName, chartSheetName)
+
+	valueChartPemenuhanDmoTerhadapKewajibanDmo := fmt.Sprintf(`{
+	    "type": "col",
+	    "series": [%v],
+	    "format":
+	    {
+	        "x_scale": 1.0,
+	        "y_scale": 1.0,
+	        "x_offset": 15,
+	        "y_offset": 10,
+	        "print_obj": true,
+	        "lock_aspect_ratio": false,
+	        "locked": false
+	    },
+	    "legend":
+	    {
+	        "position": "top",
+	        "show_legend_key": true
+	    },
+	    "title":
+	    {
+	        "name": "Pemenuhan DMO terhadap Kewajiban Pemenuhan DMO"
+	    },
+	    "show_blanks_as": "zero"
+	}`, seriesChartPemenuhanDmoTerhadapKewajibanDmo)
+
+	if err := file.AddChart(chartSheetName, "G77", valueChartPemenuhanDmoTerhadapKewajibanDmo); err != nil {
+		return file, err
+	}
+
+	file.SetCellValue(chartSheetName, "B95", "Pemenuhan DMO terhadap Realisasi Produksi")
+
+	errTitleDmo2 := file.SetCellStyle(chartSheetName, "B95", "B95", boldOnlyStyle)
+
+	if errTitleDmo2 != nil {
+		return file, errTitleDmo2
+	}
+
+	file.SetCellValue(chartSheetName, "B96", "Realisasi Produksi")
+	file.SetCellValue(chartSheetName, "B97", "Realisasi DMO")
+	file.SetCellValue(chartSheetName, "B98", "% Pemenuhan DMO terhadap Realisasi Produksi")
+
+	file.SetCellFormula(chartSheetName, "C96", "C6")
+	file.SetCellFormula(chartSheetName, "C97", "C79")
+	file.SetCellFormula(chartSheetName, "C98", fmt.Sprintf("C97/C96"))
+
+	errChartPemenuhanDmoTerhadapRealisasiProduksi := file.SetCellStyle(chartSheetName, "B96", "C98", formatNumberStyle)
+
+	if errChartPemenuhanDmoTerhadapRealisasiProduksi != nil {
+		return file, errChartPemenuhanDmoTerhadapRealisasiProduksi
+	}
+
+	errChartPercentPemenuhanDmoTerhadapRealisasiProduksi := file.SetCellStyle(chartSheetName, "C98", "C98", percentTableStyle)
+
+	if errChartPercentPemenuhanDmoTerhadapRealisasiProduksi != nil {
+		return file, errChartPercentPemenuhanDmoTerhadapRealisasiProduksi
+	}
+
+	var seriesChartPemenuhanDmoTerhadapRealisasiProduksi string
+
+	seriesChartPemenuhanDmoTerhadapRealisasiProduksi += fmt.Sprintf(`{
+						"name": "Pemenuhan DMO Terhadap Realisasi Produksi",
+						"categories": "%v!$B$96:$B$97",
+						"values": "%v!$C$96:$C$97",
+						"marker": {
+									"symbol": "square"
+								} 
+				}`, chartSheetName, chartSheetName)
+
+	valueChartPemenuhanDmoTerhadapRealisasiProduksi := fmt.Sprintf(`{
+	    "type": "col",
+	    "series": [%v],
+	    "format":
+	    {
+	        "x_scale": 1.0,
+	        "y_scale": 1.0,
+	        "x_offset": 15,
+	        "y_offset": 10,
+	        "print_obj": true,
+	        "lock_aspect_ratio": false,
+	        "locked": false
+	    },
+	    "legend":
+	    {
+	        "position": "top",
+	        "show_legend_key": true
+	    },
+	    "title":
+	    {
+	        "name": "Pemenuhan DMO terhadap Realisasi Produksi"
+	    },
+	    "show_blanks_as": "zero"
+	}`, seriesChartPemenuhanDmoTerhadapRealisasiProduksi)
+
+	if err := file.AddChart(chartSheetName, "G95", valueChartPemenuhanDmoTerhadapRealisasiProduksi); err != nil {
+		return file, err
+	}
+
+	file.SetCellValue(chartSheetName, "B111", "Pemenuhan DMO terhadap Rencana Produksi")
+
+	errTitleDmo3 := file.SetCellStyle(chartSheetName, "B111", "B111", boldOnlyStyle)
+
+	if errTitleDmo3 != nil {
+		return file, errTitleDmo3
+	}
+
+	file.SetCellValue(chartSheetName, "B112", "Rencana Produksi")
+	file.SetCellValue(chartSheetName, "B113", "Realisasi DMO")
+	file.SetCellValue(chartSheetName, "B114", "% Pemenuhan DMO terhadap Rencana Produksi")
+
+	file.SetCellFormula(chartSheetName, "C112", fmt.Sprintf("%s!E21", sheetName))
+	file.SetCellFormula(chartSheetName, "C113", "C79")
+	file.SetCellFormula(chartSheetName, "C114", fmt.Sprintf("C113/C112"))
+
+	errChartPemenuhanDmoTerhadapRencanaProduksi := file.SetCellStyle(chartSheetName, "B112", "C114", formatNumberStyle)
+
+	if errChartPemenuhanDmoTerhadapRencanaProduksi != nil {
+		return file, errChartPemenuhanDmoTerhadapRencanaProduksi
+	}
+
+	errChartPercentPemenuhanDmoTerhadapRencanaProduksi := file.SetCellStyle(chartSheetName, "C114", "C114", percentTableStyle)
+
+	if errChartPercentPemenuhanDmoTerhadapRencanaProduksi != nil {
+		return file, errChartPercentPemenuhanDmoTerhadapRencanaProduksi
+	}
+
+	var seriesChartPemenuhanDmoTerhadapRencanaProduksi string
+
+	seriesChartPemenuhanDmoTerhadapRencanaProduksi += fmt.Sprintf(`{
+						"name": "Pemenuhan DMO Terhadap Rencana Produksi",
+						"categories": "%v!$B$112:$B$113",
+						"values": "%v!$C$112:$C$113",
+						"marker": {
+									"symbol": "square"
+								} 
+				}`, chartSheetName, chartSheetName)
+
+	valueChartPemenuhanDmoTerhadapRencanaProduksi := fmt.Sprintf(`{
+	    "type": "col",
+	    "series": [%v],
+	    "format":
+	    {
+	        "x_scale": 1.0,
+	        "y_scale": 1.0,
+	        "x_offset": 15,
+	        "y_offset": 10,
+	        "print_obj": true,
+	        "lock_aspect_ratio": false,
+	        "locked": false
+	    },
+	    "legend":
+	    {
+	        "position": "top",
+	        "show_legend_key": true
+	    },
+	    "title":
+	    {
+	        "name": "Pemenuhan DMO terhadap Rencana Produksi"
+	    },
+	    "show_blanks_as": "zero"
+	}`, seriesChartPemenuhanDmoTerhadapRencanaProduksi)
+
+	if err := file.AddChart(chartSheetName, "G111", valueChartPemenuhanDmoTerhadapRencanaProduksi); err != nil {
+		return file, err
+	}
+
+	file.SetCellValue(chartSheetName, "B126", "Pemenuhan DMO terhadap Rencana Produksi (Prorata 12 bulan)")
+
+	errTitleDmo4 := file.SetCellStyle(chartSheetName, "B126", "B126", boldOnlyStyle)
+
+	if errTitleDmo4 != nil {
+		return file, errTitleDmo4
+	}
+
+	file.SetCellValue(chartSheetName, "B127", "Rencana Produksi")
+
+	file.SetCellValue(chartSheetName, "B129", "Prorata Produksi")
+	file.SetCellValue(chartSheetName, "B130", "Realisasi DMO")
+	file.SetCellValue(chartSheetName, "B131", "% Pemenuhan DMO terhadap Rencana Produksi (Prorata)")
+
+	file.SetCellFormula(chartSheetName, "C127", fmt.Sprintf("%s!E21", sheetName))
+
+	file.SetCellFormula(chartSheetName, "C129", fmt.Sprintf("%s!E21", sheetName))
+	file.SetCellFormula(chartSheetName, "C130", "C79")
+	file.SetCellFormula(chartSheetName, "C131", fmt.Sprintf("C130/C129"))
+
+	errChartPemenuhanDmoTerhadapRencanaProduksiProrata := file.SetCellStyle(chartSheetName, "B129", "C131", formatNumberStyle)
+
+	if errChartPemenuhanDmoTerhadapRencanaProduksiProrata != nil {
+		return file, errChartPemenuhanDmoTerhadapRencanaProduksiProrata
+	}
+
+	errChartPemenuhanDmoTerhadapRencanaProduksiProrata2 := file.SetCellStyle(chartSheetName, "B127", "C127", formatNumberStyle)
+
+	if errChartPemenuhanDmoTerhadapRencanaProduksiProrata2 != nil {
+		return file, errChartPemenuhanDmoTerhadapRencanaProduksiProrata2
+	}
+
+	errChartPercentPemenuhanDmoTerhadapRencanaProduksiProrata := file.SetCellStyle(chartSheetName, "C131", "C131", percentTableStyle)
+
+	if errChartPercentPemenuhanDmoTerhadapRencanaProduksiProrata != nil {
+		return file, errChartPercentPemenuhanDmoTerhadapRencanaProduksiProrata
+	}
+
+	var seriesChartPemenuhanDmoTerhadapRencanaProduksiProrata string
+
+	seriesChartPemenuhanDmoTerhadapRencanaProduksiProrata += fmt.Sprintf(`{
+						"name": "Pemenuhan DMO Terhadap Rencana Produksi Prorata (12 Bulan)",
+						"categories": "%v!$B$129:$B$130",
+						"values": "%v!$C$129:$C$130",
+						"marker": {
+									"symbol": "square"
+								} 
+				}`, chartSheetName, chartSheetName)
+
+	valueChartPemenuhanDmoTerhadapRencanaProduksiProrata := fmt.Sprintf(`{
+	    "type": "col",
+	    "series": [%v],
+	    "format":
+	    {
+	        "x_scale": 1.0,
+	        "y_scale": 1.0,
+	        "x_offset": 15,
+	        "y_offset": 10,
+	        "print_obj": true,
+	        "lock_aspect_ratio": false,
+	        "locked": false
+	    },
+	    "legend":
+	    {
+	        "position": "top",
+	        "show_legend_key": true
+	    },
+	    "title":
+	    {
+	        "name": "Pemenuhan DMO terhadap Rencana Produksi (Prorata 12 bulan)"
+	    },
+	    "show_blanks_as": "zero"
+	}`, seriesChartPemenuhanDmoTerhadapRencanaProduksiProrata)
+
+	if err := file.AddChart(chartSheetName, "G126", valueChartPemenuhanDmoTerhadapRencanaProduksiProrata); err != nil {
+		return file, err
+	}
+
+	file.SetCellValue(chartSheetName, "B143", "REKAP TOTAL DMO BERDASARKAN JENIS INDUSTRI")
+
+	errTitleDmo5 := file.SetCellStyle(chartSheetName, "B143", "B143", boldOnlyStyle)
+
+	if errTitleDmo5 != nil {
+		return file, errTitleDmo5
+	}
+
+	file.SetCellValue(chartSheetName, "B144", "Kelistrikan")
+	file.SetCellValue(chartSheetName, "B145", "Non Kelistrikan")
+
+	file.SetCellFormula(chartSheetName, "C144", "C54")
+	file.SetCellFormula(chartSheetName, "C145", "D54")
+
+	errChartRecapJenisIndustri := file.SetCellStyle(chartSheetName, "B144", "C145", formatNumberStyle)
+
+	if errChartRecapJenisIndustri != nil {
+		return file, errChartRecapJenisIndustri
+	}
+
+	var seriesChartRecapJenisIndustri string
+
+	seriesChartRecapJenisIndustri += fmt.Sprintf(`{
+						"name": "REKAP TOTAL DMO BERDASARKAN JENIS INDUSTRI",
+						"categories": "%v!$B$144:$B$145",
+						"values": "%v!$C$144:$C$145",
+						"marker": {
+									"symbol": "square"
+								} 
+				}`, chartSheetName, chartSheetName)
+
+	valueChartRecapJenisIndustri := fmt.Sprintf(`{
+	    "type": "pie",
+	    "series": [%v],
+	    "format":
+	    {
+	        "x_scale": 1.0,
+	        "y_scale": 1.0,
+	        "x_offset": 15,
+	        "y_offset": 10,
+	        "print_obj": true,
+	        "lock_aspect_ratio": false,
+	        "locked": false
+	    },
+	    "legend":
+	    {
+	        "position": "top",
+	        "show_legend_key": true
+	    },
+			"plotarea": {
+				"show_percent": true
+			},
+	    "title":
+	    {
+	        "name": "Penjualan Kelistrikan & Non Kelistrikan"
+	    },
+	    "show_blanks_as": "zero"
+	}`, seriesChartRecapJenisIndustri)
+
+	if err := file.AddChart(chartSheetName, "G143", valueChartRecapJenisIndustri); err != nil {
+		return file, err
+	}
+
 	var startDetail int
 
 	startDetail = startSale + 17 + (len(reportSaleDetail.Rkabs) * 10)
@@ -1511,12 +2137,22 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	file.SetCellValue(sheetName, fmt.Sprintf("P%v", startDetail+3), "December")
 	file.SetCellValue(sheetName, fmt.Sprintf("Q%v", startDetail+3), "TOTAL")
 
+	file.SetCellValue(chartSheetName, "B160", "DETAIL REKAP TOTAL DMO BERDASARKAN JENIS INDUSTRI - KELISTRIKAN")
+
+	errTitleDmo6 := file.SetCellStyle(chartSheetName, "B160", "B160", boldOnlyStyle)
+
+	if errTitleDmo6 != nil {
+		return file, errTitleDmo6
+	}
+
+	var countPltu int
 	var numberElectric int = 1
 	for k, value := range reportSaleDetail.CompanyElectricity {
 
 		file.SetCellValue(sheetName, fmt.Sprintf("B%v", startDetail+(4+numberElectric-1)), k)
 
 		for _, v := range value {
+
 			file.SetCellValue(sheetName, fmt.Sprintf("D%v", startDetail+(4+numberElectric-1)), v)
 			file.SetCellValue(sheetName, fmt.Sprintf("A%v", startDetail+(4+numberElectric-1)), numberElectric)
 
@@ -1594,10 +2230,64 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 
 			file.SetCellFormula(sheetName, fmt.Sprintf("Q%v", startDetail+(4+numberElectric-1)), fmt.Sprintf("SUM(E%v:P%v)", startDetail+(4+numberElectric-1), startDetail+(4+numberElectric-1)))
 			numberElectric += 1
+
+			file.SetCellFormula(chartSheetName, fmt.Sprintf("B%v", 161+countPltu), fmt.Sprintf("Detail!D%v", startDetail+(4+numberElectric-2)))
+			file.SetCellFormula(chartSheetName, fmt.Sprintf("C%v", 161+countPltu), fmt.Sprintf("Detail!Q%v", startDetail+(4+numberElectric-2)))
+			countPltu += 1
 		}
 
 		file.MergeCell(sheetName, fmt.Sprintf("B%v", startDetail+numberElectric+1), fmt.Sprintf("C%v", startDetail+numberElectric+len(value)))
 
+	}
+
+	errChartSaleElectric := file.SetCellStyle(chartSheetName, "B161", fmt.Sprintf("C%v", 161+countPltu-1), formatNumberStyle)
+
+	if errChartSaleElectric != nil {
+		return file, errChartSaleElectric
+	}
+
+	var seriesChartCompanyElectric string
+
+	seriesChartCompanyElectric += fmt.Sprintf(`{
+						"name": "Sales Kelistrikan",
+						"categories": "%v!$B$161:$B$%v",
+						"values": "%v!$C$161:$C$%v",
+						"marker": {
+									"symbol": "square"
+								} 
+				}`, chartSheetName, 161+countPltu-1, chartSheetName, 161+countPltu-1)
+
+	valueChartElectric := fmt.Sprintf(`{
+	    "type": "pie",
+	    "series": [%v],
+	    "format":
+	    {
+	        "x_scale": 1.0,
+	        "y_scale": 1.0,
+	        "x_offset": 15,
+	        "y_offset": 10,
+	        "print_obj": true,
+	        "lock_aspect_ratio": false,
+	        "locked": false
+	    },
+	    "legend":
+	    {
+	        "position": "top",
+	        "show_legend_key": true
+	    },
+			"plotarea": 
+			{
+					"show_percent": true
+			},
+	    "title":
+	    {
+	        "name": "Penjualan berdasarkan JENIS INDUSTRI (KELISTRIKAN)"
+	    },
+	    "show_blanks_as": "zero"
+	}`, seriesChartCompanyElectric)
+
+	if err := file.AddChart(chartSheetName, "G160", valueChartElectric); err != nil {
+		return file, err
 	}
 
 	var seriesCompanyElectric string
@@ -1614,9 +2304,6 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	valueElectric := fmt.Sprintf(`{
 	    "type": "pie",
 	    "series": [%v],
-			"dimension": {	
-				"width": 720
-			},
 	    "format":
 	    {
 	        "x_scale": 1.0,
@@ -1746,6 +2433,22 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	file.SetCellValue(sheetName, fmt.Sprintf("P%v", startDetailNonElectric+2), "December")
 	file.SetCellValue(sheetName, fmt.Sprintf("Q%v", startDetailNonElectric+2), "TOTAL")
 
+	var countIndustry int
+	if countPltu > 16 {
+		countIndustry = countPltu - 16
+	}
+
+	var base int
+
+	base = 178 + countIndustry
+	file.SetCellValue(chartSheetName, fmt.Sprintf("B%v", 178+countIndustry), "DETAIL REKAP TOTAL DMO BERDASARKAN JENIS INDUSTRI - NON KELISTRIKAN")
+
+	errTitleDmo7 := file.SetCellStyle(chartSheetName, fmt.Sprintf("B%v", 178+countIndustry), fmt.Sprintf("B%v", 178+countIndustry), boldOnlyStyle)
+
+	if errTitleDmo7 != nil {
+		return file, errTitleDmo7
+	}
+
 	var numberNonElectric int = 1
 
 	for k, value := range reportSaleDetail.CompanyNonElectricity {
@@ -1829,11 +2532,64 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 			}
 
 			file.SetCellFormula(sheetName, fmt.Sprintf("Q%v", startDetailNonElectric+(3+numberNonElectric-1)), fmt.Sprintf("SUM(E%v:P%v)", startDetailNonElectric+(3+numberNonElectric-1), startDetailNonElectric+(3+numberNonElectric-1)))
-			numberNonElectric += 1
 
+			file.SetCellFormula(chartSheetName, fmt.Sprintf("B%v", base+1+countIndustry), fmt.Sprintf("Detail!D%v", startDetailNonElectric+(3+numberNonElectric-1)))
+			file.SetCellFormula(chartSheetName, fmt.Sprintf("C%v", base+1+countIndustry), fmt.Sprintf("Detail!Q%v", startDetailNonElectric+(3+numberNonElectric-1)))
+			countIndustry += 1
+			numberNonElectric += 1
 		}
 
 		file.MergeCell(sheetName, fmt.Sprintf("B%v", startDetailNonElectric+numberNonElectric), fmt.Sprintf("C%v", startDetailNonElectric+numberNonElectric+len(value)-1))
+	}
+
+	errChartSaleNonElectric := file.SetCellStyle(chartSheetName, fmt.Sprintf("B%v", base+1), fmt.Sprintf("C%v", base+countIndustry), formatNumberStyle)
+
+	if errChartSaleNonElectric != nil {
+		return file, errChartSaleNonElectric
+	}
+
+	var seriesChartCompanyNonElectric string
+
+	seriesChartCompanyNonElectric += fmt.Sprintf(`{
+						"name": "Sales Non Kelistrikan",
+						"categories": "%v!$B$%v:$B$%v",
+						"values": "%v!$C$%v:$C$%v",
+						"marker": {
+									"symbol": "square"
+								} 
+				}`, chartSheetName, base+1, base+1+countIndustry, chartSheetName, base+1, base+1+countIndustry)
+
+	valueChartNonElectric := fmt.Sprintf(`{
+	    "type": "pie",
+	    "series": [%v],
+	    "format":
+	    {
+	        "x_scale": 1.0,
+	        "y_scale": 1.0,
+	        "x_offset": 15,
+	        "y_offset": 10,
+	        "print_obj": true,
+	        "lock_aspect_ratio": false,
+	        "locked": false
+	    },
+	    "legend":
+	    {
+	        "position": "top",
+	        "show_legend_key": true
+	    },
+			"plotarea": 
+			{
+					"show_percent": true
+			},
+	    "title":
+	    {
+	        "name": "Penjualan berdasarkan JENIS INDUSTRI (NON KELISTRIKAN)"
+	    },
+	    "show_blanks_as": "zero"
+	}`, seriesChartCompanyNonElectric)
+
+	if err := file.AddChart(chartSheetName, fmt.Sprintf("G%v", base), valueChartNonElectric); err != nil {
+		return file, err
 	}
 
 	errNoNonElectricStyle := file.SetCellStyle(sheetName, fmt.Sprintf("A%v", startDetailNonElectric+3), fmt.Sprintf("A%v", startDetailNonElectric+3+numberNonElectric-1), centerStyle)
@@ -1880,9 +2636,6 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	valueNonElectric := fmt.Sprintf(`{
 	    "type": "pie",
 	    "series": [%v],
-			"dimension": {	
-				"width": 720
-			},
 	    "format":
 	    {
 	        "x_scale": 1.0,
@@ -2088,9 +2841,6 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	valueDomesticExport := fmt.Sprintf(`{
 	    "type": "pie",
 	    "series": [%v],
-			"dimension": {	
-				"width": 720
-			},
 	    "format":
 	    {
 	        "x_scale": 1.0,
@@ -2118,6 +2868,63 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	}`, seriesDomesticExport)
 
 	if err := file.AddChart(sheetName, fmt.Sprintf("H%v", startSaleExportImport+1), valueDomesticExport); err != nil {
+		return file, err
+	}
+
+	file.SetCellValue(chartSheetName, "A22", "PENJUALAN")
+
+	file.SetCellValue(chartSheetName, "B23", "DALAM NEGERI")
+	file.SetCellValue(chartSheetName, "B24", "LUAR NEGERI")
+	file.SetCellFormula(chartSheetName, "C23", fmt.Sprintf("%v!D%v", sheetName, startSaleExportImport+14))
+	file.SetCellFormula(chartSheetName, "C24", fmt.Sprintf("%v!E%v", sheetName, startSaleExportImport+14))
+
+	errChartDomesticExportStyleTable := file.SetCellStyle(chartSheetName, "B23", "C24", formatNumberStyle)
+
+	if errChartDomesticExportStyleTable != nil {
+		return file, errChartDomesticExportStyleTable
+	}
+
+	var seriesChartDomesticExport string
+
+	seriesChartDomesticExport += fmt.Sprintf(`{
+						"name": "Amount",
+						"categories": "%v!$B$23:$B$24",
+						"values": "%v!$C$23:$C$24",
+						"marker": {
+									"symbol": "square"
+								} 
+				}`, chartSheetName, chartSheetName)
+
+	valueChartDomesticExport := fmt.Sprintf(`{
+	    "type": "pie",
+	    "series": [%v],
+	    "format":
+	    {
+	        "x_scale": 1.0,
+	        "y_scale": 1.0,
+	        "x_offset": 15,
+	        "y_offset": 10,
+	        "print_obj": true,
+	        "lock_aspect_ratio": false,
+	        "locked": false
+	    },
+	    "legend":
+	    {
+	        "position": "top",
+	        "show_legend_key": true
+	    },
+			"plotarea": 
+			{
+					"show_percent": true
+			},
+	    "title":
+	    {
+	        "name": "Penjualan Dalam & Luar Negeri"
+	    },
+	    "show_blanks_as": "zero"
+	}`, seriesChartDomesticExport)
+
+	if err := file.AddChart(chartSheetName, "G22", valueChartDomesticExport); err != nil {
 		return file, err
 	}
 

@@ -387,7 +387,9 @@ func (h *masterReportHandler) DownloadSaleDetailReport(c *fiber.Ctx) error {
 	excelFile := excelize.NewFile()
 	excelFile.NewSheet("Detail")
 
-	excelFile, errSaleDetail := h.masterReportService.CreateReportSalesDetail(year, saleDetailReport, iupopkData, excelFile, "Detail")
+	excelFile.NewSheet("Chart")
+
+	excelFile, errSaleDetail := h.masterReportService.CreateReportSalesDetail(year, saleDetailReport, iupopkData, excelFile, "Detail", "Chart")
 
 	fmt.Println(errSaleDetail)
 	if errSaleDetail != nil {
