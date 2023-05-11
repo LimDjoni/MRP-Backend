@@ -13,6 +13,7 @@ type Rkab struct {
 	DateOfIssue      string        `json:"date_of_issue" gorm:"type:DATE"`
 	Year             string        `json:"year"`
 	ProductionQuota  float64       `json:"production_quota"`
+	DmoObligation    float64       `json:"dmo_obligation"`
 	RkabDocumentLink string        `json:"rkab_document_link"`
 	IsRevision       bool          `json:"is_revision"`
 	IupopkId         uint          `json:"iupopk_id"`

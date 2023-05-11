@@ -1,0 +1,414 @@
+package handler
+
+import (
+	"ajebackend/model/master/allmaster"
+	"ajebackend/model/masterreport"
+	"ajebackend/model/useriupopk"
+	"fmt"
+	"reflect"
+	"strconv"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/xuri/excelize/v2"
+)
+
+type masterReportHandler struct {
+	masterReportService masterreport.Service
+	userIupopkService   useriupopk.Service
+	v                   *validator.Validate
+	allMasterService    allmaster.Service
+}
+
+func NewMasterReportHandler(masterReportService masterreport.Service, userIupopkService useriupopk.Service, v *validator.Validate, allMasterService allmaster.Service) *masterReportHandler {
+	return &masterReportHandler{
+		masterReportService,
+		userIupopkService,
+		v,
+		allMasterService,
+	}
+}
+
+func (h *masterReportHandler) RecapDmo(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	year := c.Params("year")
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	reportRecap, reportRecapErr := h.masterReportService.RecapDmo(year, iupopkIdInt)
+
+	if reportRecapErr != nil {
+		status := 400
+
+		if reportRecapErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"error": reportRecapErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(reportRecap)
+}
+
+func (h *masterReportHandler) DownloadRecapDmo(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	year := c.Params("year")
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkData, iupopkDataErr := h.allMasterService.FindIupopk(iupopkIdInt)
+
+	if iupopkDataErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": iupopkDataErr.Error(),
+		})
+	}
+
+	reportRecap, reportRecapErr := h.masterReportService.RecapDmo(year, iupopkIdInt)
+
+	if reportRecapErr != nil {
+		status := 400
+
+		if reportRecapErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"error": reportRecapErr.Error(),
+		})
+	}
+
+	excelFile := excelize.NewFile()
+	excelFile.NewSheet("Rekapitulasi")
+
+	excelFile, errRecap := h.masterReportService.CreateReportRecapDmo(year, reportRecap, iupopkData, excelFile, "Rekapitulasi")
+
+	if errRecap != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": errRecap.Error(),
+		})
+	}
+
+	excelFile.DeleteSheet("Sheet1")
+	excelFile.SetActiveSheet(0)
+
+	if err := excelFile.SaveAs("Book1.xlsx"); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "failed to get report",
+			"error":   err.Error(),
+		})
+	}
+
+	fileName := fmt.Sprintf("rekapitulasi-%s-%s", iupopkData.Code, year)
+
+	return c.Status(200).Download("./Book1.xlsx", fileName)
+}
+
+func (h *masterReportHandler) RealizationReport(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	year := c.Params("year")
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	realizationReport, realizationReportErr := h.masterReportService.RealizationReport(year, iupopkIdInt)
+
+	if realizationReportErr != nil {
+		status := 400
+
+		if realizationReportErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"error": realizationReportErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(realizationReport)
+}
+
+func (h *masterReportHandler) DownloadRealizationReport(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	year := c.Params("year")
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkData, iupopkDataErr := h.allMasterService.FindIupopk(iupopkIdInt)
+
+	if iupopkDataErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": iupopkDataErr.Error(),
+		})
+	}
+
+	realizationReport, realizationReportErr := h.masterReportService.RealizationReport(year, iupopkIdInt)
+
+	if realizationReportErr != nil {
+		status := 400
+
+		if realizationReportErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"error": realizationReportErr.Error(),
+		})
+	}
+
+	excelFile := excelize.NewFile()
+	excelFile.NewSheet("JAN")
+	excelFile.NewSheet("FEB")
+	excelFile.NewSheet("MAR")
+	excelFile.NewSheet("APR")
+	excelFile.NewSheet("MEI")
+	excelFile.NewSheet("JUN")
+	excelFile.NewSheet("JUL")
+	excelFile.NewSheet("AGU")
+	excelFile.NewSheet("SEP")
+	excelFile.NewSheet("OKT")
+	excelFile.NewSheet("NOV")
+	excelFile.NewSheet("DES")
+
+	excelFile, errRealization := h.masterReportService.CreateReportRealization(year, realizationReport, iupopkData, excelFile)
+
+	if errRealization != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": errRealization.Error(),
+		})
+	}
+
+	excelFile.DeleteSheet("Sheet1")
+	excelFile.SetActiveSheet(0)
+
+	if err := excelFile.SaveAs("Book1.xlsx"); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "failed to get report",
+			"error":   err.Error(),
+		})
+	}
+
+	fileName := fmt.Sprintf("realisasi-%s-%s", iupopkData.Code, year)
+
+	return c.Status(200).Download("./Book1.xlsx", fileName)
+}
+
+func (h *masterReportHandler) SaleDetailReport(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	year := c.Params("year")
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	saleDetailReport, saleDetailReportErr := h.masterReportService.SaleDetailReport(year, iupopkIdInt)
+
+	if saleDetailReportErr != nil {
+		status := 400
+
+		if saleDetailReportErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"error": saleDetailReportErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(saleDetailReport)
+}
+
+func (h *masterReportHandler) DownloadSaleDetailReport(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	year := c.Params("year")
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkData, iupopkDataErr := h.allMasterService.FindIupopk(iupopkIdInt)
+
+	if iupopkDataErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": iupopkDataErr.Error(),
+		})
+	}
+
+	saleDetailReport, saleDetailReportErr := h.masterReportService.SaleDetailReport(year, iupopkIdInt)
+
+	if saleDetailReportErr != nil {
+		status := 400
+
+		if saleDetailReportErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"error": saleDetailReportErr.Error(),
+		})
+	}
+
+	excelFile := excelize.NewFile()
+	excelFile.NewSheet("Detail")
+
+	excelFile.NewSheet("Chart")
+
+	excelFile, errSaleDetail := h.masterReportService.CreateReportSalesDetail(year, saleDetailReport, iupopkData, excelFile, "Detail", "Chart")
+
+	fmt.Println(errSaleDetail)
+	if errSaleDetail != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": errSaleDetail.Error(),
+		})
+	}
+
+	excelFile.DeleteSheet("Sheet1")
+	excelFile.SetActiveSheet(0)
+
+	if err := excelFile.SaveAs("Book1.xlsx"); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "failed to get report",
+			"error":   err.Error(),
+		})
+	}
+
+	fileName := fmt.Sprintf("detail-%s-%s", iupopkData.Code, year)
+
+	return c.Status(200).Download("./Book1.xlsx", fileName)
+}

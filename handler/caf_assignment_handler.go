@@ -7,6 +7,7 @@ import (
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
 	"ajebackend/model/master/allmaster"
+	"ajebackend/model/notification"
 	"ajebackend/model/notificationuser"
 	"ajebackend/model/useriupopk"
 	"ajebackend/validatorfunc"
@@ -301,6 +302,36 @@ func (h *cafAssignmentHandler) CreateCafAssignment(c *fiber.Ctx) error {
 		return c.Status(status).JSON(responseErr)
 	}
 
+	var createNotif notification.InputNotification
+
+	createNotif.Type = "caf"
+	createNotif.Status = "membuat"
+	createNotif.Period = updateCafAssignment.Year
+
+	_, createNotificationErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), iupopkIdInt)
+
+	if createNotificationErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["caf_assignment_id"] = updateCafAssignment.ID
+		inputMap["caf_assignment"] = updateCafAssignment
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": createNotificationErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error": createNotificationErr.Error(),
+		})
+	}
+
 	return c.Status(201).JSON(updateCafAssignment)
 }
 
@@ -548,6 +579,37 @@ func (h *cafAssignmentHandler) UpdateCafAssignment(c *fiber.Ctx) error {
 			return c.Status(200).JSON(updateDocCafAssignment)
 		}
 	}
+
+	var createNotif notification.InputNotification
+
+	createNotif.Type = "caf"
+	createNotif.Status = "mengedit"
+	createNotif.Period = updateCafAssignment.Year
+
+	_, createNotificationErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), iupopkIdInt)
+
+	if createNotificationErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["caf_assignment_id"] = updateCafAssignment.ID
+		inputMap["caf_assignment"] = updateCafAssignment
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": createNotificationErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error": createNotificationErr.Error(),
+		})
+	}
+
 	return c.Status(200).JSON(updateCafAssignment)
 }
 
@@ -670,6 +732,36 @@ func (h *cafAssignmentHandler) DeleteCafAssignment(c *fiber.Ctx) error {
 				"error":   deleteAwsErr.Error(),
 			})
 		}
+	}
+
+	var createNotif notification.InputNotification
+
+	createNotif.Type = "caf"
+	createNotif.Status = "menghapus"
+	createNotif.Period = detailCafAssignment.Detail.Year
+
+	_, createNotificationErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), iupopkIdInt)
+
+	if createNotificationErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["caf_assignment_id"] = detailCafAssignment.Detail.ID
+		inputMap["caf_assignment"] = detailCafAssignment.Detail
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": createNotificationErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error": createNotificationErr.Error(),
+		})
 	}
 
 	return c.Status(200).JSON(fiber.Map{

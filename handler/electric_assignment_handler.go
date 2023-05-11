@@ -7,6 +7,7 @@ import (
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
 	"ajebackend/model/master/allmaster"
+	"ajebackend/model/notification"
 	"ajebackend/model/notificationuser"
 	"ajebackend/model/useriupopk"
 	"ajebackend/validatorfunc"
@@ -301,6 +302,36 @@ func (h *electrictAssignmentHandler) CreateElectricAssignment(c *fiber.Ctx) erro
 		return c.Status(status).JSON(responseErr)
 	}
 
+	var createNotif notification.InputNotification
+
+	createNotif.Type = "electric assignment"
+	createNotif.Status = "membuat"
+	createNotif.Period = updateElectricAssignment.Year
+
+	_, createNotificationErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), iupopkIdInt)
+
+	if createNotificationErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["electric_assignment_id"] = updateElectricAssignment.ID
+		inputMap["electric_assignment"] = updateElectricAssignment
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": createNotificationErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error": createNotificationErr.Error(),
+		})
+	}
+
 	return c.Status(201).JSON(updateElectricAssignment)
 }
 
@@ -548,6 +579,37 @@ func (h *electrictAssignmentHandler) UpdateElectricAssignment(c *fiber.Ctx) erro
 			return c.Status(200).JSON(updateDocElectricAssignment)
 		}
 	}
+
+	var createNotif notification.InputNotification
+
+	createNotif.Type = "electric assignment"
+	createNotif.Status = "mengedit"
+	createNotif.Period = updateElectricAssignment.Year
+
+	_, createNotificationErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), iupopkIdInt)
+
+	if createNotificationErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["electric_assignment_id"] = updateElectricAssignment.ID
+		inputMap["electric_assignment"] = updateElectricAssignment
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": createNotificationErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error": createNotificationErr.Error(),
+		})
+	}
+
 	return c.Status(200).JSON(updateElectricAssignment)
 }
 
@@ -670,6 +732,36 @@ func (h *electrictAssignmentHandler) DeleteElectricAssignment(c *fiber.Ctx) erro
 				"error":   deleteAwsErr.Error(),
 			})
 		}
+	}
+
+	var createNotif notification.InputNotification
+
+	createNotif.Type = "caf"
+	createNotif.Status = "menghapus"
+	createNotif.Period = detailElectricAssignment.Detail.Year
+
+	_, createNotificationErr := h.notificationUserService.CreateNotification(createNotif, uint(claims["id"].(float64)), iupopkIdInt)
+
+	if createNotificationErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["electric_assignment_id"] = detailElectricAssignment.Detail.ID
+		inputMap["electric_assignment"] = detailElectricAssignment.Detail
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": createNotificationErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error": createNotificationErr.Error(),
+		})
 	}
 
 	return c.Status(200).JSON(fiber.Map{
