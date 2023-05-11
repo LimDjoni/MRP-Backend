@@ -1600,6 +1600,53 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 
 	}
 
+	var seriesCompanyElectric string
+
+	seriesCompanyElectric += fmt.Sprintf(`{
+						"name": "Sales Kelistrikan",
+						"categories": "%v!$D$%v:$D$%v",
+						"values": "%v!$Q$%v:$Q$%v",
+						"marker": {
+									"symbol": "square"
+								} 
+				}`, sheetName, startDetail+4, startDetail+2+numberElectric, sheetName, startDetail+4, startDetail+2+numberElectric)
+
+	valueElectric := fmt.Sprintf(`{
+	    "type": "pie",
+	    "series": [%v],
+			"dimension": {	
+				"width": 720
+			},
+	    "format":
+	    {
+	        "x_scale": 1.0,
+	        "y_scale": 1.0,
+	        "x_offset": 15,
+	        "y_offset": 10,
+	        "print_obj": true,
+	        "lock_aspect_ratio": false,
+	        "locked": false
+	    },
+	    "legend":
+	    {
+	        "position": "top",
+	        "show_legend_key": true
+	    },
+			"plotarea": 
+			{
+					"show_percent": true
+			},
+	    "title":
+	    {
+	        "name": "Penjualan Kelistrikan"
+	    },
+	    "show_blanks_as": "zero"
+	}`, seriesCompanyElectric)
+
+	if err := file.AddChart(sheetName, fmt.Sprintf("T%v", startDetail), valueElectric); err != nil {
+		return file, err
+	}
+
 	errNoStyle := file.SetCellStyle(sheetName, fmt.Sprintf("A%v", startDetail+4), fmt.Sprintf("A%v", startDetail+3+numberElectric), centerStyle)
 
 	if errNoStyle != nil {
@@ -1819,6 +1866,53 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 		return file, errCompanyNonElectricStyle
 	}
 
+	var seriesCompanyNonElectric string
+
+	seriesCompanyNonElectric += fmt.Sprintf(`{
+						"name": "Sales Non Kelistrikan",
+						"categories": "%v!$D$%v:$D$%v",
+						"values": "%v!$Q$%v:$Q$%v",
+						"marker": {
+									"symbol": "square"
+								} 
+				}`, sheetName, startDetailNonElectric+3, startDetailNonElectric+1+numberNonElectric, sheetName, startDetailNonElectric+3, startDetailNonElectric+1+numberNonElectric)
+
+	valueNonElectric := fmt.Sprintf(`{
+	    "type": "pie",
+	    "series": [%v],
+			"dimension": {	
+				"width": 720
+			},
+	    "format":
+	    {
+	        "x_scale": 1.0,
+	        "y_scale": 1.0,
+	        "x_offset": 15,
+	        "y_offset": 10,
+	        "print_obj": true,
+	        "lock_aspect_ratio": false,
+	        "locked": false
+	    },
+	    "legend":
+	    {
+	        "position": "top",
+	        "show_legend_key": true
+	    },
+			"plotarea": 
+			{
+					"show_percent": true
+			},
+	    "title":
+	    {
+	        "name": "Penjualan Non Kelistrikan"
+	    },
+	    "show_blanks_as": "zero"
+	}`, seriesCompanyNonElectric)
+
+	if err := file.AddChart(sheetName, fmt.Sprintf("T%v", startDetailNonElectric), valueNonElectric); err != nil {
+		return file, err
+	}
+
 	file.SetCellValue(sheetName, fmt.Sprintf("B%v", startDetail+3+numberNonElectric), "TOTAL")
 	file.MergeCell(sheetName, fmt.Sprintf("B%v", startDetail+3+numberNonElectric), fmt.Sprintf("D%v", startDetail+3+numberNonElectric))
 
@@ -2012,9 +2106,9 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	        "position": "top",
 	        "show_legend_key": true
 	    },
-			"plot_area": 
+			"plotarea": 
 			{
-					"ShowPercent": true
+					"show_percent": true
 			},
 	    "title":
 	    {
