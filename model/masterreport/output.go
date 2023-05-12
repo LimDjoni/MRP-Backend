@@ -88,8 +88,8 @@ type QuantityProduction struct {
 // Report Realization Output
 
 type RealizationOutput struct {
-	Electric RealizationElectric `json:"electric"`
-	Caf      RealizationCaf      `json:"caf"`
+	Electric    RealizationElectric    `json:"electric"`
+	NonElectric RealizationNonElectric `json:"non_electric"`
 }
 
 type RealizationElectric struct {
@@ -107,7 +107,7 @@ type RealizationElectric struct {
 	December  []RealizationTransaction `json:"december"`
 }
 
-type RealizationCaf struct {
+type RealizationNonElectric struct {
 	January   []RealizationTransaction `json:"january"`
 	February  []RealizationTransaction `json:"february"`
 	March     []RealizationTransaction `json:"march"`

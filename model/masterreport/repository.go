@@ -481,40 +481,6 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 		return realizationOutput, errFind
 	}
 
-	// Query Electric Assignment
-	var electricAssignment electricassignment.ElectricAssignment
-
-	errFindElectricAssigment := r.db.Where("year = ? AND iupopk_id = ?", year, iupopkId).First(&electricAssignment).Error
-
-	if errFindElectricAssigment != nil {
-		return realizationOutput, errFindElectricAssigment
-	}
-
-	var electricAssignmentEndUser []electricassignmentenduser.ElectricAssignmentEndUser
-
-	errFindElectricAssigmentEndUser := r.db.Where("electric_assignment_id = ?", electricAssignment.ID).Order("id desc").Find(&electricAssignmentEndUser).Error
-
-	if errFindElectricAssigmentEndUser != nil {
-		return realizationOutput, errFindElectricAssigmentEndUser
-	}
-
-	// Query Caf Assignment
-	var cafAssignment cafassignment.CafAssignment
-
-	errFindCafAssignment := r.db.Where("year = ? AND iupopk_id = ?", year, iupopkId).First(&cafAssignment).Error
-
-	if errFindCafAssignment != nil {
-		return realizationOutput, errFindCafAssignment
-	}
-
-	var cafAssignmentEndUser []cafassignmentenduser.CafAssignmentEndUser
-
-	errFindCafAssigmentEndUser := r.db.Where("caf_assignment_id = ?", cafAssignment.ID).Order("id desc").Find(&cafAssignmentEndUser).Error
-
-	if errFindCafAssigmentEndUser != nil {
-		return realizationOutput, errFindCafAssigmentEndUser
-	}
-
 	for _, v := range listTransactions {
 		date, _ := time.Parse("2006-01-02T00:00:00Z", *v.ShippingDate)
 		_, month, _ := date.Date()
@@ -522,652 +488,400 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 
 		switch int(month) {
 		case 1:
-			if v.DmoBuyer != nil {
-				for _, caf := range cafAssignmentEndUser {
-					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
-
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
-						realizationOutput.Caf.January = append(realizationOutput.Caf.January, transactionTemp)
-					}
-				}
+			var shippingDate string
+			shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+			shippingDate = shippingDateSplit[0]
+			transactionTemp.ShippingDate = shippingDate
+			if v.Customer != nil {
+				transactionTemp.Trader = v.Customer
 			}
 
-			if v.DmoDestinationPortId != nil {
-				for _, elec := range electricAssignmentEndUser {
-					if elec.PortId == *v.DmoDestinationPortId {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
+			if v.DmoBuyer != nil {
+				transactionTemp.EndUser = v.DmoBuyer
+			}
+			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
+			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
+				transactionTemp.IsBastOk = true
+			} else {
+				transactionTemp.IsBastOk = false
+			}
 
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
+			if v.DmoBuyer != nil {
+				if v.DmoBuyer.IndustryType != nil {
+					if v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 						realizationOutput.Electric.January = append(realizationOutput.Electric.January, transactionTemp)
+					} else {
+						realizationOutput.NonElectric.January = append(realizationOutput.NonElectric.January, transactionTemp)
 					}
+				} else {
+					realizationOutput.NonElectric.January = append(realizationOutput.NonElectric.January, transactionTemp)
 				}
+			} else {
+				realizationOutput.NonElectric.January = append(realizationOutput.NonElectric.January, transactionTemp)
 			}
 		case 2:
-			if v.DmoBuyer != nil {
-				for _, caf := range cafAssignmentEndUser {
-					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
-
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
-						realizationOutput.Caf.February = append(realizationOutput.Caf.February, transactionTemp)
-					}
-				}
+			var shippingDate string
+			shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+			shippingDate = shippingDateSplit[0]
+			transactionTemp.ShippingDate = shippingDate
+			if v.Customer != nil {
+				transactionTemp.Trader = v.Customer
 			}
 
-			if v.DmoDestinationPortId != nil {
-				for _, elec := range electricAssignmentEndUser {
-					if elec.PortId == *v.DmoDestinationPortId {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
+			if v.DmoBuyer != nil {
+				transactionTemp.EndUser = v.DmoBuyer
+			}
+			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
+			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
+				transactionTemp.IsBastOk = true
+			} else {
+				transactionTemp.IsBastOk = false
+			}
 
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
+			if v.DmoBuyer != nil {
+				if v.DmoBuyer.IndustryType != nil {
+					if v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 						realizationOutput.Electric.February = append(realizationOutput.Electric.February, transactionTemp)
+					} else {
+						realizationOutput.NonElectric.February = append(realizationOutput.NonElectric.February, transactionTemp)
 					}
+				} else {
+					realizationOutput.NonElectric.February = append(realizationOutput.NonElectric.February, transactionTemp)
 				}
+			} else {
+				realizationOutput.NonElectric.February = append(realizationOutput.NonElectric.February, transactionTemp)
 			}
 		case 3:
-			if v.DmoBuyer != nil {
-				for _, caf := range cafAssignmentEndUser {
-					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
-
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
-						realizationOutput.Caf.March = append(realizationOutput.Caf.March, transactionTemp)
-					}
-				}
+			var shippingDate string
+			shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+			shippingDate = shippingDateSplit[0]
+			transactionTemp.ShippingDate = shippingDate
+			if v.Customer != nil {
+				transactionTemp.Trader = v.Customer
 			}
 
-			if v.DmoDestinationPortId != nil {
-				for _, elec := range electricAssignmentEndUser {
-					if elec.PortId == *v.DmoDestinationPortId {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
+			if v.DmoBuyer != nil {
+				transactionTemp.EndUser = v.DmoBuyer
+			}
+			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
+			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
+				transactionTemp.IsBastOk = true
+			} else {
+				transactionTemp.IsBastOk = false
+			}
 
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
+			if v.DmoBuyer != nil {
+				if v.DmoBuyer.IndustryType != nil {
+					if v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 						realizationOutput.Electric.March = append(realizationOutput.Electric.March, transactionTemp)
+					} else {
+						realizationOutput.NonElectric.March = append(realizationOutput.NonElectric.March, transactionTemp)
 					}
+				} else {
+					realizationOutput.NonElectric.March = append(realizationOutput.NonElectric.March, transactionTemp)
 				}
+			} else {
+				realizationOutput.NonElectric.March = append(realizationOutput.NonElectric.March, transactionTemp)
 			}
 		case 4:
-			if v.DmoBuyer != nil {
-				for _, caf := range cafAssignmentEndUser {
-					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
-
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
-						realizationOutput.Caf.April = append(realizationOutput.Caf.April, transactionTemp)
-					}
-				}
+			var shippingDate string
+			shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+			shippingDate = shippingDateSplit[0]
+			transactionTemp.ShippingDate = shippingDate
+			if v.Customer != nil {
+				transactionTemp.Trader = v.Customer
 			}
 
-			if v.DmoDestinationPortId != nil {
-				for _, elec := range electricAssignmentEndUser {
-					if elec.PortId == *v.DmoDestinationPortId {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
+			if v.DmoBuyer != nil {
+				transactionTemp.EndUser = v.DmoBuyer
+			}
+			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
+			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
+				transactionTemp.IsBastOk = true
+			} else {
+				transactionTemp.IsBastOk = false
+			}
 
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
+			if v.DmoBuyer != nil {
+				if v.DmoBuyer.IndustryType != nil {
+					if v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 						realizationOutput.Electric.April = append(realizationOutput.Electric.April, transactionTemp)
+					} else {
+						realizationOutput.NonElectric.April = append(realizationOutput.NonElectric.April, transactionTemp)
 					}
+				} else {
+					realizationOutput.NonElectric.April = append(realizationOutput.NonElectric.April, transactionTemp)
 				}
+			} else {
+				realizationOutput.NonElectric.April = append(realizationOutput.NonElectric.April, transactionTemp)
 			}
 		case 5:
-			if v.DmoBuyer != nil {
-				for _, caf := range cafAssignmentEndUser {
-					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
-
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
-						realizationOutput.Caf.May = append(realizationOutput.Caf.May, transactionTemp)
-					}
-				}
+			var shippingDate string
+			shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+			shippingDate = shippingDateSplit[0]
+			transactionTemp.ShippingDate = shippingDate
+			if v.Customer != nil {
+				transactionTemp.Trader = v.Customer
 			}
 
-			if v.DmoDestinationPortId != nil {
-				for _, elec := range electricAssignmentEndUser {
-					if elec.PortId == *v.DmoDestinationPortId {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
+			if v.DmoBuyer != nil {
+				transactionTemp.EndUser = v.DmoBuyer
+			}
+			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
+			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
+				transactionTemp.IsBastOk = true
+			} else {
+				transactionTemp.IsBastOk = false
+			}
 
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
+			if v.DmoBuyer != nil {
+				if v.DmoBuyer.IndustryType != nil {
+					if v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 						realizationOutput.Electric.May = append(realizationOutput.Electric.May, transactionTemp)
+					} else {
+						realizationOutput.NonElectric.May = append(realizationOutput.NonElectric.May, transactionTemp)
 					}
+				} else {
+					realizationOutput.NonElectric.May = append(realizationOutput.NonElectric.May, transactionTemp)
 				}
+			} else {
+				realizationOutput.NonElectric.May = append(realizationOutput.NonElectric.May, transactionTemp)
 			}
 		case 6:
-			if v.DmoBuyer != nil {
-				for _, caf := range cafAssignmentEndUser {
-					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
-
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
-						realizationOutput.Caf.June = append(realizationOutput.Caf.June, transactionTemp)
-					}
-				}
+			var shippingDate string
+			shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+			shippingDate = shippingDateSplit[0]
+			transactionTemp.ShippingDate = shippingDate
+			if v.Customer != nil {
+				transactionTemp.Trader = v.Customer
 			}
 
-			if v.DmoDestinationPortId != nil {
-				for _, elec := range electricAssignmentEndUser {
-					if elec.PortId == *v.DmoDestinationPortId {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
+			if v.DmoBuyer != nil {
+				transactionTemp.EndUser = v.DmoBuyer
+			}
+			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
+			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
+				transactionTemp.IsBastOk = true
+			} else {
+				transactionTemp.IsBastOk = false
+			}
 
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
+			if v.DmoBuyer != nil {
+				if v.DmoBuyer.IndustryType != nil {
+					if v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 						realizationOutput.Electric.June = append(realizationOutput.Electric.June, transactionTemp)
+					} else {
+						realizationOutput.NonElectric.June = append(realizationOutput.NonElectric.June, transactionTemp)
 					}
+				} else {
+					realizationOutput.NonElectric.June = append(realizationOutput.NonElectric.June, transactionTemp)
 				}
+			} else {
+				realizationOutput.NonElectric.June = append(realizationOutput.NonElectric.June, transactionTemp)
 			}
 		case 7:
-			if v.DmoBuyer != nil {
-				for _, caf := range cafAssignmentEndUser {
-					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
-
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
-						realizationOutput.Caf.July = append(realizationOutput.Caf.July, transactionTemp)
-					}
-				}
+			var shippingDate string
+			shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+			shippingDate = shippingDateSplit[0]
+			transactionTemp.ShippingDate = shippingDate
+			if v.Customer != nil {
+				transactionTemp.Trader = v.Customer
 			}
 
-			if v.DmoDestinationPortId != nil {
-				for _, elec := range electricAssignmentEndUser {
-					if elec.PortId == *v.DmoDestinationPortId {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
+			if v.DmoBuyer != nil {
+				transactionTemp.EndUser = v.DmoBuyer
+			}
+			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
+			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
+				transactionTemp.IsBastOk = true
+			} else {
+				transactionTemp.IsBastOk = false
+			}
 
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
+			if v.DmoBuyer != nil {
+				if v.DmoBuyer.IndustryType != nil {
+					if v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 						realizationOutput.Electric.July = append(realizationOutput.Electric.July, transactionTemp)
+					} else {
+						realizationOutput.NonElectric.July = append(realizationOutput.NonElectric.July, transactionTemp)
 					}
+				} else {
+					realizationOutput.NonElectric.July = append(realizationOutput.NonElectric.July, transactionTemp)
 				}
+			} else {
+				realizationOutput.NonElectric.July = append(realizationOutput.NonElectric.July, transactionTemp)
 			}
 		case 8:
-			if v.DmoBuyer != nil {
-				for _, caf := range cafAssignmentEndUser {
-					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
-
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
-						realizationOutput.Caf.August = append(realizationOutput.Caf.August, transactionTemp)
-					}
-				}
+			var shippingDate string
+			shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+			shippingDate = shippingDateSplit[0]
+			transactionTemp.ShippingDate = shippingDate
+			if v.Customer != nil {
+				transactionTemp.Trader = v.Customer
 			}
 
-			if v.DmoDestinationPortId != nil {
-				for _, elec := range electricAssignmentEndUser {
-					if elec.PortId == *v.DmoDestinationPortId {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
+			if v.DmoBuyer != nil {
+				transactionTemp.EndUser = v.DmoBuyer
+			}
+			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
+			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
+				transactionTemp.IsBastOk = true
+			} else {
+				transactionTemp.IsBastOk = false
+			}
 
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
+			if v.DmoBuyer != nil {
+				if v.DmoBuyer.IndustryType != nil {
+					if v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 						realizationOutput.Electric.August = append(realizationOutput.Electric.August, transactionTemp)
+					} else {
+						realizationOutput.NonElectric.August = append(realizationOutput.NonElectric.August, transactionTemp)
 					}
+				} else {
+					realizationOutput.NonElectric.August = append(realizationOutput.NonElectric.August, transactionTemp)
 				}
+			} else {
+				realizationOutput.NonElectric.August = append(realizationOutput.NonElectric.August, transactionTemp)
 			}
 		case 9:
-			if v.DmoBuyer != nil {
-				for _, caf := range cafAssignmentEndUser {
-					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
-
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
-						realizationOutput.Caf.September = append(realizationOutput.Caf.September, transactionTemp)
-					}
-				}
+			var shippingDate string
+			shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+			shippingDate = shippingDateSplit[0]
+			transactionTemp.ShippingDate = shippingDate
+			if v.Customer != nil {
+				transactionTemp.Trader = v.Customer
 			}
 
-			if v.DmoDestinationPortId != nil {
-				for _, elec := range electricAssignmentEndUser {
-					if elec.PortId == *v.DmoDestinationPortId {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
+			if v.DmoBuyer != nil {
+				transactionTemp.EndUser = v.DmoBuyer
+			}
+			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
+			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
+				transactionTemp.IsBastOk = true
+			} else {
+				transactionTemp.IsBastOk = false
+			}
 
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
+			if v.DmoBuyer != nil {
+				if v.DmoBuyer.IndustryType != nil {
+					if v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 						realizationOutput.Electric.September = append(realizationOutput.Electric.September, transactionTemp)
+					} else {
+						realizationOutput.NonElectric.September = append(realizationOutput.NonElectric.September, transactionTemp)
 					}
+				} else {
+					realizationOutput.NonElectric.September = append(realizationOutput.NonElectric.September, transactionTemp)
 				}
+			} else {
+				realizationOutput.NonElectric.September = append(realizationOutput.NonElectric.September, transactionTemp)
 			}
 		case 10:
-			if v.DmoBuyer != nil {
-				for _, caf := range cafAssignmentEndUser {
-					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
-
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
-						realizationOutput.Caf.October = append(realizationOutput.Caf.October, transactionTemp)
-					}
-				}
+			var shippingDate string
+			shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+			shippingDate = shippingDateSplit[0]
+			transactionTemp.ShippingDate = shippingDate
+			if v.Customer != nil {
+				transactionTemp.Trader = v.Customer
 			}
 
-			if v.DmoDestinationPortId != nil {
-				for _, elec := range electricAssignmentEndUser {
-					if elec.PortId == *v.DmoDestinationPortId {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
+			if v.DmoBuyer != nil {
+				transactionTemp.EndUser = v.DmoBuyer
+			}
+			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
+			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
+				transactionTemp.IsBastOk = true
+			} else {
+				transactionTemp.IsBastOk = false
+			}
 
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
+			if v.DmoBuyer != nil {
+				if v.DmoBuyer.IndustryType != nil {
+					if v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 						realizationOutput.Electric.October = append(realizationOutput.Electric.October, transactionTemp)
+					} else {
+						realizationOutput.NonElectric.October = append(realizationOutput.NonElectric.October, transactionTemp)
 					}
+				} else {
+					realizationOutput.NonElectric.October = append(realizationOutput.NonElectric.October, transactionTemp)
 				}
+			} else {
+				realizationOutput.NonElectric.October = append(realizationOutput.NonElectric.October, transactionTemp)
 			}
 		case 11:
-			if v.DmoBuyer != nil {
-				for _, caf := range cafAssignmentEndUser {
-					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
-
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
-						realizationOutput.Caf.November = append(realizationOutput.Caf.November, transactionTemp)
-					}
-				}
+			var shippingDate string
+			shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+			shippingDate = shippingDateSplit[0]
+			transactionTemp.ShippingDate = shippingDate
+			if v.Customer != nil {
+				transactionTemp.Trader = v.Customer
 			}
 
-			if v.DmoDestinationPortId != nil {
-				for _, elec := range electricAssignmentEndUser {
-					if elec.PortId == *v.DmoDestinationPortId {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
+			if v.DmoBuyer != nil {
+				transactionTemp.EndUser = v.DmoBuyer
+			}
+			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
+			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
+				transactionTemp.IsBastOk = true
+			} else {
+				transactionTemp.IsBastOk = false
+			}
 
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
+			if v.DmoBuyer != nil {
+				if v.DmoBuyer.IndustryType != nil {
+					if v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 						realizationOutput.Electric.November = append(realizationOutput.Electric.November, transactionTemp)
+					} else {
+						realizationOutput.NonElectric.November = append(realizationOutput.NonElectric.November, transactionTemp)
 					}
+				} else {
+					realizationOutput.NonElectric.November = append(realizationOutput.NonElectric.November, transactionTemp)
 				}
+			} else {
+				realizationOutput.NonElectric.November = append(realizationOutput.NonElectric.November, transactionTemp)
 			}
 		case 12:
-			if v.DmoBuyer != nil {
-				for _, caf := range cafAssignmentEndUser {
-					if caf.EndUserString == v.DmoBuyer.CompanyName {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
-
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
-						realizationOutput.Caf.December = append(realizationOutput.Caf.December, transactionTemp)
-					}
-				}
+			var shippingDate string
+			shippingDateSplit := strings.Split(*v.ShippingDate, "T")
+			shippingDate = shippingDateSplit[0]
+			transactionTemp.ShippingDate = shippingDate
+			if v.Customer != nil {
+				transactionTemp.Trader = v.Customer
 			}
 
-			if v.DmoDestinationPortId != nil {
-				for _, elec := range electricAssignmentEndUser {
-					if elec.PortId == *v.DmoDestinationPortId {
-						var shippingDate string
-						shippingDateSplit := strings.Split(*v.ShippingDate, "T")
-						shippingDate = shippingDateSplit[0]
-						transactionTemp.ShippingDate = shippingDate
-						if v.Customer != nil {
-							transactionTemp.Trader = v.Customer
-						}
+			if v.DmoBuyer != nil {
+				transactionTemp.EndUser = v.DmoBuyer
+			}
+			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
+			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
+				transactionTemp.IsBastOk = true
+			} else {
+				transactionTemp.IsBastOk = false
+			}
 
-						if v.DmoBuyer != nil {
-							transactionTemp.EndUser = v.DmoBuyer
-						}
-						transactionTemp.Quantity = v.QuantityUnloading
-						transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
-						if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
-							transactionTemp.IsBastOk = true
-						} else {
-							transactionTemp.IsBastOk = false
-						}
-
+			if v.DmoBuyer != nil {
+				if v.DmoBuyer.IndustryType != nil {
+					if v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 						realizationOutput.Electric.December = append(realizationOutput.Electric.December, transactionTemp)
+					} else {
+						realizationOutput.NonElectric.December = append(realizationOutput.NonElectric.December, transactionTemp)
 					}
+				} else {
+					realizationOutput.NonElectric.December = append(realizationOutput.NonElectric.December, transactionTemp)
 				}
+			} else {
+				realizationOutput.NonElectric.December = append(realizationOutput.NonElectric.December, transactionTemp)
 			}
 		}
 	}
@@ -1372,8 +1086,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			case 1:
 				if v.Destination != nil && v.Destination.Name == "Domestik" {
 					saleDetail.Domestic.January += v.QuantityUnloading
+					saleDetail.Domestic.Total += v.QuantityUnloading
 				} else if v.Destination != nil && v.Destination.Name == "Ekspor" {
 					saleDetail.Export.January += v.QuantityUnloading
+					saleDetail.Export.Total += v.QuantityUnloading
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.January[v.DmoBuyer.CompanyName]; ok {
@@ -1479,8 +1195,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			case 2:
 				if v.Destination != nil && v.Destination.Name == "Domestik" {
 					saleDetail.Domestic.February += v.QuantityUnloading
+					saleDetail.Domestic.Total += v.QuantityUnloading
 				} else if v.Destination != nil && v.Destination.Name == "Ekspor" {
 					saleDetail.Export.February += v.QuantityUnloading
+					saleDetail.Export.Total += v.QuantityUnloading
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.February[v.DmoBuyer.CompanyName]; ok {
@@ -1586,8 +1304,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			case 3:
 				if v.Destination != nil && v.Destination.Name == "Domestik" {
 					saleDetail.Domestic.March += v.QuantityUnloading
+					saleDetail.Domestic.Total += v.QuantityUnloading
 				} else if v.Destination != nil && v.Destination.Name == "Ekspor" {
 					saleDetail.Export.March += v.QuantityUnloading
+					saleDetail.Export.Total += v.QuantityUnloading
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.March[v.DmoBuyer.CompanyName]; ok {
@@ -1693,8 +1413,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			case 4:
 				if v.Destination != nil && v.Destination.Name == "Domestik" {
 					saleDetail.Domestic.April += v.QuantityUnloading
+					saleDetail.Domestic.Total += v.QuantityUnloading
 				} else if v.Destination != nil && v.Destination.Name == "Ekspor" {
 					saleDetail.Export.April += v.QuantityUnloading
+					saleDetail.Export.Total += v.QuantityUnloading
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.April[v.DmoBuyer.CompanyName]; ok {
@@ -1800,8 +1522,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			case 5:
 				if v.Destination != nil && v.Destination.Name == "Domestik" {
 					saleDetail.Domestic.May += v.QuantityUnloading
+					saleDetail.Domestic.Total += v.QuantityUnloading
 				} else if v.Destination != nil && v.Destination.Name == "Ekspor" {
 					saleDetail.Export.May += v.QuantityUnloading
+					saleDetail.Export.Total += v.QuantityUnloading
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.May[v.DmoBuyer.CompanyName]; ok {
@@ -1907,8 +1631,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			case 6:
 				if v.Destination != nil && v.Destination.Name == "Domestik" {
 					saleDetail.Domestic.June += v.QuantityUnloading
+					saleDetail.Domestic.Total += v.QuantityUnloading
 				} else if v.Destination != nil && v.Destination.Name == "Ekspor" {
 					saleDetail.Export.June += v.QuantityUnloading
+					saleDetail.Export.Total += v.QuantityUnloading
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.June[v.DmoBuyer.CompanyName]; ok {
@@ -2014,8 +1740,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			case 7:
 				if v.Destination != nil && v.Destination.Name == "Domestik" {
 					saleDetail.Domestic.July += v.QuantityUnloading
+					saleDetail.Domestic.Total += v.QuantityUnloading
 				} else if v.Destination != nil && v.Destination.Name == "Ekspor" {
 					saleDetail.Export.July += v.QuantityUnloading
+					saleDetail.Export.Total += v.QuantityUnloading
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.July[v.DmoBuyer.CompanyName]; ok {
@@ -2121,8 +1849,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			case 8:
 				if v.Destination != nil && v.Destination.Name == "Domestik" {
 					saleDetail.Domestic.August += v.QuantityUnloading
+					saleDetail.Domestic.Total += v.QuantityUnloading
 				} else if v.Destination != nil && v.Destination.Name == "Ekspor" {
 					saleDetail.Export.August += v.QuantityUnloading
+					saleDetail.Export.Total += v.QuantityUnloading
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.August[v.DmoBuyer.CompanyName]; ok {
@@ -2228,8 +1958,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			case 9:
 				if v.Destination != nil && v.Destination.Name == "Domestik" {
 					saleDetail.Domestic.September += v.QuantityUnloading
+					saleDetail.Domestic.Total += v.QuantityUnloading
 				} else if v.Destination != nil && v.Destination.Name == "Ekspor" {
 					saleDetail.Export.September += v.QuantityUnloading
+					saleDetail.Export.Total += v.QuantityUnloading
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.September[v.DmoBuyer.CompanyName]; ok {
@@ -2335,8 +2067,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			case 10:
 				if v.Destination != nil && v.Destination.Name == "Domestik" {
 					saleDetail.Domestic.October += v.QuantityUnloading
+					saleDetail.Domestic.Total += v.QuantityUnloading
 				} else if v.Destination != nil && v.Destination.Name == "Ekspor" {
 					saleDetail.Export.October += v.QuantityUnloading
+					saleDetail.Export.Total += v.QuantityUnloading
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.October[v.DmoBuyer.CompanyName]; ok {
@@ -2442,8 +2176,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			case 11:
 				if v.Destination != nil && v.Destination.Name == "Domestik" {
 					saleDetail.Domestic.November += v.QuantityUnloading
+					saleDetail.Domestic.Total += v.QuantityUnloading
 				} else if v.Destination != nil && v.Destination.Name == "Ekspor" {
 					saleDetail.Export.November += v.QuantityUnloading
+					saleDetail.Export.Total += v.QuantityUnloading
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.November[v.DmoBuyer.CompanyName]; ok {
@@ -2549,8 +2285,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			case 12:
 				if v.Destination != nil && v.Destination.Name == "Domestik" {
 					saleDetail.Domestic.December += v.QuantityUnloading
+					saleDetail.Domestic.Total += v.QuantityUnloading
 				} else if v.Destination != nil && v.Destination.Name == "Ekspor" {
 					saleDetail.Export.December += v.QuantityUnloading
+					saleDetail.Export.Total += v.QuantityUnloading
 				}
 				if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.December[v.DmoBuyer.CompanyName]; ok {
