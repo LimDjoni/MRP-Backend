@@ -720,9 +720,8 @@ func (h *cafAssignmentHandler) DeleteCafAssignment(c *fiber.Ctx) error {
 			})
 
 			createdErrLog := logs.Logs{
-				CafAssignmentId: &detailCafAssignment.Detail.ID,
-				Input:           inputJson,
-				Message:         messageJson,
+				Input:   inputJson,
+				Message: messageJson,
 			}
 
 			h.logService.CreateLogs(createdErrLog)

@@ -720,9 +720,8 @@ func (h *electrictAssignmentHandler) DeleteElectricAssignment(c *fiber.Ctx) erro
 			})
 
 			createdErrLog := logs.Logs{
-				ElectricAssignmentId: &detailElectricAssignment.Detail.ID,
-				Input:                inputJson,
-				Message:              messageJson,
+				Input:   inputJson,
+				Message: messageJson,
 			}
 
 			h.logService.CreateLogs(createdErrLog)

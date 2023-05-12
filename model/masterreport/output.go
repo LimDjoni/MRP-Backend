@@ -1,8 +1,6 @@
 package masterreport
 
 import (
-	"ajebackend/model/cafassignment"
-	"ajebackend/model/electricassignment"
 	"ajebackend/model/master/company"
 	"ajebackend/model/rkab"
 )
@@ -10,15 +8,11 @@ import (
 // Report Recap DMO Output
 
 type ReportDmoOutput struct {
-	RecapElectricity              RecapElectricity                      `json:"recap_electricity"`
-	RecapNonElectricity           RecapNonElectricity                   `json:"recap_non_electricity"`
-	NotClaimable                  NotClaimable                          `json:"not_claimable"`
-	Production                    QuantityProduction                    `json:"production"`
-	Rkabs                         []rkab.Rkab                           `json:"rkabs"`
-	CafAssignment                 cafassignment.CafAssignment           `json:"caf_assignment"`
-	RealizationCafAssignment      float64                               `json:"realization_caf_assignment"`
-	ElectricAssignment            electricassignment.ElectricAssignment `json:"electric_assignment"`
-	RealizationElectricAssignment float64                               `json:"realization_electric_assignment"`
+	RecapElectricity    RecapElectricity    `json:"recap_electricity"`
+	RecapNonElectricity RecapNonElectricity `json:"recap_non_electricity"`
+	NotClaimable        NotClaimable        `json:"not_claimable"`
+	Production          QuantityProduction  `json:"production"`
+	Rkabs               []rkab.Rkab         `json:"rkabs"`
 }
 
 type RecapElectricity struct {
@@ -134,59 +128,18 @@ type RealizationTransaction struct {
 // Report Detail Output
 
 type SaleDetail struct {
-	Rkabs                               []rkab.Rkab                           `json:"rkabs"`
-	Electricity                         Electricity                           `json:"electricity"`
-	NonElectricity                      NonElectricity                        `json:"non_electricity"`
-	RecapElectricity                    RecapElectricity                      `json:"recap_electricity"`
-	RecapNonElectricity                 RecapNonElectricity                   `json:"recap_non_electricity"`
-	NotClaimable                        NotClaimable                          `json:"not_claimable"`
-	Production                          QuantityProduction                    `json:"production"`
-	Domestic                            Domestic                              `json:"domestic"`
-	Export                              Export                                `json:"export"`
-	CafAssignment                       cafassignment.CafAssignment           `json:"caf_assignment"`
-	RealizationCafAssignment            float64                               `json:"realization_caf_assignment"`
-	ElectricAssignment                  electricassignment.ElectricAssignment `json:"electric_assignment"`
-	RealizationElectricAssignment       float64                               `json:"realization_electric_assignment"`
-	CompanyElectricity                  map[string][]string                   `json:"company_electricity"`
-	CompanyNonElectricity               map[string][]string                   `json:"company_non_electricity"`
-	DetailRealizationCafAssignment      DetailRealizationCafAssignment        `json:"detail_realization_caf_assignment"`
-	DetailRealizationElectricAssignment DetailRealizationElectricAssignment   `json:"detail_realization_electric_assignment"`
-	RealizationCompanyElectricity       []string                              `json:"realization_company_electricity"`
-	RealizationCompanyCaf               []string                              `json:"realization_company_caf"`
+	Rkabs                 []rkab.Rkab         `json:"rkabs"`
+	Electricity           Electricity         `json:"electricity"`
+	NonElectricity        NonElectricity      `json:"non_electricity"`
+	RecapElectricity      RecapElectricity    `json:"recap_electricity"`
+	RecapNonElectricity   RecapNonElectricity `json:"recap_non_electricity"`
+	NotClaimable          NotClaimable        `json:"not_claimable"`
+	Production            QuantityProduction  `json:"production"`
+	Domestic              Domestic            `json:"domestic"`
+	Export                Export              `json:"export"`
+	CompanyElectricity    map[string][]string `json:"company_electricity"`
+	CompanyNonElectricity map[string][]string `json:"company_non_electricity"`
 }
-
-type DetailRealizationCafAssignment struct {
-	January   map[string]float64 `json:"january"`
-	February  map[string]float64 `json:"february"`
-	March     map[string]float64 `json:"march"`
-	April     map[string]float64 `json:"april"`
-	May       map[string]float64 `json:"may"`
-	June      map[string]float64 `json:"june"`
-	July      map[string]float64 `json:"july"`
-	August    map[string]float64 `json:"august"`
-	September map[string]float64 `json:"september"`
-	October   map[string]float64 `json:"october"`
-	November  map[string]float64 `json:"november"`
-	December  map[string]float64 `json:"december"`
-	Total     float64            `json:"total"`
-}
-
-type DetailRealizationElectricAssignment struct {
-	January   map[string]float64 `json:"january"`
-	February  map[string]float64 `json:"february"`
-	March     map[string]float64 `json:"march"`
-	April     map[string]float64 `json:"april"`
-	May       map[string]float64 `json:"may"`
-	June      map[string]float64 `json:"june"`
-	July      map[string]float64 `json:"july"`
-	August    map[string]float64 `json:"august"`
-	September map[string]float64 `json:"september"`
-	October   map[string]float64 `json:"october"`
-	November  map[string]float64 `json:"november"`
-	December  map[string]float64 `json:"december"`
-	Total     float64            `json:"total"`
-}
-
 type Electricity struct {
 	January   map[string]map[string]float64 `json:"january"`
 	February  map[string]map[string]float64 `json:"february"`
