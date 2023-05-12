@@ -773,63 +773,63 @@ func (s *service) CreateReportRealization(year string, reportRealization Realiza
 
 		switch v {
 		case "JAN":
-			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.January, reportRealization.Caf.January)
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.January, reportRealization.NonElectric.January)
 
 			if errFile != nil {
 				return insertedFile, errFile
 			}
 		case "FEB":
-			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.February, reportRealization.Caf.February)
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.February, reportRealization.NonElectric.February)
 			if errFile != nil {
 				return insertedFile, errFile
 			}
 		case "MAR":
-			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.March, reportRealization.Caf.March)
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.March, reportRealization.NonElectric.March)
 			if errFile != nil {
 				return insertedFile, errFile
 			}
 		case "APR":
-			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.April, reportRealization.Caf.April)
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.April, reportRealization.NonElectric.April)
 			if errFile != nil {
 				return insertedFile, errFile
 			}
 		case "MEI":
-			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.May, reportRealization.Caf.May)
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.May, reportRealization.NonElectric.May)
 			if errFile != nil {
 				return insertedFile, errFile
 			}
 		case "JUN":
-			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.June, reportRealization.Caf.June)
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.June, reportRealization.NonElectric.June)
 			if errFile != nil {
 				return insertedFile, errFile
 			}
 		case "JUL":
-			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.July, reportRealization.Caf.July)
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.July, reportRealization.NonElectric.July)
 			if errFile != nil {
 				return insertedFile, errFile
 			}
 		case "AGU":
-			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.August, reportRealization.Caf.August)
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.August, reportRealization.NonElectric.August)
 			if errFile != nil {
 				return insertedFile, errFile
 			}
 		case "SEP":
-			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.September, reportRealization.Caf.September)
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.September, reportRealization.NonElectric.September)
 			if errFile != nil {
 				return insertedFile, errFile
 			}
 		case "OKT":
-			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.October, reportRealization.Caf.October)
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.October, reportRealization.NonElectric.October)
 			if errFile != nil {
 				return insertedFile, errFile
 			}
 		case "NOV":
-			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.November, reportRealization.Caf.November)
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.November, reportRealization.NonElectric.November)
 			if errFile != nil {
 				return insertedFile, errFile
 			}
 		case "DES":
-			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.December, reportRealization.Caf.December)
+			insertedFile, errFile = insertTransactionRealization(insertedFile, v, reportRealization.Electric.December, reportRealization.NonElectric.December)
 			if errFile != nil {
 				return insertedFile, errFile
 			}
