@@ -840,6 +840,13 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							} else {
 								saleDetail.Electricity.January[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.QuantityUnloading
 							}
+						} else {
+							if !helperString(companyElectricity[v.DmoBuyer.CompanyName], "-") {
+								companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], "-")
+								saleDetail.Electricity.January[v.DmoBuyer.CompanyName]["-"] = v.QuantityUnloading
+							} else {
+								saleDetail.Electricity.January[v.DmoBuyer.CompanyName]["-"] += v.QuantityUnloading
+							}
 						}
 					} else {
 						saleDetail.Electricity.January[v.DmoBuyer.CompanyName] = make(map[string]float64)
@@ -862,7 +869,6 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 
 				} else if v.DmoBuyer != nil && v.DmoBuyer.IndustryType != nil && v.DmoBuyer.IndustryType.Category == "NON ELECTRICITY" {
 					if _, ok := saleDetail.Electricity.January[v.DmoBuyer.CompanyName]; ok {
-
 						if v.DmoBuyer.IndustryType != nil {
 							if _, ok := companyNonElectricity[v.DmoBuyer.CompanyName]; ok {
 								if !helperString(companyNonElectricity[v.DmoBuyer.CompanyName], v.DmoBuyer.IndustryType.Name) {
@@ -878,7 +884,6 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								saleDetail.NonElectricity.January[v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.Name] = v.QuantityUnloading
 							}
 						}
-
 						saleDetail.NonElectricity.Total += v.QuantityUnloading
 					} else {
 						if v.DmoBuyer != nil {
@@ -900,7 +905,6 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 					}
 					saleDetail.RecapNonElectricity.January += v.QuantityUnloading
 					saleDetail.RecapNonElectricity.Total += v.QuantityUnloading
-
 				}
 			case 2:
 				if v.Destination != nil && v.Destination.Name == "Domestik" {
