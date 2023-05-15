@@ -866,7 +866,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								}
 								saleDetail.Electricity.January[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
 							} else {
-
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], "-") {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], "-")
+								}
+								saleDetail.Electricity.January[v.DmoBuyer.CompanyName]["-"] += v.QuantityUnloading
 							}
 						}
 						saleDetail.RecapElectricity.January += v.QuantityUnloading
@@ -983,7 +986,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								}
 								saleDetail.Electricity.February[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
 							} else {
-
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], "-") {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], "-")
+								}
+								saleDetail.Electricity.February[v.DmoBuyer.CompanyName]["-"] += v.QuantityUnloading
 							}
 						}
 						saleDetail.RecapElectricity.February += v.QuantityUnloading
@@ -1100,7 +1106,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								}
 								saleDetail.Electricity.March[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
 							} else {
-
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], "-") {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], "-")
+								}
+								saleDetail.Electricity.March[v.DmoBuyer.CompanyName]["-"] += v.QuantityUnloading
 							}
 						}
 						saleDetail.RecapElectricity.March += v.QuantityUnloading
@@ -1217,7 +1226,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								}
 								saleDetail.Electricity.April[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
 							} else {
-
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], "-") {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], "-")
+								}
+								saleDetail.Electricity.April[v.DmoBuyer.CompanyName]["-"] += v.QuantityUnloading
 							}
 						}
 						saleDetail.RecapElectricity.April += v.QuantityUnloading
@@ -1334,7 +1346,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								}
 								saleDetail.Electricity.May[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
 							} else {
-
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], "-") {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], "-")
+								}
+								saleDetail.Electricity.May[v.DmoBuyer.CompanyName]["-"] += v.QuantityUnloading
 							}
 						}
 						saleDetail.RecapElectricity.May += v.QuantityUnloading
@@ -1451,7 +1466,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								}
 								saleDetail.Electricity.June[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
 							} else {
-
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], "-") {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], "-")
+								}
+								saleDetail.Electricity.June[v.DmoBuyer.CompanyName]["-"] += v.QuantityUnloading
 							}
 						}
 						saleDetail.RecapElectricity.June += v.QuantityUnloading
@@ -1568,7 +1586,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								}
 								saleDetail.Electricity.July[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
 							} else {
-
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], "-") {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], "-")
+								}
+								saleDetail.Electricity.July[v.DmoBuyer.CompanyName]["-"] += v.QuantityUnloading
 							}
 						}
 						saleDetail.RecapElectricity.July += v.QuantityUnloading
@@ -1685,7 +1706,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								}
 								saleDetail.Electricity.August[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
 							} else {
-
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], "-") {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], "-")
+								}
+								saleDetail.Electricity.August[v.DmoBuyer.CompanyName]["-"] += v.QuantityUnloading
 							}
 						}
 						saleDetail.RecapElectricity.August += v.QuantityUnloading
@@ -1802,7 +1826,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								}
 								saleDetail.Electricity.September[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
 							} else {
-
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], "-") {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], "-")
+								}
+								saleDetail.Electricity.September[v.DmoBuyer.CompanyName]["-"] += v.QuantityUnloading
 							}
 						}
 						saleDetail.RecapElectricity.September += v.QuantityUnloading
@@ -1919,7 +1946,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								}
 								saleDetail.Electricity.October[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
 							} else {
-
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], "-") {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], "-")
+								}
+								saleDetail.Electricity.October[v.DmoBuyer.CompanyName]["-"] += v.QuantityUnloading
 							}
 						}
 						saleDetail.RecapElectricity.October += v.QuantityUnloading
@@ -2036,7 +2066,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								}
 								saleDetail.Electricity.November[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
 							} else {
-
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], "-") {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], "-")
+								}
+								saleDetail.Electricity.November[v.DmoBuyer.CompanyName]["-"] += v.QuantityUnloading
 							}
 						}
 						saleDetail.RecapElectricity.November += v.QuantityUnloading
@@ -2153,7 +2186,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								}
 								saleDetail.Electricity.December[v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.QuantityUnloading
 							} else {
-
+								if !helperString(companyElectricity[v.DmoBuyer.CompanyName], "-") {
+									companyElectricity[v.DmoBuyer.CompanyName] = append(companyElectricity[v.DmoBuyer.CompanyName], "-")
+								}
+								saleDetail.Electricity.December[v.DmoBuyer.CompanyName]["-"] += v.QuantityUnloading
 							}
 						}
 						saleDetail.RecapElectricity.December += v.QuantityUnloading
