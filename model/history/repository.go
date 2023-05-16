@@ -3830,7 +3830,7 @@ func (r *repository) CreateRkab(input rkab.RkabInput, iupopkId int, userId uint)
 		return createdRkab, errFindIup
 	}
 
-	errFindRkab := tx.Where("year = ?", input.Year).Find(&findRkab).Error
+	errFindRkab := tx.Where("year = ? AND iupopk_id = ?", input.Year, iupopkId).Find(&findRkab).Error
 
 	if errFindRkab != nil {
 		tx.Rollback()
