@@ -796,12 +796,12 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 	saleDetail.Electricity.December = make(map[string]map[string]float64)
 
 	saleDetail.NonElectricity.January = make(map[string]map[string]float64)
-	saleDetail.NonElectricity.February = make(map[string]map[string]float64)
 	saleDetail.NonElectricity.March = make(map[string]map[string]float64)
 	saleDetail.NonElectricity.April = make(map[string]map[string]float64)
 	saleDetail.NonElectricity.May = make(map[string]map[string]float64)
 	saleDetail.NonElectricity.June = make(map[string]map[string]float64)
 	saleDetail.NonElectricity.July = make(map[string]map[string]float64)
+	saleDetail.NonElectricity.February = make(map[string]map[string]float64)
 	saleDetail.NonElectricity.August = make(map[string]map[string]float64)
 	saleDetail.NonElectricity.September = make(map[string]map[string]float64)
 	saleDetail.NonElectricity.October = make(map[string]map[string]float64)

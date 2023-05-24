@@ -5,6 +5,7 @@ import (
 	"ajebackend/model/masterreport"
 	"ajebackend/model/useriupopk"
 	"fmt"
+	"os"
 	"reflect"
 	"strconv"
 
@@ -129,6 +130,13 @@ func (h *masterReportHandler) DownloadRecapDmo(c *fiber.Ctx) error {
 
 	excelFile := excelize.NewFile()
 	excelFile.NewSheet("Rekapitulasi")
+
+	defer func() {
+		err := os.Remove("./Book1.xlsx")
+		if err != nil {
+			fmt.Printf("%v\n", err)
+		}
+	}()
 
 	excelFile, errRecap := h.masterReportService.CreateReportRecapDmo(year, reportRecap, iupopkData, excelFile, "Rekapitulasi")
 
@@ -264,6 +272,13 @@ func (h *masterReportHandler) DownloadRealizationReport(c *fiber.Ctx) error {
 	excelFile.NewSheet("NOV")
 	excelFile.NewSheet("DES")
 
+	defer func() {
+		err := os.Remove("./Book1.xlsx")
+		if err != nil {
+			fmt.Printf("%v\n", err)
+		}
+	}()
+
 	excelFile, errRealization := h.masterReportService.CreateReportRealization(year, realizationReport, iupopkData, excelFile)
 
 	if errRealization != nil {
@@ -389,9 +404,15 @@ func (h *masterReportHandler) DownloadSaleDetailReport(c *fiber.Ctx) error {
 
 	excelFile.NewSheet("Chart")
 
+	defer func() {
+		err := os.Remove("./Book1.xlsx")
+		if err != nil {
+			fmt.Printf("%v\n", err)
+		}
+	}()
+
 	excelFile, errSaleDetail := h.masterReportService.CreateReportSalesDetail(year, saleDetailReport, iupopkData, excelFile, "Detail", "Chart")
 
-	fmt.Println(errSaleDetail)
 	if errSaleDetail != nil {
 		return c.Status(400).JSON(fiber.Map{
 			"error": errSaleDetail.Error(),
