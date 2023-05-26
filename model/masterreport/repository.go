@@ -112,7 +112,7 @@ func (r *repository) RecapDmo(year string, iupopkId int) (ReportDmoOutput, error
 	// Transaction Query
 	var listTransactions []transaction.Transaction
 
-	queryFilter := fmt.Sprintf("seller_id = %v AND transaction_type = 'DN' AND shipping_date >= '%s' AND shipping_date <= '%s'", iupopkId, startFilter, endFilter)
+	queryFilter := fmt.Sprintf("seller_id = %v AND transaction_type = 'DN' AND shipping_date >= '%s' AND shipping_date <= '%s' AND dmo_id IS NOT NULL", iupopkId, startFilter, endFilter)
 
 	errFind := r.db.Preload("DmoBuyer.IndustryType").Where(queryFilter).Order("shipping_date ASC").Find(&listTransactions).Error
 
@@ -279,7 +279,7 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 
 	var listTransactions []transaction.Transaction
 
-	queryFilter := fmt.Sprintf("seller_id = %v AND transaction_type = 'DN' AND shipping_date >= '%s' AND shipping_date <= '%s' AND is_not_claim = false", iupopkId, startFilter, endFilter)
+	queryFilter := fmt.Sprintf("seller_id = %v AND transaction_type = 'DN' AND shipping_date >= '%s' AND shipping_date <= '%s' AND is_not_claim = false AND dmo_id IS NOT NULL", iupopkId, startFilter, endFilter)
 
 	errFind := r.db.Preload(clause.Associations).Preload("Customer.IndustryType").Preload("DmoBuyer.IndustryType").Where(queryFilter).Order("shipping_date ASC").Find(&listTransactions).Error
 
@@ -707,7 +707,7 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 	// Production Query
 	var listProduction []production.Production
 
-	queryFilterProduction := fmt.Sprintf("production_date >= '%s' AND production_date <= '%s' AND iupopk_id = %v", startFilter, endFilter, iupopkId)
+	queryFilterProduction := fmt.Sprintf("production_date >= '%s' AND production_date <= '%s' AND iupopk_id = %v AND dmo_id IS NOT NULL", startFilter, endFilter, iupopkId)
 
 	errFindProduction := r.db.Where(queryFilterProduction).Order("id ASC").Find(&listProduction).Error
 

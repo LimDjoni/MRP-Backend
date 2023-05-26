@@ -16,4 +16,5 @@ type CafAssignmentEndUser struct {
 	EndUserString   string                      `json:"end_user_string"`
 	EndUserId       uint                        `json:"end_user_id"`
 	EndUser         company.Company             `json:"end_user"`
+	LetterNumber    string                      `json:"letter_number"`
 }

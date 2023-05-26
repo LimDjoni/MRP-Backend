@@ -52,12 +52,13 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 		realization.Quantity = value.Quantity
 		realization.EndUser = value.EndUser
 		realization.ID = value.ID
+		realization.LetterNumber = value.LetterNumber
 		var transactionRealization Realization
 
 		shippingDateFrom := fmt.Sprintf("%s-01-01", electricAssignment.Year)
 		shippingDateTo := fmt.Sprintf("%s-12-31", electricAssignment.Year)
 
-		errTrRealization := r.db.Table("transactions").Select("SUM(quantity_unloading) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories ").Where("transaction_type = ? AND seller_id = ? AND is_not_claim = ? AND dmo_destination_port_id = ? AND shipping_date >= ? AND shipping_date <= ?", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo).Scan(&transactionRealization).Error
+		errTrRealization := r.db.Table("transactions").Select("SUM(quantity_unloading) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories ").Where("transaction_type = ? AND seller_id = ? AND is_not_claim = ? AND dmo_destination_port_id = ? AND shipping_date >= ? AND shipping_date <= ? AND dmo_id IS NOT NULL", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo).Scan(&transactionRealization).Error
 
 		if errTrRealization != nil {
 			return detailElectricAssignment, errTrRealization

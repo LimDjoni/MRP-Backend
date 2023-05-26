@@ -51,12 +51,13 @@ func (r *repository) DetailCafAssignment(id int, iupopkId int) (DetailCafAssignm
 		realization.EndUser = value.EndUser
 		realization.EndUserString = value.EndUserString
 		realization.ID = value.ID
+		realization.LetterNumber = value.LetterNumber
 		var transactionRealization Realization
 
 		shippingDateFrom := fmt.Sprintf("%s-01-01", cafAssignment.Year)
 		shippingDateTo := fmt.Sprintf("%s-12-31", cafAssignment.Year)
 
-		query := fmt.Sprintf("transactions.transaction_type = '%s' AND transactions.seller_id = %v AND transactions.is_not_claim = false AND transactions.shipping_date >= '%s' AND transactions.shipping_date <= '%s' AND company.company_name = '%s'", "DN", iupopkId, shippingDateFrom, shippingDateTo, value.EndUserString)
+		query := fmt.Sprintf("transactions.transaction_type = '%s' AND transactions.seller_id = %v AND transactions.is_not_claim = false AND transactions.shipping_date >= '%s' AND transactions.shipping_date <= '%s' AND company.company_name = '%s' AND transactions.dmo_id IS NOT NULL", "DN", iupopkId, shippingDateFrom, shippingDateTo, value.EndUserString)
 
 		errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity_unloading) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("left join companies company on company.id = transactions.dmo_buyer_id").Where(query).Scan(&transactionRealization).Error
 

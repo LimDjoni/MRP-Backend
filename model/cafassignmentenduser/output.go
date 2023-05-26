@@ -20,6 +20,7 @@ type RealizationEndUser struct {
 	EndUserId                  uint            `json:"end_user_id"`
 	EndUser                    company.Company `json:"end_user"`
 	EndUserString              string          `json:"end_user_string"`
+	LetterNumber               string          `json:"letter_number"`
 }
 
 type Realization struct {

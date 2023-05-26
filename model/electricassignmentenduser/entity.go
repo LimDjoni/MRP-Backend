@@ -17,4 +17,5 @@ type ElectricAssignmentEndUser struct {
 	AverageCalories      float64                               `json:"average_calories"`
 	Quantity             float64                               `json:"quantity"`
 	EndUser              string                                `json:"end_user"`
+	LetterNumber         string                                `json:"letter_number"`
 }

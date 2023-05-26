@@ -21,6 +21,7 @@ type RealizationEndUser struct {
 	Quantity                   float64    `json:"quantity"`
 	RealizationQuantity        float64    `json:"realization_quantity"`
 	EndUser                    string     `json:"end_user"`
+	LetterNumber               string     `json:"letter_number"`
 }
 
 type Realization struct {

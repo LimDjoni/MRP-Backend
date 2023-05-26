@@ -66,12 +66,12 @@ type Service interface {
 	UploadDocumentRkab(id uint, urlS3 string, userId uint, iupopkId int) (rkab.Rkab, error)
 	CreateElectricAssignment(input electricassignmentenduser.CreateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
 	UploadCreateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
-	UploadUpdateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
+	UploadUpdateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int, typeDocument string) (electricassignment.ElectricAssignment, error)
 	UpdateElectricAssignment(id int, input electricassignmentenduser.UpdateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
 	DeleteElectricAssignment(id int, iupopkId int, userId uint) (bool, error)
 	CreateCafAssignment(input cafassignmentenduser.CreateCafAssignmentInput, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
 	UploadCreateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
-	UploadUpdateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
+	UploadUpdateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int, typeDocument string) (cafassignment.CafAssignment, error)
 	DeleteCafAssignment(id int, iupopkId int, userId uint) (bool, error)
 	UpdateCafAssignment(id int, input cafassignmentenduser.UpdateCafAssignmentInput, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
 }
@@ -366,8 +366,8 @@ func (s *service) UploadCreateDocumentElectricAssignment(id uint, urlS3 string, 
 	return uploadElectricAssignment, uploadElectricAssignmentErr
 }
 
-func (s *service) UploadUpdateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error) {
-	uploadElectricAssignment, uploadElectricAssignmentErr := s.repository.UploadUpdateDocumentElectricAssignment(id, urlS3, userId, iupopkId)
+func (s *service) UploadUpdateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int, typeDocument string) (electricassignment.ElectricAssignment, error) {
+	uploadElectricAssignment, uploadElectricAssignmentErr := s.repository.UploadUpdateDocumentElectricAssignment(id, urlS3, userId, iupopkId, typeDocument)
 
 	return uploadElectricAssignment, uploadElectricAssignmentErr
 }
@@ -396,8 +396,8 @@ func (s *service) UploadCreateDocumentCafAssignment(id uint, urlS3 string, userI
 	return cafAssignment, cafAssignmentErr
 }
 
-func (s *service) UploadUpdateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int) (cafassignment.CafAssignment, error) {
-	cafAssignment, cafAssignmentErr := s.repository.UploadUpdateDocumentCafAssignment(id, urlS3, userId, iupopkId)
+func (s *service) UploadUpdateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int, typeDocument string) (cafassignment.CafAssignment, error) {
+	cafAssignment, cafAssignmentErr := s.repository.UploadUpdateDocumentCafAssignment(id, urlS3, userId, iupopkId, typeDocument)
 
 	return cafAssignment, cafAssignmentErr
 }

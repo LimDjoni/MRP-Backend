@@ -497,17 +497,14 @@ func (h *cafAssignmentHandler) UpdateCafAssignment(c *fiber.Ctx) error {
 		})
 	}
 
+	var isAlreadyUpdate = false
+
 	file, errFormFile := c.FormFile("revision_letter_assignment")
 
 	if errFormFile == nil {
-
+		isAlreadyUpdate = true
 		responseErr := fiber.Map{
 			"message": "failed to create caf assignment",
-		}
-
-		if errFormFile != nil {
-			responseErr["error"] = errFormFile.Error()
-			return c.Status(400).JSON(responseErr)
 		}
 
 		if !strings.Contains(file.Filename, ".pdf") {
@@ -545,7 +542,7 @@ func (h *cafAssignmentHandler) UpdateCafAssignment(c *fiber.Ctx) error {
 		}
 
 		if updateCafAssignment.RevisionAssignmentLetterLink == "" {
-			updateDocCafAssignment, updateDocCafAssignmentErr := h.historyService.UploadUpdateDocumentCafAssignment(updateCafAssignment.ID, up.Location, uint(claims["id"].(float64)), iupopkIdInt)
+			updateDocCafAssignment, updateDocCafAssignmentErr := h.historyService.UploadUpdateDocumentCafAssignment(updateCafAssignment.ID, up.Location, uint(claims["id"].(float64)), iupopkIdInt, "revision_assignment_letter_link")
 
 			if updateDocCafAssignmentErr != nil {
 				inputMap := make(map[string]interface{})
@@ -580,6 +577,493 @@ func (h *cafAssignmentHandler) UpdateCafAssignment(c *fiber.Ctx) error {
 		}
 	}
 
+	file, errFormFile2 := c.FormFile("letter_assignment2")
+
+	if !isAlreadyUpdate && errFormFile2 == nil {
+		isAlreadyUpdate = true
+		responseErr := fiber.Map{
+			"message": "failed to create caf assignment",
+		}
+
+		if !strings.Contains(file.Filename, ".pdf") {
+			responseErr["error"] = "document must be pdf"
+			return c.Status(400).JSON(responseErr)
+		}
+
+		fileName := fmt.Sprintf("%s/SPS/%v/%v_letter_assignment2.pdf", iupopkData.Code, updateCafAssignment.IdNumber, updateCafAssignment.IdNumber)
+
+		up, uploadErr := awshelper.UploadDocument(file, fileName)
+
+		if uploadErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["file"] = file
+			inputMap["user_id"] = claims["id"]
+			inputMap["caf_assignment_id"] = idInt
+			inputMap["input"] = inputUpdateCafAssignment
+
+			inputJson, _ := json.Marshal(inputMap)
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error": uploadErr.Error(),
+			})
+
+			createdErrLog := logs.Logs{
+				CafAssignmentId: &idUint,
+				Input:           inputJson,
+				Message:         messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			responseErr["message"] = "failed to create caf assigment upload"
+			responseErr["error"] = uploadErr.Error()
+			return c.Status(400).JSON(responseErr)
+		}
+
+		if updateCafAssignment.AssignmentLetterLink2 == "" {
+			updateDocCafAssignment, updateDocCafAssignmentErr := h.historyService.UploadUpdateDocumentCafAssignment(updateCafAssignment.ID, up.Location, uint(claims["id"].(float64)), iupopkIdInt, "assignment_letter_link2")
+
+			if updateDocCafAssignmentErr != nil {
+				inputMap := make(map[string]interface{})
+				inputMap["file"] = file
+				inputMap["user_id"] = claims["id"]
+				inputMap["caf_assignment_id"] = idInt
+				inputMap["input"] = inputUpdateCafAssignment
+				inputJson, _ := json.Marshal(inputMap)
+				messageJson, _ := json.Marshal(map[string]interface{}{
+					"error":           updateDocCafAssignmentErr.Error(),
+					"upload_response": up,
+				})
+
+				createdErrLog := logs.Logs{
+					CafAssignmentId: &idUint,
+					Input:           inputJson,
+					Message:         messageJson,
+				}
+				h.logService.CreateLogs(createdErrLog)
+
+				responseErr["error"] = updateDocCafAssignmentErr.Error()
+
+				status := 400
+
+				if updateDocCafAssignmentErr.Error() == "record not found" {
+					status = 404
+				}
+
+				return c.Status(status).JSON(responseErr)
+			}
+			return c.Status(200).JSON(updateDocCafAssignment)
+		}
+	}
+
+	file, errFormFile3 := c.FormFile("revision_letter_assignment2")
+
+	if !isAlreadyUpdate && errFormFile3 == nil {
+		isAlreadyUpdate = true
+		responseErr := fiber.Map{
+			"message": "failed to create caf assignment",
+		}
+
+		if !strings.Contains(file.Filename, ".pdf") {
+			responseErr["error"] = "document must be pdf"
+			return c.Status(400).JSON(responseErr)
+		}
+
+		fileName := fmt.Sprintf("%s/SPS/%v/%v_revision_letter_assignment2.pdf", iupopkData.Code, updateCafAssignment.IdNumber, updateCafAssignment.IdNumber)
+
+		up, uploadErr := awshelper.UploadDocument(file, fileName)
+
+		if uploadErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["file"] = file
+			inputMap["user_id"] = claims["id"]
+			inputMap["caf_assignment_id"] = idInt
+			inputMap["input"] = inputUpdateCafAssignment
+
+			inputJson, _ := json.Marshal(inputMap)
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error": uploadErr.Error(),
+			})
+
+			createdErrLog := logs.Logs{
+				CafAssignmentId: &idUint,
+				Input:           inputJson,
+				Message:         messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			responseErr["message"] = "failed to create caf assigment upload"
+			responseErr["error"] = uploadErr.Error()
+			return c.Status(400).JSON(responseErr)
+		}
+
+		if updateCafAssignment.RevisionAssignmentLetterLink2 == "" {
+			updateDocCafAssignment, updateDocCafAssignmentErr := h.historyService.UploadUpdateDocumentCafAssignment(updateCafAssignment.ID, up.Location, uint(claims["id"].(float64)), iupopkIdInt, "revision_assignment_letter_link2")
+
+			if updateDocCafAssignmentErr != nil {
+				inputMap := make(map[string]interface{})
+				inputMap["file"] = file
+				inputMap["user_id"] = claims["id"]
+				inputMap["caf_assignment_id"] = idInt
+				inputMap["input"] = inputUpdateCafAssignment
+				inputJson, _ := json.Marshal(inputMap)
+				messageJson, _ := json.Marshal(map[string]interface{}{
+					"error":           updateDocCafAssignmentErr.Error(),
+					"upload_response": up,
+				})
+
+				createdErrLog := logs.Logs{
+					CafAssignmentId: &idUint,
+					Input:           inputJson,
+					Message:         messageJson,
+				}
+				h.logService.CreateLogs(createdErrLog)
+
+				responseErr["error"] = updateDocCafAssignmentErr.Error()
+
+				status := 400
+
+				if updateDocCafAssignmentErr.Error() == "record not found" {
+					status = 404
+				}
+
+				return c.Status(status).JSON(responseErr)
+			}
+			return c.Status(200).JSON(updateDocCafAssignment)
+		}
+	}
+
+	file, errFormFile4 := c.FormFile("letter_assignment3")
+
+	if !isAlreadyUpdate && errFormFile4 == nil {
+		isAlreadyUpdate = true
+		responseErr := fiber.Map{
+			"message": "failed to create caf assignment",
+		}
+
+		if errFormFile4 != nil {
+			responseErr["error"] = errFormFile4.Error()
+			return c.Status(400).JSON(responseErr)
+		}
+
+		if !strings.Contains(file.Filename, ".pdf") {
+			responseErr["error"] = "document must be pdf"
+			return c.Status(400).JSON(responseErr)
+		}
+
+		fileName := fmt.Sprintf("%s/SPS/%v/%v_letter_assignment3.pdf", iupopkData.Code, updateCafAssignment.IdNumber, updateCafAssignment.IdNumber)
+
+		up, uploadErr := awshelper.UploadDocument(file, fileName)
+
+		if uploadErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["file"] = file
+			inputMap["user_id"] = claims["id"]
+			inputMap["caf_assignment_id"] = idInt
+			inputMap["input"] = inputUpdateCafAssignment
+
+			inputJson, _ := json.Marshal(inputMap)
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error": uploadErr.Error(),
+			})
+
+			createdErrLog := logs.Logs{
+				CafAssignmentId: &idUint,
+				Input:           inputJson,
+				Message:         messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			responseErr["message"] = "failed to create caf assigment upload"
+			responseErr["error"] = uploadErr.Error()
+			return c.Status(400).JSON(responseErr)
+		}
+
+		if updateCafAssignment.AssignmentLetterLink3 == "" {
+			updateDocCafAssignment, updateDocCafAssignmentErr := h.historyService.UploadUpdateDocumentCafAssignment(updateCafAssignment.ID, up.Location, uint(claims["id"].(float64)), iupopkIdInt, "assignment_letter_link3")
+
+			if updateDocCafAssignmentErr != nil {
+				inputMap := make(map[string]interface{})
+				inputMap["file"] = file
+				inputMap["user_id"] = claims["id"]
+				inputMap["caf_assignment_id"] = idInt
+				inputMap["input"] = inputUpdateCafAssignment
+				inputJson, _ := json.Marshal(inputMap)
+				messageJson, _ := json.Marshal(map[string]interface{}{
+					"error":           updateDocCafAssignmentErr.Error(),
+					"upload_response": up,
+				})
+
+				createdErrLog := logs.Logs{
+					CafAssignmentId: &idUint,
+					Input:           inputJson,
+					Message:         messageJson,
+				}
+				h.logService.CreateLogs(createdErrLog)
+
+				responseErr["error"] = updateDocCafAssignmentErr.Error()
+
+				status := 400
+
+				if updateDocCafAssignmentErr.Error() == "record not found" {
+					status = 404
+				}
+
+				return c.Status(status).JSON(responseErr)
+			}
+			return c.Status(200).JSON(updateDocCafAssignment)
+		}
+	}
+
+	file, errFormFile5 := c.FormFile("revision_letter_assignment3")
+
+	if !isAlreadyUpdate && errFormFile5 == nil {
+		isAlreadyUpdate = true
+		responseErr := fiber.Map{
+			"message": "failed to create caf assignment",
+		}
+
+		if errFormFile5 != nil {
+			responseErr["error"] = errFormFile5.Error()
+			return c.Status(400).JSON(responseErr)
+		}
+
+		if !strings.Contains(file.Filename, ".pdf") {
+			responseErr["error"] = "document must be pdf"
+			return c.Status(400).JSON(responseErr)
+		}
+
+		fileName := fmt.Sprintf("%s/SPS/%v/%v_revision_letter_assignment3.pdf", iupopkData.Code, updateCafAssignment.IdNumber, updateCafAssignment.IdNumber)
+
+		up, uploadErr := awshelper.UploadDocument(file, fileName)
+
+		if uploadErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["file"] = file
+			inputMap["user_id"] = claims["id"]
+			inputMap["caf_assignment_id"] = idInt
+			inputMap["input"] = inputUpdateCafAssignment
+
+			inputJson, _ := json.Marshal(inputMap)
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error": uploadErr.Error(),
+			})
+
+			createdErrLog := logs.Logs{
+				CafAssignmentId: &idUint,
+				Input:           inputJson,
+				Message:         messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			responseErr["message"] = "failed to create caf assigment upload"
+			responseErr["error"] = uploadErr.Error()
+			return c.Status(400).JSON(responseErr)
+		}
+
+		if updateCafAssignment.RevisionAssignmentLetterLink3 == "" {
+			updateDocCafAssignment, updateDocCafAssignmentErr := h.historyService.UploadUpdateDocumentCafAssignment(updateCafAssignment.ID, up.Location, uint(claims["id"].(float64)), iupopkIdInt, "revision_assignment_letter_link3")
+
+			if updateDocCafAssignmentErr != nil {
+				inputMap := make(map[string]interface{})
+				inputMap["file"] = file
+				inputMap["user_id"] = claims["id"]
+				inputMap["caf_assignment_id"] = idInt
+				inputMap["input"] = inputUpdateCafAssignment
+				inputJson, _ := json.Marshal(inputMap)
+				messageJson, _ := json.Marshal(map[string]interface{}{
+					"error":           updateDocCafAssignmentErr.Error(),
+					"upload_response": up,
+				})
+
+				createdErrLog := logs.Logs{
+					CafAssignmentId: &idUint,
+					Input:           inputJson,
+					Message:         messageJson,
+				}
+				h.logService.CreateLogs(createdErrLog)
+
+				responseErr["error"] = updateDocCafAssignmentErr.Error()
+
+				status := 400
+
+				if updateDocCafAssignmentErr.Error() == "record not found" {
+					status = 404
+				}
+
+				return c.Status(status).JSON(responseErr)
+			}
+			return c.Status(200).JSON(updateDocCafAssignment)
+		}
+	}
+
+	file, errFormFile6 := c.FormFile("letter_assignment4")
+
+	if !isAlreadyUpdate && errFormFile6 == nil {
+		isAlreadyUpdate = true
+		responseErr := fiber.Map{
+			"message": "failed to create caf assignment",
+		}
+
+		if errFormFile6 != nil {
+			responseErr["error"] = errFormFile6.Error()
+			return c.Status(400).JSON(responseErr)
+		}
+
+		if !strings.Contains(file.Filename, ".pdf") {
+			responseErr["error"] = "document must be pdf"
+			return c.Status(400).JSON(responseErr)
+		}
+
+		fileName := fmt.Sprintf("%s/SPS/%v/%v_letter_assignment4.pdf", iupopkData.Code, updateCafAssignment.IdNumber, updateCafAssignment.IdNumber)
+
+		up, uploadErr := awshelper.UploadDocument(file, fileName)
+
+		if uploadErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["file"] = file
+			inputMap["user_id"] = claims["id"]
+			inputMap["caf_assignment_id"] = idInt
+			inputMap["input"] = inputUpdateCafAssignment
+
+			inputJson, _ := json.Marshal(inputMap)
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error": uploadErr.Error(),
+			})
+
+			createdErrLog := logs.Logs{
+				CafAssignmentId: &idUint,
+				Input:           inputJson,
+				Message:         messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			responseErr["message"] = "failed to create caf assigment upload"
+			responseErr["error"] = uploadErr.Error()
+			return c.Status(400).JSON(responseErr)
+		}
+
+		if updateCafAssignment.AssignmentLetterLink4 == "" {
+			updateDocCafAssignment, updateDocCafAssignmentErr := h.historyService.UploadUpdateDocumentCafAssignment(updateCafAssignment.ID, up.Location, uint(claims["id"].(float64)), iupopkIdInt, "assignment_letter_link4")
+
+			if updateDocCafAssignmentErr != nil {
+				inputMap := make(map[string]interface{})
+				inputMap["file"] = file
+				inputMap["user_id"] = claims["id"]
+				inputMap["caf_assignment_id"] = idInt
+				inputMap["input"] = inputUpdateCafAssignment
+				inputJson, _ := json.Marshal(inputMap)
+				messageJson, _ := json.Marshal(map[string]interface{}{
+					"error":           updateDocCafAssignmentErr.Error(),
+					"upload_response": up,
+				})
+
+				createdErrLog := logs.Logs{
+					CafAssignmentId: &idUint,
+					Input:           inputJson,
+					Message:         messageJson,
+				}
+				h.logService.CreateLogs(createdErrLog)
+
+				responseErr["error"] = updateDocCafAssignmentErr.Error()
+
+				status := 400
+
+				if updateDocCafAssignmentErr.Error() == "record not found" {
+					status = 404
+				}
+
+				return c.Status(status).JSON(responseErr)
+			}
+			return c.Status(200).JSON(updateDocCafAssignment)
+		}
+	}
+
+	file, errFormFile7 := c.FormFile("revision_letter_assignment4")
+
+	if !isAlreadyUpdate && errFormFile7 == nil {
+		isAlreadyUpdate = true
+		responseErr := fiber.Map{
+			"message": "failed to create caf assignment",
+		}
+
+		if errFormFile7 != nil {
+			responseErr["error"] = errFormFile7.Error()
+			return c.Status(400).JSON(responseErr)
+		}
+
+		if !strings.Contains(file.Filename, ".pdf") {
+			responseErr["error"] = "document must be pdf"
+			return c.Status(400).JSON(responseErr)
+		}
+
+		fileName := fmt.Sprintf("%s/SPS/%v/%v_revision_letter_assignment4.pdf", iupopkData.Code, updateCafAssignment.IdNumber, updateCafAssignment.IdNumber)
+
+		up, uploadErr := awshelper.UploadDocument(file, fileName)
+
+		if uploadErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["file"] = file
+			inputMap["user_id"] = claims["id"]
+			inputMap["caf_assignment_id"] = idInt
+			inputMap["input"] = inputUpdateCafAssignment
+
+			inputJson, _ := json.Marshal(inputMap)
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error": uploadErr.Error(),
+			})
+
+			createdErrLog := logs.Logs{
+				CafAssignmentId: &idUint,
+				Input:           inputJson,
+				Message:         messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			responseErr["message"] = "failed to create caf assigment upload"
+			responseErr["error"] = uploadErr.Error()
+			return c.Status(400).JSON(responseErr)
+		}
+
+		if updateCafAssignment.RevisionAssignmentLetterLink4 == "" {
+			updateDocCafAssignment, updateDocCafAssignmentErr := h.historyService.UploadUpdateDocumentCafAssignment(updateCafAssignment.ID, up.Location, uint(claims["id"].(float64)), iupopkIdInt, "revision_assignment_letter_link4")
+
+			if updateDocCafAssignmentErr != nil {
+				inputMap := make(map[string]interface{})
+				inputMap["file"] = file
+				inputMap["user_id"] = claims["id"]
+				inputMap["caf_assignment_id"] = idInt
+				inputMap["input"] = inputUpdateCafAssignment
+				inputJson, _ := json.Marshal(inputMap)
+				messageJson, _ := json.Marshal(map[string]interface{}{
+					"error":           updateDocCafAssignmentErr.Error(),
+					"upload_response": up,
+				})
+
+				createdErrLog := logs.Logs{
+					CafAssignmentId: &idUint,
+					Input:           inputJson,
+					Message:         messageJson,
+				}
+				h.logService.CreateLogs(createdErrLog)
+
+				responseErr["error"] = updateDocCafAssignmentErr.Error()
+
+				status := 400
+
+				if updateDocCafAssignmentErr.Error() == "record not found" {
+					status = 404
+				}
+
+				return c.Status(status).JSON(responseErr)
+			}
+			return c.Status(200).JSON(updateDocCafAssignment)
+		}
+	}
 	var createNotif notification.InputNotification
 
 	createNotif.Type = "caf"
