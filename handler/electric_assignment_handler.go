@@ -1123,6 +1123,311 @@ func (h *electrictAssignmentHandler) UpdateElectricAssignment(c *fiber.Ctx) erro
 		}
 	}
 
+	if updateElectricAssignment.LetterNumber2 == "" && (updateElectricAssignment.AssignmentLetterLink2 != "" || updateElectricAssignment.RevisionAssignmentLetterLink2 != "") {
+		if updateElectricAssignment.AssignmentLetterLink2 != "" {
+			documentLink := updateElectricAssignment.AssignmentLetterLink2
+
+			documentLinkSplit := strings.Split(documentLink, "/")
+
+			fileName := ""
+
+			for i, v := range documentLinkSplit {
+				if i == 3 {
+					fileName += v + "/"
+				}
+
+				if i == 4 {
+					fileName += v + "/"
+				}
+
+				if i == 5 {
+					fileName += v
+				}
+
+				if i == 6 {
+					fileName += v + "/"
+				}
+			}
+			_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
+
+			if deleteAwsErr != nil {
+				inputMap := make(map[string]interface{})
+				inputMap["user_id"] = claims["id"]
+				inputMap["rkab_id"] = idInt
+
+				inputJson, _ := json.Marshal(inputMap)
+				messageJson, _ := json.Marshal(map[string]interface{}{
+					"error": deleteAwsErr.Error(),
+				})
+
+				createdErrLog := logs.Logs{
+					Input:   inputJson,
+					Message: messageJson,
+				}
+
+				h.logService.CreateLogs(createdErrLog)
+
+				return c.Status(400).JSON(fiber.Map{
+					"message": "failed to delete electric assignment aws",
+					"error":   deleteAwsErr.Error(),
+				})
+			}
+		}
+
+		if updateElectricAssignment.RevisionAssignmentLetterLink2 != "" {
+			documentLink := updateElectricAssignment.RevisionAssignmentLetterLink2
+
+			documentLinkSplit := strings.Split(documentLink, "/")
+
+			fileName := ""
+
+			for i, v := range documentLinkSplit {
+				if i == 3 {
+					fileName += v + "/"
+				}
+
+				if i == 4 {
+					fileName += v + "/"
+				}
+
+				if i == 5 {
+					fileName += v
+				}
+
+				if i == 6 {
+					fileName += v + "/"
+				}
+			}
+			_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
+
+			if deleteAwsErr != nil {
+				inputMap := make(map[string]interface{})
+				inputMap["user_id"] = claims["id"]
+				inputMap["rkab_id"] = idInt
+
+				inputJson, _ := json.Marshal(inputMap)
+				messageJson, _ := json.Marshal(map[string]interface{}{
+					"error": deleteAwsErr.Error(),
+				})
+
+				createdErrLog := logs.Logs{
+					Input:   inputJson,
+					Message: messageJson,
+				}
+
+				h.logService.CreateLogs(createdErrLog)
+
+				return c.Status(400).JSON(fiber.Map{
+					"message": "failed to delete electric assignment aws",
+					"error":   deleteAwsErr.Error(),
+				})
+			}
+		}
+	}
+
+	if updateElectricAssignment.LetterNumber3 == "" && (updateElectricAssignment.AssignmentLetterLink3 != "" || updateElectricAssignment.RevisionAssignmentLetterLink3 != "") {
+		if updateElectricAssignment.AssignmentLetterLink3 != "" {
+			documentLink := updateElectricAssignment.AssignmentLetterLink3
+
+			documentLinkSplit := strings.Split(documentLink, "/")
+
+			fileName := ""
+
+			for i, v := range documentLinkSplit {
+				if i == 3 {
+					fileName += v + "/"
+				}
+
+				if i == 4 {
+					fileName += v + "/"
+				}
+
+				if i == 5 {
+					fileName += v
+				}
+
+				if i == 6 {
+					fileName += v + "/"
+				}
+			}
+			_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
+
+			if deleteAwsErr != nil {
+				inputMap := make(map[string]interface{})
+				inputMap["user_id"] = claims["id"]
+				inputMap["rkab_id"] = idInt
+
+				inputJson, _ := json.Marshal(inputMap)
+				messageJson, _ := json.Marshal(map[string]interface{}{
+					"error": deleteAwsErr.Error(),
+				})
+
+				createdErrLog := logs.Logs{
+					Input:   inputJson,
+					Message: messageJson,
+				}
+
+				h.logService.CreateLogs(createdErrLog)
+
+				return c.Status(400).JSON(fiber.Map{
+					"message": "failed to delete electric assignment aws",
+					"error":   deleteAwsErr.Error(),
+				})
+			}
+		}
+
+		if updateElectricAssignment.RevisionAssignmentLetterLink3 != "" {
+			documentLink := updateElectricAssignment.RevisionAssignmentLetterLink3
+
+			documentLinkSplit := strings.Split(documentLink, "/")
+
+			fileName := ""
+
+			for i, v := range documentLinkSplit {
+				if i == 3 {
+					fileName += v + "/"
+				}
+
+				if i == 4 {
+					fileName += v + "/"
+				}
+
+				if i == 5 {
+					fileName += v
+				}
+
+				if i == 6 {
+					fileName += v + "/"
+				}
+			}
+			_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
+
+			if deleteAwsErr != nil {
+				inputMap := make(map[string]interface{})
+				inputMap["user_id"] = claims["id"]
+				inputMap["rkab_id"] = idInt
+
+				inputJson, _ := json.Marshal(inputMap)
+				messageJson, _ := json.Marshal(map[string]interface{}{
+					"error": deleteAwsErr.Error(),
+				})
+
+				createdErrLog := logs.Logs{
+					Input:   inputJson,
+					Message: messageJson,
+				}
+
+				h.logService.CreateLogs(createdErrLog)
+
+				return c.Status(400).JSON(fiber.Map{
+					"message": "failed to delete electric assignment aws",
+					"error":   deleteAwsErr.Error(),
+				})
+			}
+		}
+	}
+
+	if updateElectricAssignment.LetterNumber4 == "" && (updateElectricAssignment.AssignmentLetterLink4 != "" || updateElectricAssignment.RevisionAssignmentLetterLink4 != "") {
+		if updateElectricAssignment.AssignmentLetterLink4 != "" {
+			documentLink := updateElectricAssignment.AssignmentLetterLink4
+
+			documentLinkSplit := strings.Split(documentLink, "/")
+
+			fileName := ""
+
+			for i, v := range documentLinkSplit {
+				if i == 3 {
+					fileName += v + "/"
+				}
+
+				if i == 4 {
+					fileName += v + "/"
+				}
+
+				if i == 5 {
+					fileName += v
+				}
+
+				if i == 6 {
+					fileName += v + "/"
+				}
+			}
+			_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
+
+			if deleteAwsErr != nil {
+				inputMap := make(map[string]interface{})
+				inputMap["user_id"] = claims["id"]
+				inputMap["rkab_id"] = idInt
+
+				inputJson, _ := json.Marshal(inputMap)
+				messageJson, _ := json.Marshal(map[string]interface{}{
+					"error": deleteAwsErr.Error(),
+				})
+
+				createdErrLog := logs.Logs{
+					Input:   inputJson,
+					Message: messageJson,
+				}
+
+				h.logService.CreateLogs(createdErrLog)
+
+				return c.Status(400).JSON(fiber.Map{
+					"message": "failed to delete electric assignment aws",
+					"error":   deleteAwsErr.Error(),
+				})
+			}
+		}
+
+		if updateElectricAssignment.RevisionAssignmentLetterLink4 != "" {
+			documentLink := updateElectricAssignment.RevisionAssignmentLetterLink4
+
+			documentLinkSplit := strings.Split(documentLink, "/")
+
+			fileName := ""
+
+			for i, v := range documentLinkSplit {
+				if i == 3 {
+					fileName += v + "/"
+				}
+
+				if i == 4 {
+					fileName += v + "/"
+				}
+
+				if i == 5 {
+					fileName += v
+				}
+
+				if i == 6 {
+					fileName += v + "/"
+				}
+			}
+			_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
+
+			if deleteAwsErr != nil {
+				inputMap := make(map[string]interface{})
+				inputMap["user_id"] = claims["id"]
+				inputMap["rkab_id"] = idInt
+
+				inputJson, _ := json.Marshal(inputMap)
+				messageJson, _ := json.Marshal(map[string]interface{}{
+					"error": deleteAwsErr.Error(),
+				})
+
+				createdErrLog := logs.Logs{
+					Input:   inputJson,
+					Message: messageJson,
+				}
+
+				h.logService.CreateLogs(createdErrLog)
+
+				return c.Status(400).JSON(fiber.Map{
+					"message": "failed to delete electric assignment aws",
+					"error":   deleteAwsErr.Error(),
+				})
+			}
+		}
+	}
 	var createNotif notification.InputNotification
 
 	createNotif.Type = "electric assignment"
