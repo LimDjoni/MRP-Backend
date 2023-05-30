@@ -4061,10 +4061,11 @@ func (r *repository) CreateElectricAssignment(input electricassignmentenduser.Cr
 
 		tempElecEndUser.ElectricAssignmentId = createdElectricAssignment.ID
 		tempElecEndUser.PortId = v.PortId
-		tempElecEndUser.Supplier = v.Supplier
+		tempElecEndUser.SupplierId = v.SupplierId
 		tempElecEndUser.AverageCalories = v.AverageCalories
 		tempElecEndUser.Quantity = v.Quantity
 		tempElecEndUser.EndUser = v.EndUser
+		tempElecEndUser.LetterNumber = v.LetterNumber
 
 		electricAssignmentEndUser = append(electricAssignmentEndUser, tempElecEndUser)
 	}
@@ -4211,7 +4212,20 @@ func (r *repository) UpdateElectricAssignment(id int, input electricassignmenten
 	updateMap := make(map[string]interface{})
 
 	updateMap["grand_total_quantity"] = input.GrandTotalQuantity
+	updateMap["letter_number"] = input.LetterNumber
 	updateMap["revision_letter_number"] = input.RevisionLetterNumber
+
+	updateMap["grand_total_quantity2"] = input.GrandTotalQuantity2
+	updateMap["letter_number2"] = input.LetterNumber2
+	updateMap["revision_letter_number2"] = input.RevisionLetterNumber2
+
+	updateMap["grand_total_quantity3"] = input.GrandTotalQuantity3
+	updateMap["letter_number3"] = input.LetterNumber3
+	updateMap["revision_letter_number3"] = input.RevisionLetterNumber3
+
+	updateMap["grand_total_quantity4"] = input.GrandTotalQuantity
+	updateMap["letter_number4"] = input.LetterNumber4
+	updateMap["revision_letter_number4"] = input.RevisionLetterNumber4
 
 	errUpd := tx.Model(&updatedElectricAssignment).Where("id = ? AND iupopk_id = ?", id, iupopkId).Updates(updateMap).Error
 

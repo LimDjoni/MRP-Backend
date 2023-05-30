@@ -15,6 +15,9 @@ type CafAssignment struct {
 	LetterNumber                  string        `json:"letter_number"`
 	RevisionLetterNumber          string        `json:"revision_letter_number"`
 	GrandTotalQuantity            float64       `json:"grand_total_quantity"`
+	GrandTotalQuantity2           float64       `json:"grand_total_quantity2"`
+	GrandTotalQuantity3           float64       `json:"grand_total_quantity3"`
+	GrandTotalQuantity4           float64       `json:"grand_total_quantity4"`
 	AssignmentLetterLink2         string        `json:"assignment_letter_link2"`
 	RevisionAssignmentLetterLink2 string        `json:"revision_assignment_letter_link2"`
 	LetterNumber2                 string        `json:"letter_number2"`

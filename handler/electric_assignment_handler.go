@@ -499,6 +499,84 @@ func (h *electrictAssignmentHandler) UpdateElectricAssignment(c *fiber.Ctx) erro
 
 	var isAlreadyUpdate = false
 
+	file, errFormFileLetter := c.FormFile("letter_assignment")
+
+	if !isAlreadyUpdate && errFormFileLetter == nil {
+		isAlreadyUpdate = true
+		responseErr := fiber.Map{
+			"message": "failed to create electric assignment",
+		}
+
+		if !strings.Contains(file.Filename, ".pdf") {
+			responseErr["error"] = "document must be pdf"
+			return c.Status(400).JSON(responseErr)
+		}
+
+		fileName := fmt.Sprintf("%s/SPK/%v/%v_letter_assignment.pdf", iupopkData.Code, updateElectricAssignment.IdNumber, updateElectricAssignment.IdNumber)
+
+		up, uploadErr := awshelper.UploadDocument(file, fileName)
+
+		if uploadErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["file"] = file
+			inputMap["user_id"] = claims["id"]
+			inputMap["electric_assignment_id"] = idInt
+			inputMap["input"] = inputUpdateElectricAssignment
+
+			inputJson, _ := json.Marshal(inputMap)
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error": uploadErr.Error(),
+			})
+
+			createdErrLog := logs.Logs{
+				ElectricAssignmentId: &idUint,
+				Input:                inputJson,
+				Message:              messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			responseErr["message"] = "failed to create electric assigment upload"
+			responseErr["error"] = uploadErr.Error()
+			return c.Status(400).JSON(responseErr)
+		}
+
+		if updateElectricAssignment.AssignmentLetterLink == "" {
+			updateDocElectricAssignment, updateDocElectricAssignmentErr := h.historyService.UploadUpdateDocumentElectricAssignment(updateElectricAssignment.ID, up.Location, uint(claims["id"].(float64)), iupopkIdInt, "assignment_letter_link")
+
+			if updateDocElectricAssignmentErr != nil {
+				inputMap := make(map[string]interface{})
+				inputMap["file"] = file
+				inputMap["user_id"] = claims["id"]
+				inputMap["electric_assignment_id"] = idInt
+				inputMap["input"] = inputUpdateElectricAssignment
+				inputJson, _ := json.Marshal(inputMap)
+				messageJson, _ := json.Marshal(map[string]interface{}{
+					"error":           updateDocElectricAssignmentErr.Error(),
+					"upload_response": up,
+				})
+
+				createdErrLog := logs.Logs{
+					ElectricAssignmentId: &idUint,
+					Input:                inputJson,
+					Message:              messageJson,
+				}
+				h.logService.CreateLogs(createdErrLog)
+
+				responseErr["error"] = updateDocElectricAssignmentErr.Error()
+
+				status := 400
+
+				if updateDocElectricAssignmentErr.Error() == "record not found" {
+					status = 404
+				}
+
+				return c.Status(status).JSON(responseErr)
+			}
+			return c.Status(200).JSON(updateDocElectricAssignment)
+		}
+	}
+
 	file, errFormFile := c.FormFile("revision_letter_assignment")
 
 	if errFormFile == nil {
