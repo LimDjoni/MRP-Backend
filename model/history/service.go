@@ -4,6 +4,7 @@ import (
 	"ajebackend/model/cafassignment"
 	"ajebackend/model/cafassignmentenduser"
 	"ajebackend/model/coareport"
+	"ajebackend/model/coareportln"
 	"ajebackend/model/dmo"
 	"ajebackend/model/electricassignment"
 	"ajebackend/model/electricassignmentenduser"
@@ -61,6 +62,9 @@ type Service interface {
 	CreateCoaReport(dateFrom string, dateTo string, iupopkId int, userId uint) (coareport.CoaReport, error)
 	DeleteCoaReport(id int, iupopkId int, userId uint) (bool, error)
 	UpdateDocumentCoaReport(id int, documentLink coareport.InputUpdateDocumentCoaReport, userId uint, iupopkId int) (coareport.CoaReport, error)
+	CreateCoaReportLn(dateFrom string, dateTo string, iupopkId int, userId uint) (coareportln.CoaReportLn, error)
+	DeleteCoaReportLn(id int, iupopkId int, userId uint) (bool, error)
+	UpdateDocumentCoaReportLn(id int, documentLink coareportln.InputUpdateDocumentCoaReportLn, userId uint, iupopkId int) (coareportln.CoaReportLn, error)
 	CreateRkab(input rkab.RkabInput, iupopkId int, userId uint) (rkab.Rkab, error)
 	DeleteRkab(id int, iupopkId int, userId uint) (bool, error)
 	UploadDocumentRkab(id uint, urlS3 string, userId uint, iupopkId int) (rkab.Rkab, error)
@@ -334,6 +338,22 @@ func (s *service) UpdateDocumentCoaReport(id int, documentLink coareport.InputUp
 	updDocumentCoaReport, updDocumentCoaReportErr := s.repository.UpdateDocumentCoaReport(id, documentLink, userId, iupopkId)
 
 	return updDocumentCoaReport, updDocumentCoaReportErr
+}
+
+func (s *service) CreateCoaReportLn(dateFrom string, dateTo string, iupopkId int, userId uint) (coareportln.CoaReportLn, error) {
+	coaReportLn, coaReportLnErr := s.repository.CreateCoaReportLn(dateFrom, dateTo, iupopkId, userId)
+
+	return coaReportLn, coaReportLnErr
+}
+func (s *service) DeleteCoaReportLn(id int, iupopkId int, userId uint) (bool, error) {
+	isDeletedCoaReportLn, isDeletedCoaReportLnErr := s.repository.DeleteCoaReportLn(id, iupopkId, userId)
+
+	return isDeletedCoaReportLn, isDeletedCoaReportLnErr
+}
+func (s *service) UpdateDocumentCoaReportLn(id int, documentLink coareportln.InputUpdateDocumentCoaReportLn, userId uint, iupopkId int) (coareportln.CoaReportLn, error) {
+	updDocumentCoaReportLn, updDocumentCoaReportLnErr := s.repository.UpdateDocumentCoaReportLn(id, documentLink, userId, iupopkId)
+
+	return updDocumentCoaReportLn, updDocumentCoaReportLnErr
 }
 
 func (s *service) CreateRkab(input rkab.RkabInput, iupopkId int, userId uint) (rkab.Rkab, error) {
