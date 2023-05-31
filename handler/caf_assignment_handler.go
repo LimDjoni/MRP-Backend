@@ -1064,6 +1064,313 @@ func (h *cafAssignmentHandler) UpdateCafAssignment(c *fiber.Ctx) error {
 			return c.Status(200).JSON(updateDocCafAssignment)
 		}
 	}
+
+	if updateCafAssignment.LetterNumber2 == "" && (updateCafAssignment.AssignmentLetterLink2 != "" || updateCafAssignment.RevisionAssignmentLetterLink2 != "") {
+		if updateCafAssignment.AssignmentLetterLink2 != "" {
+			documentLink := updateCafAssignment.AssignmentLetterLink2
+
+			documentLinkSplit := strings.Split(documentLink, "/")
+
+			fileName := ""
+
+			for i, v := range documentLinkSplit {
+				if i == 3 {
+					fileName += v + "/"
+				}
+
+				if i == 4 {
+					fileName += v + "/"
+				}
+
+				if i == 5 {
+					fileName += v
+				}
+
+				if i == 6 {
+					fileName += v + "/"
+				}
+			}
+			_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
+
+			if deleteAwsErr != nil {
+				inputMap := make(map[string]interface{})
+				inputMap["user_id"] = claims["id"]
+				inputMap["rkab_id"] = idInt
+
+				inputJson, _ := json.Marshal(inputMap)
+				messageJson, _ := json.Marshal(map[string]interface{}{
+					"error": deleteAwsErr.Error(),
+				})
+
+				createdErrLog := logs.Logs{
+					Input:   inputJson,
+					Message: messageJson,
+				}
+
+				h.logService.CreateLogs(createdErrLog)
+
+				return c.Status(400).JSON(fiber.Map{
+					"message": "failed to delete caf assignment aws",
+					"error":   deleteAwsErr.Error(),
+				})
+			}
+		}
+
+		if updateCafAssignment.RevisionAssignmentLetterLink2 != "" {
+			documentLink := updateCafAssignment.RevisionAssignmentLetterLink2
+
+			documentLinkSplit := strings.Split(documentLink, "/")
+
+			fileName := ""
+
+			for i, v := range documentLinkSplit {
+				if i == 3 {
+					fileName += v + "/"
+				}
+
+				if i == 4 {
+					fileName += v + "/"
+				}
+
+				if i == 5 {
+					fileName += v
+				}
+
+				if i == 6 {
+					fileName += v + "/"
+				}
+			}
+			_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
+
+			if deleteAwsErr != nil {
+				inputMap := make(map[string]interface{})
+				inputMap["user_id"] = claims["id"]
+				inputMap["rkab_id"] = idInt
+
+				inputJson, _ := json.Marshal(inputMap)
+				messageJson, _ := json.Marshal(map[string]interface{}{
+					"error": deleteAwsErr.Error(),
+				})
+
+				createdErrLog := logs.Logs{
+					Input:   inputJson,
+					Message: messageJson,
+				}
+
+				h.logService.CreateLogs(createdErrLog)
+
+				return c.Status(400).JSON(fiber.Map{
+					"message": "failed to delete caf assignment aws",
+					"error":   deleteAwsErr.Error(),
+				})
+			}
+		}
+	}
+
+	if updateCafAssignment.LetterNumber3 == "" && (updateCafAssignment.AssignmentLetterLink3 != "" || updateCafAssignment.RevisionAssignmentLetterLink3 != "") {
+		if updateCafAssignment.AssignmentLetterLink3 != "" {
+			documentLink := updateCafAssignment.AssignmentLetterLink3
+
+			documentLinkSplit := strings.Split(documentLink, "/")
+
+			fileName := ""
+
+			for i, v := range documentLinkSplit {
+				if i == 3 {
+					fileName += v + "/"
+				}
+
+				if i == 4 {
+					fileName += v + "/"
+				}
+
+				if i == 5 {
+					fileName += v
+				}
+
+				if i == 6 {
+					fileName += v + "/"
+				}
+			}
+			_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
+
+			if deleteAwsErr != nil {
+				inputMap := make(map[string]interface{})
+				inputMap["user_id"] = claims["id"]
+				inputMap["rkab_id"] = idInt
+
+				inputJson, _ := json.Marshal(inputMap)
+				messageJson, _ := json.Marshal(map[string]interface{}{
+					"error": deleteAwsErr.Error(),
+				})
+
+				createdErrLog := logs.Logs{
+					Input:   inputJson,
+					Message: messageJson,
+				}
+
+				h.logService.CreateLogs(createdErrLog)
+
+				return c.Status(400).JSON(fiber.Map{
+					"message": "failed to delete caf assignment aws",
+					"error":   deleteAwsErr.Error(),
+				})
+			}
+		}
+
+		if updateCafAssignment.RevisionAssignmentLetterLink3 != "" {
+			documentLink := updateCafAssignment.RevisionAssignmentLetterLink3
+
+			documentLinkSplit := strings.Split(documentLink, "/")
+
+			fileName := ""
+
+			for i, v := range documentLinkSplit {
+				if i == 3 {
+					fileName += v + "/"
+				}
+
+				if i == 4 {
+					fileName += v + "/"
+				}
+
+				if i == 5 {
+					fileName += v
+				}
+
+				if i == 6 {
+					fileName += v + "/"
+				}
+			}
+			_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
+
+			if deleteAwsErr != nil {
+				inputMap := make(map[string]interface{})
+				inputMap["user_id"] = claims["id"]
+				inputMap["rkab_id"] = idInt
+
+				inputJson, _ := json.Marshal(inputMap)
+				messageJson, _ := json.Marshal(map[string]interface{}{
+					"error": deleteAwsErr.Error(),
+				})
+
+				createdErrLog := logs.Logs{
+					Input:   inputJson,
+					Message: messageJson,
+				}
+
+				h.logService.CreateLogs(createdErrLog)
+
+				return c.Status(400).JSON(fiber.Map{
+					"message": "failed to delete caf assignment aws",
+					"error":   deleteAwsErr.Error(),
+				})
+			}
+		}
+	}
+
+	if updateCafAssignment.LetterNumber4 == "" && (updateCafAssignment.AssignmentLetterLink4 != "" || updateCafAssignment.RevisionAssignmentLetterLink4 != "") {
+		if updateCafAssignment.AssignmentLetterLink4 != "" {
+			documentLink := updateCafAssignment.AssignmentLetterLink4
+
+			documentLinkSplit := strings.Split(documentLink, "/")
+
+			fileName := ""
+
+			for i, v := range documentLinkSplit {
+				if i == 3 {
+					fileName += v + "/"
+				}
+
+				if i == 4 {
+					fileName += v + "/"
+				}
+
+				if i == 5 {
+					fileName += v
+				}
+
+				if i == 6 {
+					fileName += v + "/"
+				}
+			}
+			_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
+
+			if deleteAwsErr != nil {
+				inputMap := make(map[string]interface{})
+				inputMap["user_id"] = claims["id"]
+				inputMap["rkab_id"] = idInt
+
+				inputJson, _ := json.Marshal(inputMap)
+				messageJson, _ := json.Marshal(map[string]interface{}{
+					"error": deleteAwsErr.Error(),
+				})
+
+				createdErrLog := logs.Logs{
+					Input:   inputJson,
+					Message: messageJson,
+				}
+
+				h.logService.CreateLogs(createdErrLog)
+
+				return c.Status(400).JSON(fiber.Map{
+					"message": "failed to delete caf assignment aws",
+					"error":   deleteAwsErr.Error(),
+				})
+			}
+		}
+
+		if updateCafAssignment.RevisionAssignmentLetterLink4 != "" {
+			documentLink := updateCafAssignment.RevisionAssignmentLetterLink4
+
+			documentLinkSplit := strings.Split(documentLink, "/")
+
+			fileName := ""
+
+			for i, v := range documentLinkSplit {
+				if i == 3 {
+					fileName += v + "/"
+				}
+
+				if i == 4 {
+					fileName += v + "/"
+				}
+
+				if i == 5 {
+					fileName += v
+				}
+
+				if i == 6 {
+					fileName += v + "/"
+				}
+			}
+			_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
+
+			if deleteAwsErr != nil {
+				inputMap := make(map[string]interface{})
+				inputMap["user_id"] = claims["id"]
+				inputMap["rkab_id"] = idInt
+
+				inputJson, _ := json.Marshal(inputMap)
+				messageJson, _ := json.Marshal(map[string]interface{}{
+					"error": deleteAwsErr.Error(),
+				})
+
+				createdErrLog := logs.Logs{
+					Input:   inputJson,
+					Message: messageJson,
+				}
+
+				h.logService.CreateLogs(createdErrLog)
+
+				return c.Status(400).JSON(fiber.Map{
+					"message": "failed to delete caf assignment aws",
+					"error":   deleteAwsErr.Error(),
+				})
+			}
+		}
+	}
+
 	var createNotif notification.InputNotification
 
 	createNotif.Type = "caf"

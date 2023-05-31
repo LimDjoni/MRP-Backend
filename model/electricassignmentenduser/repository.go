@@ -62,6 +62,7 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 			var realization RealizationEndUser
 			realization.PortId = value.PortId
 			realization.Port = value.Port
+
 			realization.SupplierId = value.SupplierId
 			realization.Supplier = value.Supplier
 			realization.AverageCalories = value.AverageCalories
@@ -147,11 +148,13 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 			var quantity = transactionRealization.RealizationQuantity
 			for _, val := range listElectricAssignment {
 				if value.SupplierId != nil {
-					if val.PortId == value.PortId && val.Supplier.CompanyName == value.Supplier.CompanyName && val.LetterNumber == electricAssignment.LetterNumber {
-						if quantity-val.Quantity > 0 {
-							quantity = quantity - val.Quantity
-						} else {
-							quantity = 0
+					if val.SupplierId != nil {
+						if val.PortId == value.PortId && val.Supplier.CompanyName == value.Supplier.CompanyName && val.LetterNumber == electricAssignment.LetterNumber {
+							if quantity-val.Quantity > 0 {
+								quantity = quantity - val.Quantity
+							} else {
+								quantity = 0
+							}
 						}
 					}
 				} else {
@@ -225,11 +228,13 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 			var quantity = transactionRealization.RealizationQuantity
 			for _, val := range listElectricAssignment {
 				if value.SupplierId != nil {
-					if val.PortId == value.PortId && val.Supplier.CompanyName == value.Supplier.CompanyName && (val.LetterNumber == electricAssignment.LetterNumber || val.LetterNumber == electricAssignment.LetterNumber2) {
-						if quantity-val.Quantity > 0 {
-							quantity = quantity - val.Quantity
-						} else {
-							quantity = 0
+					if val.SupplierId != nil {
+						if val.PortId == value.PortId && val.Supplier.CompanyName == value.Supplier.CompanyName && (val.LetterNumber == electricAssignment.LetterNumber || val.LetterNumber == electricAssignment.LetterNumber2) {
+							if quantity-val.Quantity > 0 {
+								quantity = quantity - val.Quantity
+							} else {
+								quantity = 0
+							}
 						}
 					}
 				} else {
@@ -303,11 +308,13 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 			var quantity = transactionRealization.RealizationQuantity
 			for _, val := range listElectricAssignment {
 				if value.SupplierId != nil {
-					if val.PortId == value.PortId && val.Supplier.CompanyName == value.Supplier.CompanyName && (val.LetterNumber == electricAssignment.LetterNumber || val.LetterNumber == electricAssignment.LetterNumber2 || val.LetterNumber == electricAssignment.LetterNumber3) {
-						if quantity-val.Quantity > 0 {
-							quantity = quantity - val.Quantity
-						} else {
-							quantity = 0
+					if val.SupplierId != nil {
+						if val.PortId == value.PortId && val.Supplier.CompanyName == value.Supplier.CompanyName && (val.LetterNumber == electricAssignment.LetterNumber || val.LetterNumber == electricAssignment.LetterNumber2 || val.LetterNumber == electricAssignment.LetterNumber3) {
+							if quantity-val.Quantity > 0 {
+								quantity = quantity - val.Quantity
+							} else {
+								quantity = 0
+							}
 						}
 					}
 				} else {
