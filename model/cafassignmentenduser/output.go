@@ -6,9 +6,8 @@ import (
 )
 
 type DetailCafAssignment struct {
-	Detail                 cafassignment.CafAssignment `json:"detail"`
-	ListEndUser            []CafAssignmentEndUser      `json:"list_end_user"`
-	ListRealizationEndUser []RealizationEndUser        `json:"list_realization_end_user"`
+	Detail          cafassignment.CafAssignment `json:"detail"`
+	ListRealization []ListRealization           `json:"list_realization"`
 }
 
 type RealizationEndUser struct {
@@ -20,6 +19,13 @@ type RealizationEndUser struct {
 	EndUserId                  uint            `json:"end_user_id"`
 	EndUser                    company.Company `json:"end_user"`
 	EndUserString              string          `json:"end_user_string"`
+	LetterNumber               string          `json:"letter_number"`
+}
+
+type ListRealization struct {
+	Order                  int                  `json:"order"`
+	LetterNumber           string               `json:"letter_number"`
+	ListRealizationEndUser []RealizationEndUser `json:"list_realization_end_user"`
 }
 
 type Realization struct {

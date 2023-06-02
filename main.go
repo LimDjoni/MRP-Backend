@@ -4,6 +4,8 @@ import (
 	"ajebackend/helper"
 	"ajebackend/model/cafassignment"
 	"ajebackend/model/cafassignmentenduser"
+	"ajebackend/model/coareport"
+	"ajebackend/model/coareportln"
 	"ajebackend/model/counter"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
@@ -39,6 +41,7 @@ import (
 	"ajebackend/model/notification"
 	"ajebackend/model/notificationuser"
 	"ajebackend/model/production"
+	"ajebackend/model/rkab"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
@@ -127,6 +130,9 @@ func main() {
 			&electricassignmentenduser.ElectricAssignmentEndUser{},
 			&cafassignment.CafAssignment{},
 			&cafassignmentenduser.CafAssignmentEndUser{},
+			&rkab.Rkab{},
+			&coareport.CoaReport{},
+			&coareportln.CoaReportLn{},
 		)
 
 		seeding.UpdateTransactionsRoyalty(db)
@@ -241,6 +247,7 @@ func Setup(db *gorm.DB, validate *validator.Validate, route fiber.Router) {
 	routing2.MasterRouting(db, route, validate)
 	routing2.InswRouting(db, route, validate)
 	routing2.CoaReportRouting(db, route, validate)
+	routing2.CoaReportLnRouting(db, route, validate)
 	routing2.RkabRouting(db, route, validate)
 	routing2.ElectricAssignmentRouting(db, route, validate)
 	routing2.CafAssignmentRouting(db, route, validate)

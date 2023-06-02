@@ -5,6 +5,7 @@ import (
 	"ajebackend/model/cafassignment"
 	"ajebackend/model/cafassignmentenduser"
 	"ajebackend/model/coareport"
+	"ajebackend/model/coareportln"
 	"ajebackend/model/counter"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
@@ -82,17 +83,20 @@ type Repository interface {
 	CreateCoaReport(dateFrom string, dateTo string, iupopkId int, userId uint) (coareport.CoaReport, error)
 	DeleteCoaReport(id int, iupopkId int, userId uint) (bool, error)
 	UpdateDocumentCoaReport(id int, documentLink coareport.InputUpdateDocumentCoaReport, userId uint, iupopkId int) (coareport.CoaReport, error)
+	CreateCoaReportLn(dateFrom string, dateTo string, iupopkId int, userId uint) (coareportln.CoaReportLn, error)
+	DeleteCoaReportLn(id int, iupopkId int, userId uint) (bool, error)
+	UpdateDocumentCoaReportLn(id int, documentLink coareportln.InputUpdateDocumentCoaReportLn, userId uint, iupopkId int) (coareportln.CoaReportLn, error)
 	CreateRkab(input rkab.RkabInput, iupopkId int, userId uint) (rkab.Rkab, error)
 	DeleteRkab(id int, iupopkId int, userId uint) (bool, error)
 	UploadDocumentRkab(id uint, urlS3 string, userId uint, iupopkId int) (rkab.Rkab, error)
 	CreateElectricAssignment(input electricassignmentenduser.CreateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
 	UploadCreateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
-	UploadUpdateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
+	UploadUpdateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int, typeDocument string) (electricassignment.ElectricAssignment, error)
 	UpdateElectricAssignment(id int, input electricassignmentenduser.UpdateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
 	DeleteElectricAssignment(id int, iupopkId int, userId uint) (bool, error)
 	CreateCafAssignment(input cafassignmentenduser.CreateCafAssignmentInput, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
 	UploadCreateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
-	UploadUpdateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
+	UploadUpdateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int, typeDocument string) (cafassignment.CafAssignment, error)
 	DeleteCafAssignment(id int, iupopkId int, userId uint) (bool, error)
 	UpdateCafAssignment(id int, input cafassignmentenduser.UpdateCafAssignmentInput, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
 }
@@ -3812,6 +3816,178 @@ func (r *repository) UpdateDocumentCoaReport(id int, documentLink coareport.Inpu
 	return coaReport, nil
 }
 
+// Coa Report LN
+
+func (r *repository) CreateCoaReportLn(dateFrom string, dateTo string, iupopkId int, userId uint) (coareportln.CoaReportLn, error) {
+	var coaReportLn coareportln.CoaReportLn
+	var iup iupopk.Iupopk
+
+	var counterTransaction counter.Counter
+
+	tx := r.db.Begin()
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return coaReportLn, errFindIup
+	}
+
+	errFindCounterTransaction := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
+
+	if errFindCounterTransaction != nil {
+		tx.Rollback()
+		return coaReportLn, errFindCounterTransaction
+	}
+
+	errFind := tx.Where("date_from = ? AND date_to = ? AND iupopk_id = ?", dateFrom, dateTo, iupopkId).First(&coaReportLn).Error
+
+	if errFind == nil {
+		tx.Rollback()
+		return coaReportLn, errors.New("Report already has been created")
+	}
+
+	idNumber := "RCO-" + iup.Code
+
+	counter := counterTransaction.CoaReportLn
+
+	if counter == 0 {
+		counter = 1
+	}
+
+	coaReportLn.IdNumber = createIdNumber(idNumber, uint(counter))
+	coaReportLn.DateFrom = dateFrom
+	coaReportLn.DateTo = dateTo
+	coaReportLn.IupopkId = iup.ID
+
+	errCreate := tx.Create(&coaReportLn).Error
+
+	if errCreate != nil {
+		tx.Rollback()
+		return coaReportLn, errCreate
+	}
+
+	coaReportLnData, _ := json.Marshal(coaReportLn)
+
+	var history History
+
+	history.CoaReportLnId = &coaReportLn.ID
+	history.Status = "Created Coa Report Ln"
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = coaReportLnData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return coaReportLn, createHistoryErr
+	}
+
+	updateCounterErr := tx.Model(&counterTransaction).Where("iupopk_id = ?", iupopkId).Update("coa_report_ln", counter+1).Error
+
+	if updateCounterErr != nil {
+		tx.Rollback()
+		return coaReportLn, updateCounterErr
+	}
+
+	tx.Commit()
+	return coaReportLn, nil
+}
+
+func (r *repository) DeleteCoaReportLn(id int, iupopkId int, userId uint) (bool, error) {
+	var coaReportLn coareportln.CoaReportLn
+	var iup iupopk.Iupopk
+
+	tx := r.db.Begin()
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return false, errFindIup
+	}
+
+	errFind := tx.Where("id = ?", id).First(&coaReportLn).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return false, errFind
+	}
+
+	coaReportLnData, _ := json.Marshal(coaReportLn)
+
+	errDelete := tx.Unscoped().Where("id = ? AND iupopk_id = ?", id, iupopkId).Delete(&coaReportLn).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+		return false, errDelete
+	}
+
+	var history History
+
+	history.Status = fmt.Sprintf("Deleted Coa Report with id number %s and id %v", &coaReportLn.IdNumber, coaReportLn.ID)
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = coaReportLnData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return false, createHistoryErr
+	}
+
+	tx.Commit()
+	return true, nil
+}
+
+func (r *repository) UpdateDocumentCoaReportLn(id int, documentLink coareportln.InputUpdateDocumentCoaReportLn, userId uint, iupopkId int) (coareportln.CoaReportLn, error) {
+	tx := r.db.Begin()
+	var coaReportLn coareportln.CoaReportLn
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&coaReportLn).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return coaReportLn, errFind
+	}
+
+	editData := make(map[string]interface{})
+
+	for _, value := range documentLink.Data {
+		if value["Location"] != nil {
+			if strings.Contains(value["Location"].(string), "coa_report_ln") {
+				editData["coa_report_ln_document_link"] = value["Location"]
+			}
+		}
+	}
+
+	errEdit := tx.Model(&coaReportLn).Updates(editData).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return coaReportLn, errEdit
+	}
+
+	var history History
+
+	history.CoaReportLnId = &coaReportLn.ID
+	history.UserId = userId
+	history.Status = fmt.Sprintf("Update upload document coa report ln with id = %v", coaReportLn.ID)
+	history.IupopkId = &coaReportLn.IupopkId
+	dataInput, _ := json.Marshal(documentLink)
+	history.AfterData = dataInput
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return coaReportLn, createHistoryErr
+	}
+
+	tx.Commit()
+	return coaReportLn, nil
+}
+
 // RKAB
 
 func (r *repository) CreateRkab(input rkab.RkabInput, iupopkId int, userId uint) (rkab.Rkab, error) {
@@ -4061,10 +4237,11 @@ func (r *repository) CreateElectricAssignment(input electricassignmentenduser.Cr
 
 		tempElecEndUser.ElectricAssignmentId = createdElectricAssignment.ID
 		tempElecEndUser.PortId = v.PortId
-		tempElecEndUser.Supplier = v.Supplier
+		tempElecEndUser.SupplierId = v.SupplierId
 		tempElecEndUser.AverageCalories = v.AverageCalories
 		tempElecEndUser.Quantity = v.Quantity
 		tempElecEndUser.EndUser = v.EndUser
+		tempElecEndUser.LetterNumber = strings.ToUpper(v.LetterNumber)
 
 		electricAssignmentEndUser = append(electricAssignmentEndUser, tempElecEndUser)
 	}
@@ -4144,7 +4321,7 @@ func (r *repository) UploadCreateDocumentElectricAssignment(id uint, urlS3 strin
 	return electricAssignment, nil
 }
 
-func (r *repository) UploadUpdateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error) {
+func (r *repository) UploadUpdateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int, typeDocument string) (electricassignment.ElectricAssignment, error) {
 	var electricAssignment electricassignment.ElectricAssignment
 
 	tx := r.db.Begin()
@@ -4155,7 +4332,7 @@ func (r *repository) UploadUpdateDocumentElectricAssignment(id uint, urlS3 strin
 		return electricAssignment, errFind
 	}
 
-	errEdit := tx.Model(&electricAssignment).Update("revision_assignment_letter_link", urlS3).Error
+	errEdit := tx.Model(&electricAssignment).Update(typeDocument, urlS3).Error
 
 	if errEdit != nil {
 		tx.Rollback()
@@ -4211,7 +4388,20 @@ func (r *repository) UpdateElectricAssignment(id int, input electricassignmenten
 	updateMap := make(map[string]interface{})
 
 	updateMap["grand_total_quantity"] = input.GrandTotalQuantity
-	updateMap["revision_letter_number"] = input.RevisionLetterNumber
+	updateMap["letter_number"] = strings.ToUpper(input.LetterNumber)
+	updateMap["revision_letter_number"] = strings.ToUpper(input.RevisionLetterNumber)
+
+	updateMap["grand_total_quantity2"] = input.GrandTotalQuantity2
+	updateMap["letter_number2"] = strings.ToUpper(input.LetterNumber2)
+	updateMap["revision_letter_number2"] = strings.ToUpper(input.RevisionLetterNumber2)
+
+	updateMap["grand_total_quantity3"] = input.GrandTotalQuantity3
+	updateMap["letter_number3"] = strings.ToUpper(input.LetterNumber3)
+	updateMap["revision_letter_number3"] = strings.ToUpper(input.RevisionLetterNumber3)
+
+	updateMap["grand_total_quantity4"] = input.GrandTotalQuantity
+	updateMap["letter_number4"] = strings.ToUpper(input.LetterNumber4)
+	updateMap["revision_letter_number4"] = strings.ToUpper(input.RevisionLetterNumber4)
 
 	errUpd := tx.Model(&updatedElectricAssignment).Where("id = ? AND iupopk_id = ?", id, iupopkId).Updates(updateMap).Error
 
@@ -4436,6 +4626,7 @@ func (r *repository) CreateCafAssignment(input cafassignmentenduser.CreateCafAss
 		tempCafEndUser.Quantity = v.Quantity
 		tempCafEndUser.EndUserId = v.EndUserId
 		tempCafEndUser.EndUserString = tempEndUser.CompanyName
+		tempCafEndUser.LetterNumber = strings.ToUpper(v.LetterNumber)
 
 		cafAssignmentEndUser = append(cafAssignmentEndUser, tempCafEndUser)
 	}
@@ -4515,7 +4706,7 @@ func (r *repository) UploadCreateDocumentCafAssignment(id uint, urlS3 string, us
 	return cafAssignment, nil
 }
 
-func (r *repository) UploadUpdateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int) (cafassignment.CafAssignment, error) {
+func (r *repository) UploadUpdateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int, typeDocument string) (cafassignment.CafAssignment, error) {
 	var cafAssignment cafassignment.CafAssignment
 
 	tx := r.db.Begin()
@@ -4526,7 +4717,7 @@ func (r *repository) UploadUpdateDocumentCafAssignment(id uint, urlS3 string, us
 		return cafAssignment, errFind
 	}
 
-	errEdit := tx.Model(&cafAssignment).Update("revision_assignment_letter_link", urlS3).Error
+	errEdit := tx.Model(&cafAssignment).Update(typeDocument, urlS3).Error
 
 	if errEdit != nil {
 		tx.Rollback()
@@ -4644,7 +4835,20 @@ func (r *repository) UpdateCafAssignment(id int, input cafassignmentenduser.Upda
 	updateMap := make(map[string]interface{})
 
 	updateMap["grand_total_quantity"] = input.GrandTotalQuantity
+	updateMap["letter_number"] = strings.ToUpper(input.LetterNumber)
 	updateMap["revision_letter_number"] = strings.ToUpper(input.RevisionLetterNumber)
+
+	updateMap["grand_total_quantity2"] = input.GrandTotalQuantity2
+	updateMap["letter_number2"] = strings.ToUpper(input.LetterNumber2)
+	updateMap["revision_letter_number2"] = strings.ToUpper(input.RevisionLetterNumber2)
+
+	updateMap["grand_total_quantity3"] = input.GrandTotalQuantity3
+	updateMap["letter_number3"] = strings.ToUpper(input.LetterNumber3)
+	updateMap["revision_letter_number3"] = strings.ToUpper(input.RevisionLetterNumber3)
+
+	updateMap["grand_total_quantity4"] = input.GrandTotalQuantity
+	updateMap["letter_number4"] = strings.ToUpper(input.LetterNumber4)
+	updateMap["revision_letter_number4"] = strings.ToUpper(input.RevisionLetterNumber4)
 
 	errUpd := tx.Model(&updatedCafAssignment).Where("id = ? AND iupopk_id = ?", id, iupopkId).Updates(updateMap).Error
 
@@ -4671,6 +4875,7 @@ func (r *repository) UpdateCafAssignment(id int, input cafassignmentenduser.Upda
 		}
 		tempCafAssignment = values
 		tempCafAssignment.EndUserString = tempEndUser.CompanyName
+
 		if !isExist {
 			tempCafAssignment.CafAssignmentId = updatedCafAssignment.ID
 

@@ -22,6 +22,7 @@ type Counter struct {
 	Insw               int            `json:"insw"`
 	BastFormat         string         `json:"bast_format"`
 	CoaReport          int            `json:"coa_report"`
+	CoaReportLn        int            `json:"coa_report_ln"`
 	Rkab               int            `json:"rkab"`
 	ElectricAssignment int            `json:"electric_assignment"`
 	CafAssignment      int            `json:"caf_assignment"`

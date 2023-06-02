@@ -3,6 +3,7 @@ package history
 import (
 	"ajebackend/model/cafassignment"
 	"ajebackend/model/coareport"
+	"ajebackend/model/coareportln"
 	"ajebackend/model/dmo"
 	"ajebackend/model/electricassignment"
 	"ajebackend/model/groupingvesseldn"
@@ -50,6 +51,8 @@ type History struct {
 	Iupopk               *iupopk.Iupopk                         `json:"iupopk" gorm:"constraint:OnDelete:CASCADE;"`
 	CoaReportId          *uint                                  `json:"coa_report_id"`
 	CoaReport            *coareport.CoaReport                   `json:"coa_report" gorm:"constraint:OnDelete:CASCADE;"`
+	CoaReportLnId        *uint                                  `json:"coa_report_ln_id"`
+	CoaReportLn          *coareportln.CoaReportLn               `json:"coa_report_ln" gorm:"constraint:OnDelete:CASCADE;"`
 	RkabId               *uint                                  `json:"rkab_id"`
 	Rkab                 *rkab.Rkab                             `json:"rkab" gorm:"constraint:OnDelete:CASCADE;"`
 	ElectricAssignmentId *uint                                  `json:"electric_assignment_id"`

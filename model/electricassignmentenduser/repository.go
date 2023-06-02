@@ -41,33 +41,303 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 		return detailElectricAssignment, errFindList
 	}
 
-	detailElectricAssignment.ListEndUser = listElectricAssignment
+	shippingDateFrom := fmt.Sprintf("%s-01-01", electricAssignment.Year)
+	shippingDateTo := fmt.Sprintf("%s-12-31", electricAssignment.Year)
 
-	for _, value := range listElectricAssignment {
-		var realization RealizationEndUser
-		realization.PortId = value.PortId
-		realization.Port = value.Port
-		realization.Supplier = value.Supplier
-		realization.AverageCalories = value.AverageCalories
-		realization.Quantity = value.Quantity
-		realization.EndUser = value.EndUser
-		realization.ID = value.ID
-		var transactionRealization Realization
+	var listRealization []ListRealization
+	if electricAssignment.LetterNumber != "" {
+		var listAssignment []ElectricAssignmentEndUser
+		var listRealizationTemp ListRealization
 
-		shippingDateFrom := fmt.Sprintf("%s-01-01", electricAssignment.Year)
-		shippingDateTo := fmt.Sprintf("%s-12-31", electricAssignment.Year)
+		listRealizationTemp.Order = 1
+		listRealizationTemp.LetterNumber = electricAssignment.LetterNumber
 
-		errTrRealization := r.db.Table("transactions").Select("SUM(quantity_unloading) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories ").Where("transaction_type = ? AND seller_id = ? AND is_not_claim = ? AND dmo_destination_port_id = ? AND shipping_date >= ? AND shipping_date <= ?", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo).Scan(&transactionRealization).Error
+		errFindList := r.db.Preload(clause.Associations).Preload("Port.PortLocation").Where("electric_assignment_id = ? AND letter_number = ?", id, electricAssignment.LetterNumber).Find(&listAssignment).Error
 
-		if errTrRealization != nil {
-			return detailElectricAssignment, errTrRealization
+		if errFindList != nil {
+			return detailElectricAssignment, errFindList
 		}
 
-		realization.RealizationQuantity = transactionRealization.RealizationQuantity
-		realization.RealizationAverageCalories = transactionRealization.RealizationAverageCalories
+		for _, value := range listAssignment {
+			var realization RealizationEndUser
+			realization.PortId = value.PortId
+			realization.Port = value.Port
 
-		detailElectricAssignment.ListRealizationEndUser = append(detailElectricAssignment.ListRealizationEndUser, realization)
+			realization.SupplierId = value.SupplierId
+			realization.Supplier = value.Supplier
+			realization.AverageCalories = value.AverageCalories
+			realization.Quantity = value.Quantity
+			realization.EndUser = value.EndUser
+			realization.ID = value.ID
+			realization.LetterNumber = value.LetterNumber
+
+			var transactionRealization Realization
+			if value.SupplierId != nil {
+				errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity_unloading) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("LEFT JOIN companies companies on companies.id = transactions.customer_id").Where("transactions.transaction_type = ? AND transactions.seller_id = ? AND transactions.is_not_claim = ? AND transactions.dmo_destination_port_id = ? AND transactions.shipping_date >= ? AND transactions.shipping_date <= ? AND transactions.dmo_id IS NOT NULL AND companies.company_name = ?", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo, value.Supplier.CompanyName).Scan(&transactionRealization).Error
+
+				if errTrRealization != nil {
+					return detailElectricAssignment, errTrRealization
+				}
+			} else {
+				errTrRealization := r.db.Table("transactions").Select("SUM(quantity_unloading) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories").Where("transaction_type = ? AND seller_id = ? AND is_not_claim = ? AND dmo_destination_port_id = ? AND shipping_date >= ? AND shipping_date <= ? AND dmo_id IS NOT NULL AND customer_id IS NULL", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo).Scan(&transactionRealization).Error
+
+				if errTrRealization != nil {
+					return detailElectricAssignment, errTrRealization
+				}
+			}
+
+			if transactionRealization.RealizationQuantity > value.Quantity {
+				if electricAssignment.LetterNumber2 != "" {
+					realization.RealizationQuantity = value.Quantity
+				} else {
+					realization.RealizationQuantity = transactionRealization.RealizationQuantity
+				}
+			} else {
+				realization.RealizationQuantity = transactionRealization.RealizationQuantity
+			}
+
+			realization.RealizationAverageCalories = transactionRealization.RealizationAverageCalories
+
+			listRealizationTemp.ListRealizationEndUser = append(listRealizationTemp.ListRealizationEndUser, realization)
+		}
+
+		listRealization = append(listRealization, listRealizationTemp)
 	}
+
+	if electricAssignment.LetterNumber2 != "" {
+		var listAssignment []ElectricAssignmentEndUser
+		var listRealizationTemp ListRealization
+
+		listRealizationTemp.Order = 2
+		listRealizationTemp.LetterNumber = electricAssignment.LetterNumber2
+
+		errFindList := r.db.Preload(clause.Associations).Preload("Port.PortLocation").Where("electric_assignment_id = ? AND letter_number = ?", id, electricAssignment.LetterNumber2).Find(&listAssignment).Error
+
+		if errFindList != nil {
+			return detailElectricAssignment, errFindList
+		}
+
+		for _, value := range listAssignment {
+			var realization RealizationEndUser
+			realization.PortId = value.PortId
+			realization.Port = value.Port
+			realization.SupplierId = value.SupplierId
+			realization.Supplier = value.Supplier
+			realization.AverageCalories = value.AverageCalories
+			realization.Quantity = value.Quantity
+			realization.EndUser = value.EndUser
+			realization.ID = value.ID
+			realization.LetterNumber = value.LetterNumber
+
+			var transactionRealization Realization
+
+			if value.SupplierId != nil {
+				errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity_unloading) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("LEFT JOIN companies companies on companies.id = transactions.customer_id").Where("transactions.transaction_type = ? AND transactions.seller_id = ? AND transactions.is_not_claim = ? AND transactions.dmo_destination_port_id = ? AND transactions.shipping_date >= ? AND transactions.shipping_date <= ? AND transactions.dmo_id IS NOT NULL AND companies.company_name = ?", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo, value.Supplier.CompanyName).Scan(&transactionRealization).Error
+
+				if errTrRealization != nil {
+					return detailElectricAssignment, errTrRealization
+				}
+			} else {
+				errTrRealization := r.db.Table("transactions").Select("SUM(quantity_unloading) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories ").Where("transaction_type = ? AND seller_id = ? AND is_not_claim = ? AND dmo_destination_port_id = ? AND shipping_date >= ? AND shipping_date <= ? AND dmo_id IS NOT NULL AND customer_id IS NULL", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo).Scan(&transactionRealization).Error
+
+				if errTrRealization != nil {
+					return detailElectricAssignment, errTrRealization
+				}
+			}
+
+			var quantity = transactionRealization.RealizationQuantity
+			for _, val := range listElectricAssignment {
+				if value.SupplierId != nil {
+					if val.SupplierId != nil {
+						if val.PortId == value.PortId && val.Supplier.CompanyName == value.Supplier.CompanyName && val.LetterNumber == electricAssignment.LetterNumber {
+							if quantity-val.Quantity > 0 {
+								quantity = quantity - val.Quantity
+							} else {
+								quantity = 0
+							}
+						}
+					}
+				} else {
+					if val.PortId == value.PortId && val.SupplierId == nil && value.SupplierId == nil && val.LetterNumber == electricAssignment.LetterNumber {
+						if quantity-val.Quantity > 0 {
+							quantity = quantity - val.Quantity
+						} else {
+							quantity = 0
+						}
+					}
+				}
+			}
+
+			if quantity > value.Quantity {
+				if electricAssignment.LetterNumber3 != "" {
+					realization.RealizationQuantity = value.Quantity
+				} else {
+					realization.RealizationQuantity = quantity
+				}
+			} else {
+				realization.RealizationQuantity = quantity
+			}
+			realization.RealizationAverageCalories = transactionRealization.RealizationAverageCalories
+
+			listRealizationTemp.ListRealizationEndUser = append(listRealizationTemp.ListRealizationEndUser, realization)
+		}
+
+		listRealization = append(listRealization, listRealizationTemp)
+	}
+
+	if electricAssignment.LetterNumber3 != "" {
+		var listAssignment []ElectricAssignmentEndUser
+		var listRealizationTemp ListRealization
+
+		listRealizationTemp.Order = 3
+		listRealizationTemp.LetterNumber = electricAssignment.LetterNumber3
+
+		errFindList := r.db.Preload(clause.Associations).Preload("Port.PortLocation").Where("electric_assignment_id = ? AND letter_number = ?", id, electricAssignment.LetterNumber3).Find(&listAssignment).Error
+
+		if errFindList != nil {
+			return detailElectricAssignment, errFindList
+		}
+
+		for _, value := range listAssignment {
+			var realization RealizationEndUser
+			realization.PortId = value.PortId
+			realization.Port = value.Port
+			realization.SupplierId = value.SupplierId
+			realization.Supplier = value.Supplier
+			realization.AverageCalories = value.AverageCalories
+			realization.Quantity = value.Quantity
+			realization.EndUser = value.EndUser
+			realization.ID = value.ID
+			realization.LetterNumber = value.LetterNumber
+
+			var transactionRealization Realization
+			if value.SupplierId != nil {
+				errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity_unloading) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("LEFT JOIN companies companies on companies.id = transactions.customer_id").Where("transactions.transaction_type = ? AND transactions.seller_id = ? AND transactions.is_not_claim = ? AND transactions.dmo_destination_port_id = ? AND transactions.shipping_date >= ? AND transactions.shipping_date <= ? AND transactions.dmo_id IS NOT NULL AND companies.company_name = ?", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo, value.Supplier.CompanyName).Scan(&transactionRealization).Error
+
+				if errTrRealization != nil {
+					return detailElectricAssignment, errTrRealization
+				}
+			} else {
+				errTrRealization := r.db.Table("transactions").Select("SUM(quantity_unloading) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories ").Where("transaction_type = ? AND seller_id = ? AND is_not_claim = ? AND dmo_destination_port_id = ? AND shipping_date >= ? AND shipping_date <= ? AND dmo_id IS NOT NULL AND customer_id IS NULL", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo).Scan(&transactionRealization).Error
+
+				if errTrRealization != nil {
+					return detailElectricAssignment, errTrRealization
+				}
+			}
+
+			var quantity = transactionRealization.RealizationQuantity
+			for _, val := range listElectricAssignment {
+				if value.SupplierId != nil {
+					if val.SupplierId != nil {
+						if val.PortId == value.PortId && val.Supplier.CompanyName == value.Supplier.CompanyName && (val.LetterNumber == electricAssignment.LetterNumber || val.LetterNumber == electricAssignment.LetterNumber2) {
+							if quantity-val.Quantity > 0 {
+								quantity = quantity - val.Quantity
+							} else {
+								quantity = 0
+							}
+						}
+					}
+				} else {
+					if val.PortId == value.PortId && val.SupplierId == nil && value.SupplierId == nil && (val.LetterNumber == electricAssignment.LetterNumber || val.LetterNumber == electricAssignment.LetterNumber2) {
+						if quantity-val.Quantity > 0 {
+							quantity = quantity - val.Quantity
+						} else {
+							quantity = 0
+						}
+					}
+				}
+			}
+
+			if quantity > value.Quantity {
+				if electricAssignment.LetterNumber4 != "" {
+					realization.RealizationQuantity = value.Quantity
+				} else {
+					realization.RealizationQuantity = quantity
+				}
+			} else {
+				realization.RealizationQuantity = quantity
+			}
+			realization.RealizationAverageCalories = transactionRealization.RealizationAverageCalories
+
+			listRealizationTemp.ListRealizationEndUser = append(listRealizationTemp.ListRealizationEndUser, realization)
+		}
+
+		listRealization = append(listRealization, listRealizationTemp)
+	}
+
+	if electricAssignment.LetterNumber4 != "" {
+		var listAssignment []ElectricAssignmentEndUser
+		var listRealizationTemp ListRealization
+
+		listRealizationTemp.Order = 4
+		listRealizationTemp.LetterNumber = electricAssignment.LetterNumber4
+
+		errFindList := r.db.Preload(clause.Associations).Preload("Port.PortLocation").Where("electric_assignment_id = ? AND letter_number = ?", id, electricAssignment.LetterNumber4).Find(&listAssignment).Error
+
+		if errFindList != nil {
+			return detailElectricAssignment, errFindList
+		}
+
+		for _, value := range listAssignment {
+			var realization RealizationEndUser
+			realization.PortId = value.PortId
+			realization.Port = value.Port
+			realization.SupplierId = value.SupplierId
+			realization.Supplier = value.Supplier
+			realization.AverageCalories = value.AverageCalories
+			realization.Quantity = value.Quantity
+			realization.EndUser = value.EndUser
+			realization.ID = value.ID
+			realization.LetterNumber = value.LetterNumber
+
+			var transactionRealization Realization
+			if value.SupplierId != nil {
+				errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity_unloading) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("LEFT JOIN companies companies on companies.id = transactions.customer_id").Where("transactions.transaction_type = ? AND transactions.seller_id = ? AND transactions.is_not_claim = ? AND transactions.dmo_destination_port_id = ? AND transactions.shipping_date >= ? AND transactions.shipping_date <= ? AND transactions.dmo_id IS NOT NULL AND companies.company_name = ?", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo, value.Supplier.CompanyName).Scan(&transactionRealization).Error
+
+				if errTrRealization != nil {
+					return detailElectricAssignment, errTrRealization
+				}
+			} else {
+				errTrRealization := r.db.Table("transactions").Select("SUM(quantity_unloading) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories ").Where("transaction_type = ? AND seller_id = ? AND is_not_claim = ? AND dmo_destination_port_id = ? AND shipping_date >= ? AND shipping_date <= ? AND dmo_id IS NOT NULL AND customer_id IS NULL", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo).Scan(&transactionRealization).Error
+
+				if errTrRealization != nil {
+					return detailElectricAssignment, errTrRealization
+				}
+			}
+
+			var quantity = transactionRealization.RealizationQuantity
+			for _, val := range listElectricAssignment {
+				if value.SupplierId != nil {
+					if val.SupplierId != nil {
+						if val.PortId == value.PortId && val.Supplier.CompanyName == value.Supplier.CompanyName && (val.LetterNumber == electricAssignment.LetterNumber || val.LetterNumber == electricAssignment.LetterNumber2 || val.LetterNumber == electricAssignment.LetterNumber3) {
+							if quantity-val.Quantity > 0 {
+								quantity = quantity - val.Quantity
+							} else {
+								quantity = 0
+							}
+						}
+					}
+				} else {
+					if val.PortId == value.PortId && val.SupplierId == nil && value.SupplierId == nil && (val.LetterNumber == electricAssignment.LetterNumber || val.LetterNumber == electricAssignment.LetterNumber2 || val.LetterNumber == electricAssignment.LetterNumber3) {
+						if quantity-val.Quantity > 0 {
+							quantity = quantity - val.Quantity
+						} else {
+							quantity = 0
+						}
+					}
+				}
+			}
+
+			realization.RealizationQuantity = quantity
+			realization.RealizationAverageCalories = transactionRealization.RealizationAverageCalories
+
+			listRealizationTemp.ListRealizationEndUser = append(listRealizationTemp.ListRealizationEndUser, realization)
+		}
+
+		listRealization = append(listRealization, listRealizationTemp)
+	}
+
+	detailElectricAssignment.ListRealization = listRealization
 
 	return detailElectricAssignment, nil
 }

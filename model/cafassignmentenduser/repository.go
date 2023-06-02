@@ -41,34 +41,229 @@ func (r *repository) DetailCafAssignment(id int, iupopkId int) (DetailCafAssignm
 		return detailCafAssignment, errFindList
 	}
 
-	detailCafAssignment.ListEndUser = listCafAssignment
+	shippingDateFrom := fmt.Sprintf("%s-01-01", cafAssignment.Year)
+	shippingDateTo := fmt.Sprintf("%s-12-31", cafAssignment.Year)
 
-	for _, value := range listCafAssignment {
-		var realization RealizationEndUser
-		realization.AverageCalories = value.AverageCalories
-		realization.Quantity = value.Quantity
-		realization.EndUserId = value.EndUserId
-		realization.EndUser = value.EndUser
-		realization.EndUserString = value.EndUserString
-		realization.ID = value.ID
-		var transactionRealization Realization
+	var listRealization []ListRealization
 
-		shippingDateFrom := fmt.Sprintf("%s-01-01", cafAssignment.Year)
-		shippingDateTo := fmt.Sprintf("%s-12-31", cafAssignment.Year)
+	if cafAssignment.LetterNumber != "" {
+		var listAssignment []CafAssignmentEndUser
+		var listRealizationTemp ListRealization
 
-		query := fmt.Sprintf("transactions.transaction_type = '%s' AND transactions.seller_id = %v AND transactions.is_not_claim = false AND transactions.shipping_date >= '%s' AND transactions.shipping_date <= '%s' AND company.company_name = '%s'", "DN", iupopkId, shippingDateFrom, shippingDateTo, value.EndUserString)
+		listRealizationTemp.Order = 1
+		listRealizationTemp.LetterNumber = cafAssignment.LetterNumber
 
-		errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity_unloading) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("left join companies company on company.id = transactions.dmo_buyer_id").Where(query).Scan(&transactionRealization).Error
+		errFindList := r.db.Preload(clause.Associations).Where("caf_assignment_id = ? AND letter_number = ?", id, cafAssignment.LetterNumber).Find(&listAssignment).Error
 
-		if errTrRealization != nil {
-			return detailCafAssignment, errTrRealization
+		if errFindList != nil {
+			return detailCafAssignment, errFindList
 		}
+		for _, value := range listAssignment {
+			var realization RealizationEndUser
+			realization.AverageCalories = value.AverageCalories
+			realization.Quantity = value.Quantity
+			realization.EndUserId = value.EndUserId
+			realization.EndUser = value.EndUser
+			realization.EndUserString = value.EndUserString
+			realization.ID = value.ID
+			realization.LetterNumber = value.LetterNumber
+			var transactionRealization Realization
 
-		realization.RealizationQuantity = transactionRealization.RealizationQuantity
-		realization.RealizationAverageCalories = transactionRealization.RealizationAverageCalories
+			query := fmt.Sprintf("transactions.transaction_type = '%s' AND transactions.seller_id = %v AND transactions.is_not_claim = false AND transactions.shipping_date >= '%s' AND transactions.shipping_date <= '%s' AND company.company_name = '%s' AND transactions.dmo_id IS NOT NULL", "DN", iupopkId, shippingDateFrom, shippingDateTo, value.EndUserString)
 
-		detailCafAssignment.ListRealizationEndUser = append(detailCafAssignment.ListRealizationEndUser, realization)
+			errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity_unloading) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("left join companies company on company.id = transactions.dmo_buyer_id").Where(query).Scan(&transactionRealization).Error
+
+			if errTrRealization != nil {
+				return detailCafAssignment, errTrRealization
+			}
+
+			if transactionRealization.RealizationQuantity > value.Quantity {
+				if cafAssignment.LetterNumber2 != "" {
+					realization.RealizationQuantity = value.Quantity
+				} else {
+					realization.RealizationQuantity = transactionRealization.RealizationQuantity
+				}
+			} else {
+				realization.RealizationQuantity = transactionRealization.RealizationQuantity
+			}
+
+			realization.RealizationAverageCalories = transactionRealization.RealizationAverageCalories
+
+			listRealizationTemp.ListRealizationEndUser = append(listRealizationTemp.ListRealizationEndUser, realization)
+		}
+		listRealization = append(listRealization, listRealizationTemp)
 	}
 
+	if cafAssignment.LetterNumber2 != "" {
+		var listAssignment []CafAssignmentEndUser
+		var listRealizationTemp ListRealization
+
+		listRealizationTemp.Order = 2
+		listRealizationTemp.LetterNumber = cafAssignment.LetterNumber2
+
+		errFindList := r.db.Preload(clause.Associations).Where("caf_assignment_id = ? AND letter_number = ?", id, cafAssignment.LetterNumber2).Find(&listAssignment).Error
+
+		if errFindList != nil {
+			return detailCafAssignment, errFindList
+		}
+		for _, value := range listAssignment {
+			var realization RealizationEndUser
+			realization.AverageCalories = value.AverageCalories
+			realization.Quantity = value.Quantity
+			realization.EndUserId = value.EndUserId
+			realization.EndUser = value.EndUser
+			realization.EndUserString = value.EndUserString
+			realization.ID = value.ID
+			realization.LetterNumber = value.LetterNumber
+			var transactionRealization Realization
+
+			query := fmt.Sprintf("transactions.transaction_type = '%s' AND transactions.seller_id = %v AND transactions.is_not_claim = false AND transactions.shipping_date >= '%s' AND transactions.shipping_date <= '%s' AND company.company_name = '%s' AND transactions.dmo_id IS NOT NULL", "DN", iupopkId, shippingDateFrom, shippingDateTo, value.EndUserString)
+
+			errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity_unloading) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("left join companies company on company.id = transactions.dmo_buyer_id").Where(query).Scan(&transactionRealization).Error
+
+			if errTrRealization != nil {
+				return detailCafAssignment, errTrRealization
+			}
+
+			var quantity = transactionRealization.RealizationQuantity
+			for _, val := range listCafAssignment {
+				if val.EndUserString == value.EndUserString && val.LetterNumber == cafAssignment.LetterNumber {
+					if quantity-val.Quantity > 0 {
+						quantity = quantity - val.Quantity
+					} else {
+						quantity = 0
+					}
+				}
+			}
+
+			if quantity > value.Quantity {
+				if cafAssignment.LetterNumber3 != "" {
+					realization.RealizationQuantity = value.Quantity
+				} else {
+					realization.RealizationQuantity = quantity
+				}
+			} else {
+				realization.RealizationQuantity = quantity
+			}
+
+			realization.RealizationAverageCalories = transactionRealization.RealizationAverageCalories
+
+			listRealizationTemp.ListRealizationEndUser = append(listRealizationTemp.ListRealizationEndUser, realization)
+		}
+
+		listRealization = append(listRealization, listRealizationTemp)
+	}
+
+	if cafAssignment.LetterNumber3 != "" {
+		var listAssignment []CafAssignmentEndUser
+		var listRealizationTemp ListRealization
+
+		listRealizationTemp.Order = 3
+		listRealizationTemp.LetterNumber = cafAssignment.LetterNumber3
+
+		errFindList := r.db.Preload(clause.Associations).Where("caf_assignment_id = ? AND letter_number = ?", id, cafAssignment.LetterNumber3).Find(&listAssignment).Error
+
+		if errFindList != nil {
+			return detailCafAssignment, errFindList
+		}
+		for _, value := range listAssignment {
+			var realization RealizationEndUser
+			realization.AverageCalories = value.AverageCalories
+			realization.Quantity = value.Quantity
+			realization.EndUserId = value.EndUserId
+			realization.EndUser = value.EndUser
+			realization.EndUserString = value.EndUserString
+			realization.ID = value.ID
+			realization.LetterNumber = value.LetterNumber
+			var transactionRealization Realization
+
+			query := fmt.Sprintf("transactions.transaction_type = '%s' AND transactions.seller_id = %v AND transactions.is_not_claim = false AND transactions.shipping_date >= '%s' AND transactions.shipping_date <= '%s' AND company.company_name = '%s' AND transactions.dmo_id IS NOT NULL", "DN", iupopkId, shippingDateFrom, shippingDateTo, value.EndUserString)
+
+			errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity_unloading) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("left join companies company on company.id = transactions.dmo_buyer_id").Where(query).Scan(&transactionRealization).Error
+
+			if errTrRealization != nil {
+				return detailCafAssignment, errTrRealization
+			}
+			var quantity = transactionRealization.RealizationQuantity
+			for _, val := range listCafAssignment {
+				if val.EndUserString == value.EndUserString && (val.LetterNumber == cafAssignment.LetterNumber || val.LetterNumber == cafAssignment.LetterNumber2) {
+					if quantity-val.Quantity > 0 {
+						quantity = quantity - val.Quantity
+					} else {
+						quantity = 0
+					}
+				}
+			}
+
+			if quantity > value.Quantity {
+				if cafAssignment.LetterNumber3 != "" {
+					realization.RealizationQuantity = value.Quantity
+				} else {
+					realization.RealizationQuantity = quantity
+				}
+			} else {
+				realization.RealizationQuantity = quantity
+			}
+
+			realization.RealizationAverageCalories = transactionRealization.RealizationAverageCalories
+
+			listRealizationTemp.ListRealizationEndUser = append(listRealizationTemp.ListRealizationEndUser, realization)
+		}
+
+		listRealization = append(listRealization, listRealizationTemp)
+	}
+
+	if cafAssignment.LetterNumber4 != "" {
+		var listAssignment []CafAssignmentEndUser
+		var listRealizationTemp ListRealization
+
+		listRealizationTemp.Order = 4
+		listRealizationTemp.LetterNumber = cafAssignment.LetterNumber4
+
+		errFindList := r.db.Preload(clause.Associations).Where("caf_assignment_id = ? AND letter_number = ?", id, cafAssignment.LetterNumber4).Find(&listAssignment).Error
+
+		if errFindList != nil {
+			return detailCafAssignment, errFindList
+		}
+		for _, value := range listAssignment {
+			var realization RealizationEndUser
+			realization.AverageCalories = value.AverageCalories
+			realization.Quantity = value.Quantity
+			realization.EndUserId = value.EndUserId
+			realization.EndUser = value.EndUser
+			realization.EndUserString = value.EndUserString
+			realization.ID = value.ID
+			realization.LetterNumber = value.LetterNumber
+			var transactionRealization Realization
+
+			query := fmt.Sprintf("transactions.transaction_type = '%s' AND transactions.seller_id = %v AND transactions.is_not_claim = false AND transactions.shipping_date >= '%s' AND transactions.shipping_date <= '%s' AND company.company_name = '%s' AND transactions.dmo_id IS NOT NULL", "DN", iupopkId, shippingDateFrom, shippingDateTo, value.EndUserString)
+
+			errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity_unloading) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("left join companies company on company.id = transactions.dmo_buyer_id").Where(query).Scan(&transactionRealization).Error
+
+			if errTrRealization != nil {
+				return detailCafAssignment, errTrRealization
+			}
+
+			var quantity = transactionRealization.RealizationQuantity
+			for _, val := range listCafAssignment {
+				if val.EndUserString == value.EndUserString && (val.LetterNumber == cafAssignment.LetterNumber || val.LetterNumber == cafAssignment.LetterNumber2 || val.LetterNumber == cafAssignment.LetterNumber3) {
+					if quantity-val.Quantity > 0 {
+						quantity = quantity - val.Quantity
+					} else {
+						quantity = 0
+					}
+				}
+			}
+
+			realization.RealizationQuantity = quantity
+			realization.RealizationAverageCalories = transactionRealization.RealizationAverageCalories
+
+			listRealizationTemp.ListRealizationEndUser = append(listRealizationTemp.ListRealizationEndUser, realization)
+		}
+
+		listRealization = append(listRealization, listRealizationTemp)
+	}
+
+	detailCafAssignment.ListRealization = listRealization
 	return detailCafAssignment, nil
 }
