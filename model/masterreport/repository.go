@@ -1,6 +1,10 @@
 package masterreport
 
 import (
+	"ajebackend/model/cafassignment"
+	"ajebackend/model/cafassignmentenduser"
+	"ajebackend/model/electricassignment"
+	"ajebackend/model/electricassignmentenduser"
 	"ajebackend/model/production"
 	"ajebackend/model/rkab"
 	"ajebackend/model/transaction"
@@ -767,6 +771,36 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 
 	if errFind != nil {
 		return saleDetail, errFind
+	}
+
+	var electricAssignment electricassignment.ElectricAssignment
+	var electricAssignmentEndUser electricassignmentenduser.ElectricAssignmentEndUser
+
+	errFindElectricAssignment := r.db.Preload(clause.Associations).Where("year = ?", year).First(&electricAssignment).Error
+
+	if errFindElectricAssignment != nil {
+		return saleDetail, errFindElectricAssignment
+	}
+
+	errFindElectricAssignmentEndUser := r.db.Preload(clause.Associations).Preload("Port.PortLocation").Where("electric_assignment_id = ?", electricAssignment.ID).Find(&electricAssignmentEndUser).Error
+
+	if errFindElectricAssignmentEndUser != nil {
+		return saleDetail, errFindElectricAssignmentEndUser
+	}
+
+	var cafAssignment cafassignment.CafAssignment
+	var cafAssignmentEndUser cafassignmentenduser.CafAssignmentEndUser
+
+	errFindCafAssignment := r.db.Preload(clause.Associations).Where("year = ?", year).First(&cafAssignment).Error
+
+	if errFindCafAssignment != nil {
+		return saleDetail, errFindCafAssignment
+	}
+
+	errFindCafAssignmentEndUser := r.db.Preload(clause.Associations).Where("caf_assignment_id = ?", cafAssignment.ID).Find(&cafAssignmentEndUser).Error
+
+	if errFindCafAssignmentEndUser != nil {
+		return saleDetail, errFindCafAssignmentEndUser
 	}
 
 	// Rkabs Query
