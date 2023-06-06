@@ -3847,7 +3847,7 @@ func (r *repository) CreateCoaReportLn(dateFrom string, dateTo string, iupopkId 
 		return coaReportLn, errors.New("Report already has been created")
 	}
 
-	idNumber := "RCO-" + iup.Code
+	idNumber := "RCN-" + iup.Code
 
 	counter := counterTransaction.CoaReportLn
 
