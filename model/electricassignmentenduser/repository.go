@@ -70,13 +70,20 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 			realization.EndUser = value.EndUser
 			realization.ID = value.ID
 			realization.LetterNumber = value.LetterNumber
-
+			var tempAssignment []ElectricAssignmentEndUser
 			var transactionRealization Realization
+
 			if value.SupplierId != nil {
 				errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity_unloading) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("LEFT JOIN companies companies on companies.id = transactions.customer_id").Where("transactions.transaction_type = ? AND transactions.seller_id = ? AND transactions.is_not_claim = ? AND transactions.dmo_destination_port_id = ? AND transactions.shipping_date >= ? AND transactions.shipping_date <= ? AND transactions.dmo_id IS NOT NULL AND companies.company_name = ?", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo, value.Supplier.CompanyName).Scan(&transactionRealization).Error
 
 				if errTrRealization != nil {
 					return detailElectricAssignment, errTrRealization
+				}
+
+				errFindTemp := r.db.Where("port_id = ? AND supplier_id = ? AND electric_assignment_id = ?", value.PortId, value.SupplierId, electricAssignment.ID).Find(&tempAssignment).Error
+
+				if errFindTemp != nil {
+					return detailElectricAssignment, errFindTemp
 				}
 			} else {
 				errTrRealization := r.db.Table("transactions").Select("SUM(quantity_unloading) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories").Where("transaction_type = ? AND seller_id = ? AND is_not_claim = ? AND dmo_destination_port_id = ? AND shipping_date >= ? AND shipping_date <= ? AND dmo_id IS NOT NULL AND customer_id IS NULL", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo).Scan(&transactionRealization).Error
@@ -84,10 +91,17 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 				if errTrRealization != nil {
 					return detailElectricAssignment, errTrRealization
 				}
+
+				errFindTemp := r.db.Where("port_id = ? AND supplier_id IS NULL AND electric_assignment_id = ?", value.PortId, electricAssignment.ID).Find(&tempAssignment).Error
+
+				if errFindTemp != nil {
+					return detailElectricAssignment, errFindTemp
+				}
 			}
 
 			if transactionRealization.RealizationQuantity > value.Quantity {
-				if electricAssignment.LetterNumber2 != "" {
+
+				if len(tempAssignment) > 1 {
 					realization.RealizationQuantity = value.Quantity
 				} else {
 					realization.RealizationQuantity = transactionRealization.RealizationQuantity
@@ -130,18 +144,30 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 			realization.LetterNumber = value.LetterNumber
 
 			var transactionRealization Realization
-
+			var tempAssignment []ElectricAssignmentEndUser
 			if value.SupplierId != nil {
 				errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity_unloading) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("LEFT JOIN companies companies on companies.id = transactions.customer_id").Where("transactions.transaction_type = ? AND transactions.seller_id = ? AND transactions.is_not_claim = ? AND transactions.dmo_destination_port_id = ? AND transactions.shipping_date >= ? AND transactions.shipping_date <= ? AND transactions.dmo_id IS NOT NULL AND companies.company_name = ?", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo, value.Supplier.CompanyName).Scan(&transactionRealization).Error
 
 				if errTrRealization != nil {
 					return detailElectricAssignment, errTrRealization
 				}
+
+				errFindTemp := r.db.Where("port_id = ? AND supplier_id = ? AND electric_assignment_id = ?", value.PortId, value.SupplierId, electricAssignment.ID).Find(&tempAssignment).Error
+
+				if errFindTemp != nil {
+					return detailElectricAssignment, errFindTemp
+				}
 			} else {
 				errTrRealization := r.db.Table("transactions").Select("SUM(quantity_unloading) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories ").Where("transaction_type = ? AND seller_id = ? AND is_not_claim = ? AND dmo_destination_port_id = ? AND shipping_date >= ? AND shipping_date <= ? AND dmo_id IS NOT NULL AND customer_id IS NULL", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo).Scan(&transactionRealization).Error
 
 				if errTrRealization != nil {
 					return detailElectricAssignment, errTrRealization
+				}
+
+				errFindTemp := r.db.Where("port_id = ? AND supplier_id IS NULL AND electric_assignment_id = ?", value.PortId, electricAssignment.ID).Find(&tempAssignment).Error
+
+				if errFindTemp != nil {
+					return detailElectricAssignment, errFindTemp
 				}
 			}
 
@@ -169,10 +195,18 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 			}
 
 			if quantity > value.Quantity {
-				if electricAssignment.LetterNumber3 != "" {
-					realization.RealizationQuantity = value.Quantity
-				} else {
+				var isOverQuantity = false
+
+				for _, temp := range tempAssignment {
+					if temp.LetterNumber == electricAssignment.LetterNumber3 || temp.LetterNumber == electricAssignment.LetterNumber4 {
+						isOverQuantity = true
+					}
+				}
+
+				if isOverQuantity {
 					realization.RealizationQuantity = quantity
+				} else {
+					realization.RealizationQuantity = value.Quantity
 				}
 			} else {
 				realization.RealizationQuantity = quantity
@@ -211,17 +245,32 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 			realization.LetterNumber = value.LetterNumber
 
 			var transactionRealization Realization
+			var tempAssignment []ElectricAssignmentEndUser
+
 			if value.SupplierId != nil {
 				errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity_unloading) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("LEFT JOIN companies companies on companies.id = transactions.customer_id").Where("transactions.transaction_type = ? AND transactions.seller_id = ? AND transactions.is_not_claim = ? AND transactions.dmo_destination_port_id = ? AND transactions.shipping_date >= ? AND transactions.shipping_date <= ? AND transactions.dmo_id IS NOT NULL AND companies.company_name = ?", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo, value.Supplier.CompanyName).Scan(&transactionRealization).Error
 
 				if errTrRealization != nil {
 					return detailElectricAssignment, errTrRealization
 				}
+
+				errFindTemp := r.db.Where("port_id = ? AND supplier_id = ? AND electric_assignment_id = ?", value.PortId, value.SupplierId, electricAssignment.ID).Find(&tempAssignment).Error
+
+				if errFindTemp != nil {
+					return detailElectricAssignment, errFindTemp
+				}
+
 			} else {
 				errTrRealization := r.db.Table("transactions").Select("SUM(quantity_unloading) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories ").Where("transaction_type = ? AND seller_id = ? AND is_not_claim = ? AND dmo_destination_port_id = ? AND shipping_date >= ? AND shipping_date <= ? AND dmo_id IS NOT NULL AND customer_id IS NULL", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo).Scan(&transactionRealization).Error
 
 				if errTrRealization != nil {
 					return detailElectricAssignment, errTrRealization
+				}
+
+				errFindTemp := r.db.Where("port_id = ? AND supplier_id IS NULL AND electric_assignment_id = ?", value.PortId, electricAssignment.ID).Find(&tempAssignment).Error
+
+				if errFindTemp != nil {
+					return detailElectricAssignment, errFindTemp
 				}
 			}
 
@@ -249,10 +298,19 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 			}
 
 			if quantity > value.Quantity {
-				if electricAssignment.LetterNumber4 != "" {
-					realization.RealizationQuantity = value.Quantity
-				} else {
+
+				var isOverQuantity = false
+
+				for _, temp := range tempAssignment {
+					if temp.LetterNumber == electricAssignment.LetterNumber4 {
+						isOverQuantity = true
+					}
+				}
+
+				if isOverQuantity {
 					realization.RealizationQuantity = quantity
+				} else {
+					realization.RealizationQuantity = value.Quantity
 				}
 			} else {
 				realization.RealizationQuantity = quantity

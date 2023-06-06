@@ -774,9 +774,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 	}
 
 	var electricAssignment electricassignment.ElectricAssignment
-	var electricAssignmentEndUser electricassignmentenduser.ElectricAssignmentEndUser
+	var electricAssignmentEndUser []electricassignmentenduser.ElectricAssignmentEndUser
 
-	errFindElectricAssignment := r.db.Preload(clause.Associations).Where("year = ?", year).First(&electricAssignment).Error
+	errFindElectricAssignment := r.db.Preload(clause.Associations).Where("year = ? AND iupopk_id = ?", year, iupopkId).First(&electricAssignment).Error
 
 	if errFindElectricAssignment != nil {
 		return saleDetail, errFindElectricAssignment
@@ -789,9 +789,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 	}
 
 	var cafAssignment cafassignment.CafAssignment
-	var cafAssignmentEndUser cafassignmentenduser.CafAssignmentEndUser
+	var cafAssignmentEndUser []cafassignmentenduser.CafAssignmentEndUser
 
-	errFindCafAssignment := r.db.Preload(clause.Associations).Where("year = ?", year).First(&cafAssignment).Error
+	errFindCafAssignment := r.db.Preload(clause.Associations).Where("year = ? AND iupopk_id = ?", year, iupopkId).First(&cafAssignment).Error
 
 	if errFindCafAssignment != nil {
 		return saleDetail, errFindCafAssignment
@@ -842,11 +842,46 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 	saleDetail.NonElectricity.November = make(map[string]map[string]float64)
 	saleDetail.NonElectricity.December = make(map[string]map[string]float64)
 
+	saleDetail.ElectricAssignment.Quantity = electricAssignment.GrandTotalQuantity + electricAssignment.GrandTotalQuantity2 + electricAssignment.GrandTotalQuantity3 + electricAssignment.GrandTotalQuantity4
+
+	saleDetail.CafAssignment.Quantity = cafAssignment.GrandTotalQuantity + cafAssignment.GrandTotalQuantity2 + cafAssignment.GrandTotalQuantity3 + cafAssignment.GrandTotalQuantity4
+
 	for _, v := range listTransactions {
 		date, _ := time.Parse("2006-01-02T00:00:00Z", *v.ShippingDate)
 		_, month, _ := date.Date()
 
 		if v.IsNotClaim == false {
+			if v.DmoId != nil {
+				var isAdded = false
+				for _, value := range electricAssignmentEndUser {
+					if !isAdded {
+						if v.CustomerId != nil && value.SupplierId != nil && v.DmoDestinationPortId != nil {
+							if v.Customer.CompanyName == value.Supplier.CompanyName && *v.DmoDestinationPortId == value.PortId {
+								isAdded = true
+								saleDetail.ElectricAssignment.RealizationQuantity += v.QuantityUnloading
+
+							}
+						} else {
+							if v.DmoDestinationPortId != nil {
+								if v.CustomerId == nil && value.SupplierId == nil && *v.DmoDestinationPortId == value.PortId {
+									isAdded = true
+									saleDetail.ElectricAssignment.RealizationQuantity += v.QuantityUnloading
+
+								}
+							}
+						}
+					}
+				}
+
+				for _, value := range cafAssignmentEndUser {
+					if v.DmoBuyer != nil {
+						if v.DmoBuyer.CompanyName == value.EndUserString {
+							saleDetail.CafAssignment.RealizationQuantity += v.QuantityUnloading
+						}
+					}
+				}
+			}
+
 			switch int(month) {
 			case 1:
 				if v.TransactionType == "DN" {

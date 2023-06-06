@@ -137,6 +137,8 @@ type SaleDetail struct {
 	Production            QuantityProduction  `json:"production"`
 	Domestic              Domestic            `json:"domestic"`
 	Export                Export              `json:"export"`
+	ElectricAssignment    ElectricAssignment  `json:"electric_assignment"`
+	CafAssignment         CafAssignment       `json:"caf_assignment"`
 	CompanyElectricity    map[string][]string `json:"company_electricity"`
 	CompanyNonElectricity map[string][]string `json:"company_non_electricity"`
 }
@@ -202,4 +204,14 @@ type Export struct {
 	November  float64 `json:"november"`
 	December  float64 `json:"december"`
 	Total     float64 `json:"total"`
+}
+
+type ElectricAssignment struct {
+	Quantity            float64 `json:"quantity"`
+	RealizationQuantity float64 `json:"realization_quantity"`
+}
+
+type CafAssignment struct {
+	Quantity            float64 `json:"quantity"`
+	RealizationQuantity float64 `json:"realization_quantity"`
 }
