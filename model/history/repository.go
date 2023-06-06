@@ -3847,7 +3847,7 @@ func (r *repository) CreateCoaReportLn(dateFrom string, dateTo string, iupopkId 
 		return coaReportLn, errors.New("Report already has been created")
 	}
 
-	idNumber := "RCO-" + iup.Code
+	idNumber := "RCN-" + iup.Code
 
 	counter := counterTransaction.CoaReportLn
 
@@ -4399,7 +4399,7 @@ func (r *repository) UpdateElectricAssignment(id int, input electricassignmenten
 	updateMap["letter_number3"] = strings.ToUpper(input.LetterNumber3)
 	updateMap["revision_letter_number3"] = strings.ToUpper(input.RevisionLetterNumber3)
 
-	updateMap["grand_total_quantity4"] = input.GrandTotalQuantity
+	updateMap["grand_total_quantity4"] = input.GrandTotalQuantity4
 	updateMap["letter_number4"] = strings.ToUpper(input.LetterNumber4)
 	updateMap["revision_letter_number4"] = strings.ToUpper(input.RevisionLetterNumber4)
 

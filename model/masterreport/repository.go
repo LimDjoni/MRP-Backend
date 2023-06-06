@@ -1,6 +1,10 @@
 package masterreport
 
 import (
+	"ajebackend/model/cafassignment"
+	"ajebackend/model/cafassignmentenduser"
+	"ajebackend/model/electricassignment"
+	"ajebackend/model/electricassignmentenduser"
 	"ajebackend/model/production"
 	"ajebackend/model/rkab"
 	"ajebackend/model/transaction"
@@ -769,6 +773,36 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 		return saleDetail, errFind
 	}
 
+	var electricAssignment electricassignment.ElectricAssignment
+	var electricAssignmentEndUser []electricassignmentenduser.ElectricAssignmentEndUser
+
+	errFindElectricAssignment := r.db.Preload(clause.Associations).Where("year = ? AND iupopk_id = ?", year, iupopkId).First(&electricAssignment).Error
+
+	if errFindElectricAssignment != nil {
+		return saleDetail, errFindElectricAssignment
+	}
+
+	errFindElectricAssignmentEndUser := r.db.Preload(clause.Associations).Preload("Port.PortLocation").Where("electric_assignment_id = ?", electricAssignment.ID).Find(&electricAssignmentEndUser).Error
+
+	if errFindElectricAssignmentEndUser != nil {
+		return saleDetail, errFindElectricAssignmentEndUser
+	}
+
+	var cafAssignment cafassignment.CafAssignment
+	var cafAssignmentEndUser []cafassignmentenduser.CafAssignmentEndUser
+
+	errFindCafAssignment := r.db.Preload(clause.Associations).Where("year = ? AND iupopk_id = ?", year, iupopkId).First(&cafAssignment).Error
+
+	if errFindCafAssignment != nil {
+		return saleDetail, errFindCafAssignment
+	}
+
+	errFindCafAssignmentEndUser := r.db.Preload(clause.Associations).Where("caf_assignment_id = ?", cafAssignment.ID).Find(&cafAssignmentEndUser).Error
+
+	if errFindCafAssignmentEndUser != nil {
+		return saleDetail, errFindCafAssignmentEndUser
+	}
+
 	// Rkabs Query
 	var rkabs []rkab.Rkab
 
@@ -808,11 +842,46 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 	saleDetail.NonElectricity.November = make(map[string]map[string]float64)
 	saleDetail.NonElectricity.December = make(map[string]map[string]float64)
 
+	saleDetail.ElectricAssignment.Quantity = electricAssignment.GrandTotalQuantity + electricAssignment.GrandTotalQuantity2 + electricAssignment.GrandTotalQuantity3 + electricAssignment.GrandTotalQuantity4
+
+	saleDetail.CafAssignment.Quantity = cafAssignment.GrandTotalQuantity + cafAssignment.GrandTotalQuantity2 + cafAssignment.GrandTotalQuantity3 + cafAssignment.GrandTotalQuantity4
+
 	for _, v := range listTransactions {
 		date, _ := time.Parse("2006-01-02T00:00:00Z", *v.ShippingDate)
 		_, month, _ := date.Date()
 
 		if v.IsNotClaim == false {
+			if v.DmoId != nil {
+				var isAdded = false
+				for _, value := range electricAssignmentEndUser {
+					if !isAdded {
+						if v.CustomerId != nil && value.SupplierId != nil && v.DmoDestinationPortId != nil {
+							if v.Customer.CompanyName == value.Supplier.CompanyName && *v.DmoDestinationPortId == value.PortId {
+								isAdded = true
+								saleDetail.ElectricAssignment.RealizationQuantity += v.QuantityUnloading
+
+							}
+						} else {
+							if v.DmoDestinationPortId != nil {
+								if v.CustomerId == nil && value.SupplierId == nil && *v.DmoDestinationPortId == value.PortId {
+									isAdded = true
+									saleDetail.ElectricAssignment.RealizationQuantity += v.QuantityUnloading
+
+								}
+							}
+						}
+					}
+				}
+
+				for _, value := range cafAssignmentEndUser {
+					if v.DmoBuyer != nil {
+						if v.DmoBuyer.CompanyName == value.EndUserString {
+							saleDetail.CafAssignment.RealizationQuantity += v.QuantityUnloading
+						}
+					}
+				}
+			}
+
 			switch int(month) {
 			case 1:
 				if v.TransactionType == "DN" {

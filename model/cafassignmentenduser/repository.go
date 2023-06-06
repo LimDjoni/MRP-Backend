@@ -68,6 +68,7 @@ func (r *repository) DetailCafAssignment(id int, iupopkId int) (DetailCafAssignm
 			realization.ID = value.ID
 			realization.LetterNumber = value.LetterNumber
 			var transactionRealization Realization
+			var tempAssignment []CafAssignmentEndUser
 
 			query := fmt.Sprintf("transactions.transaction_type = '%s' AND transactions.seller_id = %v AND transactions.is_not_claim = false AND transactions.shipping_date >= '%s' AND transactions.shipping_date <= '%s' AND company.company_name = '%s' AND transactions.dmo_id IS NOT NULL", "DN", iupopkId, shippingDateFrom, shippingDateTo, value.EndUserString)
 
@@ -77,8 +78,15 @@ func (r *repository) DetailCafAssignment(id int, iupopkId int) (DetailCafAssignm
 				return detailCafAssignment, errTrRealization
 			}
 
+			errFindTemp := r.db.Where("end_user_string = ? AND caf_assignment_id = ?", value.EndUserString, cafAssignment.ID).Find(&tempAssignment).Error
+
+			if errFindTemp != nil {
+				return detailCafAssignment, errFindTemp
+			}
+
 			if transactionRealization.RealizationQuantity > value.Quantity {
-				if cafAssignment.LetterNumber2 != "" {
+
+				if len(tempAssignment) > 1 {
 					realization.RealizationQuantity = value.Quantity
 				} else {
 					realization.RealizationQuantity = transactionRealization.RealizationQuantity
@@ -116,6 +124,7 @@ func (r *repository) DetailCafAssignment(id int, iupopkId int) (DetailCafAssignm
 			realization.ID = value.ID
 			realization.LetterNumber = value.LetterNumber
 			var transactionRealization Realization
+			var tempAssignment []CafAssignmentEndUser
 
 			query := fmt.Sprintf("transactions.transaction_type = '%s' AND transactions.seller_id = %v AND transactions.is_not_claim = false AND transactions.shipping_date >= '%s' AND transactions.shipping_date <= '%s' AND company.company_name = '%s' AND transactions.dmo_id IS NOT NULL", "DN", iupopkId, shippingDateFrom, shippingDateTo, value.EndUserString)
 
@@ -123,6 +132,12 @@ func (r *repository) DetailCafAssignment(id int, iupopkId int) (DetailCafAssignm
 
 			if errTrRealization != nil {
 				return detailCafAssignment, errTrRealization
+			}
+
+			errFindTemp := r.db.Where("end_user_string = ? AND caf_assignment_id = ?", value.EndUserString, cafAssignment.ID).Find(&tempAssignment).Error
+
+			if errFindTemp != nil {
+				return detailCafAssignment, errFindTemp
 			}
 
 			var quantity = transactionRealization.RealizationQuantity
@@ -137,10 +152,18 @@ func (r *repository) DetailCafAssignment(id int, iupopkId int) (DetailCafAssignm
 			}
 
 			if quantity > value.Quantity {
-				if cafAssignment.LetterNumber3 != "" {
-					realization.RealizationQuantity = value.Quantity
-				} else {
+				var isOverQuantity = false
+
+				for _, temp := range tempAssignment {
+					if temp.LetterNumber == cafAssignment.LetterNumber3 || temp.LetterNumber == cafAssignment.LetterNumber4 {
+						isOverQuantity = true
+					}
+				}
+
+				if isOverQuantity {
 					realization.RealizationQuantity = quantity
+				} else {
+					realization.RealizationQuantity = value.Quantity
 				}
 			} else {
 				realization.RealizationQuantity = quantity
@@ -176,6 +199,7 @@ func (r *repository) DetailCafAssignment(id int, iupopkId int) (DetailCafAssignm
 			realization.ID = value.ID
 			realization.LetterNumber = value.LetterNumber
 			var transactionRealization Realization
+			var tempAssignment []CafAssignmentEndUser
 
 			query := fmt.Sprintf("transactions.transaction_type = '%s' AND transactions.seller_id = %v AND transactions.is_not_claim = false AND transactions.shipping_date >= '%s' AND transactions.shipping_date <= '%s' AND company.company_name = '%s' AND transactions.dmo_id IS NOT NULL", "DN", iupopkId, shippingDateFrom, shippingDateTo, value.EndUserString)
 
@@ -184,6 +208,13 @@ func (r *repository) DetailCafAssignment(id int, iupopkId int) (DetailCafAssignm
 			if errTrRealization != nil {
 				return detailCafAssignment, errTrRealization
 			}
+
+			errFindTemp := r.db.Where("end_user_string = ? AND caf_assignment_id = ?", value.EndUserString, cafAssignment.ID).Find(&tempAssignment).Error
+
+			if errFindTemp != nil {
+				return detailCafAssignment, errFindTemp
+			}
+
 			var quantity = transactionRealization.RealizationQuantity
 			for _, val := range listCafAssignment {
 				if val.EndUserString == value.EndUserString && (val.LetterNumber == cafAssignment.LetterNumber || val.LetterNumber == cafAssignment.LetterNumber2) {
@@ -196,10 +227,18 @@ func (r *repository) DetailCafAssignment(id int, iupopkId int) (DetailCafAssignm
 			}
 
 			if quantity > value.Quantity {
-				if cafAssignment.LetterNumber3 != "" {
-					realization.RealizationQuantity = value.Quantity
-				} else {
+				var isOverQuantity = false
+
+				for _, temp := range tempAssignment {
+					if temp.LetterNumber == cafAssignment.LetterNumber4 {
+						isOverQuantity = true
+					}
+				}
+
+				if isOverQuantity {
 					realization.RealizationQuantity = quantity
+				} else {
+					realization.RealizationQuantity = value.Quantity
 				}
 			} else {
 				realization.RealizationQuantity = quantity
