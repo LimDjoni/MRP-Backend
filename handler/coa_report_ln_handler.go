@@ -551,7 +551,7 @@ func (h *coaReportLnHandler) RequestCreateExcelCoaReportLn(c *fiber.Ctx) error {
 
 	var inputRequestCreateExcel coareportln.InputRequestCreateUploadCoaReportLn
 	inputRequestCreateExcel.Authorization = header["Authorization"]
-	inputRequestCreateExcel.CoaReportLn = detailCoaReportLn.Detail
+	inputRequestCreateExcel.CoaReport = detailCoaReportLn.Detail
 	inputRequestCreateExcel.ListTransaction = detailCoaReportLn.ListTransaction
 	inputRequestCreateExcel.Iupopk = detailCoaReportLn.Detail.Iupopk
 	hitJob, hitJobErr := h.coaReportLnService.RequestCreateExcelCoaReportLn(inputRequestCreateExcel)
