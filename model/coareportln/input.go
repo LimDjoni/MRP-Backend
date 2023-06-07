@@ -16,7 +16,7 @@ type InputUpdateDocumentCoaReportLn struct {
 
 type InputRequestCreateUploadCoaReportLn struct {
 	Authorization   string                    `json:"authorization"`
-	CoaReportLn     CoaReportLn               `json:"coa_report_ln"`
+	CoaReport       CoaReportLn               `json:"coa_report"`
 	ListTransaction []transaction.Transaction `json:"list_transaction"`
 	Iupopk          iupopk.Iupopk             `json:"iupopk"`
 }

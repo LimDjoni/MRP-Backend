@@ -776,31 +776,27 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 	var electricAssignment electricassignment.ElectricAssignment
 	var electricAssignmentEndUser []electricassignmentenduser.ElectricAssignmentEndUser
 
-	errFindElectricAssignment := r.db.Preload(clause.Associations).Where("year = ? AND iupopk_id = ?", year, iupopkId).First(&electricAssignment).Error
+	r.db.Preload(clause.Associations).Where("year = ? AND iupopk_id = ?", year, iupopkId).First(&electricAssignment)
 
-	if errFindElectricAssignment != nil {
-		return saleDetail, errFindElectricAssignment
-	}
+	if electricAssignment.ID != 0 {
+		errFindElectricAssignmentEndUser := r.db.Preload(clause.Associations).Preload("Port.PortLocation").Where("electric_assignment_id = ?", electricAssignment.ID).Find(&electricAssignmentEndUser).Error
 
-	errFindElectricAssignmentEndUser := r.db.Preload(clause.Associations).Preload("Port.PortLocation").Where("electric_assignment_id = ?", electricAssignment.ID).Find(&electricAssignmentEndUser).Error
-
-	if errFindElectricAssignmentEndUser != nil {
-		return saleDetail, errFindElectricAssignmentEndUser
+		if errFindElectricAssignmentEndUser != nil {
+			return saleDetail, errFindElectricAssignmentEndUser
+		}
 	}
 
 	var cafAssignment cafassignment.CafAssignment
 	var cafAssignmentEndUser []cafassignmentenduser.CafAssignmentEndUser
 
-	errFindCafAssignment := r.db.Preload(clause.Associations).Where("year = ? AND iupopk_id = ?", year, iupopkId).First(&cafAssignment).Error
+	r.db.Preload(clause.Associations).Where("year = ? AND iupopk_id = ?", year, iupopkId).First(&cafAssignment)
 
-	if errFindCafAssignment != nil {
-		return saleDetail, errFindCafAssignment
-	}
+	if cafAssignment.ID != 0 {
+		errFindCafAssignmentEndUser := r.db.Preload(clause.Associations).Where("caf_assignment_id = ?", cafAssignment.ID).Find(&cafAssignmentEndUser).Error
 
-	errFindCafAssignmentEndUser := r.db.Preload(clause.Associations).Where("caf_assignment_id = ?", cafAssignment.ID).Find(&cafAssignmentEndUser).Error
-
-	if errFindCafAssignmentEndUser != nil {
-		return saleDetail, errFindCafAssignmentEndUser
+		if errFindCafAssignmentEndUser != nil {
+			return saleDetail, errFindCafAssignmentEndUser
+		}
 	}
 
 	// Rkabs Query
