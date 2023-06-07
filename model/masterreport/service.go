@@ -3,6 +3,7 @@ package masterreport
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -706,6 +707,20 @@ func (s *service) CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutp
 
 	goment.SetLocale("id")
 
+	t := time.Now()
+
+	month := t.Month()
+	yearNow := t.Year()
+	yearString := strconv.Itoa(yearNow)
+
+	var maxDmoObligationQuota float64
+
+	for _, rkab := range reportRecapDmo.Rkabs {
+		if maxDmoObligationQuota < rkab.ProductionQuota*rkab.DmoObligation/100 {
+			maxDmoObligationQuota = rkab.ProductionQuota * rkab.DmoObligation / 100
+		}
+	}
+
 	for idx, rkab := range reportRecapDmo.Rkabs {
 
 		dateFormat, errDate := goment.New(rkab.DateOfIssue)
@@ -729,12 +744,20 @@ func (s *service) CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutp
 		file.SetCellValue(sheetName, fmt.Sprintf("A%v", 25+(8*idx)), fmt.Sprintf("disetujui tgl %s", dateFormat.Format("DD MMMM YYYY", "id")))
 
 		file.SetCellValue(sheetName, fmt.Sprintf("A%v", 27+(8*idx)), fmt.Sprintf("%% Pemenuhan DMO terhadap kewajiban pemenuhan DMO %.0f%%", rkab.DmoObligation))
-		file.SetCellFormula(sheetName, fmt.Sprintf("D%v", 27+(8*idx)), fmt.Sprintf("D%v/%.2f%%", 24+(8*idx), rkab.DmoObligation))
+		file.SetCellFormula(sheetName, fmt.Sprintf("D%v", 27+(8*idx)), fmt.Sprintf("D18/F%v", 27+(8*idx)))
+		file.SetCellValue(sheetName, fmt.Sprintf("F%v", 27+(8*idx)), maxDmoObligationQuota)
 
-		file.SetCellValue(sheetName, fmt.Sprintf("A%v", 29+(8*idx)), "% Pemenuhan DMO terhadap Rencana Produksi (Prorata 12 bulan)")
-		file.SetCellFormula(sheetName, fmt.Sprintf("D%v", 29+(8*idx)), fmt.Sprintf("D18/F%v", 29+(8*idx)))
-		file.SetCellValue(sheetName, fmt.Sprintf("F%v", 29+(8*idx)), rkab.ProductionQuota)
-		file.SetCellValue(sheetName, fmt.Sprintf("G%v", 29+(8*idx)), "prorata 12 bulan")
+		if yearString == year {
+			file.SetCellValue(sheetName, fmt.Sprintf("A%v", 29+(8*idx)), fmt.Sprintf("%% Pemenuhan DMO terhadap Rencana Produksi (Prorata %v bulan)", int(month)))
+			file.SetCellFormula(sheetName, fmt.Sprintf("D%v", 29+(8*idx)), fmt.Sprintf("D18/F%v", 29+(8*idx)))
+			file.SetCellValue(sheetName, fmt.Sprintf("F%v", 29+(8*idx)), rkab.ProductionQuota*float64(int(month))/float64(12))
+			file.SetCellValue(sheetName, fmt.Sprintf("G%v", 29+(8*idx)), fmt.Sprintf("prorata %v bulan", int(month)))
+		} else {
+			file.SetCellValue(sheetName, fmt.Sprintf("A%v", 29+(8*idx)), "% Pemenuhan DMO terhadap Rencana Produksi (Prorata 12 bulan)")
+			file.SetCellFormula(sheetName, fmt.Sprintf("D%v", 29+(8*idx)), fmt.Sprintf("D18/F%v", 29+(8*idx)))
+			file.SetCellValue(sheetName, fmt.Sprintf("F%v", 29+(8*idx)), rkab.ProductionQuota)
+			file.SetCellValue(sheetName, fmt.Sprintf("G%v", 29+(8*idx)), "prorata 12 bulan")
+		}
 
 	}
 
@@ -1125,7 +1148,7 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 		}
 	}
 	file.SetCellValue(sheetName, fmt.Sprintf("B%v", startProduction+14), "TOTAL")
-	file.SetCellValue(sheetName, fmt.Sprintf("D%v", startProduction+14), reportSaleDetail.Production.Total)
+	file.SetCellFormula(sheetName, fmt.Sprintf("D%v", startProduction+14), fmt.Sprintf("SUM(D%v:D%v)", startProduction+2, startProduction+13))
 
 	file.SetCellFormula(sheetName, fmt.Sprintf("D%v", startProduction+15), fmt.Sprintf("D%v", startProduction+14))
 	file.SetCellFormula(sheetName, fmt.Sprintf("E%v", startProduction+15), fmt.Sprintf("E%v", startProduction+2))
@@ -1476,10 +1499,10 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	}
 
 	file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSale+14), "TOTAL")
-	file.SetCellValue(sheetName, fmt.Sprintf("D%v", startSale+14), reportSaleDetail.RecapElectricity.Total)
-	file.SetCellValue(sheetName, fmt.Sprintf("E%v", startSale+14), reportSaleDetail.RecapNonElectricity.Total)
-	file.SetCellValue(sheetName, fmt.Sprintf("F%v", startSale+14), reportSaleDetail.RecapElectricity.Total+reportSaleDetail.RecapNonElectricity.Total)
-	file.SetCellValue(sheetName, fmt.Sprintf("H%v", startSale+14), reportSaleDetail.NotClaimable.Total)
+	file.SetCellFormula(sheetName, fmt.Sprintf("D%v", startSale+14), fmt.Sprintf("SUM(D%v:D%v)", startSale+2, startSale+13))
+	file.SetCellFormula(sheetName, fmt.Sprintf("E%v", startSale+14), fmt.Sprintf("SUM(E%v:E%v)", startSale+2, startSale+13))
+	file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startSale+14), fmt.Sprintf("SUM(F%v:F%v)", startSale+2, startSale+13))
+	file.SetCellFormula(sheetName, fmt.Sprintf("H%v", startSale+14), fmt.Sprintf("SUM(H%v:H%v)", startSale+2, startSale+13))
 
 	file.SetCellValue(chartSheetName, "B54", "TOTAL")
 	file.SetCellFormula(chartSheetName, "C54", "SUM(C42:C53)")
@@ -1583,6 +1606,12 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 		return file, errPenjualanNumberStyle2
 	}
 
+	t := time.Now()
+
+	month := t.Month()
+	yearNow := t.Year()
+	yearString := strconv.Itoa(yearNow)
+
 	for idx, rkab := range reportSaleDetail.Rkabs {
 		dateFormat, errDate := goment.New(rkab.DateOfIssue)
 		if errDate != nil {
@@ -1592,7 +1621,11 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 		file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSale+18+(idx*10)), "% Pemenuhan DMO terhadap RENCANA PRODUKSI")
 		file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSale+19+(idx*10)), fmt.Sprintf("disetujui tgl %s", dateFormat.Format("DD MMMM YYYY", "id")))
 		file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSale+21+(idx*10)), fmt.Sprintf("%% Pemenuhan DMO terhadap kewajiban pemenuhan DMO %.0f%%", rkab.DmoObligation))
-		file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSale+23+(idx*10)), "% Pemenuhan DMO terhadap Rencana Produksi (Prorata 12 bulan)")
+		if yearString == year {
+			file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSale+23+(idx*10)), fmt.Sprintf("%% Pemenuhan DMO terhadap Rencana Produksi (Prorata %v bulan)", int(month)))
+		} else {
+			file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSale+23+(idx*10)), "% Pemenuhan DMO terhadap Rencana Produksi (Prorata 12 bulan)")
+		}
 
 		errBoldOnlyStyle := file.SetCellStyle(sheetName, fmt.Sprintf("B%v", startSale+16+(idx*10)), fmt.Sprintf("B%v", startSale+23+(idx*10)), boldOnlyStyle)
 
@@ -1601,9 +1634,13 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 		}
 
 		file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startSale+16+(idx*10)), fmt.Sprintf("F%v/D%v", startSale+14, startProduction+14))
-		file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startSale+18+(idx*10)), fmt.Sprintf("F%v/%.0f", startSale+14, rkab.ProductionQuota))
-		file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startSale+21+(idx*10)), fmt.Sprintf("F%v/%.2f%%", startSale+18+(idx*10), rkab.DmoObligation))
-		file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startSale+23+(idx*10)), fmt.Sprintf("F%v/%.0f", startSale+14, rkab.ProductionQuota))
+		file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startSale+18+(idx*10)), fmt.Sprintf("F%v/D%v", startSale+14, 8+idx*4))
+		file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startSale+21+(idx*10)), fmt.Sprintf("F%v/D%v", startSale+14, startRkab+1))
+		if yearString == year {
+			file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startSale+23+(idx*10)), fmt.Sprintf("F%v/(D%v*%v/12)", startSale+14, 8+idx*4, int(month)))
+		} else {
+			file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startSale+23+(idx*10)), fmt.Sprintf("F%v/(D%v*12/12)", startSale+14, 8+idx*4))
+		}
 
 		errBoldPercentStyle := file.SetCellStyle(sheetName, fmt.Sprintf("F%v", startSale+16+(idx*10)), fmt.Sprintf("F%v", startSale+23+(idx*10)), boldPercentStyle)
 
@@ -2705,6 +2742,59 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 
 	if err := file.AddChart(chartSheetName, "G22", valueChartDomesticExport); err != nil {
 		return file, err
+	}
+
+	var startAssignment int
+	startAssignment = startSaleExportImport + 14 + 3
+
+	file.SetCellValue(sheetName, fmt.Sprintf("A%v", startAssignment), "Surat Penugasan")
+	errTitleAssignment := file.SetCellStyle(sheetName, fmt.Sprintf("A%v", startAssignment), fmt.Sprintf("A%v", startAssignment), boldTitleStyle)
+
+	if errTitleAssignment != nil {
+		return file, errTitleAssignment
+	}
+
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startAssignment+1), fmt.Sprintf("C%v", startAssignment+1))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startAssignment+2), fmt.Sprintf("C%v", startAssignment+2))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startAssignment+3), fmt.Sprintf("C%v", startAssignment+3))
+	file.MergeCell(sheetName, fmt.Sprintf("B%v", startAssignment+4), fmt.Sprintf("C%v", startAssignment+4))
+
+	file.SetCellValue(sheetName, fmt.Sprintf("D%v", startAssignment+1), "Kebutuhan")
+	file.SetCellValue(sheetName, fmt.Sprintf("E%v", startAssignment+1), "Realisasi")
+	file.SetCellValue(sheetName, fmt.Sprintf("F%v", startAssignment+1), "Sisa")
+
+	file.SetCellValue(sheetName, fmt.Sprintf("B%v", startAssignment+2), "Kelistrikan")
+	file.SetCellValue(sheetName, fmt.Sprintf("B%v", startAssignment+3), "Non Kelistrikan")
+
+	file.SetCellValue(sheetName, fmt.Sprintf("D%v", startAssignment+2), reportSaleDetail.ElectricAssignment.Quantity)
+	file.SetCellValue(sheetName, fmt.Sprintf("E%v", startAssignment+2), reportSaleDetail.ElectricAssignment.RealizationQuantity)
+	file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startAssignment+2), fmt.Sprintf("D%v-E%v", startAssignment+2, startAssignment+2))
+
+	file.SetCellValue(sheetName, fmt.Sprintf("D%v", startAssignment+3), reportSaleDetail.CafAssignment.Quantity)
+	file.SetCellValue(sheetName, fmt.Sprintf("E%v", startAssignment+3), reportSaleDetail.CafAssignment.RealizationQuantity)
+	file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startAssignment+3), fmt.Sprintf("D%v-E%v", startAssignment+3, startAssignment+3))
+
+	file.SetCellValue(sheetName, fmt.Sprintf("B%v", startAssignment+4), "TOTAL")
+	file.SetCellFormula(sheetName, fmt.Sprintf("D%v", startAssignment+4), fmt.Sprintf("SUM(D%v:D%v)", startAssignment+2, startAssignment+3))
+	file.SetCellFormula(sheetName, fmt.Sprintf("E%v", startAssignment+4), fmt.Sprintf("SUM(E%v:E%v)", startAssignment+2, startAssignment+3))
+	file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startAssignment+4), fmt.Sprintf("SUM(F%v:F%v)", startAssignment+2, startAssignment+3))
+
+	errTitleAssignment1 := file.SetCellStyle(sheetName, fmt.Sprintf("B%v", startAssignment+1), fmt.Sprintf("F%v", startAssignment+1), boldTitleTableStyle)
+
+	if errTitleAssignment1 != nil {
+		return file, errTitleAssignment1
+	}
+
+	errNumberAssignmentStyle := file.SetCellStyle(sheetName, fmt.Sprintf("B%v", startAssignment+2), fmt.Sprintf("F%v", startAssignment+3), formatNumberStyle)
+
+	if errNumberAssignmentStyle != nil {
+		return file, errNumberAssignmentStyle
+	}
+
+	errNumberTotalAssignment := file.SetCellStyle(sheetName, fmt.Sprintf("B%v", startAssignment+4), fmt.Sprintf("F%v", startAssignment+4), boldNumberStyle)
+
+	if errNumberTotalAssignment != nil {
+		return file, errNumberTotalAssignment
 	}
 
 	return file, nil
