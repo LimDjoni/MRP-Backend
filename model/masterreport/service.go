@@ -1163,8 +1163,8 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	file.SetCellValue(chartSheetName, "B5", "RKAB")
 	file.SetCellValue(chartSheetName, "B6", "PRODUKSI")
 
-	file.SetCellFormula(chartSheetName, "C5", fmt.Sprintf("%v!D%v", sheetName, startProduction+14))
-	file.SetCellFormula(chartSheetName, "C6", fmt.Sprintf("%v!E%v", sheetName, startProduction+2))
+	file.SetCellFormula(chartSheetName, "C5", fmt.Sprintf("%v!E%v", sheetName, startProduction+2))
+	file.SetCellFormula(chartSheetName, "C6", fmt.Sprintf("%v!D%v", sheetName, startProduction+14))
 
 	errChartProductionRkabStyleTable := file.SetCellStyle(chartSheetName, "B5", "C6", formatNumberStyle)
 
@@ -1907,7 +1907,7 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 		return file, err
 	}
 
-	file.SetCellValue(chartSheetName, "B126", "Pemenuhan DMO terhadap Rencana Produksi (Prorata 12 bulan)")
+	file.SetCellValue(chartSheetName, "B126", fmt.Sprintf("Pemenuhan DMO terhadap Rencana Produksi (Prorata %v bulan)", int(month)))
 
 	errTitleDmo4 := file.SetCellStyle(chartSheetName, "B126", "B126", boldOnlyStyle)
 
@@ -1923,7 +1923,11 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 
 	file.SetCellFormula(chartSheetName, "C127", fmt.Sprintf("%s!E21", sheetName))
 
-	file.SetCellFormula(chartSheetName, "C129", fmt.Sprintf("%s!E21", sheetName))
+	if year == yearString {
+		file.SetCellFormula(chartSheetName, "C129", fmt.Sprintf("%s!E21*%v/12", sheetName, int(month)))
+	} else {
+		file.SetCellFormula(chartSheetName, "C129", fmt.Sprintf("%s!E21*12/12", sheetName))
+	}
 	file.SetCellFormula(chartSheetName, "C130", "C79")
 	file.SetCellFormula(chartSheetName, "C131", fmt.Sprintf("C130/C129"))
 
