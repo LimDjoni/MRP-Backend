@@ -207,7 +207,7 @@ func (h *coaReportLnHandler) DeleteCoaReportLn(c *fiber.Ctx) error {
 		}
 
 		return c.Status(status).JSON(fiber.Map{
-			"message": "failed to delete coa report",
+			"message": "failed to delete coa report ln",
 			"error":   detailCoaReportLnErr.Error(),
 		})
 	}
@@ -240,7 +240,7 @@ func (h *coaReportLnHandler) DeleteCoaReportLn(c *fiber.Ctx) error {
 		}
 
 		return c.Status(status).JSON(fiber.Map{
-			"message": "failed to delete coa report",
+			"message": "failed to delete coa report ln",
 			"error":   isDeletedCoaReportLnErr.Error(),
 		})
 	}
@@ -287,14 +287,14 @@ func (h *coaReportLnHandler) DeleteCoaReportLn(c *fiber.Ctx) error {
 			h.logService.CreateLogs(createdErrLog)
 
 			return c.Status(400).JSON(fiber.Map{
-				"message": "failed to delete coa report aws",
+				"message": "failed to delete coa report ln aws",
 				"error":   deleteAwsErr.Error(),
 			})
 		}
 	}
 
 	return c.Status(200).JSON(fiber.Map{
-		"message": "success delete coa report",
+		"message": "success delete coa report ln",
 	})
 }
 
@@ -375,7 +375,7 @@ func (h *coaReportLnHandler) UpdateDocumentCoaReportLn(c *fiber.Ctx) error {
 	if err := c.BodyParser(inputUpdateCoaReportLn); err != nil {
 		return c.Status(400).JSON(fiber.Map{
 			"error":   err.Error(),
-			"message": "failed to update coa report",
+			"message": "failed to update coa report ln",
 		})
 	}
 
@@ -387,7 +387,7 @@ func (h *coaReportLnHandler) UpdateDocumentCoaReportLn(c *fiber.Ctx) error {
 
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{
-			"message": "failed to update coa report",
+			"message": "failed to update coa report ln",
 			"error":   "record not found",
 		})
 	}
@@ -460,12 +460,12 @@ func (h *coaReportLnHandler) UpdateDocumentCoaReportLn(c *fiber.Ctx) error {
 
 		return c.Status(status).JSON(fiber.Map{
 			"error":   updateCoaReportLnErr.Error(),
-			"message": "failed to update coa report",
+			"message": "failed to update coa report ln",
 		})
 	}
 
 	var inputNotification notification.InputNotification
-	inputNotification.Type = "coa report"
+	inputNotification.Type = "coa report ln"
 	inputNotification.Period = fmt.Sprintf("%v/%v", detailCoaReportLn.Detail.DateFrom, detailCoaReportLn.Detail.DateTo)
 	inputNotification.Status = "membuat dokumen"
 	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), iupopkIdInt)
@@ -491,7 +491,7 @@ func (h *coaReportLnHandler) UpdateDocumentCoaReportLn(c *fiber.Ctx) error {
 
 		return c.Status(400).JSON(fiber.Map{
 			"error":   createdNotificationErr.Error(),
-			"message": "failed to create notification update coa report",
+			"message": "failed to create notification update coa report ln",
 		})
 	}
 
