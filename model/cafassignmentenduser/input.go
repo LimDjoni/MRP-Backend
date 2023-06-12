@@ -4,6 +4,7 @@ type CreateCafAssignmentInput struct {
 	Year               string               `form:"year" json:"year"`
 	GrandTotalQuantity float64              `form:"grand_total_quantity" json:"grand_total_quantity"`
 	LetterNumber       string               `form:"letter_number" json:"letter_number"`
+	LetterDate         string               `form:"letter_date" json:"letter_date"`
 	ListCafAssignment  []CafAssignmentInput `form:"list_caf_assignment" json:"list_caf_assignment"`
 }
 
@@ -27,5 +28,13 @@ type UpdateCafAssignmentInput struct {
 	RevisionLetterNumber2 string                 `form:"revision_letter_number2" json:"revision_letter_number2"`
 	RevisionLetterNumber3 string                 `form:"revision_letter_number3" json:"revision_letter_number3"`
 	RevisionLetterNumber4 string                 `form:"revision_letter_number4" json:"revision_letter_number4"`
+	LetterDate            string                 `form:"letter_date" json:"letter_date"`
+	LetterDate2           *string                `form:"letter_date2" json:"letter_date2"`
+	LetterDate3           *string                `form:"letter_date3" json:"letter_date3"`
+	LetterDate4           *string                `form:"letter_date4" json:"letter_date4"`
+	RevisionLetterDate    *string                `form:"revision_letter_date" json:"revision_letter_date"`
+	RevisionLetterDate2   *string                `form:"revision_letter_date2" json:"revision_letter_date2"`
+	RevisionLetterDate3   *string                `form:"revision_letter_date3" json:"revision_letter_date3"`
+	RevisionLetterDate4   *string                `form:"revision_letter_date4" json:"revision_letter_date4"`
 	ListCafAssignment     []CafAssignmentEndUser `form:"list_caf_assignment" json:"list_caf_assignment"`
 }

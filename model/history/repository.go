@@ -4223,6 +4223,7 @@ func (r *repository) CreateElectricAssignment(input electricassignmentenduser.Cr
 	createdElectricAssignment.LetterNumber = strings.ToUpper(input.LetterNumber)
 	createdElectricAssignment.GrandTotalQuantity = input.GrandTotalQuantity
 	createdElectricAssignment.Year = input.Year
+	createdElectricAssignment.LetterDate = input.LetterDate
 	createdElectricAssignment.IupopkId = iup.ID
 
 	errCreate := tx.Create(&createdElectricAssignment).Error
@@ -4390,18 +4391,54 @@ func (r *repository) UpdateElectricAssignment(id int, input electricassignmenten
 	updateMap["grand_total_quantity"] = input.GrandTotalQuantity
 	updateMap["letter_number"] = strings.ToUpper(input.LetterNumber)
 	updateMap["revision_letter_number"] = strings.ToUpper(input.RevisionLetterNumber)
+	updateMap["letter_date"] = input.LetterDate
+	if *input.RevisionLetterDate == "null" {
+		updateMap["revision_letter_date"] = nil
+	} else {
+		updateMap["revision_letter_date"] = input.RevisionLetterDate
+	}
 
 	updateMap["grand_total_quantity2"] = input.GrandTotalQuantity2
 	updateMap["letter_number2"] = strings.ToUpper(input.LetterNumber2)
 	updateMap["revision_letter_number2"] = strings.ToUpper(input.RevisionLetterNumber2)
+	if *input.LetterDate2 == "null" {
+		updateMap["letter_date2"] = nil
+	} else {
+		updateMap["letter_date2"] = input.LetterDate2
+	}
+	if *input.RevisionLetterDate2 == "null" {
+		updateMap["revision_letter_date2"] = nil
+	} else {
+		updateMap["revision_letter_date2"] = input.RevisionLetterDate2
+	}
 
 	updateMap["grand_total_quantity3"] = input.GrandTotalQuantity3
 	updateMap["letter_number3"] = strings.ToUpper(input.LetterNumber3)
 	updateMap["revision_letter_number3"] = strings.ToUpper(input.RevisionLetterNumber3)
+	if *input.LetterDate3 == "null" {
+		updateMap["letter_date3"] = nil
+	} else {
+		updateMap["letter_date3"] = input.LetterDate3
+	}
+	if *input.RevisionLetterDate3 == "null" {
+		updateMap["revision_letter_date3"] = nil
+	} else {
+		updateMap["revision_letter_date3"] = input.RevisionLetterDate3
+	}
 
 	updateMap["grand_total_quantity4"] = input.GrandTotalQuantity4
 	updateMap["letter_number4"] = strings.ToUpper(input.LetterNumber4)
 	updateMap["revision_letter_number4"] = strings.ToUpper(input.RevisionLetterNumber4)
+	if *input.LetterDate4 == "null" {
+		updateMap["letter_date4"] = nil
+	} else {
+		updateMap["letter_date4"] = input.LetterDate4
+	}
+	if *input.RevisionLetterDate4 == "null" {
+		updateMap["revision_letter_date4"] = nil
+	} else {
+		updateMap["revision_letter_date4"] = input.RevisionLetterDate4
+	}
 
 	errUpd := tx.Model(&updatedElectricAssignment).Where("id = ? AND iupopk_id = ?", id, iupopkId).Updates(updateMap).Error
 
@@ -4601,6 +4638,7 @@ func (r *repository) CreateCafAssignment(input cafassignmentenduser.CreateCafAss
 	createdCafAssignment.LetterNumber = strings.ToUpper(input.LetterNumber)
 	createdCafAssignment.GrandTotalQuantity = input.GrandTotalQuantity
 	createdCafAssignment.Year = input.Year
+	createdCafAssignment.LetterDate = input.LetterDate
 	createdCafAssignment.IupopkId = iup.ID
 
 	errCreate := tx.Create(&createdCafAssignment).Error
@@ -4837,18 +4875,54 @@ func (r *repository) UpdateCafAssignment(id int, input cafassignmentenduser.Upda
 	updateMap["grand_total_quantity"] = input.GrandTotalQuantity
 	updateMap["letter_number"] = strings.ToUpper(input.LetterNumber)
 	updateMap["revision_letter_number"] = strings.ToUpper(input.RevisionLetterNumber)
+	updateMap["letter_date"] = input.LetterDate
+	if *input.RevisionLetterDate == "null" {
+		updateMap["revision_letter_date"] = nil
+	} else {
+		updateMap["revision_letter_date"] = input.RevisionLetterDate
+	}
 
 	updateMap["grand_total_quantity2"] = input.GrandTotalQuantity2
 	updateMap["letter_number2"] = strings.ToUpper(input.LetterNumber2)
 	updateMap["revision_letter_number2"] = strings.ToUpper(input.RevisionLetterNumber2)
+	if *input.LetterDate2 == "null" {
+		updateMap["letter_date2"] = nil
+	} else {
+		updateMap["letter_date2"] = input.LetterDate2
+	}
+	if *input.RevisionLetterDate2 == "null" {
+		updateMap["revision_letter_date2"] = nil
+	} else {
+		updateMap["revision_letter_date2"] = input.RevisionLetterDate2
+	}
 
 	updateMap["grand_total_quantity3"] = input.GrandTotalQuantity3
 	updateMap["letter_number3"] = strings.ToUpper(input.LetterNumber3)
 	updateMap["revision_letter_number3"] = strings.ToUpper(input.RevisionLetterNumber3)
+	if *input.LetterDate3 == "null" {
+		updateMap["letter_date3"] = nil
+	} else {
+		updateMap["letter_date3"] = input.LetterDate3
+	}
+	if *input.RevisionLetterDate3 == "null" {
+		updateMap["revision_letter_date3"] = nil
+	} else {
+		updateMap["revision_letter_date3"] = input.RevisionLetterDate3
+	}
 
-	updateMap["grand_total_quantity4"] = input.GrandTotalQuantity
+	updateMap["grand_total_quantity4"] = input.GrandTotalQuantity4
 	updateMap["letter_number4"] = strings.ToUpper(input.LetterNumber4)
 	updateMap["revision_letter_number4"] = strings.ToUpper(input.RevisionLetterNumber4)
+	if *input.LetterDate4 == "null" {
+		updateMap["letter_date4"] = nil
+	} else {
+		updateMap["letter_date4"] = input.LetterDate4
+	}
+	if *input.RevisionLetterDate4 == "null" {
+		updateMap["revision_letter_date4"] = nil
+	} else {
+		updateMap["revision_letter_date4"] = input.RevisionLetterDate4
+	}
 
 	errUpd := tx.Model(&updatedCafAssignment).Where("id = ? AND iupopk_id = ?", id, iupopkId).Updates(updateMap).Error
 

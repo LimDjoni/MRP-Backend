@@ -30,6 +30,14 @@ type ElectricAssignment struct {
 	RevisionAssignmentLetterLink4 string        `json:"revision_assignment_letter_link4"`
 	LetterNumber4                 string        `json:"letter_number4"`
 	RevisionLetterNumber4         string        `json:"revision_letter_number4"`
+	LetterDate                    string        `json:"letter_date" gorm:"type:DATE"`
+	RevisionLetterDate            *string       `json:"revision_letter_date" gorm:"type:DATE"`
+	LetterDate2                   *string       `json:"letter_date2" gorm:"type:DATE"`
+	RevisionLetterDate2           *string       `json:"revision_letter_date2" gorm:"type:DATE"`
+	LetterDate3                   *string       `json:"letter_date3" gorm:"type:DATE"`
+	RevisionLetterDate3           *string       `json:"revision_letter_date3" gorm:"type:DATE"`
+	LetterDate4                   *string       `json:"letter_date4" gorm:"type:DATE"`
+	RevisionLetterDate4           *string       `json:"revision_letter_date4" gorm:"type:DATE"`
 	IupopkId                      uint          `json:"iupopk_id"`
 	Iupopk                        iupopk.Iupopk `json:"iupopk"`
 }
