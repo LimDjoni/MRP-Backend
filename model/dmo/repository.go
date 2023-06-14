@@ -89,6 +89,8 @@ WHERE b.is_end_user = TRUE `
 
 	rawQuery += ` order by ` + sortFilter
 
+	rawQuery += fmt.Sprintf(" LIMIT 7 OFFSET %v", (page-1)*7)
+
 	errFind := r.db.Scopes(paginateDmo(listReportDmo, &pagination, r.db, queryFilter)).Raw(rawQuery).Scan(&listDmo).Error
 
 	if errFind != nil {

@@ -561,7 +561,7 @@ func (r *repository) GetDetailReportDmo(id int, iupopkId int) (DetailReportDmo, 
 		salesSystemId = append(salesSystemId, v.ID)
 	}
 
-	errFindTransactions := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Order("shipping_date asc").Where("report_dmo_id = ? AND sales_system_id IN ? AND seller_id = ?", id, salesSystemId, iupopkId).Find(&transactions).Error
+	errFindTransactions := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoDestinationPort.PortLocation").Preload("DmoBuyer.IndustryType").Order("shipping_date asc").Where("report_dmo_id = ? AND sales_system_id IN ? AND seller_id = ?", id, salesSystemId, iupopkId).Find(&transactions).Error
 
 	if errFindTransactions != nil {
 		return detailReportDmo, errFindTransactions
