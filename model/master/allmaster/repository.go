@@ -65,127 +65,129 @@ func (r *repository) ListMasterData() (MasterData, error) {
 	var unit []unit.Unit
 	var vessel []vessel.Vessel
 
-	findBargeErr := r.db.Order("id desc").Find(&barge).Error
+	findBargeErr := r.db.Order("name asc").Order("created_at desc").Find(&barge).Error
 
 	if findBargeErr != nil {
 		return masterData, findBargeErr
 	}
 
-	findCompanyErr := r.db.Order("id desc").Preload(clause.Associations).Find(&company).Error
+	findCompanyErr := r.db.Order("company_name asc").Order("created_at desc").Preload(clause.Associations).Find(&company).Error
 
 	if findCompanyErr != nil {
 		return masterData, findCompanyErr
 	}
 
-	findCountryErr := r.db.Order("id desc").Find(&country).Error
+	findCountryErr := r.db.Order("name asc").Order("created_at desc").Find(&country).Error
 
 	if findCountryErr != nil {
 		return masterData, findCountryErr
 	}
 
-	findCurrencyErr := r.db.Order("id desc").Find(&currency).Error
+	findCurrencyErr := r.db.Order("name asc").Order("created_at desc").Find(&currency).Error
 
 	if findCurrencyErr != nil {
 		return masterData, findCurrencyErr
 	}
 
-	findDestinationErr := r.db.Order("id desc").Find(&destination).Error
+	findDestinationErr := r.db.Order("name asc").Order("created_at desc").Find(&destination).Error
 
 	if findDestinationErr != nil {
 		return masterData, findDestinationErr
 	}
 
-	findDocumentTypeErr := r.db.Order("id desc").Find(&documentType).Error
+	findDocumentTypeErr := r.db.Order("name asc").Order("created_at desc").Find(&documentType).Error
 
 	if findDocumentTypeErr != nil {
 		return masterData, findDocumentTypeErr
 	}
 
-	findIndustryTypeErr := r.db.Order("id desc").Find(&industryType).Error
+	findIndustryTypeErr := r.db.Order("name asc").Order("created_at desc").Find(&industryType).Error
 
 	if findIndustryTypeErr != nil {
 		return masterData, findIndustryTypeErr
 	}
 
-	findInsuranceCompanyErr := r.db.Order("id desc").Find(&insuranceCompany).Error
+	findInsuranceCompanyErr := r.db.Order("name asc").Order("created_at desc").Find(&insuranceCompany).Error
 
 	if findInsuranceCompanyErr != nil {
 		return masterData, findInsuranceCompanyErr
 	}
 
-	findIupopkErr := r.db.Order("id desc").Find(&iupopk).Error
+	findIupopkErr := r.db.Order("name asc").Order("created_at desc").Find(&iupopk).Error
 
 	if findIupopkErr != nil {
 		return masterData, findIupopkErr
 	}
 
-	findNavyCompanyErr := r.db.Order("id desc").Find(&navyCompany).Error
+	findNavyCompanyErr := r.db.Order("name asc").Order("created_at desc").Find(&navyCompany).Error
 
 	if findNavyCompanyErr != nil {
 		return masterData, findNavyCompanyErr
 	}
 
-	findNavyShipErr := r.db.Order("id desc").Find(&navyShip).Error
+	findNavyShipErr := r.db.Order("name asc").Order("created_at desc").Find(&navyShip).Error
 
 	if findNavyShipErr != nil {
 		return masterData, findNavyShipErr
 	}
 
-	findPabeanOfficeErr := r.db.Order("id desc").Find(&pabeanOffice).Error
+	findPabeanOfficeErr := r.db.Order("name asc").Order("created_at desc").Find(&pabeanOffice).Error
 
 	if findPabeanOfficeErr != nil {
 		return masterData, findPabeanOfficeErr
 	}
 
-	findPortInswErr := r.db.Order("id desc").Find(&portInsw).Error
+	findPortInswErr := r.db.Order("name asc").Order("created_at desc").Find(&portInsw).Error
 
 	if findPortInswErr != nil {
 		return masterData, findPortInswErr
 	}
 
-	findPortLocationErr := r.db.Order("id desc").Find(&portLocation).Error
+	findPortLocationErr := r.db.Order("name asc").Order("created_at desc").Find(&portLocation).Error
 
 	if findPortLocationErr != nil {
 		return masterData, findPortLocationErr
 	}
 
-	findPortsErr := r.db.Order("id desc").Preload(clause.Associations).Find(&ports).Error
+	findPortsErr := r.db.Preload(clause.Associations, func(db *gorm.DB) *gorm.DB {
+		return db.Order("name asc").Order("created_at desc")
+	}).Find(&ports).Error
 
 	if findPortsErr != nil {
 		return masterData, findPortsErr
 	}
 
-	findSalesSystemErr := r.db.Order("id desc").Find(&salesSystem).Error
+	findSalesSystemErr := r.db.Order("name asc").Order("created_at desc").Find(&salesSystem).Error
 
 	if findSalesSystemErr != nil {
 		return masterData, findSalesSystemErr
 	}
 
-	findSurveyorErr := r.db.Order("id desc").Find(&surveyor).Error
+	findSurveyorErr := r.db.Order("name asc").Order("created_at desc").Find(&surveyor).Error
 
 	if findSurveyorErr != nil {
 		return masterData, findSurveyorErr
 	}
 
-	findTraderErr := r.db.Order("id desc").Preload("Company.IndustryType").Find(&trader).Error
+	findTraderErr := r.db.Order("trader_name asc").Order("created_at desc").Preload("Company.IndustryType").Find(&trader).Error
 
 	if findTraderErr != nil {
 		return masterData, findTraderErr
 	}
 
-	findTugboatErr := r.db.Order("id desc").Find(&tugboat).Error
+	findTugboatErr := r.db.Order("name asc").Order("created_at desc").Find(&tugboat).Error
 
 	if findTugboatErr != nil {
 		return masterData, findTugboatErr
 	}
 
-	findUnitErr := r.db.Order("id desc").Find(&unit).Error
+	findUnitErr := r.db.Order("name asc").Order("created_at desc").Find(&unit).Error
 
 	if findUnitErr != nil {
 		return masterData, findUnitErr
 	}
 
-	findVesselErr := r.db.Order("id desc").Find(&vessel).Error
+	findVesselErr := r.db.Order("name asc").Order("created_at desc").Find(&vessel).Error
 
 	if findVesselErr != nil {
 		return masterData, findVesselErr
