@@ -74,7 +74,7 @@ func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionTyp
 	var pagination Pagination
 	pagination.Limit = 7
 	pagination.Page = page
-	defaultSort := "id desc"
+	defaultSort := "created_at desc"
 	sortString := fmt.Sprintf("%s %s", sortFilter.Field, sortFilter.Sort)
 	if sortFilter.Field == "" || sortFilter.Sort == "" {
 		sortString = defaultSort
