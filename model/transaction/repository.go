@@ -74,7 +74,7 @@ func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionTyp
 	var pagination Pagination
 	pagination.Limit = 7
 	pagination.Page = page
-	defaultSort := "id desc"
+	defaultSort := "created_at desc"
 	sortString := fmt.Sprintf("%s %s", sortFilter.Field, sortFilter.Sort)
 	if sortFilter.Field == "" || sortFilter.Sort == "" {
 		sortString = defaultSort
@@ -332,7 +332,7 @@ func (r *repository) ListDataDNBargeWithoutVessel(iupopkId int) ([]Transaction, 
 		salesSystemId = append(salesSystemId, v.ID)
 	}
 
-	errFindBarge := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_id IS NULL AND sales_system_id IN ? AND grouping_vessel_dn_id is NULL AND seller_id = ?", "DN", false, false, salesSystemId, iupopkId).Find(&listDataDnBargeDmo).Error
+	errFindBarge := r.db.Order("shipping_date desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_id IS NULL AND sales_system_id IN ? AND grouping_vessel_dn_id is NULL AND seller_id = ?", "DN", false, false, salesSystemId, iupopkId).Find(&listDataDnBargeDmo).Error
 
 	if errFindBarge != nil {
 		return listDataDnBargeDmo, errFindBarge
@@ -357,7 +357,7 @@ func (r *repository) ListDataDNBargeWithVessel(iupopkId int) ([]Transaction, err
 		salesSystemId = append(salesSystemId, v.ID)
 	}
 
-	errFindBarge := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_id IS NOT NULL AND sales_system_id IN ? AND grouping_vessel_dn_id is NULL AND seller_id = ?", "DN", false, false, salesSystemId, iupopkId).Find(&listDataDnBargeDmo).Error
+	errFindBarge := r.db.Order("shipping_date desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_id IS NOT NULL AND sales_system_id IN ? AND grouping_vessel_dn_id is NULL AND seller_id = ?", "DN", false, false, salesSystemId, iupopkId).Find(&listDataDnBargeDmo).Error
 
 	if errFindBarge != nil {
 		return listDataDnBargeDmo, errFindBarge
@@ -382,7 +382,7 @@ func (r *repository) ListDataDNVessel(iupopkId int) ([]Transaction, error) {
 		salesSystemId = append(salesSystemId, v.ID)
 	}
 
-	errFindBarge := r.db.Order("id desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_id IS NOT NULL AND is_finance_check = ? AND sales_system IN ? AND grouping_vessel_dn_id is NULL AND seller_id = ?", "DN", false, false, true, salesSystemId, iupopkId).Find(&listDataDnVessel).Error
+	errFindBarge := r.db.Order("shipping_date desc").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("dmo_id is NULL AND transaction_type = ? AND is_not_claim = ? AND is_migration = ? AND vessel_id IS NOT NULL AND is_finance_check = ? AND sales_system IN ? AND grouping_vessel_dn_id is NULL AND seller_id = ?", "DN", false, false, true, salesSystemId, iupopkId).Find(&listDataDnVessel).Error
 
 	if errFindBarge != nil {
 		return listDataDnVessel, errFindBarge
