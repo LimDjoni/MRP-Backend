@@ -22,6 +22,8 @@ type Service interface {
 	CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutput, iupopk iupopk.Iupopk, file *excelize.File, sheetName string) (*excelize.File, error)
 	CreateReportRealization(year string, reportRealization RealizationOutput, iupopk iupopk.Iupopk, file *excelize.File) (*excelize.File, error)
 	CreateReportSalesDetail(year string, reportSaleDetail SaleDetail, iupopk iupopk.Iupopk, file *excelize.File, sheetName string, chartSheetName string) (*excelize.File, error)
+	GetTransactionReport(iupopkId int, input TransactionReportInput, typeTransaction string) ([]TransactionReport, error)
+	CreateTransactionReport(file *excelize.File, sheetName string, iupopk iupopk.Iupopk, transactionData []TransactionReport) (*excelize.File, error)
 }
 
 type service struct {
@@ -2799,6 +2801,204 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 
 	if errNumberTotalAssignment != nil {
 		return file, errNumberTotalAssignment
+	}
+
+	return file, nil
+}
+
+func (s *service) GetTransactionReport(iupopkId int, input TransactionReportInput, typeTransaction string) ([]TransactionReport, error) {
+	transactionReport, err := s.repository.GetTransactionReport(iupopkId, input, typeTransaction)
+
+	return transactionReport, err
+}
+
+func (s *service) CreateTransactionReport(file *excelize.File, sheetName string, iupopk iupopk.Iupopk, transactionData []TransactionReport) (*excelize.File, error) {
+	file.SetCellValue(sheetName, "A1", iupopk.Name)
+
+	for idx, value := range transactionData {
+		file.SetCellValue(sheetName, "A1", iupopk.Name)
+
+		file.SetCellValue(sheetName, fmt.Sprintf("A%v", 4+idx), value.TransactionType)
+		file.SetCellValue(sheetName, fmt.Sprintf("B%v", 4+idx), idx+1)
+		file.SetCellValue(sheetName, fmt.Sprintf("C%v", 4+idx), *value.ShippingDate)
+		file.SetCellValue(sheetName, fmt.Sprintf("D%v", 4+idx), value.Quantity)
+		if value.Barge != nil && value.Tugboat != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", 4+idx), fmt.Sprintf("%s / %s", strings.ToUpper(value.Tugboat.Name), strings.ToUpper(value.Barge.Name)))
+		}
+
+		if value.Barge == nil && value.Tugboat != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", 4+idx), fmt.Sprintf("%s / -", strings.ToUpper(value.Tugboat.Name)))
+		}
+
+		if value.Barge != nil && value.Tugboat == nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", 4+idx), fmt.Sprintf("- / %s", strings.ToUpper(value.Barge.Name)))
+		}
+
+		if value.Barge == nil && value.Tugboat == nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("E%v", 4+idx), "- / -")
+		}
+
+		if value.SalesSystem != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("F%v", 4+idx), strings.ToUpper(value.SalesSystem.Name))
+		}
+
+		if value.Destination != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("G%v", 4+idx), strings.ToUpper(value.Destination.Name))
+		}
+
+		if value.Vessel != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("H%v", 4+idx), strings.ToUpper(value.Vessel.Name))
+		}
+
+		file.SetCellValue(sheetName, fmt.Sprintf("I%v", 4+idx), strings.ToUpper(iupopk.Name))
+
+		if value.Customer != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("J%v", 4+idx), strings.ToUpper(value.Customer.CompanyName))
+		}
+
+		if value.LoadingPort != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("K%v", 4+idx), strings.ToUpper(value.LoadingPort.Name))
+
+			if value.LoadingPort.PortLocation.Name != "" {
+				file.SetCellValue(sheetName, fmt.Sprintf("L%v", 4+idx), strings.ToUpper(value.LoadingPort.PortLocation.Name))
+			}
+		}
+
+		if value.UnloadingPort != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("M%v", 4+idx), strings.ToUpper(value.UnloadingPort.Name))
+
+			if value.UnloadingPort.PortLocation.Name != "" {
+				file.SetCellValue(sheetName, fmt.Sprintf("N%v", 4+idx), strings.ToUpper(value.UnloadingPort.PortLocation.Name))
+			}
+		}
+
+		if value.TransactionType == "DN" {
+			if value.DmoDestinationPort != nil {
+				file.SetCellValue(sheetName, fmt.Sprintf("O%v", 4+idx), strings.ToUpper(value.DmoDestinationPort.Name))
+			}
+		}
+
+		if value.TransactionType == "LN" {
+			file.SetCellValue(sheetName, fmt.Sprintf("O%v", 4+idx), strings.ToUpper(value.DmoDestinationPortLnName))
+		}
+
+		if value.SkbDate != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("P%v", 4+idx), *value.SkbDate)
+		}
+
+		file.SetCellValue(sheetName, fmt.Sprintf("Q%v", 4+idx), strings.ToUpper(value.SkbNumber))
+
+		if value.SkabDate != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("R%v", 4+idx), *value.SkabDate)
+		}
+
+		file.SetCellValue(sheetName, fmt.Sprintf("S%v", 4+idx), strings.ToUpper(value.SkabNumber))
+
+		if value.BillOfLadingDate != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("T%v", 4+idx), *value.BillOfLadingDate)
+		}
+
+		file.SetCellValue(sheetName, fmt.Sprintf("U%v", 4+idx), strings.ToUpper(value.BillOfLadingNumber))
+
+		file.SetCellValue(sheetName, fmt.Sprintf("V%v", 4+idx), value.RoyaltyRate/100)
+
+		file.SetCellValue(sheetName, fmt.Sprintf("W%v", 4+idx), value.DpRoyaltyPrice)
+
+		if value.DpRoyaltyDate != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("X%v", 4+idx), value.DpRoyaltyDate)
+		}
+
+		if value.DpRoyaltyBillingCode != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("Y%v", 4+idx), strings.ToUpper(*value.DpRoyaltyBillingCode))
+		}
+
+		if value.DpRoyaltyNtpn != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("Z%v", 4+idx), strings.ToUpper(*value.DpRoyaltyNtpn))
+		}
+
+		file.SetCellValue(sheetName, fmt.Sprintf("AA%v", 4+idx), value.DpRoyaltyTotal)
+
+		if value.PaymentDpRoyaltyDate != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("AD%v", 4+idx), value.PaymentDpRoyaltyDate)
+		}
+
+		if value.PaymentDpRoyaltyBillingCode != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("AE%v", 4+idx), strings.ToUpper(*value.PaymentDpRoyaltyBillingCode))
+		}
+
+		if value.PaymentDpRoyaltyNtpn != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("AF%v", 4+idx), strings.ToUpper(*value.PaymentDpRoyaltyNtpn))
+		}
+
+		file.SetCellValue(sheetName, fmt.Sprintf("AG%v", 4+idx), value.PaymentDpRoyaltyTotal)
+
+		if value.LhvDate != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("AJ%v", 4+idx), *value.LhvDate)
+		}
+
+		file.SetCellValue(sheetName, fmt.Sprintf("AK%v", 4+idx), strings.ToUpper(value.LhvNumber))
+
+		if value.Surveyor != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("AL%v", 4+idx), strings.ToUpper(value.Surveyor.Name))
+		}
+
+		if value.CowDate != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("AM%v", 4+idx), *value.CowDate)
+		}
+
+		file.SetCellValue(sheetName, fmt.Sprintf("AN%v", 4+idx), strings.ToUpper(value.CowNumber))
+
+		if value.CoaDate != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("AO%v", 4+idx), *value.CoaDate)
+		}
+
+		file.SetCellValue(sheetName, fmt.Sprintf("AP%v", 4+idx), strings.ToUpper(value.CoaNumber))
+
+		file.SetCellValue(sheetName, fmt.Sprintf("AQ%v", 4+idx), value.QualityTmAr)
+
+		file.SetCellValue(sheetName, fmt.Sprintf("AR%v", 4+idx), value.QualityImAdb)
+
+		file.SetCellValue(sheetName, fmt.Sprintf("AS%v", 4+idx), value.QualityAshAdb)
+
+		file.SetCellValue(sheetName, fmt.Sprintf("AT%v", 4+idx), value.QualityAshAr)
+
+		file.SetCellValue(sheetName, fmt.Sprintf("AU%v", 4+idx), value.QualityVmAdb)
+
+		file.SetCellValue(sheetName, fmt.Sprintf("AV%v", 4+idx), value.QualityFcAdb)
+
+		file.SetCellValue(sheetName, fmt.Sprintf("AW%v", 4+idx), value.QualityTsAdb)
+
+		file.SetCellValue(sheetName, fmt.Sprintf("AX%v", 4+idx), value.QualityTsAr)
+
+		file.SetCellValue(sheetName, fmt.Sprintf("AY%v", 4+idx), value.QualityCaloriesAdb)
+
+		file.SetCellValue(sheetName, fmt.Sprintf("AZ%v", 4+idx), value.QualityCaloriesAr)
+
+		file.SetCellValue(sheetName, fmt.Sprintf("BA%v", 4+idx), value.BargingDistance)
+
+		if value.InvoiceDate != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("BB%v", 4+idx), *value.InvoiceDate)
+		}
+
+		file.SetCellValue(sheetName, fmt.Sprintf("BC%v", 4+idx), strings.ToUpper(value.InvoiceNumber))
+
+		file.SetCellValue(sheetName, fmt.Sprintf("BD%v", 4+idx), value.InvoicePriceUnit)
+
+		file.SetCellValue(sheetName, fmt.Sprintf("BE%v", 4+idx), value.InvoicePriceTotal)
+
+		if value.ContractDate != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("BG%v", 4+idx), *value.ContractDate)
+		}
+
+		file.SetCellValue(sheetName, fmt.Sprintf("BH%v", 4+idx), strings.ToUpper(value.ContractNumber))
+
+		if value.DmoBuyer != nil {
+			file.SetCellValue(sheetName, fmt.Sprintf("BI%v", 4+idx), strings.ToUpper(value.DmoBuyer.CompanyName))
+
+			if value.DmoBuyer.IndustryType != nil {
+				file.SetCellValue(sheetName, fmt.Sprintf("BJ%v", 4+idx), strings.ToUpper(value.DmoBuyer.IndustryType.Name))
+			}
+		}
 	}
 
 	return file, nil

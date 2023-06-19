@@ -72,7 +72,6 @@ type Transaction struct {
 	PaymentDpRoyaltyTotal          float64                            `json:"payment_dp_royalty_total"`
 	LhvDate                        *string                            `json:"lhv_date" gorm:"type:DATE"`
 	LhvNumber                      string                             `json:"lhv_number"`
-	SurveyorName                   string                             `json:"surveyor_name"`
 	SurveyorId                     *uint                              `json:"surveyor_id"`
 	Surveyor                       *surveyor.Surveyor                 `json:"surveyor"`
 	CowDate                        *string                            `json:"cow_date" gorm:"type:DATE"`
