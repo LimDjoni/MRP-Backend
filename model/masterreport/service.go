@@ -2815,12 +2815,19 @@ func (s *service) GetTransactionReport(iupopkId int, input TransactionReportInpu
 func (s *service) CreateTransactionReport(file *excelize.File, sheetName string, iupopk iupopk.Iupopk, transactionData []TransactionReport) (*excelize.File, error) {
 	file.SetCellValue(sheetName, "A1", iupopk.Name)
 
+	custFmtQuantity := "#,##0.000"
+	custFmtQuality := "#,##0.00"
+
+	custFmtDate := "dd-mm-yyyy"
+
 	for idx, value := range transactionData {
 		file.SetCellValue(sheetName, "A1", iupopk.Name)
 
 		file.SetCellValue(sheetName, fmt.Sprintf("A%v", 4+idx), value.TransactionType)
 		file.SetCellValue(sheetName, fmt.Sprintf("B%v", 4+idx), idx+1)
-		file.SetCellValue(sheetName, fmt.Sprintf("C%v", 4+idx), *value.ShippingDate)
+
+		shippingDate := strings.Split(*value.ShippingDate, "T")
+		file.SetCellValue(sheetName, fmt.Sprintf("C%v", 4+idx), shippingDate[0])
 		file.SetCellValue(sheetName, fmt.Sprintf("D%v", 4+idx), value.Quantity)
 		if value.Barge != nil && value.Tugboat != nil {
 			file.SetCellValue(sheetName, fmt.Sprintf("E%v", 4+idx), fmt.Sprintf("%s / %s", strings.ToUpper(value.Tugboat.Name), strings.ToUpper(value.Barge.Name)))
@@ -2883,19 +2890,22 @@ func (s *service) CreateTransactionReport(file *excelize.File, sheetName string,
 		}
 
 		if value.SkbDate != nil {
-			file.SetCellValue(sheetName, fmt.Sprintf("P%v", 4+idx), *value.SkbDate)
+			skbDate := strings.Split(*value.SkbDate, "T")
+			file.SetCellValue(sheetName, fmt.Sprintf("P%v", 4+idx), skbDate[0])
 		}
 
 		file.SetCellValue(sheetName, fmt.Sprintf("Q%v", 4+idx), strings.ToUpper(value.SkbNumber))
 
 		if value.SkabDate != nil {
-			file.SetCellValue(sheetName, fmt.Sprintf("R%v", 4+idx), *value.SkabDate)
+			skabDate := strings.Split(*value.SkabDate, "T")
+			file.SetCellValue(sheetName, fmt.Sprintf("R%v", 4+idx), skabDate[0])
 		}
 
 		file.SetCellValue(sheetName, fmt.Sprintf("S%v", 4+idx), strings.ToUpper(value.SkabNumber))
 
 		if value.BillOfLadingDate != nil {
-			file.SetCellValue(sheetName, fmt.Sprintf("T%v", 4+idx), *value.BillOfLadingDate)
+			blDate := strings.Split(*value.BillOfLadingDate, "T")
+			file.SetCellValue(sheetName, fmt.Sprintf("T%v", 4+idx), blDate[0])
 		}
 
 		file.SetCellValue(sheetName, fmt.Sprintf("U%v", 4+idx), strings.ToUpper(value.BillOfLadingNumber))
@@ -2905,7 +2915,8 @@ func (s *service) CreateTransactionReport(file *excelize.File, sheetName string,
 		file.SetCellValue(sheetName, fmt.Sprintf("W%v", 4+idx), value.DpRoyaltyPrice)
 
 		if value.DpRoyaltyDate != nil {
-			file.SetCellValue(sheetName, fmt.Sprintf("X%v", 4+idx), value.DpRoyaltyDate)
+			dpRoyaltyDate := strings.Split(*value.DpRoyaltyDate, "T")
+			file.SetCellValue(sheetName, fmt.Sprintf("X%v", 4+idx), dpRoyaltyDate[0])
 		}
 
 		if value.DpRoyaltyBillingCode != nil {
@@ -2919,7 +2930,8 @@ func (s *service) CreateTransactionReport(file *excelize.File, sheetName string,
 		file.SetCellValue(sheetName, fmt.Sprintf("AA%v", 4+idx), value.DpRoyaltyTotal)
 
 		if value.PaymentDpRoyaltyDate != nil {
-			file.SetCellValue(sheetName, fmt.Sprintf("AD%v", 4+idx), value.PaymentDpRoyaltyDate)
+			paymentDpRoyaltyDate := strings.Split(*value.PaymentDpRoyaltyDate, "T")
+			file.SetCellValue(sheetName, fmt.Sprintf("AD%v", 4+idx), paymentDpRoyaltyDate[0])
 		}
 
 		if value.PaymentDpRoyaltyBillingCode != nil {
@@ -2933,7 +2945,8 @@ func (s *service) CreateTransactionReport(file *excelize.File, sheetName string,
 		file.SetCellValue(sheetName, fmt.Sprintf("AG%v", 4+idx), value.PaymentDpRoyaltyTotal)
 
 		if value.LhvDate != nil {
-			file.SetCellValue(sheetName, fmt.Sprintf("AJ%v", 4+idx), *value.LhvDate)
+			lhvDate := strings.Split(*value.LhvDate, "T")
+			file.SetCellValue(sheetName, fmt.Sprintf("AJ%v", 4+idx), lhvDate[0])
 		}
 
 		file.SetCellValue(sheetName, fmt.Sprintf("AK%v", 4+idx), strings.ToUpper(value.LhvNumber))
@@ -2943,13 +2956,15 @@ func (s *service) CreateTransactionReport(file *excelize.File, sheetName string,
 		}
 
 		if value.CowDate != nil {
-			file.SetCellValue(sheetName, fmt.Sprintf("AM%v", 4+idx), *value.CowDate)
+			cowDate := strings.Split(*value.CowDate, "T")
+			file.SetCellValue(sheetName, fmt.Sprintf("AM%v", 4+idx), cowDate[0])
 		}
 
 		file.SetCellValue(sheetName, fmt.Sprintf("AN%v", 4+idx), strings.ToUpper(value.CowNumber))
 
 		if value.CoaDate != nil {
-			file.SetCellValue(sheetName, fmt.Sprintf("AO%v", 4+idx), *value.CoaDate)
+			coaDate := strings.Split(*value.CoaDate, "T")
+			file.SetCellValue(sheetName, fmt.Sprintf("AO%v", 4+idx), coaDate[0])
 		}
 
 		file.SetCellValue(sheetName, fmt.Sprintf("AP%v", 4+idx), strings.ToUpper(value.CoaNumber))
@@ -2977,7 +2992,8 @@ func (s *service) CreateTransactionReport(file *excelize.File, sheetName string,
 		file.SetCellValue(sheetName, fmt.Sprintf("BA%v", 4+idx), value.BargingDistance)
 
 		if value.InvoiceDate != nil {
-			file.SetCellValue(sheetName, fmt.Sprintf("BB%v", 4+idx), *value.InvoiceDate)
+			invoiceDate := strings.Split(*value.InvoiceDate, "T")
+			file.SetCellValue(sheetName, fmt.Sprintf("BB%v", 4+idx), invoiceDate[0])
 		}
 
 		file.SetCellValue(sheetName, fmt.Sprintf("BC%v", 4+idx), strings.ToUpper(value.InvoiceNumber))
@@ -2987,7 +3003,8 @@ func (s *service) CreateTransactionReport(file *excelize.File, sheetName string,
 		file.SetCellValue(sheetName, fmt.Sprintf("BE%v", 4+idx), value.InvoicePriceTotal)
 
 		if value.ContractDate != nil {
-			file.SetCellValue(sheetName, fmt.Sprintf("BG%v", 4+idx), *value.ContractDate)
+			contractDate := strings.Split(*value.ContractDate, "T")
+			file.SetCellValue(sheetName, fmt.Sprintf("BG%v", 4+idx), contractDate[0])
 		}
 
 		file.SetCellValue(sheetName, fmt.Sprintf("BH%v", 4+idx), strings.ToUpper(value.ContractNumber))
@@ -3000,6 +3017,136 @@ func (s *service) CreateTransactionReport(file *excelize.File, sheetName string,
 			}
 		}
 	}
+
+	border := []excelize.Border{
+		{Type: "left", Color: "000000", Style: 1},
+		{Type: "top", Color: "000000", Style: 1},
+		{Type: "bottom", Color: "000000", Style: 1},
+		{Type: "right", Color: "000000", Style: 1},
+	}
+
+	titleCenterStyle, _ := file.NewStyle(&excelize.Style{
+		Border: border,
+		Font: &excelize.Font{
+			Bold: true,
+		},
+		Alignment: &excelize.Alignment{
+			Horizontal: "center",
+			Vertical:   "center",
+			WrapText:   true,
+		},
+	})
+
+	dateStyle, _ := file.NewStyle(&excelize.Style{
+		CustomNumFmt: &custFmtDate,
+	})
+
+	quantityStyle, _ := file.NewStyle(&excelize.Style{
+		CustomNumFmt: &custFmtQuantity,
+	})
+
+	qualityStyle, _ := file.NewStyle(&excelize.Style{
+		CustomNumFmt: &custFmtQuality,
+	})
+
+	percentStyle, _ := file.NewStyle(&excelize.Style{
+		NumFmt: 9,
+	})
+
+	errDate1 := file.SetColStyle(sheetName, "C", dateStyle)
+	if errDate1 != nil {
+		return file, errDate1
+	}
+	errDate2 := file.SetColStyle(sheetName, "P", dateStyle)
+	if errDate2 != nil {
+		return file, errDate2
+	}
+	errDate3 := file.SetColStyle(sheetName, "R", dateStyle)
+	if errDate3 != nil {
+		return file, errDate3
+	}
+	errDate4 := file.SetColStyle(sheetName, "T", dateStyle)
+	if errDate4 != nil {
+		return file, errDate4
+	}
+	errDate5 := file.SetColStyle(sheetName, "X", dateStyle)
+	if errDate5 != nil {
+		return file, errDate5
+	}
+	errDate6 := file.SetColStyle(sheetName, "AD", dateStyle)
+	if errDate6 != nil {
+		return file, errDate6
+	}
+	errDate7 := file.SetColStyle(sheetName, "AJ", dateStyle)
+	if errDate7 != nil {
+		return file, errDate7
+	}
+	errDate8 := file.SetColStyle(sheetName, "AM", dateStyle)
+	if errDate8 != nil {
+		return file, errDate8
+	}
+	errDate9 := file.SetColStyle(sheetName, "AO", dateStyle)
+	if errDate9 != nil {
+		return file, errDate9
+	}
+	errDate10 := file.SetColStyle(sheetName, "BB", dateStyle)
+	if errDate10 != nil {
+		return file, errDate10
+	}
+	errDate11 := file.SetColStyle(sheetName, "BH", dateStyle)
+	if errDate11 != nil {
+		return file, errDate11
+	}
+
+	errQuantity1 := file.SetColStyle(sheetName, "D", quantityStyle)
+	if errQuantity1 != nil {
+		return file, errQuantity1
+	}
+	errQuantity2 := file.SetColStyle(sheetName, "W", quantityStyle)
+	if errQuantity2 != nil {
+		return file, errQuantity2
+	}
+	errQuantity3 := file.SetColStyle(sheetName, "AA", quantityStyle)
+	if errQuantity3 != nil {
+		return file, errQuantity3
+	}
+	errQuantity4 := file.SetColStyle(sheetName, "AC", quantityStyle)
+	if errQuantity4 != nil {
+		return file, errQuantity4
+	}
+	errQuantity5 := file.SetColStyle(sheetName, "AG", quantityStyle)
+	if errQuantity5 != nil {
+		return file, errQuantity5
+	}
+	errQuantity6 := file.SetColStyle(sheetName, "AI", quantityStyle)
+	if errQuantity6 != nil {
+		return file, errQuantity6
+	}
+	errQuantity7 := file.SetColStyle(sheetName, "AY:AZ", quantityStyle)
+	if errQuantity7 != nil {
+		return file, errQuantity7
+	}
+	errQuantity8 := file.SetColStyle(sheetName, "BD:BE", quantityStyle)
+	if errQuantity8 != nil {
+		return file, errQuantity8
+	}
+
+	errQuality1 := file.SetColStyle(sheetName, "AQ:AX", qualityStyle)
+	if errQuality1 != nil {
+		return file, errQuality1
+	}
+
+	errPercent1 := file.SetColStyle(sheetName, "V", percentStyle)
+	if errPercent1 != nil {
+		return file, errPercent1
+	}
+
+	errTitleCenter := file.SetRowStyle(sheetName, 2, 3, titleCenterStyle)
+	if errTitleCenter != nil {
+		return file, errTitleCenter
+	}
+
+	file.SetColWidth(sheetName, "A", "A", 10)
 
 	return file, nil
 }

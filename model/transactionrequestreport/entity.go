@@ -15,4 +15,5 @@ type TransactionRequestReport struct {
 	DocumentLnLink string        `json:"document_ln_link"`
 	IupopkId       uint          `json:"iupopk_id"`
 	Iupopk         iupopk.Iupopk `json:"iupopk"`
+	Status         string        `json:"status"`
 }

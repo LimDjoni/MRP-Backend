@@ -54,5 +54,5 @@ type Logs struct {
 	CafAssignmentId            *uint                                              `json:"caf_assignment_id"`
 	CafAssignment              *cafassignment.CafAssignment                       `json:"caf_assignments" gorm:"constraint:OnDelete:CASCADE;"`
 	TransactionRequestReportId *uint                                              `json:"transaction_request_report_id"`
-	TransactionRequestReport   *transactionrequestreport.TransactionRequestReport `json:"transaction_request_report"`
+	TransactionRequestReport   *transactionrequestreport.TransactionRequestReport `json:"transaction_request_report" gorm:"constraint:OnDelete:CASCADE;"`
 }
