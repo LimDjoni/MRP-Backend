@@ -44,6 +44,7 @@ import (
 	"ajebackend/model/rkab"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
+	"ajebackend/model/transactionrequestreport"
 	"ajebackend/model/user"
 	"ajebackend/model/useriupopk"
 	routing2 "ajebackend/routing"
@@ -53,8 +54,6 @@ import (
 	"ajebackend/validatorfunc"
 	"fmt"
 	"os"
-
-	transactionrequestreport "command-line-arguments/Users/toktok2/Documents/toktok/Deli-AJE-Backend/model/transactionrequestreport/entity.go"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
