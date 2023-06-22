@@ -35,15 +35,23 @@ func NewRepository(db *gorm.DB) *repository {
 func (r *repository) PreviewTransactionReport(input masterreport.TransactionReportInput, iupopkId int) (TransactionRequestReportPreview, error) {
 	var previewTransactions TransactionRequestReportPreview
 
+	var checkTransactionReport TransactionRequestReport
+
+	errFindCheck := r.db.Where("date_from = ? and date_to = ? and iupopk_id = ?", input.DateFrom, input.DateTo, iupopkId).First(&checkTransactionReport).Error
+
+	if errFindCheck == nil {
+		return previewTransactions, errors.New("duplicate value")
+	}
+
 	var dnTransactions []masterreport.TransactionReport
 	var lnTransactions []masterreport.TransactionReport
-	errFindDn := r.db.Where("shipping_date >= ? and shipping_date <= ? and iupopk_id = ? and transaction_type = ?", input.DateFrom, input.DateTo, iupopkId, "DN").Find(&dnTransactions).Error
+	errFindDn := r.db.Table("transactions").Where("shipping_date >= ? and shipping_date <= ? and seller_id = ? and transaction_type = ?", input.DateFrom, input.DateTo, iupopkId, "DN").Find(&dnTransactions).Error
 
 	if errFindDn != nil {
 		return previewTransactions, errFindDn
 	}
 
-	errFindLn := r.db.Where("shipping_date >= ? and shipping_date <= ? and iupopk_id = ? and transaction_type = ?", input.DateFrom, input.DateTo, iupopkId, "LN").Find(&lnTransactions).Error
+	errFindLn := r.db.Table("transactions").Where("shipping_date >= ? and shipping_date <= ? and seller_id = ? and transaction_type = ?", input.DateFrom, input.DateTo, iupopkId, "LN").Find(&lnTransactions).Error
 
 	if errFindLn != nil {
 		return previewTransactions, errFindLn
@@ -216,6 +224,9 @@ func (r *repository) DeleteTransactionReportById(id int, iupopkId int) (bool, er
 		return false, errFind
 	}
 
+	if transactionRequest.Status == "In Progress" {
+		return false, errors.New("Transaksi tidak bisa dihapus karena masih dalam proses")
+	}
 	errDelete := r.db.Unscoped().Where("id = ? and iupopk_id = ?", id, iupopkId).Delete(&transactionRequest).Error
 
 	if errDelete != nil {

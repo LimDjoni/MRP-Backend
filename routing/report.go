@@ -54,7 +54,7 @@ func ReportRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) 
 	reportRouting.Get("/download/realization/:year/:iupopk_id", reportHandler.DownloadRealizationReport)
 	reportRouting.Get("/download/detail/:year/:iupopk_id", reportHandler.DownloadSaleDetailReport)
 
-	reportRouting.Get("/transactionrequest/preview/:iupopk_id", reportHandler.PreviewTransactionReport)
+	reportRouting.Post("/transactionrequest/preview/:iupopk_id", reportHandler.PreviewTransactionReport)
 	reportRouting.Get("/transactionrequest/detail/:id/:iupopk_id", reportHandler.DetailTransactionReport)
 	reportRouting.Get("/transactionrequest/list/:iupopk_id", reportHandler.ListTransactionReport)
 
