@@ -54,6 +54,8 @@ import (
 	"fmt"
 	"os"
 
+	transactionrequestreport "command-line-arguments/Users/toktok2/Documents/toktok/Deli-AJE-Backend/model/transactionrequestreport/entity.go"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -133,6 +135,7 @@ func main() {
 			&rkab.Rkab{},
 			&coareport.CoaReport{},
 			&coareportln.CoaReportLn{},
+			&transactionrequestreport.TransactionRequestReport{},
 		)
 
 		seeding.UpdateTransactionsRoyalty(db)
