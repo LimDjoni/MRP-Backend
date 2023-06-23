@@ -44,6 +44,7 @@ import (
 	"ajebackend/model/rkab"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
+	"ajebackend/model/transactionrequestreport"
 	"ajebackend/model/user"
 	"ajebackend/model/useriupopk"
 	routing2 "ajebackend/routing"
@@ -133,6 +134,7 @@ func main() {
 			&rkab.Rkab{},
 			&coareport.CoaReport{},
 			&coareportln.CoaReportLn{},
+			&transactionrequestreport.TransactionRequestReport{},
 		)
 
 		seeding.UpdateTransactionsRoyalty(db)
