@@ -45,13 +45,13 @@ func (r *repository) PreviewTransactionReport(input masterreport.TransactionRepo
 
 	var dnTransactions []masterreport.TransactionReport
 	var lnTransactions []masterreport.TransactionReport
-	errFindDn := r.db.Table("transactions").Where("shipping_date >= ? and shipping_date <= ? and seller_id = ? and transaction_type = ?", input.DateFrom, input.DateTo, iupopkId, "DN").Find(&dnTransactions).Error
+	errFindDn := r.db.Table("transactions").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("shipping_date >= ? and shipping_date <= ? and seller_id = ? and transaction_type = ?", input.DateFrom, input.DateTo, iupopkId, "DN").Find(&dnTransactions).Error
 
 	if errFindDn != nil {
 		return previewTransactions, errFindDn
 	}
 
-	errFindLn := r.db.Table("transactions").Where("shipping_date >= ? and shipping_date <= ? and seller_id = ? and transaction_type = ?", input.DateFrom, input.DateTo, iupopkId, "LN").Find(&lnTransactions).Error
+	errFindLn := r.db.Table("transactions").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("shipping_date >= ? and shipping_date <= ? and seller_id = ? and transaction_type = ?", input.DateFrom, input.DateTo, iupopkId, "LN").Find(&lnTransactions).Error
 
 	if errFindLn != nil {
 		return previewTransactions, errFindLn
@@ -78,7 +78,7 @@ func (r *repository) DetailTransactionReport(id int, iupopkId int) (TransactionR
 
 	var transactionsReportDn []masterreport.TransactionReport
 
-	errFindDn := r.db.Table("transactions").Where("shipping_date >= ? and shipping_date <= ? and seller_id = ? and transaction_type = ?", transactionReqDetail.DateFrom, transactionReqDetail.DateTo, iupopkId, "DN").Find(&transactionsReportDn).Error
+	errFindDn := r.db.Table("transactions").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("shipping_date >= ? and shipping_date <= ? and seller_id = ? and transaction_type = ?", transactionReqDetail.DateFrom, transactionReqDetail.DateTo, iupopkId, "DN").Find(&transactionsReportDn).Error
 
 	if errFindDn != nil {
 		return detailTransaction, errFindDn
@@ -88,7 +88,7 @@ func (r *repository) DetailTransactionReport(id int, iupopkId int) (TransactionR
 
 	var transactionsReportLn []masterreport.TransactionReport
 
-	errFindLn := r.db.Table("transactions").Where("shipping_date >= ? and shipping_date <= ? and seller_id = ? and transaction_type = ?", transactionReqDetail.DateFrom, transactionReqDetail.DateTo, iupopkId, "LN").Find(&transactionsReportLn).Error
+	errFindLn := r.db.Table("transactions").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType").Where("shipping_date >= ? and shipping_date <= ? and seller_id = ? and transaction_type = ?", transactionReqDetail.DateFrom, transactionReqDetail.DateTo, iupopkId, "LN").Find(&transactionsReportLn).Error
 
 	if errFindLn != nil {
 		return detailTransaction, errFindLn
