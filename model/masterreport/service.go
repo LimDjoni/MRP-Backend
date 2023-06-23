@@ -2881,7 +2881,15 @@ func (s *service) CreateTransactionReport(file *excelize.File, sheetName string,
 
 		if value.TransactionType == "DN" {
 			if value.DmoDestinationPort != nil {
-				file.SetCellValue(sheetName, fmt.Sprintf("O%v", 4+idx), strings.ToUpper(value.DmoDestinationPort.Name))
+				if value.SalesSystem != nil {
+					if strings.Contains(value.SalesSystem.name, "Barge") && value.Vessel != nil {
+						file.SetCellValue(sheetName, fmt.Sprintf("O%v", 4+idx), fmt.Sprintf("%s @ %s", strings.ToUpper(value.Vessel.Name), strings.ToUpper(value.DmoDestinationPort.Name)))
+					} else {
+						file.SetCellValue(sheetName, fmt.Sprintf("O%v", 4+idx), strings.ToUpper(value.DmoDestinationPort.Name))
+					}
+				} else {
+					file.SetCellValue(sheetName, fmt.Sprintf("O%v", 4+idx), strings.ToUpper(value.DmoDestinationPort.Name))
+				}
 			}
 		}
 
