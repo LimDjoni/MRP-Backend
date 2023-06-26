@@ -3010,12 +3010,12 @@ func (s *service) CreateTransactionReport(file *excelize.File, sheetName string,
 
 		file.SetCellValue(sheetName, fmt.Sprintf("BE%v", 4+idx), value.InvoicePriceTotal)
 
+		file.SetCellValue(sheetName, fmt.Sprintf("BG%v", 4+idx), strings.ToUpper(value.ContractNumber))
+
 		if value.ContractDate != nil {
 			contractDate := strings.Split(*value.ContractDate, "T")
-			file.SetCellValue(sheetName, fmt.Sprintf("BG%v", 4+idx), contractDate[0])
+			file.SetCellValue(sheetName, fmt.Sprintf("BH%v", 4+idx), contractDate[0])
 		}
-
-		file.SetCellValue(sheetName, fmt.Sprintf("BH%v", 4+idx), strings.ToUpper(value.ContractNumber))
 
 		if value.DmoBuyer != nil {
 			file.SetCellValue(sheetName, fmt.Sprintf("BI%v", 4+idx), strings.ToUpper(value.DmoBuyer.CompanyName))
@@ -3041,7 +3041,6 @@ func (s *service) CreateTransactionReport(file *excelize.File, sheetName string,
 		Alignment: &excelize.Alignment{
 			Horizontal: "center",
 			Vertical:   "center",
-			WrapText:   true,
 		},
 	})
 
