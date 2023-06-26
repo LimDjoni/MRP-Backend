@@ -2,12 +2,19 @@ package history
 
 import (
 	"ajebackend/helper"
+	"ajebackend/model/cafassignment"
+	"ajebackend/model/cafassignmentenduser"
+	"ajebackend/model/coareport"
+	"ajebackend/model/coareportln"
 	"ajebackend/model/counter"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
+	"ajebackend/model/electricassignment"
+	"ajebackend/model/electricassignmentenduser"
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/insw"
+	"ajebackend/model/master/company"
 	"ajebackend/model/master/currency"
 	"ajebackend/model/master/iupopk"
 	"ajebackend/model/master/navycompany"
@@ -18,6 +25,7 @@ import (
 	"ajebackend/model/minerbaln"
 	"ajebackend/model/production"
 	"ajebackend/model/reportdmo"
+	"ajebackend/model/rkab"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
 	"encoding/json"
@@ -72,6 +80,25 @@ type Repository interface {
 	UpdateDocumentReportDmo(id int, documentLink reportdmo.InputUpdateDocumentReportDmo, userId uint, iupopkId int) (reportdmo.ReportDmo, error)
 	UpdateTransactionReportDmo(id int, inputUpdate reportdmo.InputUpdateReportDmo, userId uint, iupopkId int) (reportdmo.ReportDmo, error)
 	DeleteReportDmo(idReportDmo int, userId uint, iupopkId int) (bool, error)
+	CreateCoaReport(dateFrom string, dateTo string, iupopkId int, userId uint) (coareport.CoaReport, error)
+	DeleteCoaReport(id int, iupopkId int, userId uint) (bool, error)
+	UpdateDocumentCoaReport(id int, documentLink coareport.InputUpdateDocumentCoaReport, userId uint, iupopkId int) (coareport.CoaReport, error)
+	CreateCoaReportLn(dateFrom string, dateTo string, iupopkId int, userId uint) (coareportln.CoaReportLn, error)
+	DeleteCoaReportLn(id int, iupopkId int, userId uint) (bool, error)
+	UpdateDocumentCoaReportLn(id int, documentLink coareportln.InputUpdateDocumentCoaReportLn, userId uint, iupopkId int) (coareportln.CoaReportLn, error)
+	CreateRkab(input rkab.RkabInput, iupopkId int, userId uint) (rkab.Rkab, error)
+	DeleteRkab(id int, iupopkId int, userId uint) (bool, error)
+	UploadDocumentRkab(id uint, urlS3 string, userId uint, iupopkId int) (rkab.Rkab, error)
+	CreateElectricAssignment(input electricassignmentenduser.CreateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
+	UploadCreateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
+	UploadUpdateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int, typeDocument string) (electricassignment.ElectricAssignment, error)
+	UpdateElectricAssignment(id int, input electricassignmentenduser.UpdateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
+	DeleteElectricAssignment(id int, iupopkId int, userId uint) (bool, error)
+	CreateCafAssignment(input cafassignmentenduser.CreateCafAssignmentInput, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
+	UploadCreateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
+	UploadUpdateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int, typeDocument string) (cafassignment.CafAssignment, error)
+	DeleteCafAssignment(id int, iupopkId int, userId uint) (bool, error)
+	UpdateCafAssignment(id int, input cafassignmentenduser.UpdateCafAssignmentInput, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
 }
 
 type repository struct {
@@ -3621,4 +3648,1380 @@ func (r *repository) DeleteReportDmo(idReportDmo int, userId uint, iupopkId int)
 
 	tx.Commit()
 	return true, nil
+}
+
+// COA Report
+
+func (r *repository) CreateCoaReport(dateFrom string, dateTo string, iupopkId int, userId uint) (coareport.CoaReport, error) {
+	var coaReport coareport.CoaReport
+	var iup iupopk.Iupopk
+
+	var counterTransaction counter.Counter
+
+	tx := r.db.Begin()
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return coaReport, errFindIup
+	}
+
+	errFindCounterTransaction := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
+
+	if errFindCounterTransaction != nil {
+		tx.Rollback()
+		return coaReport, errFindCounterTransaction
+	}
+
+	errFind := tx.Where("date_from = ? AND date_to = ? AND iupopk_id = ?", dateFrom, dateTo, iupopkId).First(&coaReport).Error
+
+	if errFind == nil {
+		tx.Rollback()
+		return coaReport, errors.New("Report already has been created")
+	}
+
+	idNumber := "RCO-" + iup.Code
+
+	coaReport.IdNumber = createIdNumber(idNumber, uint(counterTransaction.CoaReport))
+	coaReport.DateFrom = dateFrom
+	coaReport.DateTo = dateTo
+	coaReport.IupopkId = iup.ID
+
+	errCreate := tx.Create(&coaReport).Error
+
+	if errCreate != nil {
+		tx.Rollback()
+		return coaReport, errCreate
+	}
+
+	coaReportData, _ := json.Marshal(coaReport)
+
+	var history History
+
+	history.CoaReportId = &coaReport.ID
+	history.Status = "Created Coa Report"
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = coaReportData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return coaReport, createHistoryErr
+	}
+
+	updateCounterErr := tx.Model(&counterTransaction).Where("iupopk_id = ?", iupopkId).Update("coa_report", counterTransaction.CoaReport+1).Error
+
+	if updateCounterErr != nil {
+		tx.Rollback()
+		return coaReport, updateCounterErr
+	}
+
+	tx.Commit()
+	return coaReport, nil
+}
+
+func (r *repository) DeleteCoaReport(id int, iupopkId int, userId uint) (bool, error) {
+	var coaReport coareport.CoaReport
+	var iup iupopk.Iupopk
+
+	tx := r.db.Begin()
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return false, errFindIup
+	}
+
+	errFind := tx.Where("id = ?", id).First(&coaReport).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return false, errFind
+	}
+
+	coaReportData, _ := json.Marshal(coaReport)
+
+	errDelete := tx.Unscoped().Where("id = ? AND iupopk_id = ?", id, iupopkId).Delete(&coaReport).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+		return false, errDelete
+	}
+
+	var history History
+
+	history.Status = fmt.Sprintf("Deleted Coa Report with id number %s and id %v", &coaReport.IdNumber, coaReport.ID)
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = coaReportData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return false, createHistoryErr
+	}
+
+	tx.Commit()
+	return true, nil
+}
+
+func (r *repository) UpdateDocumentCoaReport(id int, documentLink coareport.InputUpdateDocumentCoaReport, userId uint, iupopkId int) (coareport.CoaReport, error) {
+	tx := r.db.Begin()
+	var coaReport coareport.CoaReport
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&coaReport).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return coaReport, errFind
+	}
+
+	editData := make(map[string]interface{})
+
+	for _, value := range documentLink.Data {
+		if value["Location"] != nil {
+			if strings.Contains(value["Location"].(string), "coa_report") {
+				editData["coa_report_document_link"] = value["Location"]
+			}
+		}
+	}
+
+	errEdit := tx.Model(&coaReport).Updates(editData).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return coaReport, errEdit
+	}
+
+	var history History
+
+	history.CoaReportId = &coaReport.ID
+	history.UserId = userId
+	history.Status = fmt.Sprintf("Update upload document coa report with id = %v", coaReport.ID)
+	history.IupopkId = &coaReport.IupopkId
+	dataInput, _ := json.Marshal(documentLink)
+	history.AfterData = dataInput
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return coaReport, createHistoryErr
+	}
+
+	tx.Commit()
+	return coaReport, nil
+}
+
+// Coa Report LN
+
+func (r *repository) CreateCoaReportLn(dateFrom string, dateTo string, iupopkId int, userId uint) (coareportln.CoaReportLn, error) {
+	var coaReportLn coareportln.CoaReportLn
+	var iup iupopk.Iupopk
+
+	var counterTransaction counter.Counter
+
+	tx := r.db.Begin()
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return coaReportLn, errFindIup
+	}
+
+	errFindCounterTransaction := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
+
+	if errFindCounterTransaction != nil {
+		tx.Rollback()
+		return coaReportLn, errFindCounterTransaction
+	}
+
+	errFind := tx.Where("date_from = ? AND date_to = ? AND iupopk_id = ?", dateFrom, dateTo, iupopkId).First(&coaReportLn).Error
+
+	if errFind == nil {
+		tx.Rollback()
+		return coaReportLn, errors.New("Report already has been created")
+	}
+
+	idNumber := "RCN-" + iup.Code
+
+	counter := counterTransaction.CoaReportLn
+
+	if counter == 0 {
+		counter = 1
+	}
+
+	coaReportLn.IdNumber = createIdNumber(idNumber, uint(counter))
+	coaReportLn.DateFrom = dateFrom
+	coaReportLn.DateTo = dateTo
+	coaReportLn.IupopkId = iup.ID
+
+	errCreate := tx.Create(&coaReportLn).Error
+
+	if errCreate != nil {
+		tx.Rollback()
+		return coaReportLn, errCreate
+	}
+
+	coaReportLnData, _ := json.Marshal(coaReportLn)
+
+	var history History
+
+	history.CoaReportLnId = &coaReportLn.ID
+	history.Status = "Created Coa Report Ln"
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = coaReportLnData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return coaReportLn, createHistoryErr
+	}
+
+	updateCounterErr := tx.Model(&counterTransaction).Where("iupopk_id = ?", iupopkId).Update("coa_report_ln", counter+1).Error
+
+	if updateCounterErr != nil {
+		tx.Rollback()
+		return coaReportLn, updateCounterErr
+	}
+
+	tx.Commit()
+	return coaReportLn, nil
+}
+
+func (r *repository) DeleteCoaReportLn(id int, iupopkId int, userId uint) (bool, error) {
+	var coaReportLn coareportln.CoaReportLn
+	var iup iupopk.Iupopk
+
+	tx := r.db.Begin()
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return false, errFindIup
+	}
+
+	errFind := tx.Where("id = ?", id).First(&coaReportLn).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return false, errFind
+	}
+
+	coaReportLnData, _ := json.Marshal(coaReportLn)
+
+	errDelete := tx.Unscoped().Where("id = ? AND iupopk_id = ?", id, iupopkId).Delete(&coaReportLn).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+		return false, errDelete
+	}
+
+	var history History
+
+	history.Status = fmt.Sprintf("Deleted Coa Report with id number %s and id %v", &coaReportLn.IdNumber, coaReportLn.ID)
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = coaReportLnData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return false, createHistoryErr
+	}
+
+	tx.Commit()
+	return true, nil
+}
+
+func (r *repository) UpdateDocumentCoaReportLn(id int, documentLink coareportln.InputUpdateDocumentCoaReportLn, userId uint, iupopkId int) (coareportln.CoaReportLn, error) {
+	tx := r.db.Begin()
+	var coaReportLn coareportln.CoaReportLn
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&coaReportLn).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return coaReportLn, errFind
+	}
+
+	editData := make(map[string]interface{})
+
+	for _, value := range documentLink.Data {
+		if value["Location"] != nil {
+			if strings.Contains(value["Location"].(string), "coa_report_ln") {
+				editData["coa_report_ln_document_link"] = value["Location"]
+			}
+		}
+	}
+
+	errEdit := tx.Model(&coaReportLn).Updates(editData).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return coaReportLn, errEdit
+	}
+
+	var history History
+
+	history.CoaReportLnId = &coaReportLn.ID
+	history.UserId = userId
+	history.Status = fmt.Sprintf("Update upload document coa report ln with id = %v", coaReportLn.ID)
+	history.IupopkId = &coaReportLn.IupopkId
+	dataInput, _ := json.Marshal(documentLink)
+	history.AfterData = dataInput
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return coaReportLn, createHistoryErr
+	}
+
+	tx.Commit()
+	return coaReportLn, nil
+}
+
+// RKAB
+
+func (r *repository) CreateRkab(input rkab.RkabInput, iupopkId int, userId uint) (rkab.Rkab, error) {
+	var createdRkab rkab.Rkab
+	var iup iupopk.Iupopk
+	var findRkab []rkab.Rkab
+
+	var counterTransaction counter.Counter
+
+	tx := r.db.Begin()
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return createdRkab, errFindIup
+	}
+
+	errFindRkab := tx.Where("year = ? AND iupopk_id = ?", input.Year, iupopkId).Find(&findRkab).Error
+
+	if errFindRkab != nil {
+		tx.Rollback()
+		return createdRkab, nil
+	}
+
+	errFindCounterTransaction := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
+
+	if errFindCounterTransaction != nil {
+		tx.Rollback()
+		return createdRkab, errFindCounterTransaction
+	}
+
+	idNumber := "RKB-" + iup.Code
+	createdRkab.IdNumber = createIdNumber(idNumber, uint(counterTransaction.Rkab))
+	createdRkab.LetterNumber = strings.ToUpper(input.LetterNumber)
+	createdRkab.DateOfIssue = input.DateOfIssue
+	createdRkab.Year = input.Year
+	createdRkab.ProductionQuota = input.ProductionQuota
+	createdRkab.DmoObligation = input.DmoObligation
+	createdRkab.IupopkId = uint(iupopkId)
+
+	if len(findRkab) > 0 {
+		createdRkab.IsRevision = true
+
+		errUpd := tx.Model(&findRkab).Where("year = ? AND iupopk_id = ?", input.Year, iupopkId).Update("is_revision", true).Error
+
+		if errUpd != nil {
+			return createdRkab, errUpd
+		}
+	}
+
+	errCreate := tx.Create(&createdRkab).Error
+
+	if errCreate != nil {
+		tx.Rollback()
+		return createdRkab, errCreate
+	}
+
+	rkabData, _ := json.Marshal(createdRkab)
+
+	var history History
+
+	history.RkabId = &createdRkab.ID
+	history.Status = "Created Rkab"
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = rkabData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return createdRkab, createHistoryErr
+	}
+
+	updateCounterErr := tx.Model(&counterTransaction).Where("iupopk_id = ?", iupopkId).Update("rkab", counterTransaction.Rkab+1).Error
+
+	if updateCounterErr != nil {
+		tx.Rollback()
+		return createdRkab, updateCounterErr
+	}
+
+	tx.Commit()
+	return createdRkab, nil
+}
+
+func (r *repository) DeleteRkab(id int, iupopkId int, userId uint) (bool, error) {
+	var rkabDeleted rkab.Rkab
+	var iup iupopk.Iupopk
+
+	var rkabYear string
+
+	tx := r.db.Begin()
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return false, errFindIup
+	}
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&rkabDeleted).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return false, errFind
+	}
+
+	rkabYear = rkabDeleted.Year
+	rkabData, _ := json.Marshal(rkabDeleted)
+
+	errDelete := tx.Unscoped().Where("id = ? AND iupopk_id = ?", id, iupopkId).Delete(&rkabDeleted).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+		return false, errDelete
+	}
+
+	var listRkab []rkab.Rkab
+
+	errFindRkabWithYear := tx.Where("year = ?", rkabYear).Order("created_at desc").Find(&listRkab).Error
+
+	if errFindRkabWithYear == nil {
+		var newUpdRkab rkab.Rkab
+		var isRevision = true
+		if len(listRkab) > 0 {
+			if len(listRkab) == 1 {
+				isRevision = false
+			}
+			newUpdRkab = listRkab[0]
+
+			errUpd := tx.Model(&newUpdRkab).Update("is_revision", isRevision).Error
+
+			if errUpd != nil {
+				tx.Rollback()
+				return false, errUpd
+			}
+		}
+	}
+
+	var history History
+
+	history.Status = fmt.Sprintf("Deleted Rkab with id number %s and id %v", &rkabDeleted.IdNumber, rkabDeleted.ID)
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = rkabData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return false, createHistoryErr
+	}
+
+	tx.Commit()
+	return true, nil
+}
+
+func (r *repository) UploadDocumentRkab(id uint, urlS3 string, userId uint, iupopkId int) (rkab.Rkab, error) {
+	var rkab rkab.Rkab
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&rkab).Error
+
+	if errFind != nil {
+		return rkab, errFind
+	}
+
+	errEdit := tx.Model(&rkab).Update("rkab_document_link", urlS3).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return rkab, errEdit
+	}
+
+	var history History
+
+	history.RkabId = &rkab.ID
+	history.UserId = userId
+	history.Status = "Uploaded document rkab"
+
+	history.IupopkId = &rkab.IupopkId
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return rkab, createHistoryErr
+	}
+
+	tx.Commit()
+	return rkab, nil
+}
+
+// Electric Assignment
+func (r *repository) CreateElectricAssignment(input electricassignmentenduser.CreateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error) {
+	var createdElectricAssignment electricassignment.ElectricAssignment
+
+	var electricAssignmentEndUser []electricassignmentenduser.ElectricAssignmentEndUser
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("year = ? AND iupopk_id = ?", input.Year, iupopkId).First(&createdElectricAssignment).Error
+
+	if errFind == nil {
+		tx.Rollback()
+		return createdElectricAssignment, errors.New("Surat Penugasan Tahun ini sudah pernah dibuat")
+	}
+
+	var counterTransaction counter.Counter
+	var iup iupopk.Iupopk
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return createdElectricAssignment, errFindIup
+	}
+
+	errFindCounterTransaction := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
+
+	if errFindCounterTransaction != nil {
+		tx.Rollback()
+		return createdElectricAssignment, errFindCounterTransaction
+	}
+
+	idElectric := counterTransaction.ElectricAssignment
+
+	if idElectric == 0 {
+		idElectric = 1
+	}
+
+	idNumber := "SPK-" + iup.Code
+	createdElectricAssignment.IdNumber = createIdNumber(idNumber, uint(idElectric))
+	createdElectricAssignment.LetterNumber = strings.ToUpper(input.LetterNumber)
+	createdElectricAssignment.GrandTotalQuantity = input.GrandTotalQuantity
+	createdElectricAssignment.Year = input.Year
+	createdElectricAssignment.LetterDate = input.LetterDate
+	createdElectricAssignment.IupopkId = iup.ID
+
+	errCreate := tx.Create(&createdElectricAssignment).Error
+
+	if errCreate != nil {
+		tx.Rollback()
+		return createdElectricAssignment, errCreate
+	}
+
+	for _, v := range input.ListElectricAssignment {
+		var tempElecEndUser electricassignmentenduser.ElectricAssignmentEndUser
+
+		tempElecEndUser.ElectricAssignmentId = createdElectricAssignment.ID
+		tempElecEndUser.PortId = v.PortId
+		tempElecEndUser.SupplierId = v.SupplierId
+		tempElecEndUser.AverageCalories = v.AverageCalories
+		tempElecEndUser.Quantity = v.Quantity
+		tempElecEndUser.EndUser = v.EndUser
+		tempElecEndUser.LetterNumber = strings.ToUpper(v.LetterNumber)
+
+		electricAssignmentEndUser = append(electricAssignmentEndUser, tempElecEndUser)
+	}
+
+	errBulkCreate := tx.Create(&electricAssignmentEndUser).Error
+
+	if errBulkCreate != nil {
+		tx.Rollback()
+		return createdElectricAssignment, errBulkCreate
+	}
+
+	beforeData := make(map[string]interface{})
+
+	beforeData["electric_assignment"] = createdElectricAssignment
+	beforeData["list_electric_assigment_end_user"] = electricAssignmentEndUser
+
+	beforeJson, _ := json.Marshal(beforeData)
+
+	var history History
+
+	history.ElectricAssignmentId = &createdElectricAssignment.ID
+	history.Status = "Created Electric Assignment"
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = beforeJson
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return createdElectricAssignment, createHistoryErr
+	}
+
+	updateCounterErr := tx.Model(&counterTransaction).Where("iupopk_id = ?", iupopkId).Update("electric_assignment", idElectric+1).Error
+
+	if updateCounterErr != nil {
+		tx.Rollback()
+		return createdElectricAssignment, updateCounterErr
+	}
+
+	tx.Commit()
+	return createdElectricAssignment, nil
+}
+
+func (r *repository) UploadCreateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error) {
+	var electricAssignment electricassignment.ElectricAssignment
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&electricAssignment).Error
+
+	if errFind != nil {
+		return electricAssignment, errFind
+	}
+
+	errEdit := tx.Model(&electricAssignment).Update("assignment_letter_link", urlS3).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return electricAssignment, errEdit
+	}
+
+	var history History
+
+	history.ElectricAssignmentId = &electricAssignment.ID
+	history.UserId = userId
+	history.Status = "Uploaded document electric assignment"
+
+	history.IupopkId = &electricAssignment.IupopkId
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return electricAssignment, createHistoryErr
+	}
+
+	tx.Commit()
+	return electricAssignment, nil
+}
+
+func (r *repository) UploadUpdateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int, typeDocument string) (electricassignment.ElectricAssignment, error) {
+	var electricAssignment electricassignment.ElectricAssignment
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&electricAssignment).Error
+
+	if errFind != nil {
+		return electricAssignment, errFind
+	}
+
+	errEdit := tx.Model(&electricAssignment).Update(typeDocument, urlS3).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return electricAssignment, errEdit
+	}
+
+	var history History
+
+	history.ElectricAssignmentId = &electricAssignment.ID
+	history.UserId = userId
+	history.Status = "Uploaded document revision electric assignment"
+
+	history.IupopkId = &electricAssignment.IupopkId
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return electricAssignment, createHistoryErr
+	}
+
+	tx.Commit()
+	return electricAssignment, nil
+}
+
+func (r *repository) UpdateElectricAssignment(id int, input electricassignmentenduser.UpdateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error) {
+	var updatedElectricAssignment electricassignment.ElectricAssignment
+
+	var electricAssigmentEndUser []electricassignmentenduser.ElectricAssignmentEndUser
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&updatedElectricAssignment).Error
+
+	if errFind != nil {
+		tx.Rollback()
+
+		return updatedElectricAssignment, errFind
+	}
+
+	errFindList := tx.Where("electric_assignment_id = ?", id).Find(&electricAssigmentEndUser).Error
+
+	if errFindList != nil {
+		tx.Rollback()
+
+		return updatedElectricAssignment, errFindList
+	}
+
+	beforeMap := make(map[string]interface{})
+
+	beforeMap["detail"] = updatedElectricAssignment
+	beforeMap["list"] = electricAssigmentEndUser
+
+	updateMap := make(map[string]interface{})
+
+	updateMap["grand_total_quantity"] = input.GrandTotalQuantity
+	updateMap["letter_number"] = strings.ToUpper(input.LetterNumber)
+	updateMap["revision_letter_number"] = strings.ToUpper(input.RevisionLetterNumber)
+	updateMap["letter_date"] = input.LetterDate
+	if *input.RevisionLetterDate == "null" {
+		updateMap["revision_letter_date"] = nil
+	} else {
+		updateMap["revision_letter_date"] = input.RevisionLetterDate
+	}
+
+	updateMap["grand_total_quantity2"] = input.GrandTotalQuantity2
+	updateMap["letter_number2"] = strings.ToUpper(input.LetterNumber2)
+	updateMap["revision_letter_number2"] = strings.ToUpper(input.RevisionLetterNumber2)
+	if *input.LetterDate2 == "null" {
+		updateMap["letter_date2"] = nil
+	} else {
+		updateMap["letter_date2"] = input.LetterDate2
+	}
+	if *input.RevisionLetterDate2 == "null" {
+		updateMap["revision_letter_date2"] = nil
+	} else {
+		updateMap["revision_letter_date2"] = input.RevisionLetterDate2
+	}
+
+	updateMap["grand_total_quantity3"] = input.GrandTotalQuantity3
+	updateMap["letter_number3"] = strings.ToUpper(input.LetterNumber3)
+	updateMap["revision_letter_number3"] = strings.ToUpper(input.RevisionLetterNumber3)
+	if *input.LetterDate3 == "null" {
+		updateMap["letter_date3"] = nil
+	} else {
+		updateMap["letter_date3"] = input.LetterDate3
+	}
+	if *input.RevisionLetterDate3 == "null" {
+		updateMap["revision_letter_date3"] = nil
+	} else {
+		updateMap["revision_letter_date3"] = input.RevisionLetterDate3
+	}
+
+	updateMap["grand_total_quantity4"] = input.GrandTotalQuantity4
+	updateMap["letter_number4"] = strings.ToUpper(input.LetterNumber4)
+	updateMap["revision_letter_number4"] = strings.ToUpper(input.RevisionLetterNumber4)
+	if *input.LetterDate4 == "null" {
+		updateMap["letter_date4"] = nil
+	} else {
+		updateMap["letter_date4"] = input.LetterDate4
+	}
+	if *input.RevisionLetterDate4 == "null" {
+		updateMap["revision_letter_date4"] = nil
+	} else {
+		updateMap["revision_letter_date4"] = input.RevisionLetterDate4
+	}
+
+	errUpd := tx.Model(&updatedElectricAssignment).Where("id = ? AND iupopk_id = ?", id, iupopkId).Updates(updateMap).Error
+
+	if errUpd != nil {
+		tx.Rollback()
+
+		return updatedElectricAssignment, errUpd
+	}
+
+	var idUpdated []uint
+
+	for _, values := range input.ListElectricAssignment {
+		var tempElectricAssignment electricassignmentenduser.ElectricAssignmentEndUser
+		isExist := helper.IsExistElectricAssignment(values.ID, electricAssigmentEndUser)
+
+		tempElectricAssignment = values
+
+		if !isExist {
+			tempElectricAssignment.ElectricAssignmentId = updatedElectricAssignment.ID
+
+			errCreate := tx.Create(&tempElectricAssignment).Error
+
+			if errCreate != nil {
+				return updatedElectricAssignment, errCreate
+			}
+
+		} else {
+			errUpd := tx.Model(&tempElectricAssignment).Updates(&tempElectricAssignment).Error
+
+			if errUpd != nil {
+				return updatedElectricAssignment, errUpd
+			}
+
+		}
+
+		idUpdated = append(idUpdated, tempElectricAssignment.ID)
+	}
+
+	var deletedElectricAssignment []electricassignmentenduser.ElectricAssignmentEndUser
+
+	errFindDeleted := tx.Where("electric_assignment_id = ? AND id NOT IN ?", id, idUpdated).Find(&deletedElectricAssignment).Error
+
+	if errFindDeleted != nil {
+		tx.Rollback()
+
+		return updatedElectricAssignment, errFindDeleted
+	}
+
+	errDelete := tx.Unscoped().Where("electric_assignment_id = ? AND id NOT IN ?", id, idUpdated).Delete(&deletedElectricAssignment).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+
+		return updatedElectricAssignment, errDelete
+	}
+
+	var newElectricAssigmentEndUser []electricassignmentenduser.ElectricAssignmentEndUser
+
+	errFindListNew := tx.Where("electric_assignment_id = ?", id).Find(&newElectricAssigmentEndUser).Error
+
+	if errFindListNew != nil {
+		tx.Rollback()
+
+		return updatedElectricAssignment, errFindListNew
+	}
+
+	afterMap := make(map[string]interface{})
+
+	afterMap["detail"] = updatedElectricAssignment
+	afterMap["list"] = newElectricAssigmentEndUser
+
+	beforeJson, _ := json.Marshal(beforeMap)
+	afterJson, _ := json.Marshal(afterMap)
+
+	var history History
+
+	history.ElectricAssignmentId = &updatedElectricAssignment.ID
+	history.Status = "Updated Electric Assignment"
+	history.UserId = userId
+	history.IupopkId = &updatedElectricAssignment.IupopkId
+	history.BeforeData = beforeJson
+	history.AfterData = afterJson
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return updatedElectricAssignment, createHistoryErr
+	}
+
+	tx.Commit()
+	return updatedElectricAssignment, nil
+}
+
+func (r *repository) DeleteElectricAssignment(id int, iupopkId int, userId uint) (bool, error) {
+	var electricAssignmentDeleted electricassignment.ElectricAssignment
+	var iup iupopk.Iupopk
+	var listElectricAssignmentEndUser []electricassignmentenduser.ElectricAssignmentEndUser
+
+	tx := r.db.Begin()
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return false, errFindIup
+	}
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&electricAssignmentDeleted).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return false, errFind
+	}
+
+	errFindList := tx.Where("electric_assignment_id = ?", id).Find(&listElectricAssignmentEndUser).Error
+
+	if errFindList != nil {
+
+		if errFindList != nil {
+			tx.Rollback()
+			return false, errFindList
+		}
+	}
+
+	beforeMap := make(map[string]interface{})
+
+	beforeMap["electric_assigment"] = electricAssignmentDeleted
+	beforeMap["list_electric_assigment"] = listElectricAssignmentEndUser
+
+	beforeData, _ := json.Marshal(beforeMap)
+
+	errDelete := tx.Unscoped().Where("id = ? AND iupopk_id = ?", id, iupopkId).Delete(&electricAssignmentDeleted).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+		return false, errDelete
+	}
+
+	var history History
+
+	history.Status = fmt.Sprintf("Deleted Electric Assignment with id number %s and id %v", &electricAssignmentDeleted.IdNumber, electricAssignmentDeleted.ID)
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = beforeData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return false, createHistoryErr
+	}
+
+	tx.Commit()
+	return true, nil
+}
+
+// Caf Assignment -> Cement and Fertilizer Assignment
+
+func (r *repository) CreateCafAssignment(input cafassignmentenduser.CreateCafAssignmentInput, userId uint, iupopkId int) (cafassignment.CafAssignment, error) {
+	var createdCafAssignment cafassignment.CafAssignment
+
+	var cafAssignmentEndUser []cafassignmentenduser.CafAssignmentEndUser
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("year = ? AND iupopk_id = ?", input.Year, iupopkId).First(&createdCafAssignment).Error
+
+	if errFind == nil {
+		tx.Rollback()
+		return createdCafAssignment, errors.New("Surat Penugasan Tahun ini sudah pernah dibuat")
+	}
+
+	var counterTransaction counter.Counter
+	var iup iupopk.Iupopk
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return createdCafAssignment, errFindIup
+	}
+
+	errFindCounterTransaction := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
+
+	if errFindCounterTransaction != nil {
+		tx.Rollback()
+		return createdCafAssignment, errFindCounterTransaction
+	}
+
+	idCaf := counterTransaction.CafAssignment
+
+	if idCaf == 0 {
+		idCaf = 1
+	}
+
+	idNumber := "SPS-" + iup.Code
+	createdCafAssignment.IdNumber = createIdNumber(idNumber, uint(idCaf))
+	createdCafAssignment.LetterNumber = strings.ToUpper(input.LetterNumber)
+	createdCafAssignment.GrandTotalQuantity = input.GrandTotalQuantity
+	createdCafAssignment.Year = input.Year
+	createdCafAssignment.LetterDate = input.LetterDate
+	createdCafAssignment.IupopkId = iup.ID
+
+	errCreate := tx.Create(&createdCafAssignment).Error
+
+	if errCreate != nil {
+		tx.Rollback()
+		return createdCafAssignment, errCreate
+	}
+
+	for _, v := range input.ListCafAssignment {
+		var tempCafEndUser cafassignmentenduser.CafAssignmentEndUser
+		var tempEndUser company.Company
+
+		errTempEndUser := tx.Where("id = ?", v.EndUserId).First(&tempEndUser).Error
+
+		if errTempEndUser != nil {
+			tx.Rollback()
+			return createdCafAssignment, errTempEndUser
+		}
+
+		tempCafEndUser.CafAssignmentId = createdCafAssignment.ID
+		tempCafEndUser.AverageCalories = v.AverageCalories
+		tempCafEndUser.Quantity = v.Quantity
+		tempCafEndUser.EndUserId = v.EndUserId
+		tempCafEndUser.EndUserString = tempEndUser.CompanyName
+		tempCafEndUser.LetterNumber = strings.ToUpper(v.LetterNumber)
+
+		cafAssignmentEndUser = append(cafAssignmentEndUser, tempCafEndUser)
+	}
+
+	errBulkCreate := tx.Create(&cafAssignmentEndUser).Error
+
+	if errBulkCreate != nil {
+		tx.Rollback()
+		return createdCafAssignment, errBulkCreate
+	}
+
+	beforeData := make(map[string]interface{})
+
+	beforeData["caf_assignment"] = createdCafAssignment
+	beforeData["list_caf_assigment_end_user"] = cafAssignmentEndUser
+
+	beforeJson, _ := json.Marshal(beforeData)
+
+	var history History
+
+	history.CafAssignmentId = &createdCafAssignment.ID
+	history.Status = "Created Caf Assignment"
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = beforeJson
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return createdCafAssignment, createHistoryErr
+	}
+
+	updateCounterErr := tx.Model(&counterTransaction).Where("iupopk_id = ?", iupopkId).Update("caf_assignment", idCaf+1).Error
+
+	if updateCounterErr != nil {
+		tx.Rollback()
+		return createdCafAssignment, updateCounterErr
+	}
+
+	tx.Commit()
+	return createdCafAssignment, nil
+}
+
+func (r *repository) UploadCreateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int) (cafassignment.CafAssignment, error) {
+	var cafAssignment cafassignment.CafAssignment
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&cafAssignment).Error
+
+	if errFind != nil {
+		return cafAssignment, errFind
+	}
+
+	errEdit := tx.Model(&cafAssignment).Update("assignment_letter_link", urlS3).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return cafAssignment, errEdit
+	}
+
+	var history History
+
+	history.CafAssignmentId = &cafAssignment.ID
+	history.UserId = userId
+	history.Status = "Uploaded document caf assignment"
+
+	history.IupopkId = &cafAssignment.IupopkId
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return cafAssignment, createHistoryErr
+	}
+
+	tx.Commit()
+	return cafAssignment, nil
+}
+
+func (r *repository) UploadUpdateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int, typeDocument string) (cafassignment.CafAssignment, error) {
+	var cafAssignment cafassignment.CafAssignment
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&cafAssignment).Error
+
+	if errFind != nil {
+		return cafAssignment, errFind
+	}
+
+	errEdit := tx.Model(&cafAssignment).Update(typeDocument, urlS3).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return cafAssignment, errEdit
+	}
+
+	var history History
+
+	history.CafAssignmentId = &cafAssignment.ID
+	history.UserId = userId
+	history.Status = "Uploaded document revision caf assignment"
+
+	history.IupopkId = &cafAssignment.IupopkId
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return cafAssignment, createHistoryErr
+	}
+
+	tx.Commit()
+	return cafAssignment, nil
+}
+
+func (r *repository) DeleteCafAssignment(id int, iupopkId int, userId uint) (bool, error) {
+	var cafAssignmentDeleted cafassignment.CafAssignment
+	var iup iupopk.Iupopk
+	var listCafAssignmentEndUser []cafassignmentenduser.CafAssignmentEndUser
+
+	tx := r.db.Begin()
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return false, errFindIup
+	}
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&cafAssignmentDeleted).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return false, errFind
+	}
+
+	errFindList := tx.Where("caf_assignment_id = ?", id).Find(&listCafAssignmentEndUser).Error
+
+	if errFindList != nil {
+
+		if errFindList != nil {
+			tx.Rollback()
+			return false, errFindList
+		}
+	}
+
+	beforeMap := make(map[string]interface{})
+
+	beforeMap["caf_assigment"] = cafAssignmentDeleted
+	beforeMap["list_caf_assigment"] = listCafAssignmentEndUser
+
+	beforeData, _ := json.Marshal(beforeMap)
+
+	errDelete := tx.Unscoped().Where("id = ? AND iupopk_id = ?", id, iupopkId).Delete(&cafAssignmentDeleted).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+		return false, errDelete
+	}
+
+	var history History
+
+	history.Status = fmt.Sprintf("Deleted Caf Assignment with id number %s and id %v", &cafAssignmentDeleted.IdNumber, cafAssignmentDeleted.ID)
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = beforeData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return false, createHistoryErr
+	}
+
+	tx.Commit()
+	return true, nil
+}
+
+func (r *repository) UpdateCafAssignment(id int, input cafassignmentenduser.UpdateCafAssignmentInput, userId uint, iupopkId int) (cafassignment.CafAssignment, error) {
+	var updatedCafAssignment cafassignment.CafAssignment
+
+	var cafAssigmentEndUser []cafassignmentenduser.CafAssignmentEndUser
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&updatedCafAssignment).Error
+
+	if errFind != nil {
+		tx.Rollback()
+
+		return updatedCafAssignment, errFind
+	}
+
+	errFindList := tx.Where("caf_assignment_id = ?", id).Find(&cafAssigmentEndUser).Error
+
+	if errFindList != nil {
+		tx.Rollback()
+
+		return updatedCafAssignment, errFindList
+	}
+
+	beforeMap := make(map[string]interface{})
+
+	beforeMap["detail"] = updatedCafAssignment
+	beforeMap["list"] = cafAssigmentEndUser
+
+	updateMap := make(map[string]interface{})
+
+	updateMap["grand_total_quantity"] = input.GrandTotalQuantity
+	updateMap["letter_number"] = strings.ToUpper(input.LetterNumber)
+	updateMap["revision_letter_number"] = strings.ToUpper(input.RevisionLetterNumber)
+	updateMap["letter_date"] = input.LetterDate
+	if *input.RevisionLetterDate == "null" {
+		updateMap["revision_letter_date"] = nil
+	} else {
+		updateMap["revision_letter_date"] = input.RevisionLetterDate
+	}
+
+	updateMap["grand_total_quantity2"] = input.GrandTotalQuantity2
+	updateMap["letter_number2"] = strings.ToUpper(input.LetterNumber2)
+	updateMap["revision_letter_number2"] = strings.ToUpper(input.RevisionLetterNumber2)
+	if *input.LetterDate2 == "null" {
+		updateMap["letter_date2"] = nil
+	} else {
+		updateMap["letter_date2"] = input.LetterDate2
+	}
+	if *input.RevisionLetterDate2 == "null" {
+		updateMap["revision_letter_date2"] = nil
+	} else {
+		updateMap["revision_letter_date2"] = input.RevisionLetterDate2
+	}
+
+	updateMap["grand_total_quantity3"] = input.GrandTotalQuantity3
+	updateMap["letter_number3"] = strings.ToUpper(input.LetterNumber3)
+	updateMap["revision_letter_number3"] = strings.ToUpper(input.RevisionLetterNumber3)
+	if *input.LetterDate3 == "null" {
+		updateMap["letter_date3"] = nil
+	} else {
+		updateMap["letter_date3"] = input.LetterDate3
+	}
+	if *input.RevisionLetterDate3 == "null" {
+		updateMap["revision_letter_date3"] = nil
+	} else {
+		updateMap["revision_letter_date3"] = input.RevisionLetterDate3
+	}
+
+	updateMap["grand_total_quantity4"] = input.GrandTotalQuantity4
+	updateMap["letter_number4"] = strings.ToUpper(input.LetterNumber4)
+	updateMap["revision_letter_number4"] = strings.ToUpper(input.RevisionLetterNumber4)
+	if *input.LetterDate4 == "null" {
+		updateMap["letter_date4"] = nil
+	} else {
+		updateMap["letter_date4"] = input.LetterDate4
+	}
+	if *input.RevisionLetterDate4 == "null" {
+		updateMap["revision_letter_date4"] = nil
+	} else {
+		updateMap["revision_letter_date4"] = input.RevisionLetterDate4
+	}
+
+	errUpd := tx.Model(&updatedCafAssignment).Where("id = ? AND iupopk_id = ?", id, iupopkId).Updates(updateMap).Error
+
+	if errUpd != nil {
+		tx.Rollback()
+
+		return updatedCafAssignment, errUpd
+	}
+
+	var idUpdated []uint
+
+	for _, values := range input.ListCafAssignment {
+		var tempCafAssignment cafassignmentenduser.CafAssignmentEndUser
+		isExist := helper.IsExistCafAssignment(values.ID, cafAssigmentEndUser)
+
+		var tempEndUser company.Company
+
+		errFindEndUser := tx.Where("id = ?", values.EndUserId).First(&tempEndUser).Error
+
+		if errFindEndUser != nil {
+			tx.Rollback()
+
+			return updatedCafAssignment, errFindEndUser
+		}
+		tempCafAssignment = values
+		tempCafAssignment.EndUserString = tempEndUser.CompanyName
+
+		if !isExist {
+			tempCafAssignment.CafAssignmentId = updatedCafAssignment.ID
+
+			errCreate := tx.Create(&tempCafAssignment).Error
+
+			if errCreate != nil {
+				return updatedCafAssignment, errCreate
+			}
+
+		} else {
+			errUpd := tx.Model(&tempCafAssignment).Updates(&tempCafAssignment).Error
+
+			if errUpd != nil {
+				return updatedCafAssignment, errUpd
+			}
+
+		}
+
+		idUpdated = append(idUpdated, tempCafAssignment.ID)
+	}
+
+	var deletedCafAssignment []cafassignmentenduser.CafAssignmentEndUser
+
+	errFindDeleted := tx.Where("caf_assignment_id = ? AND id NOT IN ?", id, idUpdated).Find(&deletedCafAssignment).Error
+
+	if errFindDeleted != nil {
+		tx.Rollback()
+
+		return updatedCafAssignment, errFindDeleted
+	}
+
+	errDelete := tx.Unscoped().Where("caf_assignment_id = ? AND id NOT IN ?", id, idUpdated).Delete(&deletedCafAssignment).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+
+		return updatedCafAssignment, errDelete
+	}
+
+	var newCafAssigmentEndUser []cafassignmentenduser.CafAssignmentEndUser
+
+	errFindListNew := tx.Where("caf_assignment_id = ?", id).Find(&newCafAssigmentEndUser).Error
+
+	if errFindListNew != nil {
+		tx.Rollback()
+
+		return updatedCafAssignment, errFindListNew
+	}
+
+	afterMap := make(map[string]interface{})
+
+	afterMap["detail"] = updatedCafAssignment
+	afterMap["list"] = newCafAssigmentEndUser
+
+	beforeJson, _ := json.Marshal(beforeMap)
+	afterJson, _ := json.Marshal(afterMap)
+
+	var history History
+
+	history.CafAssignmentId = &updatedCafAssignment.ID
+	history.Status = "Updated Caf Assignment"
+	history.UserId = userId
+	history.IupopkId = &updatedCafAssignment.IupopkId
+	history.BeforeData = beforeJson
+	history.AfterData = afterJson
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return updatedCafAssignment, createHistoryErr
+	}
+
+	tx.Commit()
+	return updatedCafAssignment, nil
 }

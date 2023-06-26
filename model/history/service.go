@@ -1,7 +1,13 @@
 package history
 
 import (
+	"ajebackend/model/cafassignment"
+	"ajebackend/model/cafassignmentenduser"
+	"ajebackend/model/coareport"
+	"ajebackend/model/coareportln"
 	"ajebackend/model/dmo"
+	"ajebackend/model/electricassignment"
+	"ajebackend/model/electricassignmentenduser"
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/insw"
@@ -9,6 +15,7 @@ import (
 	"ajebackend/model/minerbaln"
 	"ajebackend/model/production"
 	"ajebackend/model/reportdmo"
+	"ajebackend/model/rkab"
 	"ajebackend/model/transaction"
 )
 
@@ -52,6 +59,25 @@ type Service interface {
 	UpdateDocumentReportDmo(id int, documentLink reportdmo.InputUpdateDocumentReportDmo, userId uint, iupopkId int) (reportdmo.ReportDmo, error)
 	UpdateTransactionReportDmo(id int, inputUpdate reportdmo.InputUpdateReportDmo, userId uint, iupopkId int) (reportdmo.ReportDmo, error)
 	DeleteReportDmo(idReportDmo int, userId uint, iupopkId int) (bool, error)
+	CreateCoaReport(dateFrom string, dateTo string, iupopkId int, userId uint) (coareport.CoaReport, error)
+	DeleteCoaReport(id int, iupopkId int, userId uint) (bool, error)
+	UpdateDocumentCoaReport(id int, documentLink coareport.InputUpdateDocumentCoaReport, userId uint, iupopkId int) (coareport.CoaReport, error)
+	CreateCoaReportLn(dateFrom string, dateTo string, iupopkId int, userId uint) (coareportln.CoaReportLn, error)
+	DeleteCoaReportLn(id int, iupopkId int, userId uint) (bool, error)
+	UpdateDocumentCoaReportLn(id int, documentLink coareportln.InputUpdateDocumentCoaReportLn, userId uint, iupopkId int) (coareportln.CoaReportLn, error)
+	CreateRkab(input rkab.RkabInput, iupopkId int, userId uint) (rkab.Rkab, error)
+	DeleteRkab(id int, iupopkId int, userId uint) (bool, error)
+	UploadDocumentRkab(id uint, urlS3 string, userId uint, iupopkId int) (rkab.Rkab, error)
+	CreateElectricAssignment(input electricassignmentenduser.CreateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
+	UploadCreateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
+	UploadUpdateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int, typeDocument string) (electricassignment.ElectricAssignment, error)
+	UpdateElectricAssignment(id int, input electricassignmentenduser.UpdateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error)
+	DeleteElectricAssignment(id int, iupopkId int, userId uint) (bool, error)
+	CreateCafAssignment(input cafassignmentenduser.CreateCafAssignmentInput, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
+	UploadCreateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
+	UploadUpdateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int, typeDocument string) (cafassignment.CafAssignment, error)
+	DeleteCafAssignment(id int, iupopkId int, userId uint) (bool, error)
+	UpdateCafAssignment(id int, input cafassignmentenduser.UpdateCafAssignmentInput, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
 }
 
 type service struct {
@@ -294,4 +320,116 @@ func (s *service) DeleteReportDmo(idReportDmo int, userId uint, iupopkId int) (b
 	deleteReportDmo, deleteReportDmoErr := s.repository.DeleteReportDmo(idReportDmo, userId, iupopkId)
 
 	return deleteReportDmo, deleteReportDmoErr
+}
+
+func (s *service) CreateCoaReport(dateFrom string, dateTo string, iupopkId int, userId uint) (coareport.CoaReport, error) {
+	coaReport, coaReportErr := s.repository.CreateCoaReport(dateFrom, dateTo, iupopkId, userId)
+
+	return coaReport, coaReportErr
+}
+
+func (s *service) DeleteCoaReport(id int, iupopkId int, userId uint) (bool, error) {
+	isDeletedCoaReport, isDeletedCoaReportErr := s.repository.DeleteCoaReport(id, iupopkId, userId)
+
+	return isDeletedCoaReport, isDeletedCoaReportErr
+}
+
+func (s *service) UpdateDocumentCoaReport(id int, documentLink coareport.InputUpdateDocumentCoaReport, userId uint, iupopkId int) (coareport.CoaReport, error) {
+	updDocumentCoaReport, updDocumentCoaReportErr := s.repository.UpdateDocumentCoaReport(id, documentLink, userId, iupopkId)
+
+	return updDocumentCoaReport, updDocumentCoaReportErr
+}
+
+func (s *service) CreateCoaReportLn(dateFrom string, dateTo string, iupopkId int, userId uint) (coareportln.CoaReportLn, error) {
+	coaReportLn, coaReportLnErr := s.repository.CreateCoaReportLn(dateFrom, dateTo, iupopkId, userId)
+
+	return coaReportLn, coaReportLnErr
+}
+func (s *service) DeleteCoaReportLn(id int, iupopkId int, userId uint) (bool, error) {
+	isDeletedCoaReportLn, isDeletedCoaReportLnErr := s.repository.DeleteCoaReportLn(id, iupopkId, userId)
+
+	return isDeletedCoaReportLn, isDeletedCoaReportLnErr
+}
+func (s *service) UpdateDocumentCoaReportLn(id int, documentLink coareportln.InputUpdateDocumentCoaReportLn, userId uint, iupopkId int) (coareportln.CoaReportLn, error) {
+	updDocumentCoaReportLn, updDocumentCoaReportLnErr := s.repository.UpdateDocumentCoaReportLn(id, documentLink, userId, iupopkId)
+
+	return updDocumentCoaReportLn, updDocumentCoaReportLnErr
+}
+
+func (s *service) CreateRkab(input rkab.RkabInput, iupopkId int, userId uint) (rkab.Rkab, error) {
+	createdRkab, createdRkabErr := s.repository.CreateRkab(input, iupopkId, userId)
+
+	return createdRkab, createdRkabErr
+}
+
+func (s *service) DeleteRkab(id int, iupopkId int, userId uint) (bool, error) {
+	isDeletedRkab, isDeletedRkabErr := s.repository.DeleteRkab(id, iupopkId, userId)
+
+	return isDeletedRkab, isDeletedRkabErr
+}
+
+func (s *service) UploadDocumentRkab(id uint, urlS3 string, userId uint, iupopkId int) (rkab.Rkab, error) {
+	updateRkab, updateRkabErr := s.repository.UploadDocumentRkab(id, urlS3, userId, iupopkId)
+
+	return updateRkab, updateRkabErr
+}
+
+func (s *service) CreateElectricAssignment(input electricassignmentenduser.CreateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error) {
+	createElectricAssignment, createElectricAssignmentErr := s.repository.CreateElectricAssignment(input, userId, iupopkId)
+
+	return createElectricAssignment, createElectricAssignmentErr
+}
+
+func (s *service) UploadCreateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error) {
+	uploadElectricAssignment, uploadElectricAssignmentErr := s.repository.UploadCreateDocumentElectricAssignment(id, urlS3, userId, iupopkId)
+
+	return uploadElectricAssignment, uploadElectricAssignmentErr
+}
+
+func (s *service) UploadUpdateDocumentElectricAssignment(id uint, urlS3 string, userId uint, iupopkId int, typeDocument string) (electricassignment.ElectricAssignment, error) {
+	uploadElectricAssignment, uploadElectricAssignmentErr := s.repository.UploadUpdateDocumentElectricAssignment(id, urlS3, userId, iupopkId, typeDocument)
+
+	return uploadElectricAssignment, uploadElectricAssignmentErr
+}
+
+func (s *service) UpdateElectricAssignment(id int, input electricassignmentenduser.UpdateElectricAssignmentInput, userId uint, iupopkId int) (electricassignment.ElectricAssignment, error) {
+	updateElectricAssigment, updateElectricAssigmentErr := s.repository.UpdateElectricAssignment(id, input, userId, iupopkId)
+
+	return updateElectricAssigment, updateElectricAssigmentErr
+}
+
+func (s *service) DeleteElectricAssignment(id int, iupopkId int, userId uint) (bool, error) {
+	isDeleted, isDeletedErr := s.repository.DeleteElectricAssignment(id, iupopkId, userId)
+
+	return isDeleted, isDeletedErr
+}
+
+func (s *service) CreateCafAssignment(input cafassignmentenduser.CreateCafAssignmentInput, userId uint, iupopkId int) (cafassignment.CafAssignment, error) {
+	cafAssignment, cafAssignmentErr := s.repository.CreateCafAssignment(input, userId, iupopkId)
+
+	return cafAssignment, cafAssignmentErr
+}
+
+func (s *service) UploadCreateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int) (cafassignment.CafAssignment, error) {
+	cafAssignment, cafAssignmentErr := s.repository.UploadCreateDocumentCafAssignment(id, urlS3, userId, iupopkId)
+
+	return cafAssignment, cafAssignmentErr
+}
+
+func (s *service) UploadUpdateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int, typeDocument string) (cafassignment.CafAssignment, error) {
+	cafAssignment, cafAssignmentErr := s.repository.UploadUpdateDocumentCafAssignment(id, urlS3, userId, iupopkId, typeDocument)
+
+	return cafAssignment, cafAssignmentErr
+}
+
+func (s *service) DeleteCafAssignment(id int, iupopkId int, userId uint) (bool, error) {
+	isDeletedCafAssignment, isDeletedCafAssignmentErr := s.repository.DeleteCafAssignment(id, iupopkId, userId)
+
+	return isDeletedCafAssignment, isDeletedCafAssignmentErr
+}
+
+func (s *service) UpdateCafAssignment(id int, input cafassignmentenduser.UpdateCafAssignmentInput, userId uint, iupopkId int) (cafassignment.CafAssignment, error) {
+	cafAssignment, cafAssignmentErr := s.repository.UpdateCafAssignment(id, input, userId, iupopkId)
+
+	return cafAssignment, cafAssignmentErr
 }

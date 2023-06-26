@@ -31,15 +31,21 @@ func (r *repository) UpdateCounter() error {
 	}
 
 	counterMap := map[string]interface{}{
-		"transaction_dn": 1,
-		"transaction_ln": 1,
-		"grouping_mv_dn": 1,
-		"grouping_mv_ln": 1,
-		"sp3medn":        1,
-		"sp3meln":        1,
-		"ba_end_user":    1,
-		"dmo":            1,
-		"production":     1,
+		"transaction_dn":      1,
+		"transaction_ln":      1,
+		"grouping_mv_dn":      1,
+		"grouping_mv_ln":      1,
+		"sp3medn":             1,
+		"sp3meln":             1,
+		"ba_end_user":         1,
+		"dmo":                 1,
+		"production":          1,
+		"coa_report":          1,
+		"coa_report_ln":       1,
+		"insw":                1,
+		"rkab":                1,
+		"electric_assignment": 1,
+		"caf_assignment":      1,
 	}
 
 	updateCounterErr := r.db.Model(&Counter{}).Where("created_at <= ?", time.Now()).Updates(counterMap).Error
@@ -85,6 +91,13 @@ func (r *repository) CreateIupopk(input iupopk.InputIupopk) (iupopk.Iupopk, erro
 	createdCounter.BaEndUser = 1
 	createdCounter.Dmo = 1
 	createdCounter.Production = 1
+	createdCounter.Insw = 1
+	createdCounter.CoaReport = 1
+	createdCounter.CoaReportLn = 1
+	createdCounter.Rkab = 1
+	createdCounter.ElectricAssignment = 1
+	createdCounter.CafAssignment = 1
+	createdCounter.BastFormat = input.BastFormat
 
 	createCounterErr := tx.Create(&createdCounter).Error
 
