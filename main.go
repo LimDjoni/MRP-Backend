@@ -189,6 +189,12 @@ func main() {
 		fmt.Println(errLongMonth.Error())
 	}
 
+	errCategory := validate.RegisterValidation("CategoryValidation", validatorfunc.CheckEnum)
+
+	if errCategory != nil {
+		fmt.Println(errCategory.Error())
+	}
+
 	app := fiber.New()
 
 	app.Use(cors.New(cors.Config{
