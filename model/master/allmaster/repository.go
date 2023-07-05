@@ -357,6 +357,8 @@ func (r *repository) CreateCompany(input InputCompany) (company.Company, error) 
 	createdCompany.PhoneNumber = input.PhoneNumber
 	createdCompany.FaxNumber = input.FaxNumber
 	createdCompany.IndustryTypeId = input.IndustryTypeId
+	createdCompany.IsTrader = input.IsTrader
+	createdCompany.IsEndUser = input.IsEndUser
 
 	errCreate := r.db.Create(&createdCompany).Error
 
@@ -417,6 +419,7 @@ func (r *repository) CreateIndustryType(input InputIndustryType) (industrytype.I
 
 	createdIndustryType.Name = input.Name
 	createdIndustryType.Category = input.Category
+	createdIndustryType.SystemCategory = input.SystemCategory
 
 	errCreate := r.db.Create(&createdIndustryType).Error
 
@@ -569,6 +572,8 @@ func (r *repository) UpdateCompany(id int, input InputCompany) (company.Company,
 	upd["province"] = input.Province
 	upd["phone_number"] = input.PhoneNumber
 	upd["fax_number"] = input.FaxNumber
+	upd["is_trader"] = input.IsTrader
+	upd["is_end_user"] = input.IsEndUser
 
 	updateErr := r.db.Model(&updatedCompany).Updates(upd).Error
 
@@ -635,6 +640,7 @@ func (r *repository) UpdateIndustryType(id int, input InputIndustryType) (indust
 
 	upd["name"] = input.Name
 	upd["category"] = input.Category
+	upd["system_category"] = input.SystemCategory
 
 	updateErr := r.db.Model(&updatedIndustryType).Updates(upd).Error
 
