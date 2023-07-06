@@ -3021,7 +3021,7 @@ func (s *service) CreateTransactionReport(file *excelize.File, sheetName string,
 			file.SetCellValue(sheetName, fmt.Sprintf("BI%v", 4+idx), strings.ToUpper(value.DmoBuyer.CompanyName))
 
 			if value.DmoBuyer.IndustryType != nil {
-				file.SetCellValue(sheetName, fmt.Sprintf("BJ%v", 4+idx), strings.ToUpper(value.DmoBuyer.IndustryType.Name))
+				file.SetCellValue(sheetName, fmt.Sprintf("BJ%v", 4+idx), strings.ToUpper(value.DmoBuyer.IndustryType.SystemCategory))
 			}
 		}
 	}
