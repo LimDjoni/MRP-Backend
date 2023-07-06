@@ -15,4 +15,6 @@ type Company struct {
 	Province       string                     `json:"province"`
 	PhoneNumber    string                     `json:"phone_number"`
 	FaxNumber      string                     `json:"fax_number"`
+	IsTrader       bool                       `json:"is_trader"`
+	IsEndUser      bool                       `json:"is_end_user"`
 }
