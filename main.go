@@ -16,6 +16,7 @@ import (
 	"ajebackend/model/insw"
 	"ajebackend/model/logs"
 	"ajebackend/model/master/barge"
+	"ajebackend/model/master/categoryindustrytype"
 	"ajebackend/model/master/company"
 	"ajebackend/model/master/country"
 	"ajebackend/model/master/currency"
@@ -135,6 +136,7 @@ func main() {
 			&coareport.CoaReport{},
 			&coareportln.CoaReportLn{},
 			&transactionrequestreport.TransactionRequestReport{},
+			&categoryindustrytype.CategoryIndustryType{},
 		)
 
 		seeding.UpdateTransactionsRoyalty(db)
@@ -158,6 +160,7 @@ func main() {
 		seedingmaster.SeedingUnit(db)
 		seedingmaster.SeedingVessel(db)
 		seedingmaster.SeedingCounter(db)
+		seedingmaster.SeedingCategoryIndustryType(db)
 		seeding.UpdateIupopk(db)
 		fmt.Println(errMigrate)
 	}

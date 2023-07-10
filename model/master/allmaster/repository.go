@@ -2,6 +2,7 @@ package allmaster
 
 import (
 	"ajebackend/model/master/barge"
+	"ajebackend/model/master/categoryindustrytype"
 	"ajebackend/model/master/company"
 	"ajebackend/model/master/country"
 	"ajebackend/model/master/currency"
@@ -71,6 +72,7 @@ func (r *repository) ListMasterData() (MasterData, error) {
 	var masterData MasterData
 
 	var barge []barge.Barge
+	var categoryIndustryType []categoryindustrytype.CategoryIndustryType
 	var company []company.Company
 	var country []country.Country
 	var currency []currency.Currency
@@ -96,6 +98,12 @@ func (r *repository) ListMasterData() (MasterData, error) {
 
 	if findBargeErr != nil {
 		return masterData, findBargeErr
+	}
+
+	findCategoryIndustryTypeErr := r.db.Find(&categoryIndustryType).Error
+
+	if findCategoryIndustryTypeErr != nil {
+		return masterData, findCategoryIndustryTypeErr
 	}
 
 	findCompanyErr := r.db.Order("company_name asc").Order("created_at desc").Preload(clause.Associations).Find(&company).Error
@@ -221,6 +229,7 @@ func (r *repository) ListMasterData() (MasterData, error) {
 	}
 
 	masterData.Barge = barge
+	masterData.CategoryIndustryType = categoryIndustryType
 	masterData.Company = company
 	masterData.Country = country
 	masterData.Currency = currency
@@ -418,7 +427,7 @@ func (r *repository) CreateIndustryType(input InputIndustryType) (industrytype.I
 	var createdIndustryType industrytype.IndustryType
 
 	createdIndustryType.Name = input.Name
-	createdIndustryType.Category = input.Category
+	createdIndustryType.CategoryIndustryTypeId = input.CategoryIndustryTypeId
 	createdIndustryType.SystemCategory = input.SystemCategory
 
 	errCreate := r.db.Create(&createdIndustryType).Error
@@ -639,7 +648,7 @@ func (r *repository) UpdateIndustryType(id int, input InputIndustryType) (indust
 	upd := make(map[string]interface{})
 
 	upd["name"] = input.Name
-	upd["category"] = input.Category
+	upd["category_industry_type_id"] = input.CategoryIndustryTypeId
 	upd["system_category"] = input.SystemCategory
 
 	updateErr := r.db.Model(&updatedIndustryType).Updates(upd).Error
