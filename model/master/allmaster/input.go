@@ -54,7 +54,7 @@ type InputTrader struct {
 }
 
 type InputIndustryType struct {
-	Name           string `json:"name" validate:"required"`
-	Category       string `json:"category" validate:"required,CategoryValidation=ELECTRICITY_NON ELECTRICITY"`
-	SystemCategory string `json:"system_category"`
+	Name                   string `json:"name" validate:"required"`
+	CategoryIndustryTypeId uint   `json:"category_industry_type_id" validate:"required"`
+	SystemCategory         string `json:"system_category"`
 }

@@ -3304,7 +3304,7 @@ func (r *repository) CreateReportDmo(input reportdmo.InputCreateReportDmo, userI
 		}
 
 		for _, v := range groupingVessel {
-			vesselQuantity += v.Quantity
+			vesselQuantity += v.GrandTotalQuantity
 		}
 
 		createdReportDmo.Quantity += vesselQuantity

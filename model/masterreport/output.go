@@ -19,6 +19,7 @@ import (
 
 type ReportDmoOutput struct {
 	RecapElectricity    RecapElectricity    `json:"recap_electricity"`
+	RecapCement         RecapCement         `json:"recap_cement"`
 	RecapNonElectricity RecapNonElectricity `json:"recap_non_electricity"`
 	NotClaimable        NotClaimable        `json:"not_claimable"`
 	Production          QuantityProduction  `json:"production"`
@@ -26,6 +27,22 @@ type ReportDmoOutput struct {
 }
 
 type RecapElectricity struct {
+	January   float64 `json:"january"`
+	February  float64 `json:"february"`
+	March     float64 `json:"march"`
+	April     float64 `json:"april"`
+	May       float64 `json:"may"`
+	June      float64 `json:"june"`
+	July      float64 `json:"july"`
+	August    float64 `json:"august"`
+	September float64 `json:"september"`
+	October   float64 `json:"october"`
+	November  float64 `json:"november"`
+	December  float64 `json:"december"`
+	Total     float64 `json:"total"`
+}
+
+type RecapCement struct {
 	January   float64 `json:"january"`
 	February  float64 `json:"february"`
 	March     float64 `json:"march"`
@@ -93,10 +110,26 @@ type QuantityProduction struct {
 
 type RealizationOutput struct {
 	Electric    RealizationElectric    `json:"electric"`
+	Cement      RealizationCement      `json:"cement"`
 	NonElectric RealizationNonElectric `json:"non_electric"`
 }
 
 type RealizationElectric struct {
+	January   []RealizationTransaction `json:"january"`
+	February  []RealizationTransaction `json:"february"`
+	March     []RealizationTransaction `json:"march"`
+	April     []RealizationTransaction `json:"april"`
+	May       []RealizationTransaction `json:"may"`
+	June      []RealizationTransaction `json:"june"`
+	July      []RealizationTransaction `json:"july"`
+	August    []RealizationTransaction `json:"august"`
+	September []RealizationTransaction `json:"september"`
+	October   []RealizationTransaction `json:"october"`
+	November  []RealizationTransaction `json:"november"`
+	December  []RealizationTransaction `json:"december"`
+}
+
+type RealizationCement struct {
 	January   []RealizationTransaction `json:"january"`
 	February  []RealizationTransaction `json:"february"`
 	March     []RealizationTransaction `json:"march"`
@@ -140,8 +173,10 @@ type RealizationTransaction struct {
 type SaleDetail struct {
 	Rkabs                 []rkab.Rkab         `json:"rkabs"`
 	Electricity           Electricity         `json:"electricity"`
+	Cement                Cement              `json:"cement"`
 	NonElectricity        NonElectricity      `json:"non_electricity"`
 	RecapElectricity      RecapElectricity    `json:"recap_electricity"`
+	RecapCement           RecapCement         `json:"recap_cement"`
 	RecapNonElectricity   RecapNonElectricity `json:"recap_non_electricity"`
 	NotClaimable          NotClaimable        `json:"not_claimable"`
 	Production            QuantityProduction  `json:"production"`
@@ -150,8 +185,10 @@ type SaleDetail struct {
 	ElectricAssignment    ElectricAssignment  `json:"electric_assignment"`
 	CafAssignment         CafAssignment       `json:"caf_assignment"`
 	CompanyElectricity    map[string][]string `json:"company_electricity"`
+	CompanyCement         map[string][]string `json:"company_cement"`
 	CompanyNonElectricity map[string][]string `json:"company_non_electricity"`
 }
+
 type Electricity struct {
 	January   map[string]map[string]float64 `json:"january"`
 	February  map[string]map[string]float64 `json:"february"`
@@ -168,6 +205,21 @@ type Electricity struct {
 	Total     float64                       `json:"total"`
 }
 
+type Cement struct {
+	January   map[string]map[string]float64 `json:"january"`
+	February  map[string]map[string]float64 `json:"february"`
+	March     map[string]map[string]float64 `json:"march"`
+	April     map[string]map[string]float64 `json:"april"`
+	May       map[string]map[string]float64 `json:"may"`
+	June      map[string]map[string]float64 `json:"june"`
+	July      map[string]map[string]float64 `json:"july"`
+	August    map[string]map[string]float64 `json:"august"`
+	September map[string]map[string]float64 `json:"september"`
+	October   map[string]map[string]float64 `json:"october"`
+	November  map[string]map[string]float64 `json:"november"`
+	December  map[string]map[string]float64 `json:"december"`
+	Total     float64                       `json:"total"`
+}
 type NonElectricity struct {
 	January   map[string]map[string]float64 `json:"january"`
 	February  map[string]map[string]float64 `json:"february"`
