@@ -34,9 +34,50 @@ func NewService(repository Repository) *service {
 	return &service{repository}
 }
 
-func getMonthProrate() int {
+var month = []string{"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"}
 
-	return 0
+func getMonthProrate(electric RecapElectricity, nonElectric RecapNonElectricity, cement RecapCement, year string) int {
+
+	t := time.Now()
+
+	monthNow := t.Month()
+	yearNow := t.Year()
+	yearString := strconv.Itoa(yearNow)
+
+	if yearString != year {
+		return 12
+	}
+
+	if monthNow.String() == "January" {
+		return 1
+	}
+
+	electricReflect := reflect.ValueOf(electric)
+	nonElectricReflect := reflect.ValueOf(nonElectric)
+	cementReflect := reflect.ValueOf(cement)
+
+	valElectric := reflect.Indirect(electricReflect).FieldByName(monthNow.String()).Interface().(float64)
+	valNonElectric := reflect.Indirect(nonElectricReflect).FieldByName(monthNow.String()).Interface().(float64)
+	valCement := reflect.Indirect(cementReflect).FieldByName(monthNow.String()).Interface().(float64)
+
+	if valElectric != 0 || valNonElectric != 0 || valCement != 0 {
+		return int(monthNow)
+	}
+
+	return int(monthNow) - 1
+}
+
+func getProductionProrate(prorate int, prod QuantityProduction) float64 {
+	var prodQuantity float64
+	productionReflect := reflect.ValueOf(prod)
+	for i := 0; i < prorate; i++ {
+
+		valProd := reflect.Indirect(productionReflect).FieldByName(month[i]).Interface().(float64)
+
+		prodQuantity += valProd
+	}
+
+	return prodQuantity
 }
 
 func createTemplateRealization(file *excelize.File, sheetName []string, year string, iupopkName string) (*excelize.File, error) {
@@ -417,10 +458,11 @@ func (s *service) CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutp
 		"A17": "Desember",
 		"A18": "TOTAL",
 		"B5":  "Kelistrikan",
-		"C5":  "Non Kelistrikan",
-		"D5":  "Jumlah",
-		"F5":  "Produksi",
-		"G5":  "Tidak bisa Claim DMO",
+		"C5":  "Smelter",
+		"D5":  "Semen",
+		"E5":  "Jumlah",
+		"G5":  "Produksi",
+		"H5":  "Tidak bisa Claim DMO",
 	}
 
 	for k, v := range categories {
@@ -435,54 +477,54 @@ func (s *service) CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutp
 		switch recapElectricity.Type().Field(i).Name {
 		case "January":
 			values["B6"] = recapElectricity.Field(i).Interface().(float64)
-			values["D6"] = recapElectricity.Field(i).Interface().(float64)
+			values["E6"] = recapElectricity.Field(i).Interface().(float64)
 		case "February":
 			values["B7"] = recapElectricity.Field(i).Interface().(float64)
-			values["D7"] = recapElectricity.Field(i).Interface().(float64)
+			values["E7"] = recapElectricity.Field(i).Interface().(float64)
 
 		case "March":
 			values["B8"] = recapElectricity.Field(i).Interface().(float64)
-			values["D8"] = recapElectricity.Field(i).Interface().(float64)
+			values["E8"] = recapElectricity.Field(i).Interface().(float64)
 
 		case "April":
 			values["B9"] = recapElectricity.Field(i).Interface().(float64)
-			values["D9"] = recapElectricity.Field(i).Interface().(float64)
+			values["E9"] = recapElectricity.Field(i).Interface().(float64)
 
 		case "May":
 			values["B10"] = recapElectricity.Field(i).Interface().(float64)
-			values["D10"] = recapElectricity.Field(i).Interface().(float64)
+			values["E10"] = recapElectricity.Field(i).Interface().(float64)
 
 		case "June":
 			values["B11"] = recapElectricity.Field(i).Interface().(float64)
-			values["D11"] = recapElectricity.Field(i).Interface().(float64)
+			values["E11"] = recapElectricity.Field(i).Interface().(float64)
 
 		case "July":
 			values["B12"] = recapElectricity.Field(i).Interface().(float64)
-			values["D12"] = recapElectricity.Field(i).Interface().(float64)
+			values["E12"] = recapElectricity.Field(i).Interface().(float64)
 
 		case "August":
 			values["B13"] = recapElectricity.Field(i).Interface().(float64)
-			values["D13"] = recapElectricity.Field(i).Interface().(float64)
+			values["E13"] = recapElectricity.Field(i).Interface().(float64)
 
 		case "September":
 			values["B14"] = recapElectricity.Field(i).Interface().(float64)
-			values["D14"] = recapElectricity.Field(i).Interface().(float64)
+			values["E14"] = recapElectricity.Field(i).Interface().(float64)
 
 		case "October":
 			values["B15"] = recapElectricity.Field(i).Interface().(float64)
-			values["D15"] = recapElectricity.Field(i).Interface().(float64)
+			values["E15"] = recapElectricity.Field(i).Interface().(float64)
 
 		case "November":
 			values["B16"] = recapElectricity.Field(i).Interface().(float64)
-			values["D16"] = recapElectricity.Field(i).Interface().(float64)
+			values["E16"] = recapElectricity.Field(i).Interface().(float64)
 
 		case "December":
 			values["B17"] = recapElectricity.Field(i).Interface().(float64)
-			values["D17"] = recapElectricity.Field(i).Interface().(float64)
+			values["E17"] = recapElectricity.Field(i).Interface().(float64)
 
 		case "Total":
 			values["B18"] = recapElectricity.Field(i).Interface().(float64)
-			values["D18"] = recapElectricity.Field(i).Interface().(float64)
+			values["E18"] = recapElectricity.Field(i).Interface().(float64)
 
 		}
 	}
@@ -493,54 +535,81 @@ func (s *service) CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutp
 		switch recapNonElectricity.Type().Field(i).Name {
 		case "January":
 			values["C6"] = recapNonElectricity.Field(i).Interface().(float64)
-			values["D6"] = values["D6"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
 
 		case "February":
 			values["C7"] = recapNonElectricity.Field(i).Interface().(float64)
-			values["D7"] = values["D7"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
 
 		case "March":
 			values["C8"] = recapNonElectricity.Field(i).Interface().(float64)
-			values["D8"] = values["D8"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
 
 		case "April":
 			values["C9"] = recapNonElectricity.Field(i).Interface().(float64)
-			values["D9"] = values["D9"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
 
 		case "May":
 			values["C10"] = recapNonElectricity.Field(i).Interface().(float64)
-			values["D10"] = values["D10"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
 
 		case "June":
 			values["C11"] = recapNonElectricity.Field(i).Interface().(float64)
-			values["D11"] = values["D11"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
 
 		case "July":
 			values["C12"] = recapNonElectricity.Field(i).Interface().(float64)
-			values["D12"] = values["D12"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
 
 		case "August":
 			values["C13"] = recapNonElectricity.Field(i).Interface().(float64)
-			values["D13"] = values["D13"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
 
 		case "September":
 			values["C14"] = recapNonElectricity.Field(i).Interface().(float64)
-			values["D14"] = values["D14"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
 
 		case "October":
 			values["C15"] = recapNonElectricity.Field(i).Interface().(float64)
-			values["D15"] = values["D15"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
 
 		case "November":
 			values["C16"] = recapNonElectricity.Field(i).Interface().(float64)
-			values["D16"] = values["D16"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
 
 		case "December":
 			values["C17"] = recapNonElectricity.Field(i).Interface().(float64)
-			values["D17"] = values["D17"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
-		case "Total":
-			values["C18"] = recapNonElectricity.Field(i).Interface().(float64)
-			values["D18"] = values["D18"].(float64) + recapNonElectricity.Field(i).Interface().(float64)
+		}
+	}
+
+	recapCement := reflect.ValueOf(reportRecapDmo.RecapCement)
+
+	for i := 0; i < recapCement.NumField(); i++ {
+		switch recapCement.Type().Field(i).Name {
+		case "January":
+			values["D6"] = recapCement.Field(i).Interface().(float64)
+
+		case "February":
+			values["D7"] = recapCement.Field(i).Interface().(float64)
+
+		case "March":
+			values["D8"] = recapCement.Field(i).Interface().(float64)
+
+		case "April":
+			values["D9"] = recapCement.Field(i).Interface().(float64)
+
+		case "May":
+			values["D10"] = recapCement.Field(i).Interface().(float64)
+
+		case "June":
+			values["D11"] = recapCement.Field(i).Interface().(float64)
+
+		case "July":
+			values["D12"] = recapCement.Field(i).Interface().(float64)
+
+		case "August":
+			values["D13"] = recapCement.Field(i).Interface().(float64)
+
+		case "September":
+			values["D14"] = recapCement.Field(i).Interface().(float64)
+
+		case "October":
+			values["D15"] = recapCement.Field(i).Interface().(float64)
+
+		case "November":
+			values["D16"] = recapCement.Field(i).Interface().(float64)
+
+		case "December":
+			values["D17"] = recapCement.Field(i).Interface().(float64)
 		}
 	}
 
@@ -549,31 +618,29 @@ func (s *service) CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutp
 	for i := 0; i < recapProduction.NumField(); i++ {
 		switch recapProduction.Type().Field(i).Name {
 		case "January":
-			values["F6"] = recapProduction.Field(i).Interface().(float64)
+			values["G6"] = recapProduction.Field(i).Interface().(float64)
 		case "February":
-			values["F7"] = recapProduction.Field(i).Interface().(float64)
+			values["G7"] = recapProduction.Field(i).Interface().(float64)
 		case "March":
-			values["F8"] = recapProduction.Field(i).Interface().(float64)
+			values["G8"] = recapProduction.Field(i).Interface().(float64)
 		case "April":
-			values["F9"] = recapProduction.Field(i).Interface().(float64)
+			values["G9"] = recapProduction.Field(i).Interface().(float64)
 		case "May":
-			values["F10"] = recapProduction.Field(i).Interface().(float64)
+			values["G10"] = recapProduction.Field(i).Interface().(float64)
 		case "June":
-			values["F11"] = recapProduction.Field(i).Interface().(float64)
+			values["G11"] = recapProduction.Field(i).Interface().(float64)
 		case "July":
-			values["F12"] = recapProduction.Field(i).Interface().(float64)
+			values["G12"] = recapProduction.Field(i).Interface().(float64)
 		case "August":
-			values["F13"] = recapProduction.Field(i).Interface().(float64)
+			values["G13"] = recapProduction.Field(i).Interface().(float64)
 		case "September":
-			values["F14"] = recapProduction.Field(i).Interface().(float64)
+			values["G14"] = recapProduction.Field(i).Interface().(float64)
 		case "October":
-			values["F15"] = recapProduction.Field(i).Interface().(float64)
+			values["G15"] = recapProduction.Field(i).Interface().(float64)
 		case "November":
-			values["F16"] = recapProduction.Field(i).Interface().(float64)
+			values["G16"] = recapProduction.Field(i).Interface().(float64)
 		case "December":
-			values["F17"] = recapProduction.Field(i).Interface().(float64)
-		case "Total":
-			values["F18"] = recapProduction.Field(i).Interface().(float64)
+			values["G17"] = recapProduction.Field(i).Interface().(float64)
 		}
 	}
 
@@ -582,37 +649,56 @@ func (s *service) CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutp
 	for i := 0; i < recapNotClaim.NumField(); i++ {
 		switch recapNotClaim.Type().Field(i).Name {
 		case "January":
-			values["G6"] = recapNotClaim.Field(i).Interface().(float64)
+			values["H6"] = recapNotClaim.Field(i).Interface().(float64)
 		case "February":
-			values["G7"] = recapNotClaim.Field(i).Interface().(float64)
+			values["H7"] = recapNotClaim.Field(i).Interface().(float64)
 		case "March":
-			values["G8"] = recapNotClaim.Field(i).Interface().(float64)
+			values["H8"] = recapNotClaim.Field(i).Interface().(float64)
 		case "April":
-			values["G9"] = recapNotClaim.Field(i).Interface().(float64)
+			values["H9"] = recapNotClaim.Field(i).Interface().(float64)
 		case "May":
-			values["G10"] = recapNotClaim.Field(i).Interface().(float64)
+			values["H10"] = recapNotClaim.Field(i).Interface().(float64)
 		case "June":
-			values["G11"] = recapNotClaim.Field(i).Interface().(float64)
+			values["H11"] = recapNotClaim.Field(i).Interface().(float64)
 		case "July":
-			values["G12"] = recapNotClaim.Field(i).Interface().(float64)
+			values["H12"] = recapNotClaim.Field(i).Interface().(float64)
 		case "August":
-			values["G13"] = recapNotClaim.Field(i).Interface().(float64)
+			values["H13"] = recapNotClaim.Field(i).Interface().(float64)
 		case "September":
-			values["G14"] = recapNotClaim.Field(i).Interface().(float64)
+			values["H14"] = recapNotClaim.Field(i).Interface().(float64)
 		case "October":
-			values["G15"] = recapNotClaim.Field(i).Interface().(float64)
+			values["H15"] = recapNotClaim.Field(i).Interface().(float64)
 		case "November":
-			values["G16"] = recapNotClaim.Field(i).Interface().(float64)
+			values["H16"] = recapNotClaim.Field(i).Interface().(float64)
 		case "December":
-			values["G17"] = recapNotClaim.Field(i).Interface().(float64)
-		case "Total":
-			values["G18"] = recapNotClaim.Field(i).Interface().(float64)
+			values["H17"] = recapNotClaim.Field(i).Interface().(float64)
 		}
 	}
 
 	for k, v := range values {
 		file.SetCellValue(sheetName, k, v)
 	}
+
+	file.SetCellFormula(sheetName, "E6", "SUM(B6:D6)")
+	file.SetCellFormula(sheetName, "E7", "SUM(B7:D7)")
+	file.SetCellFormula(sheetName, "E8", "SUM(B8:D8)")
+	file.SetCellFormula(sheetName, "E9", "SUM(B9:D9)")
+	file.SetCellFormula(sheetName, "E10", "SUM(B10:D10)")
+	file.SetCellFormula(sheetName, "E11", "SUM(B11:D11)")
+	file.SetCellFormula(sheetName, "E12", "SUM(B12:D12)")
+	file.SetCellFormula(sheetName, "E13", "SUM(B13:D13)")
+	file.SetCellFormula(sheetName, "E14", "SUM(B14:D14)")
+	file.SetCellFormula(sheetName, "E15", "SUM(B15:D15)")
+	file.SetCellFormula(sheetName, "E16", "SUM(B16:D16)")
+	file.SetCellFormula(sheetName, "E17", "SUM(B17:D17)")
+
+	file.SetCellFormula(sheetName, "B18", "SUM(B6:B17)")
+	file.SetCellFormula(sheetName, "C18", "SUM(C6:C17)")
+	file.SetCellFormula(sheetName, "D18", "SUM(D6:D17)")
+	file.SetCellFormula(sheetName, "E18", "SUM(E6:E17)")
+	file.SetCellFormula(sheetName, "G18", "SUM(G6:G17)")
+	file.SetCellFormula(sheetName, "H18", "SUM(H6:H17)")
+
 	custFmt := "#,##0.000"
 
 	border := []excelize.Border{
@@ -676,59 +762,59 @@ func (s *service) CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutp
 		return file, errStyleFontTitle
 	}
 
-	errStyleBorderBold1 := file.SetCellStyle(sheetName, "A5", "D5", boldStyle)
+	errStyleBorderBold1 := file.SetCellStyle(sheetName, "A5", "F5", boldStyle)
 
 	if errStyleBorderBold1 != nil {
 		return file, errStyleBorderBold1
 	}
 
-	errStyleBorderBold2 := file.SetCellStyle(sheetName, "F5", "G5", boldStyle)
+	errStyleBorderBold2 := file.SetCellStyle(sheetName, "G5", "H5", boldStyle)
 
 	if errStyleBorderBold2 != nil {
 		return file, errStyleBorderBold2
 	}
 
-	errFmtNmbr1 := file.SetCellStyle(sheetName, "A6", "D17", borderStyle)
+	errFmtNmbr1 := file.SetCellStyle(sheetName, "A6", "E17", borderStyle)
 
 	if errFmtNmbr1 != nil {
 		return file, errFmtNmbr1
 	}
 
-	errFmtNmbr2 := file.SetCellStyle(sheetName, "F6", "G17", borderStyle)
+	errFmtNmbr2 := file.SetCellStyle(sheetName, "G6", "H17", borderStyle)
 
 	if errFmtNmbr2 != nil {
 		return file, errFmtNmbr2
 	}
 
-	errBoldNmbr1 := file.SetCellStyle(sheetName, "A18", "D18", boldNumberStyle)
+	errBoldNmbr1 := file.SetCellStyle(sheetName, "A18", "E18", boldNumberStyle)
 
 	if errBoldNmbr1 != nil {
 		return file, errBoldNmbr1
 	}
 
-	errBoldNmbr2 := file.SetCellStyle(sheetName, "F18", "G18", boldNumberStyle)
+	errBoldNmbr2 := file.SetCellStyle(sheetName, "G18", "H18", boldNumberStyle)
 
 	if errBoldNmbr2 != nil {
 		return file, errBoldNmbr2
 	}
 
-	errCustomNmbrRight1 := file.SetCellStyle(sheetName, "B6", "D17", customNumberRightStyle)
+	errCustomNmbrRight1 := file.SetCellStyle(sheetName, "B6", "E17", customNumberRightStyle)
 
 	if errCustomNmbrRight1 != nil {
 		return file, errCustomNmbrRight1
 	}
 
-	errCustomNmbrRight2 := file.SetCellStyle(sheetName, "F6", "G17", customNumberRightStyle)
+	errCustomNmbrRight2 := file.SetCellStyle(sheetName, "G6", "H17", customNumberRightStyle)
 
 	if errCustomNmbrRight2 != nil {
 		return file, errCustomNmbrRight2
 	}
 
 	file.SetColWidth(sheetName, "A", "A", float64(15))
-	file.SetColWidth(sheetName, "B", "D", float64(25))
-	file.SetColWidth(sheetName, "E", "E", float64(5))
-	file.SetColWidth(sheetName, "F", "F", float64(25))
+	file.SetColWidth(sheetName, "B", "E", float64(25))
+	file.SetColWidth(sheetName, "F", "F", float64(5))
 	file.SetColWidth(sheetName, "G", "G", float64(30))
+	file.SetColWidth(sheetName, "H", "H", float64(25))
 
 	mergeErr4 := file.MergeCell(sheetName, "A20", "C20")
 	if mergeErr4 != nil {
@@ -737,7 +823,7 @@ func (s *service) CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutp
 
 	file.SetCellValue(sheetName, "A20", "% Pemenuhan DMO terhadap REALISASI PRODUKSI")
 
-	file.SetCellFormula(sheetName, "D20", "D18/F18")
+	file.SetCellFormula(sheetName, "E20", fmt.Sprintf("D18/SUM(G6:G%v)", 6+getMonthProrate(reportRecapDmo.RecapElectricity, reportRecapDmo.RecapNonElectricity, reportRecapDmo.RecapCement, year)-1))
 
 	percentageBoldStyle, _ := file.NewStyle(&excelize.Style{
 		Font: &excelize.Font{
@@ -746,8 +832,8 @@ func (s *service) CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutp
 		NumFmt: 10,
 	})
 
-	errPercentageBoldStyle := file.SetCellStyle(sheetName, "A20", "G60", percentageBoldStyle)
-	errBoldNmbrOnly1 := file.SetCellStyle(sheetName, "F20", "F60", boldNumberOnlyStyle)
+	errPercentageBoldStyle := file.SetCellStyle(sheetName, "A20", "H60", percentageBoldStyle)
+	errBoldNmbrOnly1 := file.SetCellStyle(sheetName, "G20", "G60", boldNumberOnlyStyle)
 
 	if errPercentageBoldStyle != nil {
 		return file, errPercentageBoldStyle
@@ -770,12 +856,6 @@ func (s *service) CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutp
 
 	goment.SetLocale("id")
 
-	t := time.Now()
-
-	month := t.Month()
-	yearNow := t.Year()
-	yearString := strconv.Itoa(yearNow)
-
 	var maxDmoObligationQuota float64
 
 	for _, rkab := range reportRecapDmo.Rkabs {
@@ -796,31 +876,24 @@ func (s *service) CreateReportRecapDmo(year string, reportRecapDmo ReportDmoOutp
 		numberCommas := message.NewPrinter(language.Indonesian)
 
 		withCommaThousandSep := numberCommas.Sprintf("RKAB: %.0f", rkab.ProductionQuota)
-		file.SetCellValue(sheetName, fmt.Sprintf("D%v", 23+(8*idx)), withCommaThousandSep)
+		file.SetCellValue(sheetName, fmt.Sprintf("E%v", 23+(8*idx)), withCommaThousandSep)
 		file.SetCellStyle(sheetName, fmt.Sprintf("A%v", 23+(8*idx)), fmt.Sprintf("G%v", 23+(8*idx)), normalStyle)
 
 		file.SetCellValue(sheetName, fmt.Sprintf("A%v", 24+(8*idx)), "% Pemenuhan DMO terhadap RENCANA PRODUKSI")
-		file.SetCellFormula(sheetName, fmt.Sprintf("D%v", 24+(8*idx)), fmt.Sprintf("D18/F%v", 24+(8*idx)))
-		file.SetCellValue(sheetName, fmt.Sprintf("F%v", 24+(8*idx)), rkab.ProductionQuota)
-		file.SetCellValue(sheetName, fmt.Sprintf("G%v", 24+(8*idx)), "Quota RKAB")
+		file.SetCellFormula(sheetName, fmt.Sprintf("E%v", 24+(8*idx)), fmt.Sprintf("E18/G%v", 24+(8*idx)))
+		file.SetCellValue(sheetName, fmt.Sprintf("G%v", 24+(8*idx)), rkab.ProductionQuota)
+		file.SetCellValue(sheetName, fmt.Sprintf("H%v", 24+(8*idx)), "Quota RKAB")
 
 		file.SetCellValue(sheetName, fmt.Sprintf("A%v", 25+(8*idx)), fmt.Sprintf("disetujui tgl %s", dateFormat.Format("DD MMMM YYYY", "id")))
 
 		file.SetCellValue(sheetName, fmt.Sprintf("A%v", 27+(8*idx)), fmt.Sprintf("%% Pemenuhan DMO terhadap kewajiban pemenuhan DMO %.0f%%", rkab.DmoObligation))
-		file.SetCellFormula(sheetName, fmt.Sprintf("D%v", 27+(8*idx)), fmt.Sprintf("D18/F%v", 27+(8*idx)))
-		file.SetCellValue(sheetName, fmt.Sprintf("F%v", 27+(8*idx)), maxDmoObligationQuota)
+		file.SetCellFormula(sheetName, fmt.Sprintf("E%v", 27+(8*idx)), fmt.Sprintf("D18/G%v", 27+(8*idx)))
+		file.SetCellValue(sheetName, fmt.Sprintf("G%v", 27+(8*idx)), maxDmoObligationQuota)
 
-		if yearString == year {
-			file.SetCellValue(sheetName, fmt.Sprintf("A%v", 29+(8*idx)), fmt.Sprintf("%% Pemenuhan DMO terhadap Rencana Produksi (Prorata %v bulan)", int(month)))
-			file.SetCellFormula(sheetName, fmt.Sprintf("D%v", 29+(8*idx)), fmt.Sprintf("D18/F%v", 29+(8*idx)))
-			file.SetCellValue(sheetName, fmt.Sprintf("F%v", 29+(8*idx)), rkab.ProductionQuota*float64(int(month))/float64(12))
-			file.SetCellValue(sheetName, fmt.Sprintf("G%v", 29+(8*idx)), fmt.Sprintf("prorata %v bulan", int(month)))
-		} else {
-			file.SetCellValue(sheetName, fmt.Sprintf("A%v", 29+(8*idx)), "% Pemenuhan DMO terhadap Rencana Produksi (Prorata 12 bulan)")
-			file.SetCellFormula(sheetName, fmt.Sprintf("D%v", 29+(8*idx)), fmt.Sprintf("D18/F%v", 29+(8*idx)))
-			file.SetCellValue(sheetName, fmt.Sprintf("F%v", 29+(8*idx)), rkab.ProductionQuota)
-			file.SetCellValue(sheetName, fmt.Sprintf("G%v", 29+(8*idx)), "prorata 12 bulan")
-		}
+		file.SetCellValue(sheetName, fmt.Sprintf("A%v", 29+(8*idx)), fmt.Sprintf("%% Pemenuhan DMO terhadap Rencana Produksi (Prorata %v bulan)", getMonthProrate(reportRecapDmo.RecapElectricity, reportRecapDmo.RecapNonElectricity, reportRecapDmo.RecapCement, year)))
+		file.SetCellFormula(sheetName, fmt.Sprintf("E%v", 29+(8*idx)), fmt.Sprintf("D18/G%v", 29+(8*idx)))
+		file.SetCellValue(sheetName, fmt.Sprintf("G%v", 29+(8*idx)), rkab.ProductionQuota*float64(getMonthProrate(reportRecapDmo.RecapElectricity, reportRecapDmo.RecapNonElectricity, reportRecapDmo.RecapCement, year))/float64(12))
+		file.SetCellValue(sheetName, fmt.Sprintf("H%v", 29+(8*idx)), fmt.Sprintf("prorata %v bulan", getMonthProrate(reportRecapDmo.RecapElectricity, reportRecapDmo.RecapNonElectricity, reportRecapDmo.RecapCement, year)))
 
 	}
 
@@ -1346,7 +1419,7 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	file.SetCellValue(chartSheetName, "E41", "Smelter")
 	file.SetCellValue(chartSheetName, "F41", "Jumlah")
 
-	errChartTitleRecap := file.SetCellStyle(chartSheetName, "B41", "E41", boldTitleTableStyle)
+	errChartTitleRecap := file.SetCellStyle(chartSheetName, "B41", "F41", boldTitleTableStyle)
 
 	if errChartTitleRecap != nil {
 		return file, errChartTitleRecap
@@ -1728,12 +1801,6 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 		return file, errPenjualanNumberStyle2
 	}
 
-	t := time.Now()
-
-	month := t.Month()
-	yearNow := t.Year()
-	yearString := strconv.Itoa(yearNow)
-
 	for idx, rkab := range reportSaleDetail.Rkabs {
 		dateFormat, errDate := goment.New(rkab.DateOfIssue)
 		if errDate != nil {
@@ -1743,11 +1810,7 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 		file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSale+18+(idx*10)), "% Pemenuhan DMO terhadap RENCANA PRODUKSI")
 		file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSale+19+(idx*10)), fmt.Sprintf("disetujui tgl %s", dateFormat.Format("DD MMMM YYYY", "id")))
 		file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSale+21+(idx*10)), fmt.Sprintf("%% Pemenuhan DMO terhadap kewajiban pemenuhan DMO %.0f%%", rkab.DmoObligation))
-		if yearString == year {
-			file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSale+23+(idx*10)), fmt.Sprintf("%% Pemenuhan DMO terhadap Rencana Produksi (Prorata %v bulan)", int(month)))
-		} else {
-			file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSale+23+(idx*10)), "% Pemenuhan DMO terhadap Rencana Produksi (Prorata 12 bulan)")
-		}
+		file.SetCellValue(sheetName, fmt.Sprintf("B%v", startSale+23+(idx*10)), fmt.Sprintf("%% Pemenuhan DMO terhadap Rencana Produksi (Prorata %v bulan)", getMonthProrate(reportSaleDetail.RecapElectricity, reportSaleDetail.RecapNonElectricity, reportSaleDetail.RecapCement, year)))
 
 		errBoldOnlyStyle := file.SetCellStyle(sheetName, fmt.Sprintf("B%v", startSale+16+(idx*10)), fmt.Sprintf("B%v", startSale+23+(idx*10)), boldOnlyStyle)
 
@@ -1755,14 +1818,10 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 			return file, errBoldOnlyStyle
 		}
 
-		file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startSale+16+(idx*10)), fmt.Sprintf("F%v/D%v", startSale+14, startProduction+14))
-		file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startSale+18+(idx*10)), fmt.Sprintf("F%v/D%v", startSale+14, 8+idx*4))
-		file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startSale+21+(idx*10)), fmt.Sprintf("F%v/D%v", startSale+14, startRkab+1))
-		if yearString == year {
-			file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startSale+23+(idx*10)), fmt.Sprintf("F%v/(D%v*%v/12)", startSale+14, 8+idx*4, int(month)))
-		} else {
-			file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startSale+23+(idx*10)), fmt.Sprintf("F%v/(D%v*12/12)", startSale+14, 8+idx*4))
-		}
+		file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startSale+16+(idx*10)), fmt.Sprintf("G%v/SUM(D%v:D%v)", startSale+14, startProduction+2, startProduction+2+getMonthProrate(reportSaleDetail.RecapElectricity, reportSaleDetail.RecapNonElectricity, reportSaleDetail.RecapCement, year)-1))
+		file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startSale+18+(idx*10)), fmt.Sprintf("G%v/D%v", startSale+14, 8+idx*4))
+		file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startSale+21+(idx*10)), fmt.Sprintf("G%v/D%v", startSale+14, startRkab+1))
+		file.SetCellFormula(sheetName, fmt.Sprintf("F%v", startSale+23+(idx*10)), fmt.Sprintf("G%v/(D%v*%v/12)", startSale+14, 8+idx*4, getMonthProrate(reportSaleDetail.RecapElectricity, reportSaleDetail.RecapNonElectricity, reportSaleDetail.RecapCement, year)))
 
 		errBoldPercentStyle := file.SetCellStyle(sheetName, fmt.Sprintf("F%v", startSale+16+(idx*10)), fmt.Sprintf("F%v", startSale+23+(idx*10)), boldPercentStyle)
 
@@ -1838,7 +1897,7 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	file.SetCellValue(chartSheetName, "B80", "% Pemenuhan DMO")
 
 	file.SetCellFormula(chartSheetName, "C78", fmt.Sprintf("Detail!D16"))
-	file.SetCellFormula(chartSheetName, "C79", fmt.Sprintf("E54"))
+	file.SetCellFormula(chartSheetName, "C79", fmt.Sprintf("F54"))
 	file.SetCellFormula(chartSheetName, "C80", fmt.Sprintf("C79/C78"))
 
 	errChartPemenuhanDmo := file.SetCellStyle(chartSheetName, "B78", "C80", formatNumberStyle)
@@ -2029,7 +2088,7 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 		return file, err
 	}
 
-	file.SetCellValue(chartSheetName, "B126", fmt.Sprintf("Pemenuhan DMO terhadap Rencana Produksi (Prorata %v bulan)", int(month)))
+	file.SetCellValue(chartSheetName, "B126", fmt.Sprintf("Pemenuhan DMO terhadap Rencana Produksi (Prorata %v bulan)", getMonthProrate(reportSaleDetail.RecapElectricity, reportSaleDetail.RecapNonElectricity, reportSaleDetail.RecapCement, year)))
 
 	errTitleDmo4 := file.SetCellStyle(chartSheetName, "B126", "B126", boldOnlyStyle)
 
@@ -2045,11 +2104,8 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 
 	file.SetCellFormula(chartSheetName, "C127", fmt.Sprintf("%s!E21", sheetName))
 
-	if year == yearString {
-		file.SetCellFormula(chartSheetName, "C129", fmt.Sprintf("%s!E21*%v/12", sheetName, int(month)))
-	} else {
-		file.SetCellFormula(chartSheetName, "C129", fmt.Sprintf("%s!E21*12/12", sheetName))
-	}
+	file.SetCellFormula(chartSheetName, "C129", fmt.Sprintf("%s!E21*%v/12", sheetName, getMonthProrate(reportSaleDetail.RecapElectricity, reportSaleDetail.RecapNonElectricity, reportSaleDetail.RecapCement, year)))
+
 	file.SetCellFormula(chartSheetName, "C130", "C79")
 	file.SetCellFormula(chartSheetName, "C131", fmt.Sprintf("C130/C129"))
 
@@ -2074,13 +2130,13 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	var seriesChartPemenuhanDmoTerhadapRencanaProduksiProrata string
 
 	seriesChartPemenuhanDmoTerhadapRencanaProduksiProrata += fmt.Sprintf(`{
-						"name": "Pemenuhan DMO Terhadap Rencana Produksi Prorata (12 Bulan)",
+						"name": "Pemenuhan DMO Terhadap Rencana Produksi Prorata (%v Bulan)",
 						"categories": "%v!$B$129:$B$130",
 						"values": "%v!$C$129:$C$130",
 						"marker": {
 									"symbol": "square"
 								} 
-				}`, chartSheetName, chartSheetName)
+				}`, getMonthProrate(reportSaleDetail.RecapElectricity, reportSaleDetail.RecapNonElectricity, reportSaleDetail.RecapCement, year), chartSheetName, chartSheetName)
 
 	valueChartPemenuhanDmoTerhadapRencanaProduksiProrata := fmt.Sprintf(`{
 	    "type": "col",
@@ -2102,10 +2158,10 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	    },
 	    "title":
 	    {
-	        "name": "Pemenuhan DMO terhadap Rencana Produksi (Prorata 12 bulan)"
+	        "name": "Pemenuhan DMO terhadap Rencana Produksi (Prorata %v bulan)"
 	    },
 	    "show_blanks_as": "zero"
-	}`, seriesChartPemenuhanDmoTerhadapRencanaProduksiProrata)
+	}`, seriesChartPemenuhanDmoTerhadapRencanaProduksiProrata, getMonthProrate(reportSaleDetail.RecapElectricity, reportSaleDetail.RecapNonElectricity, reportSaleDetail.RecapCement, year))
 
 	if err := file.AddChart(chartSheetName, "G126", valueChartPemenuhanDmoTerhadapRencanaProduksiProrata); err != nil {
 		return file, err
@@ -2120,12 +2176,14 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	}
 
 	file.SetCellValue(chartSheetName, "B144", "Kelistrikan")
-	file.SetCellValue(chartSheetName, "B145", "Non Kelistrikan")
+	file.SetCellValue(chartSheetName, "B145", "Semen")
+	file.SetCellValue(chartSheetName, "B146", "Smelter")
 
 	file.SetCellFormula(chartSheetName, "C144", "C54")
 	file.SetCellFormula(chartSheetName, "C145", "D54")
+	file.SetCellFormula(chartSheetName, "C146", "E54")
 
-	errChartRecapJenisIndustri := file.SetCellStyle(chartSheetName, "B144", "C145", formatNumberStyle)
+	errChartRecapJenisIndustri := file.SetCellStyle(chartSheetName, "B144", "C146", formatNumberStyle)
 
 	if errChartRecapJenisIndustri != nil {
 		return file, errChartRecapJenisIndustri
@@ -2135,8 +2193,8 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 
 	seriesChartRecapJenisIndustri += fmt.Sprintf(`{
 						"name": "REKAP TOTAL DMO BERDASARKAN JENIS INDUSTRI",
-						"categories": "%v!$B$144:$B$145",
-						"values": "%v!$C$144:$C$145",
+						"categories": "%v!$B$144:$B$146",
+						"values": "%v!$C$144:$C$146",
 						"marker": {
 									"symbol": "square"
 								} 
@@ -2165,7 +2223,7 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 			},
 	    "title":
 	    {
-	        "name": "Penjualan Kelistrikan & Non Kelistrikan"
+	        "name": "Penjualan Berdasarkan Jenis Industri"
 	    },
 	    "show_blanks_as": "zero"
 	}`, seriesChartRecapJenisIndustri)
@@ -2471,7 +2529,7 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	var base int
 
 	base = 178 + countIndustry
-	file.SetCellValue(chartSheetName, fmt.Sprintf("B%v", 178+countIndustry), "DETAIL REKAP TOTAL DMO BERDASARKAN JENIS INDUSTRI - NON KELISTRIKAN")
+	file.SetCellValue(chartSheetName, fmt.Sprintf("B%v", 178+countIndustry), "DETAIL REKAP TOTAL DMO BERDASARKAN JENIS INDUSTRI - Smelter")
 
 	errTitleDmo7 := file.SetCellStyle(chartSheetName, fmt.Sprintf("B%v", 178+countIndustry), fmt.Sprintf("B%v", 178+countIndustry), boldOnlyStyle)
 
@@ -2581,7 +2639,7 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	var seriesChartCompanyNonElectric string
 
 	seriesChartCompanyNonElectric += fmt.Sprintf(`{
-						"name": "Sales Non Kelistrikan",
+						"name": "Sales Smelter",
 						"categories": "%v!$B$%v:$B$%v",
 						"values": "%v!$C$%v:$C$%v",
 						"marker": {
@@ -2613,7 +2671,7 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 			},
 	    "title":
 	    {
-	        "name": "Penjualan berdasarkan JENIS INDUSTRI (NON KELISTRIKAN)"
+	        "name": "Penjualan berdasarkan JENIS INDUSTRI (Smelter)"
 	    },
 	    "show_blanks_as": "zero"
 	}`, seriesChartCompanyNonElectric)
@@ -2723,6 +2781,16 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 
 	var numberCement int = 1
 
+	var countCement int
+	if countIndustry > 16 {
+		countCement = countIndustry - 16
+	}
+
+	var baseCement int
+
+	baseCement = 178 + 16 + countCement
+	file.SetCellValue(chartSheetName, fmt.Sprintf("B%v", baseCement), "DETAIL REKAP TOTAL DMO BERDASARKAN JENIS INDUSTRI - Semen")
+
 	for k, value := range reportSaleDetail.CompanyCement {
 
 		file.SetCellValue(sheetName, fmt.Sprintf("B%v", startCement+(3+numberCement-1)), k)
@@ -2805,10 +2873,63 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 
 			file.SetCellFormula(sheetName, fmt.Sprintf("Q%v", startCement+(3+numberCement-1)), fmt.Sprintf("SUM(E%v:P%v)", startCement+(3+numberCement-1), startCement+(3+numberCement-1)))
 
+			file.SetCellFormula(chartSheetName, fmt.Sprintf("B%v", baseCement+1+countCement), fmt.Sprintf("Detail!D%v", startCement+(3+numberCement-1)))
+			file.SetCellFormula(chartSheetName, fmt.Sprintf("C%v", baseCement+1+countCement), fmt.Sprintf("Detail!Q%v", startCement+(3+numberCement-1)))
 			numberCement += 1
+			countCement += 1
 		}
 
 		file.MergeCell(sheetName, fmt.Sprintf("B%v", startCement+(2+numberCement-1)), fmt.Sprintf("C%v", startCement+(2+numberCement-1)))
+	}
+
+	errChartSaleCement := file.SetCellStyle(chartSheetName, fmt.Sprintf("B%v", baseCement+1), fmt.Sprintf("C%v", baseCement+countCement), formatNumberStyle)
+
+	if errChartSaleCement != nil {
+		return file, errChartSaleCement
+	}
+
+	var seriesChartCompanyCement string
+
+	seriesChartCompanyCement += fmt.Sprintf(`{
+						"name": "Sales Semen",
+						"categories": "%v!$B$%v:$B$%v",
+						"values": "%v!$C$%v:$C$%v",
+						"marker": {
+									"symbol": "square"
+								} 
+				}`, chartSheetName, baseCement+1, baseCement+1+countCement, chartSheetName, baseCement+1, baseCement+1+countCement)
+
+	valueChartCement := fmt.Sprintf(`{
+	    "type": "pie",
+	    "series": [%v],
+	    "format":
+	    {
+	        "x_scale": 1.0,
+	        "y_scale": 1.0,
+	        "x_offset": 15,
+	        "y_offset": 10,
+	        "print_obj": true,
+	        "lock_aspect_ratio": false,
+	        "locked": false
+	    },
+	    "legend":
+	    {
+	        "position": "top",
+	        "show_legend_key": true
+	    },
+			"plotarea": 
+			{
+					"show_percent": true
+			},
+	    "title":
+	    {
+	        "name": "Penjualan berdasarkan JENIS INDUSTRI (Semen)"
+	    },
+	    "show_blanks_as": "zero"
+	}`, seriesChartCompanyCement)
+
+	if err := file.AddChart(chartSheetName, fmt.Sprintf("G%v", baseCement), valueChartCement); err != nil {
+		return file, err
 	}
 
 	errNoCementStyle := file.SetCellStyle(sheetName, fmt.Sprintf("A%v", startCement+3), fmt.Sprintf("A%v", startCement+3+numberCement-1), centerStyle)
@@ -2881,8 +3002,6 @@ func (s *service) CreateReportSalesDetail(year string, reportSaleDetail SaleDeta
 	file.SetCellFormula(sheetName, fmt.Sprintf("P%v", startCement+2+numberCement), fmt.Sprintf("SUM(P%v:P%v)", startCement+3, startCement+numberCement+1))
 
 	file.SetCellFormula(sheetName, fmt.Sprintf("Q%v", startCement+2+numberCement), fmt.Sprintf("SUM(Q%v:Q%v)", startCement+3, startCement+numberCement+1))
-
-	// START
 
 	var startSaleExportImport int
 	startSaleExportImport = startCement + 6 + numberCement
