@@ -106,8 +106,7 @@ func (r *repository) ListMasterData() (MasterData, error) {
 		return masterData, findCategoryIndustryTypeErr
 	}
 
-	findCompanyErr := r.db.Order("company_name asc").Order("created_at desc").Preload(clause.Associations).Find(&company).Error
-
+	findCompanyErr := r.db.Order("company_name asc").Order("created_at desc").Preload(clause.Associations).Preload("IndustryType.CategoryIndustryType").Find(&company).Error
 	if findCompanyErr != nil {
 		return masterData, findCompanyErr
 	}
@@ -204,7 +203,7 @@ func (r *repository) ListMasterData() (MasterData, error) {
 		return masterData, findSurveyorErr
 	}
 
-	findTraderErr := r.db.Order("trader_name asc").Order("created_at desc").Preload("Company.IndustryType").Find(&trader).Error
+	findTraderErr := r.db.Order("trader_name asc").Order("created_at desc").Preload("Company.IndustryType.CategoryIndustryType").Find(&trader).Error
 
 	if findTraderErr != nil {
 		return masterData, findTraderErr
