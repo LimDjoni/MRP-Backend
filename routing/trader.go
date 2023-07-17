@@ -47,8 +47,5 @@ func TraderRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) 
 	}))
 
 	traderRouting.Get("/list", traderHandler.ListTrader)
-	traderRouting.Post("/create", traderHandler.CreateTrader)
-	traderRouting.Put("/update/:id", traderHandler.UpdateTrader)
-	traderRouting.Delete("/delete/:id", traderHandler.DeleteTrader)
 	traderRouting.Get("/detail/:id", traderHandler.DetailTrader)
 }
