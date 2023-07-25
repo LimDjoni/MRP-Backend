@@ -26,7 +26,7 @@ func NewRepository(db *gorm.DB) *repository {
 func (r *repository) ListCompany() ([]Company, error) {
 	var listCompany []Company
 
-	getListCompanyErr := r.db.Preload(clause.Associations).Order("company_name asc").Find(&listCompany).Error
+	getListCompanyErr := r.db.Preload(clause.Associations).Preload("IndustryType.CategoryIndustryType").Order("company_name asc").Find(&listCompany).Error
 
 	return listCompany, getListCompanyErr
 }

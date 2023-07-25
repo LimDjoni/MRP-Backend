@@ -32,7 +32,7 @@ func NewRepository(db *gorm.DB) *repository {
 func (r *repository) ListTrader() ([]Trader, error) {
 	var listTrader []Trader
 
-	getListTraderErr := r.db.Preload(clause.Associations).Order("trader_name asc").Find(&listTrader).Error
+	getListTraderErr := r.db.Preload(clause.Associations).Preload("Company.IndustryType.CategoryIndustryType").Order("trader_name asc").Find(&listTrader).Error
 
 	return listTrader, getListTraderErr
 }

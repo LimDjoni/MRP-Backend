@@ -806,7 +806,7 @@ func (r *repository) DeleteIndustryType(id int) (bool, error) {
 func (r *repository) ListCompany() ([]company.Company, error) {
 	var listCompany []company.Company
 
-	errFind := r.db.Preload(clause.Associations).Find(&listCompany).Error
+	errFind := r.db.Preload(clause.Associations).Preload("IndustryType.CategoryIndustryType").Find(&listCompany).Error
 
 	if errFind != nil {
 		return listCompany, errFind
@@ -818,7 +818,7 @@ func (r *repository) ListCompany() ([]company.Company, error) {
 func (r *repository) ListTrader() ([]trader.Trader, error) {
 	var listTrader []trader.Trader
 
-	errFind := r.db.Preload(clause.Associations).Find(&listTrader).Error
+	errFind := r.db.Preload(clause.Associations).Preload("Company.IndustryType.CategoryIndustryType").Find(&listTrader).Error
 
 	if errFind != nil {
 		return listTrader, errFind

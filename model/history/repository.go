@@ -26,6 +26,8 @@ import (
 	"ajebackend/model/production"
 	"ajebackend/model/reportdmo"
 	"ajebackend/model/rkab"
+	"ajebackend/model/royaltyrecon"
+	"ajebackend/model/royaltyreport"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
 	"encoding/json"
@@ -99,6 +101,12 @@ type Repository interface {
 	UploadUpdateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int, typeDocument string) (cafassignment.CafAssignment, error)
 	DeleteCafAssignment(id int, iupopkId int, userId uint) (bool, error)
 	UpdateCafAssignment(id int, input cafassignmentenduser.UpdateCafAssignmentInput, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
+	CreateRoyaltyRecon(dateFrom string, dateTo string, iupopkId int, userId uint) (royaltyrecon.RoyaltyRecon, error)
+	DeleteRoyaltyRecon(id int, iupopkId int, userId uint) (bool, error)
+	UpdateDocumentRoyaltyRecon(id int, documentLink royaltyrecon.InputUpdateDocumentRoyaltyRecon, userId uint, iupopkId int) (royaltyrecon.RoyaltyRecon, error)
+	CreateRoyaltyReport(dateFrom string, dateTo string, iupopkId int, userId uint) (royaltyreport.RoyaltyReport, error)
+	DeleteRoyaltyReport(id int, iupopkId int, userId uint) (bool, error)
+	UpdateDocumentRoyaltyReport(id int, documentLink royaltyreport.InputUpdateDocumentRoyaltyReport, userId uint, iupopkId int) (royaltyreport.RoyaltyReport, error)
 }
 
 type repository struct {
@@ -5024,4 +5032,344 @@ func (r *repository) UpdateCafAssignment(id int, input cafassignmentenduser.Upda
 
 	tx.Commit()
 	return updatedCafAssignment, nil
+}
+
+// Royalty Recon
+
+func (r *repository) CreateRoyaltyRecon(dateFrom string, dateTo string, iupopkId int, userId uint) (royaltyrecon.RoyaltyRecon, error) {
+	var royaltyRecon royaltyrecon.RoyaltyRecon
+	var iup iupopk.Iupopk
+
+	var counterTransaction counter.Counter
+
+	tx := r.db.Begin()
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return royaltyRecon, errFindIup
+	}
+
+	errFindCounterTransaction := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
+
+	if errFindCounterTransaction != nil {
+		tx.Rollback()
+		return royaltyRecon, errFindCounterTransaction
+	}
+
+	errFind := tx.Where("date_from = ? AND date_to = ? AND iupopk_id = ?", dateFrom, dateTo, iupopkId).First(&royaltyRecon).Error
+
+	if errFind == nil {
+		tx.Rollback()
+		return royaltyRecon, errors.New("Report already has been created")
+	}
+
+	idNumber := "RRK-" + iup.Code
+
+	if counterTransaction.RoyaltyRecon == 0 {
+		counterTransaction.RoyaltyRecon = 1
+	}
+
+	royaltyRecon.IdNumber = createIdNumber(idNumber, uint(counterTransaction.RoyaltyRecon))
+	royaltyRecon.DateFrom = dateFrom
+	royaltyRecon.DateTo = dateTo
+	royaltyRecon.IupopkId = iup.ID
+
+	errCreate := tx.Create(&royaltyRecon).Error
+
+	if errCreate != nil {
+		tx.Rollback()
+		return royaltyRecon, errCreate
+	}
+
+	royaltyReconData, _ := json.Marshal(royaltyRecon)
+
+	var history History
+
+	history.RoyaltyReconId = &royaltyRecon.ID
+	history.Status = "Created Royalty Recon"
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = royaltyReconData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return royaltyRecon, createHistoryErr
+	}
+
+	updateCounterErr := tx.Model(&counterTransaction).Where("iupopk_id = ?", iupopkId).Update("royalty_recon", counterTransaction.RoyaltyRecon+1).Error
+
+	if updateCounterErr != nil {
+		tx.Rollback()
+		return royaltyRecon, updateCounterErr
+	}
+
+	tx.Commit()
+	return royaltyRecon, nil
+}
+
+func (r *repository) DeleteRoyaltyRecon(id int, iupopkId int, userId uint) (bool, error) {
+	var royaltyRecon royaltyrecon.RoyaltyRecon
+	var iup iupopk.Iupopk
+
+	tx := r.db.Begin()
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return false, errFindIup
+	}
+
+	errFind := tx.Where("id = ?", id).First(&royaltyRecon).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return false, errFind
+	}
+
+	royaltyReconData, _ := json.Marshal(royaltyRecon)
+
+	errDelete := tx.Unscoped().Where("id = ? AND iupopk_id = ?", id, iupopkId).Delete(&royaltyRecon).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+		return false, errDelete
+	}
+
+	var history History
+
+	history.Status = fmt.Sprintf("Deleted Royalty Recon with id number %s and id %v", &royaltyRecon.IdNumber, royaltyRecon.ID)
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = royaltyReconData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return false, createHistoryErr
+	}
+
+	tx.Commit()
+	return true, nil
+}
+
+func (r *repository) UpdateDocumentRoyaltyRecon(id int, documentLink royaltyrecon.InputUpdateDocumentRoyaltyRecon, userId uint, iupopkId int) (royaltyrecon.RoyaltyRecon, error) {
+	tx := r.db.Begin()
+	var royaltyRecon royaltyrecon.RoyaltyRecon
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&royaltyRecon).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return royaltyRecon, errFind
+	}
+
+	editData := make(map[string]interface{})
+
+	for _, value := range documentLink.Data {
+		if value["Location"] != nil {
+			if strings.Contains(value["Location"].(string), "royalty_recon") {
+				editData["royalty_recon_document_link"] = value["Location"]
+			}
+		}
+	}
+
+	errEdit := tx.Model(&royaltyRecon).Updates(editData).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return royaltyRecon, errEdit
+	}
+
+	var history History
+
+	history.RoyaltyReconId = &royaltyRecon.ID
+	history.UserId = userId
+	history.Status = fmt.Sprintf("Update upload document royalty recon with id = %v", royaltyRecon.ID)
+	history.IupopkId = &royaltyRecon.IupopkId
+	dataInput, _ := json.Marshal(documentLink)
+	history.AfterData = dataInput
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return royaltyRecon, createHistoryErr
+	}
+
+	tx.Commit()
+	return royaltyRecon, nil
+}
+
+// Royalty Report
+
+func (r *repository) CreateRoyaltyReport(dateFrom string, dateTo string, iupopkId int, userId uint) (royaltyreport.RoyaltyReport, error) {
+	var royaltyReport royaltyreport.RoyaltyReport
+	var iup iupopk.Iupopk
+
+	var counterTransaction counter.Counter
+
+	tx := r.db.Begin()
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return royaltyReport, errFindIup
+	}
+
+	errFindCounterTransaction := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
+
+	if errFindCounterTransaction != nil {
+		tx.Rollback()
+		return royaltyReport, errFindCounterTransaction
+	}
+
+	errFind := tx.Where("date_from = ? AND date_to = ? AND iupopk_id = ?", dateFrom, dateTo, iupopkId).First(&royaltyReport).Error
+
+	if errFind == nil {
+		tx.Rollback()
+		return royaltyReport, errors.New("Report already has been created")
+	}
+
+	idNumber := "RRO-" + iup.Code
+
+	if counterTransaction.RoyaltyReport == 0 {
+		counterTransaction.RoyaltyReport = 1
+	}
+
+	royaltyReport.IdNumber = createIdNumber(idNumber, uint(counterTransaction.RoyaltyReport))
+	royaltyReport.DateFrom = dateFrom
+	royaltyReport.DateTo = dateTo
+	royaltyReport.IupopkId = iup.ID
+
+	errCreate := tx.Create(&royaltyReport).Error
+
+	if errCreate != nil {
+		tx.Rollback()
+		return royaltyReport, errCreate
+	}
+
+	royaltyReportData, _ := json.Marshal(royaltyReport)
+
+	var history History
+
+	history.RoyaltyReportId = &royaltyReport.ID
+	history.Status = "Created Royalty Report"
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = royaltyReportData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return royaltyReport, createHistoryErr
+	}
+
+	updateCounterErr := tx.Model(&counterTransaction).Where("iupopk_id = ?", iupopkId).Update("royalty_report", counterTransaction.RoyaltyReport+1).Error
+
+	if updateCounterErr != nil {
+		tx.Rollback()
+		return royaltyReport, updateCounterErr
+	}
+
+	tx.Commit()
+	return royaltyReport, nil
+}
+
+func (r *repository) DeleteRoyaltyReport(id int, iupopkId int, userId uint) (bool, error) {
+	var royaltyReport royaltyreport.RoyaltyReport
+	var iup iupopk.Iupopk
+
+	tx := r.db.Begin()
+
+	errFindIup := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if errFindIup != nil {
+		tx.Rollback()
+		return false, errFindIup
+	}
+
+	errFind := tx.Where("id = ?", id).First(&royaltyReport).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return false, errFind
+	}
+
+	royaltyReportData, _ := json.Marshal(royaltyReport)
+
+	errDelete := tx.Unscoped().Where("id = ? AND iupopk_id = ?", id, iupopkId).Delete(&royaltyReport).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+		return false, errDelete
+	}
+
+	var history History
+
+	history.Status = fmt.Sprintf("Deleted Royalty Report with id number %s and id %v", &royaltyReport.IdNumber, royaltyReport.ID)
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	history.BeforeData = royaltyReportData
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return false, createHistoryErr
+	}
+
+	tx.Commit()
+	return true, nil
+}
+
+func (r *repository) UpdateDocumentRoyaltyReport(id int, documentLink royaltyreport.InputUpdateDocumentRoyaltyReport, userId uint, iupopkId int) (royaltyreport.RoyaltyReport, error) {
+	tx := r.db.Begin()
+	var royaltyReport royaltyreport.RoyaltyReport
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&royaltyReport).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return royaltyReport, errFind
+	}
+
+	editData := make(map[string]interface{})
+
+	for _, value := range documentLink.Data {
+		if value["Location"] != nil {
+			if strings.Contains(value["Location"].(string), "royalty_report") {
+				editData["royalty_report_document_link"] = value["Location"]
+			}
+		}
+	}
+
+	errEdit := tx.Model(&royaltyReport).Updates(editData).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return royaltyReport, errEdit
+	}
+
+	var history History
+
+	history.RoyaltyReportId = &royaltyReport.ID
+	history.UserId = userId
+	history.Status = fmt.Sprintf("Update upload document royalty report with id = %v", royaltyReport.ID)
+	history.IupopkId = &royaltyReport.IupopkId
+	dataInput, _ := json.Marshal(documentLink)
+	history.AfterData = dataInput
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return royaltyReport, createHistoryErr
+	}
+
+	tx.Commit()
+	return royaltyReport, nil
 }
