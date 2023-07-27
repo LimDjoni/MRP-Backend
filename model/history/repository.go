@@ -5171,7 +5171,7 @@ func (r *repository) UpdateDocumentRoyaltyRecon(id int, documentLink royaltyreco
 
 	for _, value := range documentLink.Data {
 		if value["Location"] != nil {
-			if strings.Contains(value["Location"].(string), "royalty_recon") {
+			if strings.Contains(value["Location"].(string), "royalti_rekon") {
 				editData["royalty_recon_document_link"] = value["Location"]
 			}
 		}
@@ -5341,7 +5341,7 @@ func (r *repository) UpdateDocumentRoyaltyReport(id int, documentLink royaltyrep
 
 	for _, value := range documentLink.Data {
 		if value["Location"] != nil {
-			if strings.Contains(value["Location"].(string), "royalty_report") {
+			if strings.Contains(value["Location"].(string), "laporan_royalti") {
 				editData["royalty_report_document_link"] = value["Location"]
 			}
 		}

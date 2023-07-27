@@ -8,7 +8,7 @@ import (
 
 type RoyaltyReconData struct {
 	ShippingDate                string           `json:"shipping_date"`
-	Quantity                    string           `json:"quantity"`
+	Quantity                    float64          `json:"quantity"`
 	TugboatId                   *uint            `json:"tugboat_id"`
 	Tugboat                     *tugboat.Tugboat `json:"tugboat"`
 	BargeId                     *uint            `json:"barge_id"`

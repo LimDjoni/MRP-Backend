@@ -24,7 +24,7 @@ func NewRepository(db *gorm.DB) *repository {
 func (r *repository) GetTransactionRoyaltyRecon(dateFrom string, dateTo string, iupopkId int) ([]RoyaltyReconData, error) {
 	var listTransaction []RoyaltyReconData
 
-	errFind := r.db.Table("transactions").Preload(clause.Associations).Where("shipping_date >= ? AND shipping_date <= ? AND seller_id = ?", dateFrom, dateTo, iupopkId).Order("shipping_date desc").Find(&listTransaction).Error
+	errFind := r.db.Table("transactions").Preload(clause.Associations).Preload("Customer.IndustryType.CategoryIndustryType").Preload("DmoBuyer.IndustryType.CategoryIndustryType").Where("shipping_date >= ? AND shipping_date <= ? AND seller_id = ?", dateFrom, dateTo, iupopkId).Order("shipping_date desc").Find(&listTransaction).Error
 
 	if errFind != nil {
 		return listTransaction, errFind
@@ -46,7 +46,7 @@ func (r *repository) GetDetailTransactionRoyaltyRecon(id int, iupopkId int) (Roy
 
 	detailRoyaltyRecon.Detail = royaltyRecon
 
-	errFind := r.db.Preload(clause.Associations).Where("shipping_date >= ? AND shipping_date <= ? AND seller_id = ?", royaltyRecon.DateFrom, royaltyRecon.DateTo, iupopkId).Order("shipping_date desc").Find(&listTransaction).Error
+	errFind := r.db.Table("transactions").Preload(clause.Associations).Preload("Customer.IndustryType.CategoryIndustryType").Preload("DmoBuyer.IndustryType.CategoryIndustryType").Where("shipping_date >= ? AND shipping_date <= ? AND seller_id = ?", royaltyRecon.DateFrom, royaltyRecon.DateTo, iupopkId).Order("shipping_date desc").Find(&listTransaction).Error
 
 	if errFind != nil {
 		return detailRoyaltyRecon, errFind
