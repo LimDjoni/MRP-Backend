@@ -2,9 +2,14 @@ package handler
 
 import (
 	"ajebackend/model/awshelper"
+	"ajebackend/model/history"
 	"ajebackend/model/logs"
 	"ajebackend/model/master/allmaster"
 	"ajebackend/model/masterreport"
+	"ajebackend/model/notification"
+	"ajebackend/model/notificationuser"
+	"ajebackend/model/royaltyrecon"
+	"ajebackend/model/royaltyreport"
 	"ajebackend/model/useriupopk"
 	"ajebackend/validatorfunc"
 	"encoding/json"
@@ -29,9 +34,24 @@ type masterReportHandler struct {
 	allMasterService                allmaster.Service
 	transactionRequestReportService transactionrequestreport.Service
 	logService                      logs.Service
+	royaltyReconService             royaltyrecon.Service
+	royaltyReportService            royaltyreport.Service
+	historyService                  history.Service
+	notificationUserService         notificationuser.Service
 }
 
-func NewMasterReportHandler(masterReportService masterreport.Service, userIupopkService useriupopk.Service, v *validator.Validate, allMasterService allmaster.Service, transactionRequestReportService transactionrequestreport.Service, logService logs.Service) *masterReportHandler {
+func NewMasterReportHandler(
+	masterReportService masterreport.Service,
+	userIupopkService useriupopk.Service,
+	v *validator.Validate,
+	allMasterService allmaster.Service,
+	transactionRequestReportService transactionrequestreport.Service,
+	logService logs.Service,
+	royaltyReconService royaltyrecon.Service,
+	royaltyReportService royaltyreport.Service,
+	historyService history.Service,
+	notificationUserService notificationuser.Service,
+) *masterReportHandler {
 	return &masterReportHandler{
 		masterReportService,
 		userIupopkService,
@@ -39,9 +59,14 @@ func NewMasterReportHandler(masterReportService masterreport.Service, userIupopk
 		allMasterService,
 		transactionRequestReportService,
 		logService,
+		royaltyReconService,
+		royaltyReportService,
+		historyService,
+		notificationUserService,
 	}
 }
 
+// Report Recap DMO
 func (h *masterReportHandler) RecapDmo(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
@@ -172,6 +197,7 @@ func (h *masterReportHandler) DownloadRecapDmo(c *fiber.Ctx) error {
 	return c.Status(200).Download("./Book1.xlsx", fileName)
 }
 
+// Report Realisasi DMO
 func (h *masterReportHandler) RealizationReport(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
@@ -313,6 +339,7 @@ func (h *masterReportHandler) DownloadRealizationReport(c *fiber.Ctx) error {
 	return c.Status(200).Download("./Book1.xlsx", fileName)
 }
 
+// Report Detail Penjualan DMO
 func (h *masterReportHandler) SaleDetailReport(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
@@ -445,6 +472,7 @@ func (h *masterReportHandler) DownloadSaleDetailReport(c *fiber.Ctx) error {
 	return c.Status(200).Download("./Book1.xlsx", fileName)
 }
 
+// Request Transaksi Report (All Data)
 func (h *masterReportHandler) PreviewTransactionReport(c *fiber.Ctx) error {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
@@ -581,8 +609,6 @@ func (h *masterReportHandler) CreateTransactionRequestReport(c *fiber.Ctx) error
 	if reqJobErr != nil {
 
 		_, updErr := h.transactionRequestReportService.UpdateTransactionReportError(int(createTransactionReqReport.ID), iupopkIdInt)
-
-		fmt.Println("finish 3")
 
 		maps := make(map[string]interface{})
 		maps["error"] = reqJobErr.Error()
@@ -1116,4 +1142,1176 @@ func (h *masterReportHandler) ListTransactionReport(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(list)
+}
+
+// Report Royalty Recon
+func (h *masterReportHandler) PreviewRoyaltyRecon(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	royaltyReconInput := new(royaltyrecon.InputRoyaltyRecon)
+
+	// Binds the request body to the Person struct
+	if err := c.BodyParser(royaltyReconInput); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	errors := h.v.Struct(*royaltyReconInput)
+
+	if errors != nil {
+		dataErrors := validatorfunc.ValidateStruct(errors)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": dataErrors,
+		})
+	}
+
+	royaltyRecon, royaltyReconErr := h.royaltyReconService.GetTransactionRoyaltyRecon(royaltyReconInput.DateFrom, royaltyReconInput.DateTo, iupopkIdInt)
+
+	if royaltyReconErr != nil {
+		status := 400
+
+		if royaltyReconErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"error": royaltyReconErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(royaltyRecon)
+}
+
+func (h *masterReportHandler) CreateRoyaltyRecon(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := fiber.Map{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	royaltyReconInput := new(royaltyrecon.InputRoyaltyRecon)
+
+	// Binds the request body to the Person struct
+	if err := c.BodyParser(royaltyReconInput); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	errors := h.v.Struct(*royaltyReconInput)
+
+	if errors != nil {
+		dataErrors := validatorfunc.ValidateStruct(errors)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": dataErrors,
+		})
+	}
+
+	royaltyRecon, royaltyReconErr := h.historyService.CreateRoyaltyRecon(royaltyReconInput.DateFrom, royaltyReconInput.DateTo, iupopkIdInt, uint(claims["id"].(float64)))
+
+	if royaltyReconErr != nil {
+		inputJson, _ := json.Marshal(royaltyReconInput)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error":   royaltyReconErr.Error(),
+			"message": "create royalty recon err",
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": royaltyReconErr.Error(),
+		})
+	}
+
+	return c.Status(201).JSON(royaltyRecon)
+}
+
+func (h *masterReportHandler) DeleteRoyaltyRecon(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := fiber.Map{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+	id := c.Params("id")
+	idInt, err := strconv.Atoi(id)
+	iupopkId := c.Params("iupopk_id")
+	iupopkIdInt, iupopkErr := strconv.Atoi(iupopkId)
+
+	if err != nil || iupopkErr != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	detailRoyaltyRecon, detailRoyaltyReconErr := h.royaltyReconService.GetDetailTransactionRoyaltyRecon(idInt, iupopkIdInt)
+
+	if detailRoyaltyReconErr != nil {
+		status := 400
+
+		if detailRoyaltyReconErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"message": "failed to delete royalty recon",
+			"error":   detailRoyaltyReconErr.Error(),
+		})
+	}
+
+	_, isDeletedRoyaltyReconErr := h.historyService.DeleteRoyaltyRecon(idInt, iupopkIdInt, uint(claims["id"].(float64)))
+
+	if isDeletedRoyaltyReconErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["royalty_recon_id"] = idInt
+
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": isDeletedRoyaltyReconErr.Error(),
+		})
+
+		royaltyReconId := uint(idInt)
+		createdErrLog := logs.Logs{
+			RoyaltyReconId: &royaltyReconId,
+			Input:          inputJson,
+			Message:        messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		status := 400
+
+		if isDeletedRoyaltyReconErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"message": "failed to delete royalty recon",
+			"error":   isDeletedRoyaltyReconErr.Error(),
+		})
+	}
+
+	if detailRoyaltyRecon.Detail.RoyaltyReconDocumentLink != "" {
+		documentLink := detailRoyaltyRecon.Detail.RoyaltyReconDocumentLink
+
+		documentLinkSplit := strings.Split(documentLink, "/")
+
+		fileName := ""
+
+		for i, v := range documentLinkSplit {
+			if i == 3 {
+				fileName += v + "/"
+			}
+
+			if i == 4 {
+				fileName += v + "/"
+			}
+
+			if i == 5 {
+				fileName += v
+			}
+		}
+		_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
+
+		if deleteAwsErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["user_id"] = claims["id"]
+			inputMap["royalty_recon_id"] = idInt
+
+			inputJson, _ := json.Marshal(inputMap)
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error": isDeletedRoyaltyReconErr.Error(),
+			})
+
+			royaltyReconId := uint(idInt)
+			createdErrLog := logs.Logs{
+				RoyaltyReconId: &royaltyReconId,
+				Input:          inputJson,
+				Message:        messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			return c.Status(400).JSON(fiber.Map{
+				"message": "failed to delete royalty recon aws",
+				"error":   deleteAwsErr.Error(),
+			})
+		}
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"message": "success delete royalty recon",
+	})
+}
+
+func (h *masterReportHandler) DetailRoyaltyRecon(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := fiber.Map{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+	id := c.Params("id")
+	idInt, err := strconv.Atoi(id)
+	iupopkId := c.Params("iupopk_id")
+	iupopkIdInt, iupopkErr := strconv.Atoi(iupopkId)
+
+	if err != nil || iupopkErr != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	detailRoyaltyRecon, detailRoyaltyReconErr := h.royaltyReconService.GetDetailTransactionRoyaltyRecon(idInt, iupopkIdInt)
+
+	if detailRoyaltyReconErr != nil {
+		status := 400
+
+		if detailRoyaltyReconErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"error": detailRoyaltyReconErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(detailRoyaltyRecon)
+}
+
+func (h *masterReportHandler) UpdateDocumentRoyaltyRecon(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	inputUpdateRoyaltyRecon := new(royaltyrecon.InputUpdateDocumentRoyaltyRecon)
+
+	// Binds the request body to the Person struct
+	if err := c.BodyParser(inputUpdateRoyaltyRecon); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error":   err.Error(),
+			"message": "failed to update royalty recon",
+		})
+	}
+
+	errors := h.v.Struct(*inputUpdateRoyaltyRecon)
+
+	id := c.Params("id")
+
+	idInt, err := strconv.Atoi(id)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"message": "failed to update royalty recon",
+			"error":   "record not found",
+		})
+	}
+
+	if errors != nil {
+		dataErrors := validatorfunc.ValidateStruct(errors)
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["input"] = inputUpdateRoyaltyRecon
+		inputMap["royalty_recon_id"] = idInt
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"errors": dataErrors,
+		})
+
+		royaltyReconId := uint(idInt)
+
+		createdErrLog := logs.Logs{
+			Input:          inputJson,
+			Message:        messageJson,
+			RoyaltyReconId: &royaltyReconId,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": dataErrors,
+		})
+	}
+
+	detailRoyaltyRecon, detailRoyaltyReconErr := h.royaltyReconService.GetDetailTransactionRoyaltyRecon(idInt, iupopkIdInt)
+
+	if detailRoyaltyReconErr != nil {
+		status := 400
+
+		if detailRoyaltyReconErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"error": detailRoyaltyReconErr.Error(),
+		})
+	}
+
+	updateRoyaltyRecon, updateRoyaltyReconErr := h.historyService.UpdateDocumentRoyaltyRecon(idInt, *inputUpdateRoyaltyRecon, uint(claims["id"].(float64)), iupopkIdInt)
+
+	if updateRoyaltyReconErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["input"] = inputUpdateRoyaltyRecon
+		inputMap["royalty_recon_id"] = idInt
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": updateRoyaltyReconErr.Error(),
+		})
+
+		royaltyReconId := uint(idInt)
+
+		createdErrLog := logs.Logs{
+			Input:          inputJson,
+			Message:        messageJson,
+			RoyaltyReconId: &royaltyReconId,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		status := 400
+		if updateRoyaltyReconErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"error":   updateRoyaltyReconErr.Error(),
+			"message": "failed to update royalty recon",
+		})
+	}
+
+	var inputNotification notification.InputNotification
+	inputNotification.Type = "royalty recon"
+	inputNotification.Period = fmt.Sprintf("%v/%v", detailRoyaltyRecon.Detail.DateFrom, detailRoyaltyRecon.Detail.DateTo)
+	inputNotification.Status = "membuat dokumen"
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), iupopkIdInt)
+
+	if createdNotificationErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["input"] = inputUpdateRoyaltyRecon
+		inputMap["royalty_recon_id"] = idInt
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": createdNotificationErr.Error(),
+		})
+		royaltyReconId := uint(idInt)
+
+		createdErrLog := logs.Logs{
+			Input:          inputJson,
+			Message:        messageJson,
+			RoyaltyReconId: &royaltyReconId,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error":   createdNotificationErr.Error(),
+			"message": "failed to create notification update royalty recon",
+		})
+	}
+
+	return c.Status(200).JSON(updateRoyaltyRecon)
+}
+
+func (h *masterReportHandler) RequestCreateExcelRoyaltyRecon(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	id := c.Params("id")
+
+	idInt, err := strconv.Atoi(id)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "record not found",
+		})
+	}
+
+	header := c.GetReqHeaders()
+
+	detailRoyaltyRecon, detailRoyaltyReconErr := h.royaltyReconService.GetDetailTransactionRoyaltyRecon(idInt, iupopkIdInt)
+
+	if detailRoyaltyReconErr != nil {
+		status := 400
+
+		if detailRoyaltyReconErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"error": detailRoyaltyReconErr.Error(),
+		})
+	}
+
+	var inputRequestCreateExcel royaltyrecon.InputRequestCreateUploadRoyaltyRecon
+	inputRequestCreateExcel.Authorization = header["Authorization"]
+	inputRequestCreateExcel.RoyaltyRecon = detailRoyaltyRecon.Detail
+	inputRequestCreateExcel.ListTransaction = detailRoyaltyRecon.ListTransaction
+	inputRequestCreateExcel.Iupopk = detailRoyaltyRecon.Detail.Iupopk
+	hitJob, hitJobErr := h.royaltyReconService.RequestCreateExcelRoyaltyRecon(inputRequestCreateExcel)
+
+	if hitJobErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": hitJobErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(hitJob)
+}
+
+func (h *masterReportHandler) ListRoyaltyRecon(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	page := c.Query("page")
+
+	pageNumber, err := strconv.Atoi(page)
+
+	if err != nil && page != "" {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	if page == "" {
+		pageNumber = 1
+	}
+
+	var filterRoyaltyRecon royaltyrecon.SortFilterRoyaltyRecon
+
+	filterRoyaltyRecon.Field = c.Query("field")
+	filterRoyaltyRecon.Sort = c.Query("sort")
+	filterRoyaltyRecon.DateStart = c.Query("date_start")
+	filterRoyaltyRecon.DateEnd = c.Query("date_end")
+
+	listRoyaltyRecon, listRoyaltyReconErr := h.royaltyReconService.ListRoyaltyRecon(pageNumber, filterRoyaltyRecon, iupopkIdInt)
+
+	if listRoyaltyReconErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": listRoyaltyReconErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(listRoyaltyRecon)
+}
+
+// Report Royalty Report
+func (h *masterReportHandler) PreviewRoyaltyReport(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	royaltyReportInput := new(royaltyreport.InputRoyaltyReport)
+
+	// Binds the request body to the Person struct
+	if err := c.BodyParser(royaltyReportInput); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	errors := h.v.Struct(*royaltyReportInput)
+
+	if errors != nil {
+		dataErrors := validatorfunc.ValidateStruct(errors)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": dataErrors,
+		})
+	}
+
+	royaltyReport, royaltyReportErr := h.royaltyReportService.GetTransactionRoyaltyReport(royaltyReportInput.DateFrom, royaltyReportInput.DateTo, iupopkIdInt)
+
+	if royaltyReportErr != nil {
+		status := 400
+
+		if royaltyReportErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"error": royaltyReportErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(royaltyReport)
+}
+
+func (h *masterReportHandler) CreateRoyaltyReport(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := fiber.Map{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	royaltyReportInput := new(royaltyreport.InputRoyaltyReport)
+
+	// Binds the request body to the Person struct
+	if err := c.BodyParser(royaltyReportInput); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	errors := h.v.Struct(*royaltyReportInput)
+
+	if errors != nil {
+		dataErrors := validatorfunc.ValidateStruct(errors)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": dataErrors,
+		})
+	}
+
+	royaltyReport, royaltyReportErr := h.historyService.CreateRoyaltyReport(royaltyReportInput.DateFrom, royaltyReportInput.DateTo, iupopkIdInt, uint(claims["id"].(float64)))
+
+	if royaltyReportErr != nil {
+		inputJson, _ := json.Marshal(royaltyReportInput)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error":   royaltyReportErr.Error(),
+			"message": "create royalty report err",
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": royaltyReportErr.Error(),
+		})
+	}
+
+	return c.Status(201).JSON(royaltyReport)
+}
+
+func (h *masterReportHandler) DeleteRoyaltyReport(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := fiber.Map{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+	id := c.Params("id")
+	idInt, err := strconv.Atoi(id)
+	iupopkId := c.Params("iupopk_id")
+	iupopkIdInt, iupopkErr := strconv.Atoi(iupopkId)
+
+	if err != nil || iupopkErr != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	detailRoyaltyReport, detailRoyaltyReportErr := h.royaltyReportService.GetDetailTransactionRoyaltyReport(idInt, iupopkIdInt)
+
+	if detailRoyaltyReportErr != nil {
+		status := 400
+
+		if detailRoyaltyReportErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"message": "failed to delete royalty report",
+			"error":   detailRoyaltyReportErr.Error(),
+		})
+	}
+
+	_, isDeletedRoyaltyReportErr := h.historyService.DeleteRoyaltyReport(idInt, iupopkIdInt, uint(claims["id"].(float64)))
+
+	if isDeletedRoyaltyReportErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["royalty_report_id"] = idInt
+
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": isDeletedRoyaltyReportErr.Error(),
+		})
+
+		royaltyReportId := uint(idInt)
+		createdErrLog := logs.Logs{
+			RoyaltyReportId: &royaltyReportId,
+			Input:           inputJson,
+			Message:         messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		status := 400
+
+		if isDeletedRoyaltyReportErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"message": "failed to delete royalty report",
+			"error":   isDeletedRoyaltyReportErr.Error(),
+		})
+	}
+
+	if detailRoyaltyReport.Detail.RoyaltyReportDocumentLink != "" {
+		documentLink := detailRoyaltyReport.Detail.RoyaltyReportDocumentLink
+
+		documentLinkSplit := strings.Split(documentLink, "/")
+
+		fileName := ""
+
+		for i, v := range documentLinkSplit {
+			if i == 3 {
+				fileName += v + "/"
+			}
+
+			if i == 4 {
+				fileName += v + "/"
+			}
+
+			if i == 5 {
+				fileName += v
+			}
+		}
+		_, deleteAwsErr := awshelper.DeleteDocumentBatch(fileName)
+
+		if deleteAwsErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["user_id"] = claims["id"]
+			inputMap["royalty_report_id"] = idInt
+
+			inputJson, _ := json.Marshal(inputMap)
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error": isDeletedRoyaltyReportErr.Error(),
+			})
+
+			royaltyReportId := uint(idInt)
+			createdErrLog := logs.Logs{
+				RoyaltyReportId: &royaltyReportId,
+				Input:           inputJson,
+				Message:         messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			return c.Status(400).JSON(fiber.Map{
+				"message": "failed to delete royalty report aws",
+				"error":   deleteAwsErr.Error(),
+			})
+		}
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"message": "success delete royalty report",
+	})
+}
+
+func (h *masterReportHandler) DetailRoyaltyReport(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := fiber.Map{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+	id := c.Params("id")
+	idInt, err := strconv.Atoi(id)
+	iupopkId := c.Params("iupopk_id")
+	iupopkIdInt, iupopkErr := strconv.Atoi(iupopkId)
+
+	if err != nil || iupopkErr != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	detailRoyaltyReport, detailRoyaltyReportErr := h.royaltyReportService.GetDetailTransactionRoyaltyReport(idInt, iupopkIdInt)
+
+	if detailRoyaltyReportErr != nil {
+		status := 400
+
+		if detailRoyaltyReportErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"error": detailRoyaltyReportErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(detailRoyaltyReport)
+}
+
+func (h *masterReportHandler) UpdateDocumentRoyaltyReport(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	inputUpdateRoyaltyReport := new(royaltyreport.InputUpdateDocumentRoyaltyReport)
+
+	// Binds the request body to the Person struct
+	if err := c.BodyParser(inputUpdateRoyaltyReport); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error":   err.Error(),
+			"message": "failed to update royalty report",
+		})
+	}
+
+	errors := h.v.Struct(*inputUpdateRoyaltyReport)
+
+	id := c.Params("id")
+
+	idInt, err := strconv.Atoi(id)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"message": "failed to update royalty report",
+			"error":   "record not found",
+		})
+	}
+
+	if errors != nil {
+		dataErrors := validatorfunc.ValidateStruct(errors)
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["input"] = inputUpdateRoyaltyReport
+		inputMap["royalty_report_id"] = idInt
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"errors": dataErrors,
+		})
+
+		royaltyReportId := uint(idInt)
+
+		createdErrLog := logs.Logs{
+			Input:           inputJson,
+			Message:         messageJson,
+			RoyaltyReportId: &royaltyReportId,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": dataErrors,
+		})
+	}
+
+	detailRoyaltyReport, detailRoyaltyReportErr := h.royaltyReportService.GetDetailTransactionRoyaltyReport(idInt, iupopkIdInt)
+
+	if detailRoyaltyReportErr != nil {
+		status := 400
+
+		if detailRoyaltyReportErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"error": detailRoyaltyReportErr.Error(),
+		})
+	}
+
+	updateRoyaltyReport, updateRoyaltyReportErr := h.historyService.UpdateDocumentRoyaltyReport(idInt, *inputUpdateRoyaltyReport, uint(claims["id"].(float64)), iupopkIdInt)
+
+	if updateRoyaltyReportErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["input"] = inputUpdateRoyaltyReport
+		inputMap["royalty_report_id"] = idInt
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": updateRoyaltyReportErr.Error(),
+		})
+
+		royaltyReportId := uint(idInt)
+
+		createdErrLog := logs.Logs{
+			Input:           inputJson,
+			Message:         messageJson,
+			RoyaltyReportId: &royaltyReportId,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		status := 400
+		if updateRoyaltyReportErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"error":   updateRoyaltyReportErr.Error(),
+			"message": "failed to update royalty report",
+		})
+	}
+
+	var inputNotification notification.InputNotification
+	inputNotification.Type = "royalty report"
+	inputNotification.Period = fmt.Sprintf("%v/%v", detailRoyaltyReport.Detail.DateFrom, detailRoyaltyReport.Detail.DateTo)
+	inputNotification.Status = "membuat dokumen"
+	_, createdNotificationErr := h.notificationUserService.CreateNotification(inputNotification, uint(claims["id"].(float64)), iupopkIdInt)
+
+	if createdNotificationErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["input"] = inputUpdateRoyaltyReport
+		inputMap["royalty_report_id"] = idInt
+		inputJson, _ := json.Marshal(inputMap)
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": createdNotificationErr.Error(),
+		})
+		royaltyReportId := uint(idInt)
+
+		createdErrLog := logs.Logs{
+			Input:           inputJson,
+			Message:         messageJson,
+			RoyaltyReportId: &royaltyReportId,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error":   createdNotificationErr.Error(),
+			"message": "failed to create notification update royalty report",
+		})
+	}
+
+	return c.Status(200).JSON(updateRoyaltyReport)
+}
+
+func (h *masterReportHandler) RequestCreateExcelRoyaltyReport(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	id := c.Params("id")
+
+	idInt, err := strconv.Atoi(id)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "record not found",
+		})
+	}
+
+	header := c.GetReqHeaders()
+
+	detailRoyaltyReport, detailRoyaltyReportErr := h.royaltyReportService.GetDetailTransactionRoyaltyReport(idInt, iupopkIdInt)
+
+	if detailRoyaltyReportErr != nil {
+		status := 400
+
+		if detailRoyaltyReportErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"error": detailRoyaltyReportErr.Error(),
+		})
+	}
+
+	var inputRequestCreateExcel royaltyreport.InputRequestCreateUploadRoyaltyReport
+	inputRequestCreateExcel.Authorization = header["Authorization"]
+	inputRequestCreateExcel.RoyaltyReport = detailRoyaltyReport.Detail
+	inputRequestCreateExcel.ListTransaction = detailRoyaltyReport.ListTransaction
+	inputRequestCreateExcel.Iupopk = detailRoyaltyReport.Detail.Iupopk
+	hitJob, hitJobErr := h.royaltyReportService.RequestCreateExcelRoyaltyReport(inputRequestCreateExcel)
+
+	if hitJobErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": hitJobErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(hitJob)
+}
+
+func (h *masterReportHandler) ListRoyaltyReport(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	page := c.Query("page")
+
+	pageNumber, err := strconv.Atoi(page)
+
+	if err != nil && page != "" {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	if page == "" {
+		pageNumber = 1
+	}
+
+	var filterRoyaltyReport royaltyreport.SortFilterRoyaltyReport
+
+	filterRoyaltyReport.Field = c.Query("field")
+	filterRoyaltyReport.Sort = c.Query("sort")
+	filterRoyaltyReport.DateStart = c.Query("date_start")
+	filterRoyaltyReport.DateEnd = c.Query("date_end")
+
+	listRoyaltyReport, listRoyaltyReportErr := h.royaltyReportService.ListRoyaltyReport(pageNumber, filterRoyaltyReport, iupopkIdInt)
+
+	if listRoyaltyReportErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": listRoyaltyReportErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(listRoyaltyReport)
 }

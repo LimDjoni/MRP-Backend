@@ -43,6 +43,8 @@ import (
 	"ajebackend/model/notificationuser"
 	"ajebackend/model/production"
 	"ajebackend/model/rkab"
+	"ajebackend/model/royaltyrecon"
+	"ajebackend/model/royaltyreport"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
 	"ajebackend/model/transactionrequestreport"
@@ -137,6 +139,8 @@ func main() {
 			&coareportln.CoaReportLn{},
 			&transactionrequestreport.TransactionRequestReport{},
 			&categoryindustrytype.CategoryIndustryType{},
+			&royaltyrecon.RoyaltyRecon{},
+			&royaltyreport.RoyaltyReport{},
 		)
 
 		seeding.UpdateTransactionsRoyalty(db)
