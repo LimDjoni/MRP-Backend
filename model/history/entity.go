@@ -15,6 +15,8 @@ import (
 	"ajebackend/model/production"
 	"ajebackend/model/reportdmo"
 	"ajebackend/model/rkab"
+	"ajebackend/model/royaltyrecon"
+	"ajebackend/model/royaltyreport"
 	"ajebackend/model/transaction"
 	"ajebackend/model/user"
 
@@ -59,4 +61,8 @@ type History struct {
 	ElectricAssignment   *electricassignment.ElectricAssignment `json:"electrict_assignment" gorm:"constraint:OnDelete:CASCADE;"`
 	CafAssignmentId      *uint                                  `json:"caf_assignment_id"`
 	CafAssignment        *cafassignment.CafAssignment           `json:"caf_assignment" gorm:"constraint:OnDelete:CASCADE;"`
+	RoyaltyReconId       *uint                                  `json:"royalty_recon_id"`
+	RoyaltyRecon         *royaltyrecon.RoyaltyRecon             `json:"royalty_recon" gorm:"constraint:OnDelete:CASCADE;"`
+	RoyaltyReportId      *uint                                  `json:"royalty_report_id"`
+	RoyaltyReport        *royaltyreport.RoyaltyReport           `json:"royalty_report" gorm:"constraint:OnDelete:CASCADE;"`
 }

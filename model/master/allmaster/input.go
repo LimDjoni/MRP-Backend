@@ -42,8 +42,8 @@ type InputCompany struct {
 	Province       string `json:"province" validate:"required"`
 	PhoneNumber    string `json:"phone_number"`
 	FaxNumber      string `json:"fax_number"`
-	IsTrader       bool   `json:"is_trader"`
-	IsEndUser      bool   `json:"is_end_user"`
+	IsTrader       bool   `json:"is_trader" validate:"required"`
+	IsEndUser      bool   `json:"is_end_user" validate:"required"`
 }
 
 type InputTrader struct {
@@ -56,5 +56,5 @@ type InputTrader struct {
 type InputIndustryType struct {
 	Name                   string `json:"name" validate:"required"`
 	CategoryIndustryTypeId uint   `json:"category_industry_type_id" validate:"required"`
-	SystemCategory         string `json:"system_category"`
+	SystemCategory         string `json:"system_category" validate:"required"`
 }

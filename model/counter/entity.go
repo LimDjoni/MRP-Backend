@@ -26,4 +26,6 @@ type Counter struct {
 	Rkab               int            `json:"rkab"`
 	ElectricAssignment int            `json:"electric_assignment"`
 	CafAssignment      int            `json:"caf_assignment"`
+	RoyaltyRecon       int            `json:"royalty_recon"`
+	RoyaltyReport      int            `json:"royalty_report"`
 }

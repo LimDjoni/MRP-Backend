@@ -16,6 +16,8 @@ import (
 	"ajebackend/model/production"
 	"ajebackend/model/reportdmo"
 	"ajebackend/model/rkab"
+	"ajebackend/model/royaltyrecon"
+	"ajebackend/model/royaltyreport"
 	"ajebackend/model/transaction"
 )
 
@@ -78,6 +80,12 @@ type Service interface {
 	UploadUpdateDocumentCafAssignment(id uint, urlS3 string, userId uint, iupopkId int, typeDocument string) (cafassignment.CafAssignment, error)
 	DeleteCafAssignment(id int, iupopkId int, userId uint) (bool, error)
 	UpdateCafAssignment(id int, input cafassignmentenduser.UpdateCafAssignmentInput, userId uint, iupopkId int) (cafassignment.CafAssignment, error)
+	CreateRoyaltyRecon(dateFrom string, dateTo string, iupopkId int, userId uint) (royaltyrecon.RoyaltyRecon, error)
+	DeleteRoyaltyRecon(id int, iupopkId int, userId uint) (bool, error)
+	UpdateDocumentRoyaltyRecon(id int, documentLink royaltyrecon.InputUpdateDocumentRoyaltyRecon, userId uint, iupopkId int) (royaltyrecon.RoyaltyRecon, error)
+	CreateRoyaltyReport(dateFrom string, dateTo string, iupopkId int, userId uint) (royaltyreport.RoyaltyReport, error)
+	DeleteRoyaltyReport(id int, iupopkId int, userId uint) (bool, error)
+	UpdateDocumentRoyaltyReport(id int, documentLink royaltyreport.InputUpdateDocumentRoyaltyReport, userId uint, iupopkId int) (royaltyreport.RoyaltyReport, error)
 }
 
 type service struct {
@@ -432,4 +440,40 @@ func (s *service) UpdateCafAssignment(id int, input cafassignmentenduser.UpdateC
 	cafAssignment, cafAssignmentErr := s.repository.UpdateCafAssignment(id, input, userId, iupopkId)
 
 	return cafAssignment, cafAssignmentErr
+}
+
+func (s *service) CreateRoyaltyRecon(dateFrom string, dateTo string, iupopkId int, userId uint) (royaltyrecon.RoyaltyRecon, error) {
+	royaltyRecon, royaltyReconErr := s.repository.CreateRoyaltyRecon(dateFrom, dateTo, iupopkId, userId)
+
+	return royaltyRecon, royaltyReconErr
+}
+
+func (s *service) DeleteRoyaltyRecon(id int, iupopkId int, userId uint) (bool, error) {
+	royaltyRecon, royaltyReconErr := s.repository.DeleteRoyaltyRecon(id, iupopkId, userId)
+
+	return royaltyRecon, royaltyReconErr
+}
+
+func (s *service) UpdateDocumentRoyaltyRecon(id int, documentLink royaltyrecon.InputUpdateDocumentRoyaltyRecon, userId uint, iupopkId int) (royaltyrecon.RoyaltyRecon, error) {
+	royaltyRecon, royaltyReconErr := s.repository.UpdateDocumentRoyaltyRecon(id, documentLink, userId, iupopkId)
+
+	return royaltyRecon, royaltyReconErr
+}
+
+func (s *service) CreateRoyaltyReport(dateFrom string, dateTo string, iupopkId int, userId uint) (royaltyreport.RoyaltyReport, error) {
+	royaltyReport, royaltyReportErr := s.repository.CreateRoyaltyReport(dateFrom, dateTo, iupopkId, userId)
+
+	return royaltyReport, royaltyReportErr
+}
+
+func (s *service) DeleteRoyaltyReport(id int, iupopkId int, userId uint) (bool, error) {
+	royaltyReport, royaltyReportErr := s.repository.DeleteRoyaltyReport(id, iupopkId, userId)
+
+	return royaltyReport, royaltyReportErr
+}
+
+func (s *service) UpdateDocumentRoyaltyReport(id int, documentLink royaltyreport.InputUpdateDocumentRoyaltyReport, userId uint, iupopkId int) (royaltyreport.RoyaltyReport, error) {
+	royaltyReport, royaltyReportErr := s.repository.UpdateDocumentRoyaltyReport(id, documentLink, userId, iupopkId)
+
+	return royaltyReport, royaltyReportErr
 }
