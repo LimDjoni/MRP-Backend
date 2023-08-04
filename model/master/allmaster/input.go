@@ -42,8 +42,8 @@ type InputCompany struct {
 	Province       string `json:"province" validate:"required"`
 	PhoneNumber    string `json:"phone_number"`
 	FaxNumber      string `json:"fax_number"`
-	IsTrader       bool   `json:"is_trader" validate:"required"`
-	IsEndUser      bool   `json:"is_end_user" validate:"required"`
+	IsTrader       bool   `json:"is_trader"`
+	IsEndUser      bool   `json:"is_end_user"`
 }
 
 type InputTrader struct {
