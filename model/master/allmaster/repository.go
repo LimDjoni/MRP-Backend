@@ -135,7 +135,7 @@ func (r *repository) ListMasterData() (MasterData, error) {
 		return masterData, findDocumentTypeErr
 	}
 
-	findIndustryTypeErr := r.db.Order("name asc").Order("created_at desc").Find(&industryType).Error
+	findIndustryTypeErr := r.db.Preload(clause.Associations).Order("name asc").Order("created_at desc").Find(&industryType).Error
 
 	if findIndustryTypeErr != nil {
 		return masterData, findIndustryTypeErr
