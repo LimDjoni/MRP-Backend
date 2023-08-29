@@ -1699,7 +1699,7 @@ func (r *repository) UpdateDmo(dmoUpdateInput dmo.UpdateDmoInput, id int, userId
 		}
 
 		for _, v := range transactionBarge {
-			bargeQuantity += v.QuantityUnloading
+			bargeQuantity += v.Quantity
 		}
 
 		updatedMap["barge_total_quantity"] = math.Round(bargeQuantity*1000) / 1000
