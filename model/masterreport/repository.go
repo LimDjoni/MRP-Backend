@@ -118,9 +118,9 @@ func (r *repository) RecapDmo(year string, iupopkId int) (ReportDmoOutput, error
 	// Transaction Query
 	var listTransactions []transaction.Transaction
 
-	queryFilter := fmt.Sprintf("transactions.seller_id = %v AND transactions.transaction_type = 'DN' AND report_dmos.period LIKE '%%%v' AND report_dmo_id IS NOT NULL AND grouping_vessel_dns.sales_system != 'Vessel'", iupopkId, year)
+	queryFilter := fmt.Sprintf("transactions.seller_id = %v AND transactions.transaction_type = 'DN' AND dmos.period LIKE '%%%v' AND report_dmo_id IS NOT NULL AND grouping_vessel_dns.sales_system != 'Vessel'", iupopkId, year)
 
-	errFind := r.db.Preload("ReportDmo").Preload("DmoBuyer.IndustryType.CategoryIndustryType").Table("transactions").Select("transactions.*").Joins("left join report_dmos on report_dmos.id = transactions.report_dmo_id left join grouping_vessel_dns on grouping_vessel_dns.id = transactions.grouping_vessel_dn_id").Where(queryFilter).Order("shipping_date ASC").Find(&listTransactions).Error
+	errFind := r.db.Preload("ReportDmo").Preload("DmoBuyer.IndustryType.CategoryIndustryType").Table("transactions").Select("transactions.*").Joins("left join dmos on dmos.id = transactions.report_dmo_id left join grouping_vessel_dns on grouping_vessel_dns.id = transactions.grouping_vessel_dn_id").Where(queryFilter).Order("shipping_date ASC").Find(&listTransactions).Error
 
 	if errFind != nil {
 		return reportDmoOuput, errFind
