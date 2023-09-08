@@ -118,7 +118,7 @@ func (r *repository) RecapDmo(year string, iupopkId int) (ReportDmoOutput, error
 	// Transaction Query
 	var listTransactions []transaction.Transaction
 
-	queryFilter := fmt.Sprintf("transactions.seller_id = %v AND transactions.transaction_type = 'DN' AND dmos.period LIKE '%%%v' AND transactions.dmo_id IS NOT NULL AND grouping_vessel_dns.sales_system != 'Vessel' OR grouping_vessel_dn_id IS NULL", iupopkId, year)
+	queryFilter := fmt.Sprintf("transactions.seller_id = %v AND transactions.transaction_type = 'DN' AND dmos.period LIKE '%%%v' AND transactions.dmo_id IS NOT NULL AND (grouping_vessel_dns.sales_system != 'Vessel' OR grouping_vessel_dn_id IS NULL)", iupopkId, year)
 
 	errFind := r.db.Preload("ReportDmo").Preload("DmoBuyer.IndustryType.CategoryIndustryType").Table("transactions").Select("transactions.*").Joins("left join dmos on dmos.id = transactions.dmo_id left join grouping_vessel_dns on grouping_vessel_dns.id = transactions.grouping_vessel_dn_id").Where(queryFilter).Order("shipping_date ASC").Find(&listTransactions).Error
 
@@ -317,7 +317,7 @@ func (r *repository) RecapDmo(year string, iupopkId int) (ReportDmoOutput, error
 
 	var groupingVessels []groupingvesseldn.GroupingVesselDn
 
-	queryFilterGrouping := fmt.Sprintf("grouping_vessel_dns.iupopk_id = %v AND report_dmos.period LIKE '%%%v' AND grouping_vessel_dns.sales_system = 'Vessel'", iupopkId, year)
+	queryFilterGrouping := fmt.Sprintf("grouping_vessel_dns.iupopk_id = %v AND report_dmos.period LIKE '%%%v' AND grouping_vessel_dns.sales_system = 'Vessel' AND report_dmo_id IS NOT NULL", iupopkId, year)
 
 	errFindGrouping := r.db.Preload("ReportDmo").Preload("Buyer.IndustryType.CategoryIndustryType").Table("grouping_vessel_dns").Select("grouping_vessel_dns.*").Joins("left join report_dmos on report_dmos.id = grouping_vessel_dns.report_dmo_id").Where(queryFilterGrouping).Find(&groupingVessels).Error
 
