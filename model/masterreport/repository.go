@@ -317,7 +317,7 @@ func (r *repository) RecapDmo(year string, iupopkId int) (ReportDmoOutput, error
 
 	var groupingVessels []groupingvesseldn.GroupingVesselDn
 
-	queryFilterGrouping := fmt.Sprintf("grouping_vessel_dns.iupopk_id = %v AND report_dmos.period LIKE '%%%v' AND grouping_vessel_dns.sales_system = 'Vessel'", iupopkId, year)
+	queryFilterGrouping := fmt.Sprintf("grouping_vessel_dns.iupopk_id = %v AND report_dmos.period LIKE '%%%v' AND grouping_vessel_dns.sales_system = 'Vessel' AND report_dmo_id IS NOT NULL", iupopkId, year)
 
 	errFindGrouping := r.db.Preload("ReportDmo").Preload("Buyer.IndustryType.CategoryIndustryType").Table("grouping_vessel_dns").Select("grouping_vessel_dns.*").Joins("left join report_dmos on report_dmos.id = grouping_vessel_dns.report_dmo_id").Where(queryFilterGrouping).Find(&groupingVessels).Error
 
