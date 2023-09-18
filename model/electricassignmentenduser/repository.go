@@ -113,7 +113,7 @@ GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= 
 				var rawQuery = fmt.Sprintf(`select SUM(grand_total_quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories from grouping_vessel_dns
 where id in (select grouping_vessel_dn_id from transactions t LEFT JOIN companies c on c.id = t.customer_id where dmo_id IS NOT NULL and grouping_vessel_dn_id IS NOT NULL and t.customer_id IS NULL and t.transaction_type = 'DN' and t.is_not_claim = false
 GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= '%s' AND bl_date <= '%s' AND iupopk_id = %v
-				`, value.Supplier.CompanyName, value.PortId, shippingDateFrom, shippingDateTo, iupopkId)
+				`, value.PortId, shippingDateFrom, shippingDateTo, iupopkId)
 
 				errGroupingRealization := r.db.Raw(rawQuery).Scan(&groupingRealization).Error
 
@@ -217,7 +217,7 @@ GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= 
 				var rawQuery = fmt.Sprintf(`select SUM(grand_total_quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories from grouping_vessel_dns
 where id in (select grouping_vessel_dn_id from transactions t LEFT JOIN companies c on c.id = t.customer_id where dmo_id IS NOT NULL and grouping_vessel_dn_id IS NOT NULL and t.customer_id IS NULL and t.transaction_type = 'DN' and t.is_not_claim = false
 GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= '%s' AND bl_date <= '%s' AND iupopk_id = %v
-				`, value.Supplier.CompanyName, value.PortId, shippingDateFrom, shippingDateTo, iupopkId)
+				`, value.PortId, shippingDateFrom, shippingDateTo, iupopkId)
 
 				errGroupingRealization := r.db.Raw(rawQuery).Scan(&groupingRealization).Error
 
@@ -352,7 +352,7 @@ GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= 
 				var rawQuery = fmt.Sprintf(`select SUM(grand_total_quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories from grouping_vessel_dns
 where id in (select grouping_vessel_dn_id from transactions t LEFT JOIN companies c on c.id = t.customer_id where dmo_id IS NOT NULL and grouping_vessel_dn_id IS NOT NULL and t.customer_id IS NULL and t.transaction_type = 'DN' and t.is_not_claim = false
 GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= '%s' AND bl_date <= '%s' AND iupopk_id = %v
-				`, value.Supplier.CompanyName, value.PortId, shippingDateFrom, shippingDateTo, iupopkId)
+				`, value.PortId, shippingDateFrom, shippingDateTo, iupopkId)
 
 				errGroupingRealization := r.db.Raw(rawQuery).Scan(&groupingRealization).Error
 
@@ -480,7 +480,7 @@ GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= 
 				var rawQuery = fmt.Sprintf(`select SUM(grand_total_quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories from grouping_vessel_dns
 where id in (select grouping_vessel_dn_id from transactions t LEFT JOIN companies c on c.id = t.customer_id where dmo_id IS NOT NULL and grouping_vessel_dn_id IS NOT NULL and t.customer_id IS NULL and t.transaction_type = 'DN' and t.is_not_claim = false
 GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= '%s' AND bl_date <= '%s' AND iupopk_id = %v
-				`, value.Supplier.CompanyName, value.PortId, shippingDateFrom, shippingDateTo, iupopkId)
+				`, value.PortId, shippingDateFrom, shippingDateTo, iupopkId)
 
 				errGroupingRealization := r.db.Raw(rawQuery).Scan(&groupingRealization).Error
 
