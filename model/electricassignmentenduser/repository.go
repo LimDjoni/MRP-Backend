@@ -74,11 +74,27 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 			var transactionRealization Realization
 
 			if value.SupplierId != nil {
-				errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity_unloading) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("LEFT JOIN companies companies on companies.id = transactions.customer_id").Where("transactions.transaction_type = ? AND transactions.seller_id = ? AND transactions.is_not_claim = ? AND transactions.dmo_destination_port_id = ? AND transactions.shipping_date >= ? AND transactions.shipping_date <= ? AND transactions.dmo_id IS NOT NULL AND companies.company_name = ?", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo, value.Supplier.CompanyName).Scan(&transactionRealization).Error
+				errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity_unloading) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("LEFT JOIN companies companies on companies.id = transactions.customer_id").Where("transactions.transaction_type = ? AND transactions.seller_id = ? AND transactions.is_not_claim = ? AND transactions.dmo_destination_port_id = ? AND transactions.shipping_date >= ? AND transactions.shipping_date <= ? AND transactions.dmo_id IS NOT NULL AND companies.company_name = ? AND grouping_vessel_dn_id IS NULL", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo, value.Supplier.CompanyName).Scan(&transactionRealization).Error
 
 				if errTrRealization != nil {
 					return detailElectricAssignment, errTrRealization
 				}
+
+				var groupingRealization Realization
+
+				var rawQuery = fmt.Sprintf(`select SUM(grand_total_quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories from grouping_vessel_dns
+where id in (select grouping_vessel_dn_id from transactions t LEFT JOIN companies c on c.id = t.customer_id where dmo_id IS NOT NULL and grouping_vessel_dn_id IS NOT NULL and c.company_name = %s and t.transaction_type = 'DN' and t.is_not_claim = false
+GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= '%s' AND bl_date <= '%s' AND iupopk_id = %v
+				`, value.Supplier.CompanyName, value.PortId, shippingDateFrom, shippingDateTo, iupopkId)
+
+				errGroupingRealization := r.db.Raw(rawQuery).Scan(&groupingRealization).Error
+
+				if errGroupingRealization != nil {
+					return detailElectricAssignment, errGroupingRealization
+				}
+
+				transactionRealization.RealizationQuantity += groupingRealization.RealizationQuantity
+				transactionRealization.RealizationAverageCalories = (transactionRealization.RealizationAverageCalories + groupingRealization.RealizationAverageCalories) / 2
 
 				errFindTemp := r.db.Where("port_id = ? AND supplier_id = ? AND electric_assignment_id = ?", value.PortId, value.SupplierId, electricAssignment.ID).Find(&tempAssignment).Error
 
@@ -86,11 +102,27 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 					return detailElectricAssignment, errFindTemp
 				}
 			} else {
-				errTrRealization := r.db.Table("transactions").Select("SUM(quantity_unloading) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories").Where("transaction_type = ? AND seller_id = ? AND is_not_claim = ? AND dmo_destination_port_id = ? AND shipping_date >= ? AND shipping_date <= ? AND dmo_id IS NOT NULL AND customer_id IS NULL", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo).Scan(&transactionRealization).Error
+				errTrRealization := r.db.Table("transactions").Select("SUM(quantity_unloading) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories").Where("transaction_type = ? AND seller_id = ? AND is_not_claim = ? AND dmo_destination_port_id = ? AND shipping_date >= ? AND shipping_date <= ? AND dmo_id IS NOT NULL AND customer_id IS NULL AND grouping_vessel_dn_id IS NULL", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo).Scan(&transactionRealization).Error
 
 				if errTrRealization != nil {
 					return detailElectricAssignment, errTrRealization
 				}
+
+				var groupingRealization Realization
+
+				var rawQuery = fmt.Sprintf(`select SUM(grand_total_quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories from grouping_vessel_dns
+where id in (select grouping_vessel_dn_id from transactions t LEFT JOIN companies c on c.id = t.customer_id where dmo_id IS NOT NULL and grouping_vessel_dn_id IS NOT NULL and t.customer_id IS NULL and t.transaction_type = 'DN' and t.is_not_claim = false
+GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= '%s' AND bl_date <= '%s' AND iupopk_id = %v
+				`, value.Supplier.CompanyName, value.PortId, shippingDateFrom, shippingDateTo, iupopkId)
+
+				errGroupingRealization := r.db.Raw(rawQuery).Scan(&groupingRealization).Error
+
+				if errGroupingRealization != nil {
+					return detailElectricAssignment, errGroupingRealization
+				}
+
+				transactionRealization.RealizationQuantity += groupingRealization.RealizationQuantity
+				transactionRealization.RealizationAverageCalories = (transactionRealization.RealizationAverageCalories + groupingRealization.RealizationAverageCalories) / 2
 
 				errFindTemp := r.db.Where("port_id = ? AND supplier_id IS NULL AND electric_assignment_id = ?", value.PortId, electricAssignment.ID).Find(&tempAssignment).Error
 
@@ -152,6 +184,22 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 					return detailElectricAssignment, errTrRealization
 				}
 
+				var groupingRealization Realization
+
+				var rawQuery = fmt.Sprintf(`select SUM(grand_total_quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories from grouping_vessel_dns
+where id in (select grouping_vessel_dn_id from transactions t LEFT JOIN companies c on c.id = t.customer_id where dmo_id IS NOT NULL and grouping_vessel_dn_id IS NOT NULL and c.company_name = %s and t.transaction_type = 'DN' and t.is_not_claim = false
+GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= '%s' AND bl_date <= '%s' AND iupopk_id = %v
+				`, value.Supplier.CompanyName, value.PortId, shippingDateFrom, shippingDateTo, iupopkId)
+
+				errGroupingRealization := r.db.Raw(rawQuery).Scan(&groupingRealization).Error
+
+				if errGroupingRealization != nil {
+					return detailElectricAssignment, errGroupingRealization
+				}
+
+				transactionRealization.RealizationQuantity += groupingRealization.RealizationQuantity
+				transactionRealization.RealizationAverageCalories = (transactionRealization.RealizationAverageCalories + groupingRealization.RealizationAverageCalories) / 2
+
 				errFindTemp := r.db.Where("port_id = ? AND supplier_id = ? AND electric_assignment_id = ?", value.PortId, value.SupplierId, electricAssignment.ID).Find(&tempAssignment).Error
 
 				if errFindTemp != nil {
@@ -163,6 +211,22 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 				if errTrRealization != nil {
 					return detailElectricAssignment, errTrRealization
 				}
+
+				var groupingRealization Realization
+
+				var rawQuery = fmt.Sprintf(`select SUM(grand_total_quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories from grouping_vessel_dns
+where id in (select grouping_vessel_dn_id from transactions t LEFT JOIN companies c on c.id = t.customer_id where dmo_id IS NOT NULL and grouping_vessel_dn_id IS NOT NULL and t.customer_id IS NULL and t.transaction_type = 'DN' and t.is_not_claim = false
+GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= '%s' AND bl_date <= '%s' AND iupopk_id = %v
+				`, value.Supplier.CompanyName, value.PortId, shippingDateFrom, shippingDateTo, iupopkId)
+
+				errGroupingRealization := r.db.Raw(rawQuery).Scan(&groupingRealization).Error
+
+				if errGroupingRealization != nil {
+					return detailElectricAssignment, errGroupingRealization
+				}
+
+				transactionRealization.RealizationQuantity += groupingRealization.RealizationQuantity
+				transactionRealization.RealizationAverageCalories = (transactionRealization.RealizationAverageCalories + groupingRealization.RealizationAverageCalories) / 2
 
 				errFindTemp := r.db.Where("port_id = ? AND supplier_id IS NULL AND electric_assignment_id = ?", value.PortId, electricAssignment.ID).Find(&tempAssignment).Error
 
@@ -254,6 +318,22 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 					return detailElectricAssignment, errTrRealization
 				}
 
+				var groupingRealization Realization
+
+				var rawQuery = fmt.Sprintf(`select SUM(grand_total_quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories from grouping_vessel_dns
+where id in (select grouping_vessel_dn_id from transactions t LEFT JOIN companies c on c.id = t.customer_id where dmo_id IS NOT NULL and grouping_vessel_dn_id IS NOT NULL and c.company_name = %s and t.transaction_type = 'DN' and t.is_not_claim = false
+GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= '%s' AND bl_date <= '%s' AND iupopk_id = %v
+				`, value.Supplier.CompanyName, value.PortId, shippingDateFrom, shippingDateTo, iupopkId)
+
+				errGroupingRealization := r.db.Raw(rawQuery).Scan(&groupingRealization).Error
+
+				if errGroupingRealization != nil {
+					return detailElectricAssignment, errGroupingRealization
+				}
+
+				transactionRealization.RealizationQuantity += groupingRealization.RealizationQuantity
+				transactionRealization.RealizationAverageCalories = (transactionRealization.RealizationAverageCalories + groupingRealization.RealizationAverageCalories) / 2
+
 				errFindTemp := r.db.Where("port_id = ? AND supplier_id = ? AND electric_assignment_id = ?", value.PortId, value.SupplierId, electricAssignment.ID).Find(&tempAssignment).Error
 
 				if errFindTemp != nil {
@@ -266,6 +346,22 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 				if errTrRealization != nil {
 					return detailElectricAssignment, errTrRealization
 				}
+
+				var groupingRealization Realization
+
+				var rawQuery = fmt.Sprintf(`select SUM(grand_total_quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories from grouping_vessel_dns
+where id in (select grouping_vessel_dn_id from transactions t LEFT JOIN companies c on c.id = t.customer_id where dmo_id IS NOT NULL and grouping_vessel_dn_id IS NOT NULL and t.customer_id IS NULL and t.transaction_type = 'DN' and t.is_not_claim = false
+GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= '%s' AND bl_date <= '%s' AND iupopk_id = %v
+				`, value.Supplier.CompanyName, value.PortId, shippingDateFrom, shippingDateTo, iupopkId)
+
+				errGroupingRealization := r.db.Raw(rawQuery).Scan(&groupingRealization).Error
+
+				if errGroupingRealization != nil {
+					return detailElectricAssignment, errGroupingRealization
+				}
+
+				transactionRealization.RealizationQuantity += groupingRealization.RealizationQuantity
+				transactionRealization.RealizationAverageCalories = (transactionRealization.RealizationAverageCalories + groupingRealization.RealizationAverageCalories) / 2
 
 				errFindTemp := r.db.Where("port_id = ? AND supplier_id IS NULL AND electric_assignment_id = ?", value.PortId, electricAssignment.ID).Find(&tempAssignment).Error
 
@@ -355,12 +451,45 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 				if errTrRealization != nil {
 					return detailElectricAssignment, errTrRealization
 				}
+
+				var groupingRealization Realization
+
+				var rawQuery = fmt.Sprintf(`select SUM(grand_total_quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories from grouping_vessel_dns
+where id in (select grouping_vessel_dn_id from transactions t LEFT JOIN companies c on c.id = t.customer_id where dmo_id IS NOT NULL and grouping_vessel_dn_id IS NOT NULL and c.company_name = %s and t.transaction_type = 'DN' and t.is_not_claim = false
+GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= '%s' AND bl_date <= '%s' AND iupopk_id = %v
+				`, value.Supplier.CompanyName, value.PortId, shippingDateFrom, shippingDateTo, iupopkId)
+
+				errGroupingRealization := r.db.Raw(rawQuery).Scan(&groupingRealization).Error
+
+				if errGroupingRealization != nil {
+					return detailElectricAssignment, errGroupingRealization
+				}
+
+				transactionRealization.RealizationQuantity += groupingRealization.RealizationQuantity
+				transactionRealization.RealizationAverageCalories = (transactionRealization.RealizationAverageCalories + groupingRealization.RealizationAverageCalories) / 2
+
 			} else {
 				errTrRealization := r.db.Table("transactions").Select("SUM(quantity_unloading) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories ").Where("transaction_type = ? AND seller_id = ? AND is_not_claim = ? AND dmo_destination_port_id = ? AND shipping_date >= ? AND shipping_date <= ? AND dmo_id IS NOT NULL AND customer_id IS NULL", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo).Scan(&transactionRealization).Error
 
 				if errTrRealization != nil {
 					return detailElectricAssignment, errTrRealization
 				}
+
+				var groupingRealization Realization
+
+				var rawQuery = fmt.Sprintf(`select SUM(grand_total_quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories from grouping_vessel_dns
+where id in (select grouping_vessel_dn_id from transactions t LEFT JOIN companies c on c.id = t.customer_id where dmo_id IS NOT NULL and grouping_vessel_dn_id IS NOT NULL and t.customer_id IS NULL and t.transaction_type = 'DN' and t.is_not_claim = false
+GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= '%s' AND bl_date <= '%s' AND iupopk_id = %v
+				`, value.Supplier.CompanyName, value.PortId, shippingDateFrom, shippingDateTo, iupopkId)
+
+				errGroupingRealization := r.db.Raw(rawQuery).Scan(&groupingRealization).Error
+
+				if errGroupingRealization != nil {
+					return detailElectricAssignment, errGroupingRealization
+				}
+
+				transactionRealization.RealizationQuantity += groupingRealization.RealizationQuantity
+				transactionRealization.RealizationAverageCalories = (transactionRealization.RealizationAverageCalories + groupingRealization.RealizationAverageCalories) / 2
 			}
 
 			var quantity = transactionRealization.RealizationQuantity
