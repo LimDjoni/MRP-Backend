@@ -4474,7 +4474,22 @@ func (r *repository) UpdateElectricAssignment(id int, input electricassignmenten
 			}
 
 		} else {
-			errUpd := tx.Model(&tempElectricAssignment).Updates(&tempElectricAssignment).Error
+
+			tempUpd := make(map[string]interface{})
+
+			tempUpd["port_id"] = values.PortId
+			if values.SupplierId != nil && *values.SupplierId > 0 {
+				tempUpd["supplier_id"] = *values.SupplierId
+			} else {
+				tempUpd["supplier_id"] = nil
+			}
+
+			tempUpd["average_calories"] = values.AverageCalories
+			tempUpd["quantity"] = values.Quantity
+			tempUpd["end_user"] = values.EndUser
+			tempUpd["letter_number"] = values.LetterNumber
+
+			errUpd := tx.Model(&tempElectricAssignment).Where("id = ?", values.ID).Updates(&tempUpd).Error
 
 			if errUpd != nil {
 				return updatedElectricAssignment, errUpd
@@ -4968,6 +4983,14 @@ func (r *repository) UpdateCafAssignment(id int, input cafassignmentenduser.Upda
 			}
 
 		} else {
+			tempUpd := make(map[string]interface{})
+
+			tempUpd["average_calories"] = values.AverageCalories
+			tempUpd["quantity"] = values.Quantity
+			tempUpd["end_user_id"] = values.EndUserId
+			tempUpd["end_user_string"] = tempEndUser.CompanyName
+			tempUpd["letter_number"] = values.LetterNumber
+
 			errUpd := tx.Model(&tempCafAssignment).Updates(&tempCafAssignment).Error
 
 			if errUpd != nil {

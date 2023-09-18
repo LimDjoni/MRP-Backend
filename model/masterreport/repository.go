@@ -1649,37 +1649,6 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 	}
 
 	for _, v := range listTransactions {
-		if v.DmoId != nil && v.SalesSystem != nil && !strings.Contains(v.SalesSystem.Name, "Vessel") {
-			var isAdded = false
-			for _, value := range electricAssignmentEndUser {
-				if !isAdded {
-					if v.CustomerId != nil && value.SupplierId != nil && v.DmoDestinationPortId != nil {
-						if v.Customer.CompanyName == value.Supplier.CompanyName && *v.DmoDestinationPortId == value.PortId {
-							isAdded = true
-							saleDetail.ElectricAssignment.RealizationQuantity += v.QuantityUnloading
-
-						}
-					} else {
-						if v.DmoDestinationPortId != nil {
-							if v.CustomerId == nil && value.SupplierId == nil && *v.DmoDestinationPortId == value.PortId {
-								isAdded = true
-								saleDetail.ElectricAssignment.RealizationQuantity += v.QuantityUnloading
-
-							}
-						}
-					}
-				}
-			}
-
-			for _, value := range cafAssignmentEndUser {
-				if v.DmoBuyer != nil {
-					if v.DmoBuyer.CompanyName == value.EndUserString {
-						saleDetail.CafAssignment.RealizationQuantity += v.QuantityUnloading
-					}
-				}
-			}
-		}
-
 		if v.ReportDmoId == nil || (v.GroupingVesselDnId != nil && v.SalesSystem != nil && strings.Contains(v.SalesSystem.Name, "Vessel")) {
 			continue
 		}
