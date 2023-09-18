@@ -70,13 +70,30 @@ func (r *repository) DetailCafAssignment(id int, iupopkId int) (DetailCafAssignm
 			var transactionRealization Realization
 			var tempAssignment []CafAssignmentEndUser
 
-			query := fmt.Sprintf("transactions.transaction_type = '%s' AND transactions.seller_id = %v AND transactions.is_not_claim = false AND transactions.shipping_date >= '%s' AND transactions.shipping_date <= '%s' AND company.company_name = '%s' AND transactions.dmo_id IS NOT NULL", "DN", iupopkId, shippingDateFrom, shippingDateTo, value.EndUserString)
+			query := fmt.Sprintf("transactions.transaction_type = '%s' AND transactions.seller_id = %v AND transactions.is_not_claim = false AND transactions.shipping_date >= '%s' AND transactions.shipping_date <= '%s' AND company.company_name = '%s' AND transactions.dmo_id IS NOT NULL AND transactions.grouping_vessel_dn_id IS NULL", "DN", iupopkId, shippingDateFrom, shippingDateTo, value.EndUserString)
 
 			errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity_unloading) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("left join companies company on company.id = transactions.dmo_buyer_id").Where(query).Scan(&transactionRealization).Error
 
 			if errTrRealization != nil {
 				return detailCafAssignment, errTrRealization
 			}
+
+			var groupingRealization Realization
+
+			var rawQuery = fmt.Sprintf(`select SUM(grand_total_quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories from grouping_vessel_dns gvd
+				LEFT JOIN companies c on c.id = gvd.buyer_id
+where gvd.id in (select grouping_vessel_dn_id from transactions where dmo_id IS NOT NULL and grouping_vessel_dn_id IS NOT NULL and transaction_type = 'DN' and is_not_claim = false
+GROUP BY grouping_vessel_dn_id) AND gvd.bl_date >= '%s' AND gvd.bl_date <= '%s' AND gvd.iupopk_id = %v and c.company_name = '%s'
+				`, shippingDateFrom, shippingDateTo, iupopkId, value.EndUserString)
+
+			errGroupingRealization := r.db.Raw(rawQuery).Scan(&groupingRealization).Error
+
+			if errGroupingRealization != nil {
+				return detailCafAssignment, errGroupingRealization
+			}
+
+			transactionRealization.RealizationQuantity += groupingRealization.RealizationQuantity
+			transactionRealization.RealizationAverageCalories = (transactionRealization.RealizationAverageCalories + groupingRealization.RealizationAverageCalories) / 2
 
 			errFindTemp := r.db.Where("end_user_string = ? AND caf_assignment_id = ?", value.EndUserString, cafAssignment.ID).Find(&tempAssignment).Error
 
@@ -133,6 +150,23 @@ func (r *repository) DetailCafAssignment(id int, iupopkId int) (DetailCafAssignm
 			if errTrRealization != nil {
 				return detailCafAssignment, errTrRealization
 			}
+
+			var groupingRealization Realization
+
+			var rawQuery = fmt.Sprintf(`select SUM(grand_total_quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories from grouping_vessel_dns gvd
+				LEFT JOIN companies c on c.id = gvd.buyer_id
+where gvd.id in (select grouping_vessel_dn_id from transactions where dmo_id IS NOT NULL and grouping_vessel_dn_id IS NOT NULL and transaction_type = 'DN' and is_not_claim = false
+GROUP BY grouping_vessel_dn_id) AND gvd.bl_date >= '%s' AND gvd.bl_date <= '%s' AND gvd.iupopk_id = %v and c.company_name = '%s'
+				`, shippingDateFrom, shippingDateTo, iupopkId, value.EndUserString)
+
+			errGroupingRealization := r.db.Raw(rawQuery).Scan(&groupingRealization).Error
+
+			if errGroupingRealization != nil {
+				return detailCafAssignment, errGroupingRealization
+			}
+
+			transactionRealization.RealizationQuantity += groupingRealization.RealizationQuantity
+			transactionRealization.RealizationAverageCalories = (transactionRealization.RealizationAverageCalories + groupingRealization.RealizationAverageCalories) / 2
 
 			errFindTemp := r.db.Where("end_user_string = ? AND caf_assignment_id = ?", value.EndUserString, cafAssignment.ID).Find(&tempAssignment).Error
 
@@ -209,6 +243,23 @@ func (r *repository) DetailCafAssignment(id int, iupopkId int) (DetailCafAssignm
 				return detailCafAssignment, errTrRealization
 			}
 
+			var groupingRealization Realization
+
+			var rawQuery = fmt.Sprintf(`select SUM(grand_total_quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories from grouping_vessel_dns gvd
+				LEFT JOIN companies c on c.id = gvd.buyer_id
+where gvd.id in (select grouping_vessel_dn_id from transactions where dmo_id IS NOT NULL and grouping_vessel_dn_id IS NOT NULL and transaction_type = 'DN' and is_not_claim = false
+GROUP BY grouping_vessel_dn_id) AND gvd.bl_date >= '%s' AND gvd.bl_date <= '%s' AND gvd.iupopk_id = %v and c.company_name = '%s'
+				`, shippingDateFrom, shippingDateTo, iupopkId, value.EndUserString)
+
+			errGroupingRealization := r.db.Raw(rawQuery).Scan(&groupingRealization).Error
+
+			if errGroupingRealization != nil {
+				return detailCafAssignment, errGroupingRealization
+			}
+
+			transactionRealization.RealizationQuantity += groupingRealization.RealizationQuantity
+			transactionRealization.RealizationAverageCalories = (transactionRealization.RealizationAverageCalories + groupingRealization.RealizationAverageCalories) / 2
+
 			errFindTemp := r.db.Where("end_user_string = ? AND caf_assignment_id = ?", value.EndUserString, cafAssignment.ID).Find(&tempAssignment).Error
 
 			if errFindTemp != nil {
@@ -282,6 +333,23 @@ func (r *repository) DetailCafAssignment(id int, iupopkId int) (DetailCafAssignm
 			if errTrRealization != nil {
 				return detailCafAssignment, errTrRealization
 			}
+
+			var groupingRealization Realization
+
+			var rawQuery = fmt.Sprintf(`select SUM(grand_total_quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories from grouping_vessel_dns gvd
+				LEFT JOIN companies c on c.id = gvd.buyer_id
+where gvd.id in (select grouping_vessel_dn_id from transactions where dmo_id IS NOT NULL and grouping_vessel_dn_id IS NOT NULL and transaction_type = 'DN' and is_not_claim = false
+GROUP BY grouping_vessel_dn_id) AND gvd.bl_date >= '%s' AND gvd.bl_date <= '%s' AND gvd.iupopk_id = %v and c.company_name = '%s'
+				`, shippingDateFrom, shippingDateTo, iupopkId, value.EndUserString)
+
+			errGroupingRealization := r.db.Raw(rawQuery).Scan(&groupingRealization).Error
+
+			if errGroupingRealization != nil {
+				return detailCafAssignment, errGroupingRealization
+			}
+
+			transactionRealization.RealizationQuantity += groupingRealization.RealizationQuantity
+			transactionRealization.RealizationAverageCalories = (transactionRealization.RealizationAverageCalories + groupingRealization.RealizationAverageCalories) / 2
 
 			var quantity = transactionRealization.RealizationQuantity
 			for _, val := range listCafAssignment {
