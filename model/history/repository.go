@@ -4991,7 +4991,7 @@ func (r *repository) UpdateCafAssignment(id int, input cafassignmentenduser.Upda
 			tempUpd["end_user_string"] = tempEndUser.CompanyName
 			tempUpd["letter_number"] = values.LetterNumber
 
-			errUpd := tx.Model(&tempCafAssignment).Updates(&tempCafAssignment).Error
+			errUpd := tx.Model(&tempCafAssignment).Where("id = ?", values.ID).Updates(&tempUpd).Error
 
 			if errUpd != nil {
 				return updatedCafAssignment, errUpd
