@@ -4246,7 +4246,6 @@ func (r *repository) CreateElectricAssignment(input electricassignmentenduser.Cr
 
 		tempElecEndUser.ElectricAssignmentId = createdElectricAssignment.ID
 		tempElecEndUser.PortId = v.PortId
-		tempElecEndUser.SupplierId = v.SupplierId
 		tempElecEndUser.AverageCalories = v.AverageCalories
 		tempElecEndUser.Quantity = v.Quantity
 		tempElecEndUser.EndUser = v.EndUser
@@ -4478,12 +4477,6 @@ func (r *repository) UpdateElectricAssignment(id int, input electricassignmenten
 			tempUpd := make(map[string]interface{})
 
 			tempUpd["port_id"] = values.PortId
-			if values.SupplierId != nil && *values.SupplierId > 0 {
-				tempUpd["supplier_id"] = *values.SupplierId
-			} else {
-				tempUpd["supplier_id"] = nil
-			}
-
 			tempUpd["average_calories"] = values.AverageCalories
 			tempUpd["quantity"] = values.Quantity
 			tempUpd["end_user"] = values.EndUser

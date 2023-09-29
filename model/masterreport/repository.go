@@ -505,7 +505,7 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				transactionTemp.EndUser = v.DmoBuyer
 			}
-			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.Quantity = v.Quantity
 			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
 			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
@@ -540,7 +540,7 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				transactionTemp.EndUser = v.DmoBuyer
 			}
-			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.Quantity = v.Quantity
 			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
 			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
@@ -575,7 +575,7 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				transactionTemp.EndUser = v.DmoBuyer
 			}
-			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.Quantity = v.Quantity
 			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
 			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
@@ -610,7 +610,7 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				transactionTemp.EndUser = v.DmoBuyer
 			}
-			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.Quantity = v.Quantity
 			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
 			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
@@ -645,7 +645,7 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				transactionTemp.EndUser = v.DmoBuyer
 			}
-			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.Quantity = v.Quantity
 			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
 			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
@@ -680,7 +680,7 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				transactionTemp.EndUser = v.DmoBuyer
 			}
-			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.Quantity = v.Quantity
 			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
 			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
@@ -715,7 +715,7 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				transactionTemp.EndUser = v.DmoBuyer
 			}
-			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.Quantity = v.Quantity
 			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
 			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
@@ -750,7 +750,7 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				transactionTemp.EndUser = v.DmoBuyer
 			}
-			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.Quantity = v.Quantity
 			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
 			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
@@ -785,7 +785,7 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				transactionTemp.EndUser = v.DmoBuyer
 			}
-			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.Quantity = v.Quantity
 			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
 			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
@@ -820,7 +820,7 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				transactionTemp.EndUser = v.DmoBuyer
 			}
-			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.Quantity = v.Quantity
 			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
 			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
@@ -855,7 +855,7 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				transactionTemp.EndUser = v.DmoBuyer
 			}
-			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.Quantity = v.Quantity
 			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
 			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
@@ -890,7 +890,7 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 			if v.DmoBuyer != nil {
 				transactionTemp.EndUser = v.DmoBuyer
 			}
-			transactionTemp.Quantity = v.QuantityUnloading
+			transactionTemp.Quantity = v.Quantity
 			transactionTemp.QualityCaloriesAr = v.QualityCaloriesAr
 			if v.Dmo != nil && v.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
@@ -1660,19 +1660,11 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				var isAdded = false
 				for _, value := range electricAssignmentEndUser {
 					if !isAdded {
-						if v.CustomerId != nil && value.SupplierId != nil && v.DmoDestinationPortId != nil {
-							if v.Customer.CompanyName == value.Supplier.CompanyName && *v.DmoDestinationPortId == value.PortId {
+						if v.DmoDestinationPortId != nil {
+							if *v.DmoDestinationPortId == value.PortId {
 								isAdded = true
 								saleDetail.ElectricAssignment.RealizationQuantity += v.Quantity
 
-							}
-						} else {
-							if v.DmoDestinationPortId != nil {
-								if v.CustomerId == nil && value.SupplierId == nil && *v.DmoDestinationPortId == value.PortId {
-									isAdded = true
-									saleDetail.ElectricAssignment.RealizationQuantity += v.Quantity
-
-								}
 							}
 						}
 					}
@@ -3630,18 +3622,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 		var isAdded = false
 		for _, value := range electricAssignmentEndUser {
 			if !isAdded {
-				if tempTransaction.CustomerId != nil && value.SupplierId != nil && v.DmoDestinationPortId != nil {
-					if tempTransaction.Customer.CompanyName == value.Supplier.CompanyName && *v.DmoDestinationPortId == value.PortId {
+				if v.DmoDestinationPortId != nil {
+					if *v.DmoDestinationPortId == value.PortId {
 						isAdded = true
 						saleDetail.ElectricAssignment.RealizationQuantity += v.Quantity
-
-					}
-				} else {
-					if v.DmoDestinationPortId != nil {
-						if tempTransaction.CustomerId == nil && value.SupplierId == nil && *v.DmoDestinationPortId == value.PortId {
-							isAdded = true
-							saleDetail.ElectricAssignment.RealizationQuantity += v.Quantity
-						}
 					}
 				}
 			}
@@ -5504,7 +5488,6 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				saleDetail.RecapNonElectricity.Total += v.GrandTotalQuantity
 			}
 		}
-
 	}
 
 	saleDetail.CompanyElectricity = companyElectricity
