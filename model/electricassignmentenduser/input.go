@@ -10,11 +10,11 @@ type CreateElectricAssignmentInput struct {
 
 type ElectricAssignmentInput struct {
 	PortId          uint    `form:"port_id" json:"port_id"`
-	SupplierId      *uint   `form:"supplier_id" json:"supplier_id"`
 	AverageCalories float64 `form:"average_calories" json:"average_calories"`
 	Quantity        float64 `form:"quantity" json:"quantity"`
 	EndUser         string  `form:"end_user" json:"end_user"`
 	LetterNumber    string  `form:"letter_number" json:"letter_number"`
+	//SupplierId      *uint   `form:"supplier_id" json:"supplier_id"`
 }
 
 type UpdateElectricAssignmentInput struct {
