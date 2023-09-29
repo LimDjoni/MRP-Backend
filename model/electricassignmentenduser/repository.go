@@ -369,9 +369,11 @@ GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= 
 	for _, v := range listElectricAssignment {
 		var realizationSupplierTemp []RealizationSupplier
 
+		var groupingRealizationSupplierTemp []RealizationSupplier
+
 		var rawQuery = fmt.Sprintf(`select SUM(quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories, t.customer_id as supplier_id, t.dmo_destination_port_id as port_id from transactions t
                                 LEFT JOIN companies c on c.id = t.customer_id
-																where  t.shipping_date >= '%s' AND t.shipping_date <= '%s' AND t.seller_id = %v and t.dmo_destination_port_id = %v
+																where  t.shipping_date >= '%s' AND t.shipping_date <= '%s' AND t.seller_id = %v and t.dmo_destination_port_id = %v and t.dmo_id IS NOT NULL and t.grouping_vessel_dn_id IS NULL and t.report_dmo_id IS NOT NULL
 																group by t.customer_id , t.dmo_destination_port_id
 				`, shippingDateFrom, shippingDateTo, iupopkId, v.PortId)
 
@@ -381,7 +383,23 @@ GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= 
 			return detailElectricAssignment, errRealizationSupplier
 		}
 
+		var groupingRawQuery = fmt.Sprintf(`select SUM(grand_total_quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories, gvd.buyer_id as supplier_id, gvd.dmo_destination_port_id as port_id from grouping_vessel_dns gvd
+                              LEFT JOIN companies c on c.id = gvd.buyer_id
+																where  gvd.bl_date >= '%s' AND gvd.bl_date <= '%s' AND gvd.iupopk_id = %v and gvd.dmo_destination_port_id = %v and gvd.report_dmo_id IS NOT NULL
+																group by gvd.buyer_id , gvd.dmo_destination_port_id
+				`, shippingDateFrom, shippingDateTo, iupopkId, v.PortId)
+
+		errGroupingRealizationSupplier := r.db.Preload(clause.Associations).Raw(groupingRawQuery).Scan(&groupingRealizationSupplierTemp).Error
+
+		if errGroupingRealizationSupplier != nil {
+			return detailElectricAssignment, errGroupingRealizationSupplier
+		}
+
 		for _, v := range realizationSupplierTemp {
+			realizationSupplier = append(realizationSupplier, v)
+		}
+
+		for _, v := range groupingRealizationSupplierTemp {
 			realizationSupplier = append(realizationSupplier, v)
 		}
 	}
