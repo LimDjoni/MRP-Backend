@@ -70,7 +70,7 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 			var tempAssignment []ElectricAssignmentEndUser
 			var transactionRealization Realization
 
-			errTrRealization := r.db.Table("transactions").Select("SUM(quantity_unloading) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories").Where("transaction_type = ? AND seller_id = ? AND is_not_claim = ? AND dmo_destination_port_id = ? AND shipping_date >= ? AND shipping_date <= ? AND dmo_id IS NOT NULL AND grouping_vessel_dn_id IS NULL", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo).Scan(&transactionRealization).Error
+			errTrRealization := r.db.Table("transactions").Select("SUM(quantity_unloading) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories").Where("transaction_type = ? AND seller_id = ? AND is_not_claim = ? AND dmo_destination_port_id = ? AND shipping_date >= ? AND shipping_date <= ? AND dmo_id IS NOT NULL AND grouping_vessel_dn_id IS NULL AND report_dmo_id IS NOT NULL", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo).Scan(&transactionRealization).Error
 
 			if errTrRealization != nil {
 				return detailElectricAssignment, errTrRealization
@@ -371,8 +371,9 @@ GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= 
 
 		var groupingRealizationSupplierTemp []RealizationSupplier
 
-		var rawQuery = fmt.Sprintf(`select SUM(quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories, t.customer_id as supplier_id, t.dmo_destination_port_id as port_id from transactions t
+		var rawQuery = fmt.Sprintf(`select SUM(quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories, t.customer_id as supplier_id, c.* as companies, t.dmo_destination_port_id as port_id, p.* as port from transactions t
                                 LEFT JOIN companies c on c.id = t.customer_id
+																LEFT JOIN ports p on p.id = t.dmo_destination_port_id
 																where  t.shipping_date >= '%s' AND t.shipping_date <= '%s' AND t.seller_id = %v and t.dmo_destination_port_id = %v and t.dmo_id IS NOT NULL and t.grouping_vessel_dn_id IS NULL and t.report_dmo_id IS NOT NULL
 																group by t.customer_id , t.dmo_destination_port_id
 				`, shippingDateFrom, shippingDateTo, iupopkId, v.PortId)
@@ -383,8 +384,9 @@ GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= 
 			return detailElectricAssignment, errRealizationSupplier
 		}
 
-		var groupingRawQuery = fmt.Sprintf(`select SUM(grand_total_quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories, gvd.buyer_id as supplier_id, gvd.dmo_destination_port_id as port_id from grouping_vessel_dns gvd
+		var groupingRawQuery = fmt.Sprintf(`select SUM(grand_total_quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories, gvd.buyer_id as supplier_id, c.* as supplier, gvd.dmo_destination_port_id as port_id, p.* as port from grouping_vessel_dns gvd
                               LEFT JOIN companies c on c.id = gvd.buyer_id
+															LEFT JOIN ports p on p.id = gvd.dmo_destination_port_id
 																where  gvd.bl_date >= '%s' AND gvd.bl_date <= '%s' AND gvd.iupopk_id = %v and gvd.dmo_destination_port_id = %v and gvd.report_dmo_id IS NOT NULL
 																group by gvd.buyer_id , gvd.dmo_destination_port_id
 				`, shippingDateFrom, shippingDateTo, iupopkId, v.PortId)
