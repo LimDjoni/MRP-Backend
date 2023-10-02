@@ -371,29 +371,25 @@ GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= 
 
 		var groupingRealizationSupplierTemp []RealizationSupplier
 
-		var rawQuery = fmt.Sprintf(`select SUM(quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories, t.customer_id as supplier_id, c.* as supplier, t.dmo_destination_port_id as port_id, p.* as port from transactions t
+		var rawQuery = fmt.Sprintf(`select SUM(quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories, t.customer_id as supplier_id, t.dmo_destination_port_id as port_id from transactions t
                                 LEFT JOIN companies c on c.id = t.customer_id
-																LEFT JOIN ports p on p.id = t.dmo_destination_port_id
 																where  t.shipping_date >= '%s' AND t.shipping_date <= '%s' AND t.seller_id = %v and t.dmo_destination_port_id = %v and t.dmo_id IS NOT NULL and t.grouping_vessel_dn_id IS NULL and t.report_dmo_id IS NOT NULL
-																and c.id = t.customer_id and p.id = %v
-																group by t.customer_id , t.dmo_destination_port_id, c.id, p.id
-				`, shippingDateFrom, shippingDateTo, iupopkId, v.PortId, v.PortId)
+																group by t.customer_id , t.dmo_destination_port_id
+				`, shippingDateFrom, shippingDateTo, iupopkId, v.PortId)
 
-		errRealizationSupplier := r.db.Preload(clause.Associations).Raw(rawQuery).Scan(&realizationSupplierTemp).Error
+		errRealizationSupplier := r.db.Preload(clause.Associations).Raw(rawQuery).Find(&realizationSupplierTemp).Error
 
 		if errRealizationSupplier != nil {
 			return detailElectricAssignment, errRealizationSupplier
 		}
 
-		var groupingRawQuery = fmt.Sprintf(`select SUM(grand_total_quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories, gvd.buyer_id as supplier_id, c.* as supplier, gvd.dmo_destination_port_id as port_id, p.* as port from grouping_vessel_dns gvd
+		var groupingRawQuery = fmt.Sprintf(`select SUM(grand_total_quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories, gvd.buyer_id as supplier_id, gvd.dmo_destination_port_id as port_id from grouping_vessel_dns gvd
                               LEFT JOIN companies c on c.id = gvd.buyer_id
-															LEFT JOIN ports p on p.id = gvd.dmo_destination_port_id
 																where  gvd.bl_date >= '%s' AND gvd.bl_date <= '%s' AND gvd.iupopk_id = %v and gvd.dmo_destination_port_id = %v and gvd.report_dmo_id IS NOT NULL
-																and c.id = gvd.buyer_id and p.id = %v
-																group by gvd.buyer_id , gvd.dmo_destination_port_id, c.id, p.id
-				`, shippingDateFrom, shippingDateTo, iupopkId, v.PortId, v.PortId)
+																group by gvd.buyer_id , gvd.dmo_destination_port_id
+				`, shippingDateFrom, shippingDateTo, iupopkId, v.PortId)
 
-		errGroupingRealizationSupplier := r.db.Preload(clause.Associations).Raw(groupingRawQuery).Scan(&groupingRealizationSupplierTemp).Error
+		errGroupingRealizationSupplier := r.db.Preload(clause.Associations).Raw(groupingRawQuery).Find(&groupingRealizationSupplierTemp).Error
 
 		if errGroupingRealizationSupplier != nil {
 			return detailElectricAssignment, errGroupingRealizationSupplier
