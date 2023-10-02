@@ -70,7 +70,7 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 			var tempAssignment []ElectricAssignmentEndUser
 			var transactionRealization Realization
 
-			errTrRealization := r.db.Table("transactions").Select("SUM(quantity_unloading) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories").Where("transaction_type = ? AND seller_id = ? AND is_not_claim = ? AND dmo_destination_port_id = ? AND shipping_date >= ? AND shipping_date <= ? AND dmo_id IS NOT NULL AND customer_id IS NULL AND grouping_vessel_dn_id IS NULL", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo).Scan(&transactionRealization).Error
+			errTrRealization := r.db.Table("transactions").Select("SUM(quantity_unloading) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories").Where("transaction_type = ? AND seller_id = ? AND is_not_claim = ? AND dmo_destination_port_id = ? AND shipping_date >= ? AND shipping_date <= ? AND dmo_id IS NOT NULL AND grouping_vessel_dn_id IS NULL", "DN", iupopkId, false, value.PortId, shippingDateFrom, shippingDateTo).Scan(&transactionRealization).Error
 
 			if errTrRealization != nil {
 				return detailElectricAssignment, errTrRealization
@@ -80,7 +80,7 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 
 			var rawQuery = fmt.Sprintf(`select SUM(grand_total_quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories from grouping_vessel_dns
 where id in (select grouping_vessel_dn_id from transactions where dmo_id IS NOT NULL and grouping_vessel_dn_id IS NOT NULL and transaction_type = 'DN' and is_not_claim = false
-GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= '%s' AND bl_date <= '%s' AND iupopk_id = %v
+GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= '%s' AND bl_date <= '%s' AND iupopk_id = %v AND report_dmo_id IS NOT NULL
 				`, value.PortId, shippingDateFrom, shippingDateTo, iupopkId)
 
 			errGroupingRealization := r.db.Raw(rawQuery).Scan(&groupingRealization).Error

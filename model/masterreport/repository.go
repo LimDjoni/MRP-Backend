@@ -1664,7 +1664,6 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if *v.DmoDestinationPortId == value.PortId {
 								isAdded = true
 								saleDetail.ElectricAssignment.RealizationQuantity += v.Quantity
-
 							}
 						}
 					}
@@ -3625,7 +3624,7 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				if v.DmoDestinationPortId != nil {
 					if *v.DmoDestinationPortId == value.PortId {
 						isAdded = true
-						saleDetail.ElectricAssignment.RealizationQuantity += v.Quantity
+						saleDetail.ElectricAssignment.RealizationQuantity += v.GrandTotalQuantity
 					}
 				}
 			}
