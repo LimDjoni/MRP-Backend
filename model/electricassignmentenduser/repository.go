@@ -389,7 +389,7 @@ GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= 
                               LEFT JOIN companies c on c.id = gvd.buyer_id
 															LEFT JOIN ports p on p.id = gvd.dmo_destination_port_id
 																where  gvd.bl_date >= '%s' AND gvd.bl_date <= '%s' AND gvd.iupopk_id = %v and gvd.dmo_destination_port_id = %v and gvd.report_dmo_id IS NOT NULL
-																and c.id = gvd.buer_id and p.id = %v
+																and c.id = gvd.buyer_id and p.id = %v
 																group by gvd.buyer_id , gvd.dmo_destination_port_id, c.id, p.id
 				`, shippingDateFrom, shippingDateTo, iupopkId, v.PortId, v.PortId)
 
