@@ -13,7 +13,6 @@ type DetailElectricAssignment struct {
 }
 
 type RealizationSupplier struct {
-	ID                         uint             `json:"ID"`
 	PortId                     uint             `json:"port_id"`
 	Port                       ports.Port       `json:"port"`
 	RealizationAverageCalories float64          `json:"realization_average_calories"`
