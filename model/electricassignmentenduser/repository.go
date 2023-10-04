@@ -73,7 +73,7 @@ func (r *repository) DetailElectricAssignment(id int, iupopkId int) (DetailElect
 			var trRawQuery = fmt.Sprintf(`select SUM(t.quantity) as realization_quantity, AVG(t.quality_calories_ar) as realization_average_calories
 				from transactions t LEFT JOIN grouping_vessel_dns gvd on gvd.id = t.grouping_vessel_dn_id where
 				t.transaction_type = 'DN' AND t.seller_id = %v AND t.is_not_claim = false AND t.dmo_destination_port_id = %v AND t.shipping_date >= '%v'
-				AND t.shipping_date <= '%v' AND t.dmo_id IS NOT NULL AND gvd.sales_system != 'Vessel' AND report_dmo_id IS NOT NULL
+				AND t.shipping_date <= '%v' AND t.dmo_id IS NOT NULL AND gvd.sales_system != 'Vessel' AND t.report_dmo_id IS NOT NULL
 			`, iupopkId, value.PortId, shippingDateFrom, shippingDateTo)
 
 			errTrRealization := r.db.Raw(trRawQuery).Scan(&transactionRealization).Error
@@ -152,7 +152,7 @@ GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= 
 			var trRawQuery = fmt.Sprintf(`select SUM(t.quantity) as realization_quantity, AVG(t.quality_calories_ar) as realization_average_calories
 				from transactions t LEFT JOIN grouping_vessel_dns gvd on gvd.id = t.grouping_vessel_dn_id where
 				t.transaction_type = 'DN' AND t.seller_id = %v AND t.is_not_claim = false AND t.dmo_destination_port_id = %v AND t.shipping_date >= '%v'
-				AND t.shipping_date <= '%v' AND t.dmo_id IS NOT NULL AND gvd.sales_system != 'Vessel' AND report_dmo_id IS NOT NULL
+				AND t.shipping_date <= '%v' AND t.dmo_id IS NOT NULL AND gvd.sales_system != 'Vessel' AND t.report_dmo_id IS NOT NULL
 			`, iupopkId, value.PortId, shippingDateFrom, shippingDateTo)
 
 			errTrRealization := r.db.Raw(trRawQuery).Scan(&transactionRealization).Error
@@ -248,7 +248,7 @@ GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= 
 			var trRawQuery = fmt.Sprintf(`select SUM(t.quantity) as realization_quantity, AVG(t.quality_calories_ar) as realization_average_calories
 				from transactions t LEFT JOIN grouping_vessel_dns gvd on gvd.id = t.grouping_vessel_dn_id where
 				t.transaction_type = 'DN' AND t.seller_id = %v AND t.is_not_claim = false AND t.dmo_destination_port_id = %v AND t.shipping_date >= '%v'
-				AND t.shipping_date <= '%v' AND t.dmo_id IS NOT NULL AND gvd.sales_system != 'Vessel' AND report_dmo_id IS NOT NULL
+				AND t.shipping_date <= '%v' AND t.dmo_id IS NOT NULL AND gvd.sales_system != 'Vessel' AND t.report_dmo_id IS NOT NULL
 			`, iupopkId, value.PortId, shippingDateFrom, shippingDateTo)
 
 			errTrRealization := r.db.Raw(trRawQuery).Scan(&transactionRealization).Error
@@ -343,7 +343,7 @@ GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= 
 			var trRawQuery = fmt.Sprintf(`select SUM(t.quantity) as realization_quantity, AVG(t.quality_calories_ar) as realization_average_calories
 				from transactions t LEFT JOIN grouping_vessel_dns gvd on gvd.id = t.grouping_vessel_dn_id where
 				t.transaction_type = 'DN' AND t.seller_id = %v AND t.is_not_claim = false AND t.dmo_destination_port_id = %v AND t.shipping_date >= '%v'
-				AND t.shipping_date <= '%v' AND t.dmo_id IS NOT NULL AND gvd.sales_system != 'Vessel' AND report_dmo_id IS NOT NULL
+				AND t.shipping_date <= '%v' AND t.dmo_id IS NOT NULL AND gvd.sales_system != 'Vessel' AND t.report_dmo_id IS NOT NULL
 			`, iupopkId, value.PortId, shippingDateFrom, shippingDateTo)
 
 			errTrRealization := r.db.Raw(trRawQuery).Scan(&transactionRealization).Error
