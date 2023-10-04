@@ -395,7 +395,7 @@ GROUP BY grouping_vessel_dn_id) AND dmo_destination_port_id = %v AND bl_date >= 
 
 		var groupingRealizationSupplierTemp []RealizationSupplier
 
-		var rawQuery = fmt.Sprintf(`select SUM(t.quantity) as realization_quantity, AVG(quality_calories_ar) as realization_average_calories, t.customer_id as supplier_id, t.dmo_destination_port_id as port_id from transactions t
+		var rawQuery = fmt.Sprintf(`select SUM(t.quantity) as realization_quantity, AVG(t.quality_calories_ar) as realization_average_calories, t.customer_id as supplier_id, t.dmo_destination_port_id as port_id from transactions t
                                 LEFT JOIN companies c on c.id = t.customer_id
 																LEFT JOIN grouping_vessel_dns gvd on gvd.id = t.grouping_vessel_dn_id
 																where  t.shipping_date >= '%s' AND t.shipping_date <= '%s' AND t.seller_id = %v and t.dmo_destination_port_id = %v and t.dmo_id IS NOT NULL and gvd.sales_system != 'Vessel' and t.report_dmo_id IS NOT NULL
