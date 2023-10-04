@@ -102,7 +102,7 @@ func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionTyp
 		}
 
 		if sortFilter.Field == "quantity" {
-			sortString = "quantity_unloading " + sortFilter.Sort
+			sortString = "quantity " + sortFilter.Sort
 		}
 	}
 
@@ -129,7 +129,7 @@ func (r *repository) ListData(page int, sortFilter SortAndFilter, transactionTyp
 	}
 
 	if sortFilter.Quantity != "" {
-		queryFilter = queryFilter + " AND cast(quantity_unloading AS TEXT) LIKE '%" + sortFilter.Quantity + "%'"
+		queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" + sortFilter.Quantity + "%'"
 	}
 
 	if sortFilter.VerificationFilter == "Belum diverifikasi" {

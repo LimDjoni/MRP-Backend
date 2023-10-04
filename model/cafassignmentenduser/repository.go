@@ -72,7 +72,7 @@ func (r *repository) DetailCafAssignment(id int, iupopkId int) (DetailCafAssignm
 
 			query := fmt.Sprintf("transactions.transaction_type = '%s' AND transactions.seller_id = %v AND transactions.is_not_claim = false AND transactions.shipping_date >= '%s' AND transactions.shipping_date <= '%s' AND company.company_name = '%s' AND transactions.dmo_id IS NOT NULL AND transactions.report_dmo_id IS NOT NULL AND transactions.grouping_vessel_dn_id IS NULL", "DN", iupopkId, shippingDateFrom, shippingDateTo, value.EndUserString)
 
-			errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity_unloading) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("left join companies company on company.id = transactions.dmo_buyer_id").Where(query).Scan(&transactionRealization).Error
+			errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("left join companies company on company.id = transactions.dmo_buyer_id").Where(query).Scan(&transactionRealization).Error
 
 			if errTrRealization != nil {
 				return detailCafAssignment, errTrRealization
@@ -145,7 +145,7 @@ GROUP BY grouping_vessel_dn_id) AND gvd.bl_date >= '%s' AND gvd.bl_date <= '%s' 
 
 			query := fmt.Sprintf("transactions.transaction_type = '%s' AND transactions.seller_id = %v AND transactions.is_not_claim = false AND transactions.shipping_date >= '%s' AND transactions.shipping_date <= '%s' AND company.company_name = '%s' AND transactions.dmo_id IS NOT NULL AND transactions.report_dmo_id IS NOT NULL", "DN", iupopkId, shippingDateFrom, shippingDateTo, value.EndUserString)
 
-			errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity_unloading) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("left join companies company on company.id = transactions.dmo_buyer_id").Where(query).Scan(&transactionRealization).Error
+			errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("left join companies company on company.id = transactions.dmo_buyer_id").Where(query).Scan(&transactionRealization).Error
 
 			if errTrRealization != nil {
 				return detailCafAssignment, errTrRealization
@@ -237,7 +237,7 @@ GROUP BY grouping_vessel_dn_id) AND gvd.bl_date >= '%s' AND gvd.bl_date <= '%s' 
 
 			query := fmt.Sprintf("transactions.transaction_type = '%s' AND transactions.seller_id = %v AND transactions.is_not_claim = false AND transactions.shipping_date >= '%s' AND transactions.shipping_date <= '%s' AND company.company_name = '%s' AND transactions.dmo_id IS NOT NULL AND transactions.report_dmo_id IS NOT NULL", "DN", iupopkId, shippingDateFrom, shippingDateTo, value.EndUserString)
 
-			errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity_unloading) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("left join companies company on company.id = transactions.dmo_buyer_id").Where(query).Scan(&transactionRealization).Error
+			errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("left join companies company on company.id = transactions.dmo_buyer_id").Where(query).Scan(&transactionRealization).Error
 
 			if errTrRealization != nil {
 				return detailCafAssignment, errTrRealization
@@ -328,7 +328,7 @@ GROUP BY grouping_vessel_dn_id) AND gvd.bl_date >= '%s' AND gvd.bl_date <= '%s' 
 
 			query := fmt.Sprintf("transactions.transaction_type = '%s' AND transactions.seller_id = %v AND transactions.is_not_claim = false AND transactions.shipping_date >= '%s' AND transactions.shipping_date <= '%s' AND company.company_name = '%s' AND transactions.dmo_id IS NOT NULL AND transactions.report_dmo_id IS NOT NULL", "DN", iupopkId, shippingDateFrom, shippingDateTo, value.EndUserString)
 
-			errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity_unloading) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("left join companies company on company.id = transactions.dmo_buyer_id").Where(query).Scan(&transactionRealization).Error
+			errTrRealization := r.db.Table("transactions").Select("SUM(transactions.quantity) as realization_quantity, AVG(transactions.quality_calories_ar) as realization_average_calories ").Joins("left join companies company on company.id = transactions.dmo_buyer_id").Where(query).Scan(&transactionRealization).Error
 
 			if errTrRealization != nil {
 				return detailCafAssignment, errTrRealization
