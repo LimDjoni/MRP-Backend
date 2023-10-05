@@ -953,7 +953,9 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 				transactionTemp.EndUser = v.Buyer
 			}
 			transactionTemp.Quantity = v.GrandTotalQuantity
-			transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			if v.QualityCaloriesAr != nil {
+				transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			}
 			if tempTransaction.Dmo != nil && tempTransaction.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
 			} else {
@@ -988,7 +990,9 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 				transactionTemp.EndUser = v.Buyer
 			}
 			transactionTemp.Quantity = v.GrandTotalQuantity
-			transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			if v.QualityCaloriesAr != nil {
+				transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			}
 			if tempTransaction.Dmo != nil && tempTransaction.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
 			} else {
@@ -1023,7 +1027,9 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 				transactionTemp.EndUser = v.Buyer
 			}
 			transactionTemp.Quantity = v.GrandTotalQuantity
-			transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			if v.QualityCaloriesAr != nil {
+				transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			}
 			if tempTransaction.Dmo != nil && tempTransaction.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
 			} else {
@@ -1058,7 +1064,9 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 				transactionTemp.EndUser = v.Buyer
 			}
 			transactionTemp.Quantity = v.GrandTotalQuantity
-			transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			if v.QualityCaloriesAr != nil {
+				transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			}
 			if tempTransaction.Dmo != nil && tempTransaction.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
 			} else {
@@ -1093,7 +1101,9 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 				transactionTemp.EndUser = v.Buyer
 			}
 			transactionTemp.Quantity = v.GrandTotalQuantity
-			transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			if v.QualityCaloriesAr != nil {
+				transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			}
 			if tempTransaction.Dmo != nil && tempTransaction.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
 			} else {
@@ -1128,7 +1138,9 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 				transactionTemp.EndUser = v.Buyer
 			}
 			transactionTemp.Quantity = v.GrandTotalQuantity
-			transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			if v.QualityCaloriesAr != nil {
+				transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			}
 			if tempTransaction.Dmo != nil && tempTransaction.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
 			} else {
@@ -1163,7 +1175,9 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 				transactionTemp.EndUser = v.Buyer
 			}
 			transactionTemp.Quantity = v.GrandTotalQuantity
-			transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			if v.QualityCaloriesAr != nil {
+				transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			}
 			if tempTransaction.Dmo != nil && tempTransaction.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
 			} else {
@@ -1198,7 +1212,9 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 				transactionTemp.EndUser = v.Buyer
 			}
 			transactionTemp.Quantity = v.GrandTotalQuantity
-			transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			if v.QualityCaloriesAr != nil {
+				transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			}
 			if tempTransaction.Dmo != nil && tempTransaction.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
 			} else {
@@ -1233,7 +1249,9 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 				transactionTemp.EndUser = v.Buyer
 			}
 			transactionTemp.Quantity = v.GrandTotalQuantity
-			transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			if v.QualityCaloriesAr != nil {
+				transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			}
 			if tempTransaction.Dmo != nil && tempTransaction.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
 			} else {
@@ -1268,7 +1286,9 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 				transactionTemp.EndUser = v.Buyer
 			}
 			transactionTemp.Quantity = v.GrandTotalQuantity
-			transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			if v.QualityCaloriesAr != nil {
+				transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			}
 			if tempTransaction.Dmo != nil && tempTransaction.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
 			} else {
@@ -1303,7 +1323,9 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 				transactionTemp.EndUser = v.Buyer
 			}
 			transactionTemp.Quantity = v.GrandTotalQuantity
-			transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			if v.QualityCaloriesAr != nil {
+				transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			}
 			if tempTransaction.Dmo != nil && tempTransaction.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
 			} else {
@@ -1338,7 +1360,9 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 				transactionTemp.EndUser = v.Buyer
 			}
 			transactionTemp.Quantity = v.GrandTotalQuantity
-			transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			if v.QualityCaloriesAr != nil {
+				transactionTemp.QualityCaloriesAr = *v.QualityCaloriesAr
+			}
 			if tempTransaction.Dmo != nil && tempTransaction.Dmo.IsBastDocumentSigned {
 				transactionTemp.IsBastOk = true
 			} else {
