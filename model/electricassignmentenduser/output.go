@@ -7,22 +7,32 @@ import (
 )
 
 type DetailElectricAssignment struct {
-	Detail          electricassignment.ElectricAssignment `json:"detail"`
-	ListRealization []ListRealization                     `json:"list_realization"`
+	Detail                  electricassignment.ElectricAssignment `json:"detail"`
+	ListRealization         []ListRealization                     `json:"list_realization"`
+	ListRealizationSupplier []RealizationSupplier                 `json:"list_realization_supplier"`
+}
+
+type RealizationSupplier struct {
+	PortId                     uint             `json:"port_id"`
+	Port                       ports.Port       `json:"port"`
+	RealizationAverageCalories float64          `json:"realization_average_calories"`
+	RealizationQuantity        float64          `json:"realization_quantity"`
+	SupplierId                 *uint            `json:"supplier_id"`
+	Supplier                   *company.Company `json:"supplier"`
 }
 
 type RealizationEndUser struct {
-	ID                         uint             `json:"ID"`
-	PortId                     uint             `json:"port_id"`
-	Port                       ports.Port       `json:"port"`
-	SupplierId                 *uint            `json:"supplier_id"`
-	Supplier                   *company.Company `json:"supplier"`
-	AverageCalories            float64          `json:"average_calories"`
-	RealizationAverageCalories float64          `json:"realization_average_calories"`
-	Quantity                   float64          `json:"quantity"`
-	RealizationQuantity        float64          `json:"realization_quantity"`
-	EndUser                    string           `json:"end_user"`
-	LetterNumber               string           `json:"letter_number"`
+	ID                         uint       `json:"ID"`
+	PortId                     uint       `json:"port_id"`
+	Port                       ports.Port `json:"port"`
+	AverageCalories            float64    `json:"average_calories"`
+	RealizationAverageCalories float64    `json:"realization_average_calories"`
+	Quantity                   float64    `json:"quantity"`
+	RealizationQuantity        float64    `json:"realization_quantity"`
+	EndUser                    string     `json:"end_user"`
+	LetterNumber               string     `json:"letter_number"`
+	// SupplierId                 *uint            `json:"supplier_id"`
+	// Supplier                   *company.Company `json:"supplier"`
 }
 
 type ListRealization struct {

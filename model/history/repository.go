@@ -791,7 +791,7 @@ func (r *repository) CreateMinerba(period string, updateTransaction []int, userI
 
 	var tempQuantity float64
 	for _, v := range transactions {
-		tempQuantity += v.QuantityUnloading
+		tempQuantity += v.Quantity
 	}
 
 	stringTempQuantity := fmt.Sprintf("%.3f", tempQuantity)
@@ -913,7 +913,7 @@ func (r *repository) UpdateMinerba(id int, updateTransaction []int, userId uint,
 	}
 
 	for _, v := range transactions {
-		quantityMinerba += v.QuantityUnloading
+		quantityMinerba += v.Quantity
 	}
 
 	quantityMinerba = math.Round(quantityMinerba*1000) / 1000
@@ -2813,7 +2813,7 @@ func (r *repository) CreateMinerbaLn(period string, listTransactions []int, user
 
 	var tempQuantity float64
 	for _, v := range transactions {
-		tempQuantity += v.QuantityUnloading
+		tempQuantity += v.Quantity
 	}
 
 	stringTempQuantity := fmt.Sprintf("%.3f", tempQuantity)
@@ -2934,7 +2934,7 @@ func (r *repository) UpdateMinerbaLn(id int, listTransactions []int, userId uint
 	}
 
 	for _, v := range transactions {
-		quantityMinerba += v.QuantityUnloading
+		quantityMinerba += v.Quantity
 	}
 
 	quantityMinerba = math.Round(quantityMinerba*1000) / 1000
@@ -3290,7 +3290,7 @@ func (r *repository) CreateReportDmo(input reportdmo.InputCreateReportDmo, userI
 		}
 
 		for _, v := range transactionBarge {
-			bargeQuantity += v.QuantityUnloading
+			bargeQuantity += v.Quantity
 		}
 
 		createdReportDmo.Quantity = math.Round(bargeQuantity*1000) / 1000
@@ -3543,7 +3543,7 @@ func (r *repository) UpdateTransactionReportDmo(id int, inputUpdate reportdmo.In
 	}
 
 	for _, v := range transactions {
-		quantityReportDmo += v.QuantityUnloading
+		quantityReportDmo += v.Quantity
 	}
 
 	listTransactionsErr := tx.Table("transactions").Where("id IN ? AND seller_id = ?", inputUpdate.Transactions, iupopkId).Update("report_dmo_id", id).Error
@@ -4246,7 +4246,6 @@ func (r *repository) CreateElectricAssignment(input electricassignmentenduser.Cr
 
 		tempElecEndUser.ElectricAssignmentId = createdElectricAssignment.ID
 		tempElecEndUser.PortId = v.PortId
-		tempElecEndUser.SupplierId = v.SupplierId
 		tempElecEndUser.AverageCalories = v.AverageCalories
 		tempElecEndUser.Quantity = v.Quantity
 		tempElecEndUser.EndUser = v.EndUser
@@ -4478,12 +4477,6 @@ func (r *repository) UpdateElectricAssignment(id int, input electricassignmenten
 			tempUpd := make(map[string]interface{})
 
 			tempUpd["port_id"] = values.PortId
-			if values.SupplierId != nil && *values.SupplierId > 0 {
-				tempUpd["supplier_id"] = *values.SupplierId
-			} else {
-				tempUpd["supplier_id"] = nil
-			}
-
 			tempUpd["average_calories"] = values.AverageCalories
 			tempUpd["quantity"] = values.Quantity
 			tempUpd["end_user"] = values.EndUser
