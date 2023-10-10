@@ -52,6 +52,20 @@ import (
 	"ajebackend/model/useriupopk"
 	routing2 "ajebackend/routing"
 
+	// Hauling
+	"ajebackend/model/master/contractor"
+	"ajebackend/model/master/isp"
+	"ajebackend/model/master/jetty"
+	"ajebackend/model/master/pit"
+	"ajebackend/model/master/site"
+	"ajebackend/model/master/truck"
+	"ajebackend/model/transactionshauling/transactionispjetty"
+	"ajebackend/model/transactionshauling/transactionjetty"
+	"ajebackend/model/transactionshauling/transactiontoisp"
+	"ajebackend/model/transactionshauling/transactiontojetty"
+
+	"ajebackend/model/haulingsynchronize"
+
 	"ajebackend/seeding"
 	seedingmaster "ajebackend/seeding/master"
 	"ajebackend/validatorfunc"
@@ -68,7 +82,7 @@ import (
 func main() {
 	var port string
 	if len(os.Getenv("PORT")) < 2 {
-		port = "8080"
+		port = "8081"
 	} else {
 		port = helper.GetEnvWithKey("PORT")
 	}
@@ -141,6 +155,21 @@ func main() {
 			&categoryindustrytype.CategoryIndustryType{},
 			&royaltyrecon.RoyaltyRecon{},
 			&royaltyreport.RoyaltyReport{},
+			// Hauling section
+			&contractor.Contractor{},
+			&isp.Isp{},
+			&iupopk.Iupopk{},
+			&jetty.Jetty{},
+			&pit.Pit{},
+			&site.Site{},
+			&truck.Truck{},
+
+			&transactionispjetty.TransactionIspJetty{},
+			&transactionjetty.TransactionJetty{},
+			&transactiontoisp.TransactionToIsp{},
+			&transactiontojetty.TransactionToJetty{},
+
+			&haulingsynchronize.HaulingSynchronize{},
 		)
 
 		seeding.UpdateTransactionsRoyalty(db)
@@ -266,4 +295,6 @@ func Setup(db *gorm.DB, validate *validator.Validate, route fiber.Router) {
 	routing2.RkabRouting(db, route, validate)
 	routing2.ElectricAssignmentRouting(db, route, validate)
 	routing2.CafAssignmentRouting(db, route, validate)
+	routing2.HaulingSynchronizeRouting(db, route, validate)
+	routing2.HaulingTransactionRouting(db, route, validate)
 }
