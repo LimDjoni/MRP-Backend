@@ -309,3 +309,79 @@ func (h *haulingHandler) DetailTransactionHauling(c *fiber.Ctx) error {
 
 	return c.Status(200).JSON(detailData)
 }
+
+func (h *haulingHandler) SummaryJettyTransactionPerDay(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := fiber.Map{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	summary, summaryErr := h.transactionsHaulingService.SummaryJettyTransactionPerDay(iupopkIdInt)
+
+	if summaryErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": summaryErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(summary)
+}
+
+func (h *haulingHandler) SummaryInventoryStockRom(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := fiber.Map{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	summary, summaryErr := h.transactionsHaulingService.SummaryInventoryStockRom(iupopkIdInt)
+
+	if summaryErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": summaryErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(summary)
+}

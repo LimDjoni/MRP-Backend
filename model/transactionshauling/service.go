@@ -10,6 +10,8 @@ type Service interface {
 	ListTransactionHauling(page int, iupopkId int) (Pagination, error)
 	DetailStockRom(iupopkId int, stockRomId int) (transactiontoisp.TransactionToIsp, error)
 	DetailTransactionHauling(iupopkId int, transactionHaulingId int) (transactionispjetty.TransactionIspJetty, error)
+	SummaryJettyTransactionPerDay(iupopkId int) (SummaryJettyTransactionPerDay, error)
+	SummaryInventoryStockRom(iupopkId int) ([]InventoryStockRom, error)
 }
 
 type service struct {
@@ -42,4 +44,16 @@ func (s *service) DetailTransactionHauling(iupopkId int, transactionHaulingId in
 	detail, detailErr := s.repository.DetailTransactionHauling(iupopkId, transactionHaulingId)
 
 	return detail, detailErr
+}
+
+func (s *service) SummaryJettyTransactionPerDay(iupopkId int) (SummaryJettyTransactionPerDay, error) {
+	summary, summaryErr := s.repository.SummaryJettyTransactionPerDay(iupopkId)
+
+	return summary, summaryErr
+}
+
+func (s *service) SummaryInventoryStockRom(iupopkId int) ([]InventoryStockRom, error) {
+	summary, summaryErr := s.repository.SummaryInventoryStockRom(iupopkId)
+
+	return summary, summaryErr
 }

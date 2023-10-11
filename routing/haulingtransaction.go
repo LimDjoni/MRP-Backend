@@ -45,6 +45,10 @@ func HaulingTransactionRouting(db *gorm.DB, app fiber.Router, validate *validato
 
 	haulingRouting.Get("/list/stock/:iupopk_id", haulingTransactionRoutingHandler.ListStockRom)
 	haulingRouting.Get("/list/transaction/:iupopk_id", haulingTransactionRoutingHandler.ListTransactionHauling)
+
 	haulingRouting.Get("/detail/stock/:id/:iupopk_id", haulingTransactionRoutingHandler.DetailStockRom)
 	haulingRouting.Get("/detail/transaction/:id/:iupopk_id", haulingTransactionRoutingHandler.DetailTransactionHauling)
+
+	haulingRouting.Get("/summary/transaction/:iupopk_id", haulingTransactionRoutingHandler.SummaryJettyTransactionPerDay)
+	haulingRouting.Get("/summary/stock/:iupopk_id", haulingTransactionRoutingHandler.SummaryInventoryStockRom)
 }
