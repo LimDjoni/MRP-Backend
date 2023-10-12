@@ -82,7 +82,7 @@ import (
 func main() {
 	var port string
 	if len(os.Getenv("PORT")) < 2 {
-		port = "8081"
+		port = "8080"
 	} else {
 		port = helper.GetEnvWithKey("PORT")
 	}
