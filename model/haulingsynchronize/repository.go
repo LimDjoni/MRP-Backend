@@ -5,6 +5,7 @@ import (
 	"ajebackend/model/transactionshauling/transactionjetty"
 	"ajebackend/model/transactionshauling/transactiontoisp"
 	"ajebackend/model/transactionshauling/transactiontojetty"
+	"fmt"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -109,9 +110,13 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 		for _, v := range transactionIspJetty {
 			var tempTransactionJetty transactionjetty.TransactionJetty
 
-			errFindTransactionJetty := tx.Table("transaction_jetties tj").Where("truck_id = ? and isp_id = ? and site_id = ? and tj.iupopk_id = ? and tij.id IS NULL", v.TransactionToJetty.TruckId,
+			rawQuery := fmt.Sprintf(`select * from transaction_jetties tj
+LEFT JOIN transaction_isp_jetties tij on tij.transaction_jetty_id = tj.id
+where truck_id = %v and isp_id = %v and site_id = %v and tj.iupopk_id = %v and tij.id IS NULL ORDER BY created_at asc LIMIT 1`, v.TransactionToJetty.TruckId,
 				v.TransactionToJetty.IspId,
-				v.TransactionToJetty.SiteId, syncData.IupopkId).Joins("LEFT JOIN transaction_isp_jetties tij on tij.transaction_jetty_id = tj.id ").Order("created_at asc").First(&tempTransactionJetty).Error
+				v.TransactionToJetty.SiteId, syncData.IupopkId)
+
+			errFindTransactionJetty := tx.Raw(rawQuery).Scan(&tempTransactionJetty).Error
 
 			if errFindTransactionJetty == nil {
 				errUpdIspJetty := tx.Table("transaction_isp_jetties").Where("id = ?", v.ID).Update("transaction_jetty_id", tempTransactionJetty.ID).Error
