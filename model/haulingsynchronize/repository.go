@@ -109,9 +109,9 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 		for _, v := range transactionIspJetty {
 			var tempTransactionJetty transactionjetty.TransactionJetty
 
-			errFindTransactionJetty := tx.Where("truck_id = ? and isp_id = ? and site_id = ?", v.TransactionToJetty.TruckId,
+			errFindTransactionJetty := tx.Table("transaction_jetties tj").Where("truck_id = ? and isp_id = ? and site_id = ? and tj.iupopk_id = ? and tij.id IS NULL", v.TransactionToJetty.TruckId,
 				v.TransactionToJetty.IspId,
-				v.TransactionToJetty.SiteId).Order("created_at asc").First(&tempTransactionJetty).Error
+				v.TransactionToJetty.SiteId, syncData.IupopkId).Joins("LEFT JOINS transaction_isp_jetties tij on tij.transaction_jetty_id = tj.id ").Order("created_at asc").First(&tempTransactionJetty).Error
 
 			if errFindTransactionJetty == nil {
 				errUpdIspJetty := tx.Table("transaction_isp_jetties").Where("id = ?", v.ID).Update("transaction_jetty_id", tempTransactionJetty.ID).Error
