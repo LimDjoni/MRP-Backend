@@ -1,0 +1,38 @@
+package transactiontojetty
+
+import (
+	"ajebackend/model/master/isp"
+	"ajebackend/model/master/iupopk"
+	"ajebackend/model/master/pit"
+	"ajebackend/model/master/site"
+	"ajebackend/model/master/truck"
+	"ajebackend/model/user"
+
+	"gorm.io/gorm"
+)
+
+type TransactionToJetty struct {
+	gorm.Model
+	IdNumber              string        `json:"id_number"`
+	TruckId               uint          `json:"truck_id"`
+	Truck                 truck.Truck   `json:"truck"`
+	IupopkId              uint          `json:"iupopk_id"`
+	Iupopk                iupopk.Iupopk `json:"iupopk"`
+	IspId                 *uint         `json:"isp_id"`
+	Isp                   *isp.Isp      `json:"isp"`
+	SiteId                uint          `json:"site_id"`
+	Site                  site.Site     `json:"site"`
+	PitId                 *uint         `json:"pit_id"`
+	Pit                   *pit.Pit      `json:"pit"`
+	Seam                  string        `json:"seam"`
+	Method                string        `json:"method"`
+	ClockOutDate          string        `json:"clock_out_date" gorm:"DATETIME"`
+	TopTruckPhotoLink     string        `json:"top_truck_photo_link"`
+	TopTruckPhotoPath     string        `json:"top_truck_photo_path"`
+	LambungTruckPhotoLink string        `json:"lambung_truck_photo_link"`
+	LambungTruckPhotoPath string        `json:"lambung_truck_photo_path"`
+	CreatedById           uint          `json:"created_by_id"`
+	CreatedBy             user.User     `json:"created_by"`
+	UpdatedById           uint          `json:"updated_by_id"`
+	UpdatedBy             user.User     `json:"updated_by"`
+}
