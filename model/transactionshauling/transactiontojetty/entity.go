@@ -3,6 +3,7 @@ package transactiontojetty
 import (
 	"ajebackend/model/master/isp"
 	"ajebackend/model/master/iupopk"
+	"ajebackend/model/master/pit"
 	"ajebackend/model/master/site"
 	"ajebackend/model/master/truck"
 	"ajebackend/model/user"
@@ -17,11 +18,14 @@ type TransactionToJetty struct {
 	Truck                 truck.Truck   `json:"truck"`
 	IupopkId              uint          `json:"iupopk_id"`
 	Iupopk                iupopk.Iupopk `json:"iupopk"`
-	IspId                 uint          `json:"isp_id"`
-	Isp                   isp.Isp       `json:"isp"`
+	IspId                 *uint         `json:"isp_id"`
+	Isp                   *isp.Isp      `json:"isp"`
 	SiteId                uint          `json:"site_id"`
 	Site                  site.Site     `json:"site"`
+	PitId                 *uint         `json:"pit_id"`
+	Pit                   *pit.Pit      `json:"pit"`
 	Seam                  string        `json:"seam"`
+	Method                string        `json:"method"`
 	ClockOutDate          string        `json:"clock_out_date" gorm:"DATETIME"`
 	TopTruckPhotoLink     string        `json:"top_truck_photo_link"`
 	TopTruckPhotoPath     string        `json:"top_truck_photo_path"`
