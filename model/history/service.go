@@ -26,6 +26,7 @@ type Service interface {
 	DeleteTransaction(id int, userId uint, transactionType string, iupopkId int) (bool, error)
 	UpdateTransactionDN(idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error)
 	UploadDocumentTransaction(idTransaction uint, urlS3 string, userId uint, documentType string, transactionType string, iupopkId int) (transaction.Transaction, error)
+	DeleteDocumentTransaction(idTransaction uint, userId uint, documentType string, transactionType string, iupopkId int) (transaction.Transaction, error)
 	CreateTransactionLN(inputTransactionLN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error)
 	UpdateTransactionLN(id int, inputTransactionLN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error)
 	CreateMinerba(period string, updateTransaction []int, userId uint, iupopkId int) (minerba.Minerba, error)
@@ -118,6 +119,12 @@ func (s *service) UploadDocumentTransaction(idTransaction uint, urlS3 string, us
 	uploadedDocument, uploadedDocumentErr := s.repository.UploadDocumentTransaction(idTransaction, urlS3, userId, documentType, transactionType, iupopkId)
 
 	return uploadedDocument, uploadedDocumentErr
+}
+
+func (s *service) DeleteDocumentTransaction(idTransaction uint, userId uint, documentType string, transactionType string, iupopkId int) (transaction.Transaction, error) {
+	transaction, transactionErr := s.repository.DeleteDocumentTransaction(idTransaction, userId, documentType, transactionType, iupopkId)
+
+	return transaction, transactionErr
 }
 
 func (s *service) CreateTransactionLN(inputTransactionLN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error) {

@@ -60,4 +60,6 @@ func TransactionRouting(db *gorm.DB, app fiber.Router, validate *validator.Valid
 	transactionRouting.Get("/detail/:transaction_type/:id/:iupopk_id", transactionHandler.DetailTransaction)
 	transactionRouting.Delete("/delete/:transaction_type/:id/:iupopk_id", transactionHandler.DeleteTransaction)
 	transactionRouting.Put("/update/document/:transaction_type/:id/:type/:iupopk_id", transactionHandler.UpdateDocumentTransaction)
+
+	transactionRouting.Delete("/delete/document/:transaction_type/:type/:id/:iupopk_id", transactionHandler.DeleteDocumentTransaction)
 }
