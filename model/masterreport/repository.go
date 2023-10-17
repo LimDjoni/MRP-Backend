@@ -5523,7 +5523,7 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 func (r *repository) GetTransactionReport(iupopkId int, input TransactionReportInput, typeTransaction string) ([]TransactionReport, error) {
 	var transactionReport []TransactionReport
 
-	errFind := r.db.Table("transactions").Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoDestinationPort.PortLocation").Preload("DmoBuyer.IndustryType.CategoryIndustryType").Where("seller_id = ? and transaction_type = ? and shipping_date >= ? and shipping_date <= ?", iupopkId, strings.ToUpper(typeTransaction), input.DateFrom, input.DateTo).Find(&transactionReport).Error
+	errFind := r.db.Table("transactions").Preload(clause.Associations).Preload("LoadingPort.Iupopk").Preload("UnloadingPort.PortLocation").Preload("DmoDestinationPort.PortLocation").Preload("DmoBuyer.IndustryType.CategoryIndustryType").Where("seller_id = ? and transaction_type = ? and shipping_date >= ? and shipping_date <= ?", iupopkId, strings.ToUpper(typeTransaction), input.DateFrom, input.DateTo).Find(&transactionReport).Error
 
 	if errFind != nil {
 		return transactionReport, errFind

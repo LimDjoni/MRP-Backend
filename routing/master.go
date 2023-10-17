@@ -37,7 +37,7 @@ func MasterRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) 
 		},
 	}))
 
-	masterRouting.Get("/global", masterHandler.GetListMaster)
+	masterRouting.Get("/global/:iupopk_id", masterHandler.GetListMaster)
 	masterRouting.Put("/update/counter", masterHandler.UpdateCounter)
 
 	masterRouting.Get("/list/trader", masterHandler.ListTrader)

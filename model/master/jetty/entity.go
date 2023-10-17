@@ -9,7 +9,7 @@ import (
 
 type Jetty struct {
 	gorm.Model
-	Name        string        `json:"name" gorm:"UNIQUE"`
+	Name        string        `json:"name"`
 	Latitude    string        `json:"latitude"`
 	Longitude   string        `json:"longitude"`
 	Quantity    float64       `json:"quantity"`

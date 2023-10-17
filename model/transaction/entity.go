@@ -10,6 +10,7 @@ import (
 	"ajebackend/model/master/currency"
 	"ajebackend/model/master/destination"
 	"ajebackend/model/master/iupopk"
+	"ajebackend/model/master/jetty"
 	"ajebackend/model/master/ports"
 	"ajebackend/model/master/salessystem"
 	"ajebackend/model/master/surveyor"
@@ -44,7 +45,7 @@ type Transaction struct {
 	CustomerId                     *uint                              `json:"customer_id"`
 	Customer                       *company.Company                   `json:"customer"`
 	LoadingPortId                  *uint                              `json:"loading_port_id"`
-	LoadingPort                    *ports.Port                        `json:"loading_port"`
+	LoadingPort                    *jetty.Jetty                       `json:"loading_port"`
 	UnloadingPortId                *uint                              `json:"unloading_port_id"`
 	UnloadingPort                  *ports.Port                        `json:"unloading_port"`
 	DmoDestinationPortId           *uint                              `json:"dmo_destination_port_id"`

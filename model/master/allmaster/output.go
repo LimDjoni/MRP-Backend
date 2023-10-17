@@ -11,6 +11,7 @@ import (
 	"ajebackend/model/master/industrytype"
 	"ajebackend/model/master/insurancecompany"
 	"ajebackend/model/master/iupopk"
+	"ajebackend/model/master/jetty"
 	"ajebackend/model/master/navycompany"
 	"ajebackend/model/master/navyship"
 	"ajebackend/model/master/pabeanoffice"
@@ -36,6 +37,7 @@ type MasterData struct {
 	IndustryType         []industrytype.IndustryType                 `json:"industry_type"`
 	InsuranceCompany     []insurancecompany.InsuranceCompany         `json:"insurance_company"`
 	Iupopk               []iupopk.Iupopk                             `json:"iupopk"`
+	Jetty                []jetty.Jetty                               `json:"jetty"`
 	NavyCompany          []navycompany.NavyCompany                   `json:"navy_company"`
 	NavyShip             []navyship.NavyShip                         `json:"navy_ship"`
 	PabeanOffice         []pabeanoffice.PabeanOffice                 `json:"pabean_office"`

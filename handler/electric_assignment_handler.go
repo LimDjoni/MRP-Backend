@@ -215,7 +215,7 @@ func (h *electrictAssignmentHandler) CreateElectricAssignment(c *fiber.Ctx) erro
 		return c.Status(400).JSON(responseErr)
 	}
 
-	if !strings.Contains(file.Filename, ".pdf") {
+	if !strings.Contains(strings.ToLower(file.Filename), ".pdf") {
 		responseErr["error"] = "document must be pdf"
 		return c.Status(400).JSON(responseErr)
 	}
@@ -507,7 +507,7 @@ func (h *electrictAssignmentHandler) UpdateElectricAssignment(c *fiber.Ctx) erro
 			"message": "failed to create electric assignment",
 		}
 
-		if !strings.Contains(file.Filename, ".pdf") {
+		if !strings.Contains(strings.ToLower(file.Filename), ".pdf") {
 			responseErr["error"] = "document must be pdf"
 			return c.Status(400).JSON(responseErr)
 		}
@@ -585,7 +585,7 @@ func (h *electrictAssignmentHandler) UpdateElectricAssignment(c *fiber.Ctx) erro
 			"message": "failed to create electric assignment",
 		}
 
-		if !strings.Contains(file.Filename, ".pdf") {
+		if !strings.Contains(strings.ToLower(file.Filename), ".pdf") {
 			responseErr["error"] = "document must be pdf"
 			return c.Status(400).JSON(responseErr)
 		}
@@ -663,7 +663,7 @@ func (h *electrictAssignmentHandler) UpdateElectricAssignment(c *fiber.Ctx) erro
 			"message": "failed to create electric assignment",
 		}
 
-		if !strings.Contains(file.Filename, ".pdf") {
+		if !strings.Contains(strings.ToLower(file.Filename), ".pdf") {
 			responseErr["error"] = "document must be pdf"
 			return c.Status(400).JSON(responseErr)
 		}
@@ -741,7 +741,7 @@ func (h *electrictAssignmentHandler) UpdateElectricAssignment(c *fiber.Ctx) erro
 			"message": "failed to create electric assignment",
 		}
 
-		if !strings.Contains(file.Filename, ".pdf") {
+		if !strings.Contains(strings.ToLower(file.Filename), ".pdf") {
 			responseErr["error"] = "document must be pdf"
 			return c.Status(400).JSON(responseErr)
 		}
@@ -819,7 +819,7 @@ func (h *electrictAssignmentHandler) UpdateElectricAssignment(c *fiber.Ctx) erro
 			"message": "failed to create electric assignment",
 		}
 
-		if !strings.Contains(file.Filename, ".pdf") {
+		if !strings.Contains(strings.ToLower(file.Filename), ".pdf") {
 			responseErr["error"] = "document must be pdf"
 			return c.Status(400).JSON(responseErr)
 		}
@@ -897,7 +897,7 @@ func (h *electrictAssignmentHandler) UpdateElectricAssignment(c *fiber.Ctx) erro
 			"message": "failed to create electric assignment",
 		}
 
-		if !strings.Contains(file.Filename, ".pdf") {
+		if !strings.Contains(strings.ToLower(file.Filename), ".pdf") {
 			responseErr["error"] = "document must be pdf"
 			return c.Status(400).JSON(responseErr)
 		}
@@ -975,7 +975,7 @@ func (h *electrictAssignmentHandler) UpdateElectricAssignment(c *fiber.Ctx) erro
 			"message": "failed to create electric assignment",
 		}
 
-		if !strings.Contains(file.Filename, ".pdf") {
+		if !strings.Contains(strings.ToLower(file.Filename), ".pdf") {
 			responseErr["error"] = "document must be pdf"
 			return c.Status(400).JSON(responseErr)
 		}
@@ -1053,7 +1053,7 @@ func (h *electrictAssignmentHandler) UpdateElectricAssignment(c *fiber.Ctx) erro
 			"message": "failed to create electric assignment",
 		}
 
-		if !strings.Contains(file.Filename, ".pdf") {
+		if !strings.Contains(strings.ToLower(file.Filename), ".pdf") {
 			responseErr["error"] = "document must be pdf"
 			return c.Status(400).JSON(responseErr)
 		}

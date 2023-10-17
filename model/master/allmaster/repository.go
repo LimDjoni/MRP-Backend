@@ -11,6 +11,7 @@ import (
 	"ajebackend/model/master/industrytype"
 	"ajebackend/model/master/insurancecompany"
 	"ajebackend/model/master/iupopk"
+	"ajebackend/model/master/jetty"
 	"ajebackend/model/master/navycompany"
 	"ajebackend/model/master/navyship"
 	"ajebackend/model/master/pabeanoffice"
@@ -30,7 +31,7 @@ import (
 )
 
 type Repository interface {
-	ListMasterData() (MasterData, error)
+	ListMasterData(iupopkId int) (MasterData, error)
 	FindIupopk(iupopkId int) (iupopk.Iupopk, error)
 	CreateBarge(input InputBarge) (barge.Barge, error)
 	CreateTugboat(input InputTugboat) (tugboat.Tugboat, error)
@@ -68,7 +69,7 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
-func (r *repository) ListMasterData() (MasterData, error) {
+func (r *repository) ListMasterData(iupopkId int) (MasterData, error) {
 	var masterData MasterData
 
 	var barge []barge.Barge
@@ -81,6 +82,7 @@ func (r *repository) ListMasterData() (MasterData, error) {
 	var industryType []industrytype.IndustryType
 	var insuranceCompany []insurancecompany.InsuranceCompany
 	var iupopk []iupopk.Iupopk
+	var jetty []jetty.Jetty
 	var navyCompany []navycompany.NavyCompany
 	var navyShip []navyship.NavyShip
 	var pabeanOffice []pabeanoffice.PabeanOffice
@@ -151,6 +153,12 @@ func (r *repository) ListMasterData() (MasterData, error) {
 
 	if findIupopkErr != nil {
 		return masterData, findIupopkErr
+	}
+
+	findJettyErr := r.db.Order("name asc").Preload(clause.Associations).Order("created_at desc").Where("iupopk_id = ?", iupopkId).Find(&jetty).Error
+
+	if findJettyErr != nil {
+		return masterData, findJettyErr
 	}
 
 	findNavyCompanyErr := r.db.Order("name asc").Order("created_at desc").Find(&navyCompany).Error
@@ -237,6 +245,7 @@ func (r *repository) ListMasterData() (MasterData, error) {
 	masterData.IndustryType = industryType
 	masterData.InsuranceCompany = insuranceCompany
 	masterData.Iupopk = iupopk
+	masterData.Jetty = jetty
 	masterData.NavyCompany = navyCompany
 	masterData.NavyShip = navyShip
 	masterData.PabeanOffice = pabeanOffice
