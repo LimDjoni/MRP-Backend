@@ -3760,7 +3760,7 @@ func (r *repository) DeleteCoaReport(id int, iupopkId int, userId uint) (bool, e
 
 	var history History
 
-	history.Status = fmt.Sprintf("Deleted Coa Report with id number %s and id %v", *coaReport.IdNumber, coaReport.ID)
+	history.Status = fmt.Sprintf("Deleted Coa Report with id number %s and id %v", coaReport.IdNumber, coaReport.ID)
 	history.UserId = userId
 	history.IupopkId = &iup.ID
 	history.BeforeData = coaReportData
@@ -3932,7 +3932,7 @@ func (r *repository) DeleteCoaReportLn(id int, iupopkId int, userId uint) (bool,
 
 	var history History
 
-	history.Status = fmt.Sprintf("Deleted Coa Report with id number %s and id %v", *coaReportLn.IdNumber, coaReportLn.ID)
+	history.Status = fmt.Sprintf("Deleted Coa Report with id number %s and id %v", coaReportLn.IdNumber, coaReportLn.ID)
 	history.UserId = userId
 	history.IupopkId = &iup.ID
 	history.BeforeData = coaReportLnData
@@ -4136,7 +4136,7 @@ func (r *repository) DeleteRkab(id int, iupopkId int, userId uint) (bool, error)
 
 	var history History
 
-	history.Status = fmt.Sprintf("Deleted Rkab with id number %s and id %v", *rkabDeleted.IdNumber, rkabDeleted.ID)
+	history.Status = fmt.Sprintf("Deleted Rkab with id number %s and id %v", rkabDeleted.IdNumber, rkabDeleted.ID)
 	history.UserId = userId
 	history.IupopkId = &iup.ID
 	history.BeforeData = rkabData
@@ -4594,7 +4594,7 @@ func (r *repository) DeleteElectricAssignment(id int, iupopkId int, userId uint)
 
 	var history History
 
-	history.Status = fmt.Sprintf("Deleted Electric Assignment with id number %s and id %v", *electricAssignmentDeleted.IdNumber, electricAssignmentDeleted.ID)
+	history.Status = fmt.Sprintf("Deleted Electric Assignment with id number %s and id %v", electricAssignmentDeleted.IdNumber, electricAssignmentDeleted.ID)
 	history.UserId = userId
 	history.IupopkId = &iup.ID
 	history.BeforeData = beforeData
@@ -4842,7 +4842,7 @@ func (r *repository) DeleteCafAssignment(id int, iupopkId int, userId uint) (boo
 
 	var history History
 
-	history.Status = fmt.Sprintf("Deleted Caf Assignment with id number %s and id %v", *cafAssignmentDeleted.IdNumber, cafAssignmentDeleted.ID)
+	history.Status = fmt.Sprintf("Deleted Caf Assignment with id number %s and id %v", cafAssignmentDeleted.IdNumber, cafAssignmentDeleted.ID)
 	history.UserId = userId
 	history.IupopkId = &iup.ID
 	history.BeforeData = beforeData
@@ -5156,7 +5156,7 @@ func (r *repository) DeleteRoyaltyRecon(id int, iupopkId int, userId uint) (bool
 
 	var history History
 
-	history.Status = fmt.Sprintf("Deleted Royalty Recon with id number %s and id %v", *royaltyRecon.IdNumber, royaltyRecon.ID)
+	history.Status = fmt.Sprintf("Deleted Royalty Recon with id number %s and id %v", royaltyRecon.IdNumber, royaltyRecon.ID)
 	history.UserId = userId
 	history.IupopkId = &iup.ID
 	history.BeforeData = royaltyReconData
@@ -5326,7 +5326,7 @@ func (r *repository) DeleteRoyaltyReport(id int, iupopkId int, userId uint) (boo
 
 	var history History
 
-	history.Status = fmt.Sprintf("Deleted Royalty Report with id number %s and id %v", *royaltyReport.IdNumber, royaltyReport.ID)
+	history.Status = fmt.Sprintf("Deleted Royalty Report with id number %s and id %v", royaltyReport.IdNumber, royaltyReport.ID)
 	history.UserId = userId
 	history.IupopkId = &iup.ID
 	history.BeforeData = royaltyReportData
