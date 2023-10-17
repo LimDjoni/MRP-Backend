@@ -63,7 +63,17 @@ func (h *masterHandler) GetDestination(c *fiber.Ctx) error {
 
 func (h *masterHandler) GetListMaster(c *fiber.Ctx) error {
 
-	listMaster, listMasterErr := h.allMasterService.ListMasterData()
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "record not found",
+		})
+	}
+
+	listMaster, listMasterErr := h.allMasterService.ListMasterData(iupopkIdInt)
 
 	if listMasterErr != nil {
 		return c.Status(400).JSON(fiber.Map{

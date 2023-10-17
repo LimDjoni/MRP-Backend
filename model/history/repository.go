@@ -2170,7 +2170,6 @@ func (r *repository) EditGroupingVesselDn(id int, editGrouping groupingvesseldn.
 
 	updateTransactions["vessel_id"] = editGrouping.VesselId
 	updateTransactions["dmo_buyer_id"] = editGrouping.BuyerId
-	updateTransactions["loading_port_id"] = editGrouping.LoadingPortId
 	updateTransactions["dmo_destination_port_id"] = editGrouping.DmoDestinationPortId
 	updateTransactions["destination_country_id"] = editGrouping.DestinationCountryId
 	updateTransactions["destination_id"] = editGrouping.DestinationId

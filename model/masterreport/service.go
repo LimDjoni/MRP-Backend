@@ -3293,8 +3293,8 @@ func (s *service) CreateTransactionReport(file *excelize.File, sheetName string,
 		if value.LoadingPort != nil {
 			file.SetCellValue(sheetName, fmt.Sprintf("K%v", 4+idx), strings.ToUpper(value.LoadingPort.Name))
 
-			if value.LoadingPort.PortLocation.Name != "" {
-				file.SetCellValue(sheetName, fmt.Sprintf("L%v", 4+idx), strings.ToUpper(value.LoadingPort.PortLocation.Name))
+			if value.LoadingPort.Iupopk.Province != "" {
+				file.SetCellValue(sheetName, fmt.Sprintf("L%v", 4+idx), strings.ToUpper(value.LoadingPort.Iupopk.Province))
 			}
 		}
 

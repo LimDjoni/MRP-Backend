@@ -13,7 +13,7 @@ import (
 )
 
 type Service interface {
-	ListMasterData() (MasterData, error)
+	ListMasterData(iupopkId int) (MasterData, error)
 	FindIupopk(iupopkId int) (iupopk.Iupopk, error)
 	CreateBarge(input InputBarge) (barge.Barge, error)
 	CreateTugboat(input InputTugboat) (tugboat.Tugboat, error)
@@ -51,8 +51,8 @@ func NewService(repository Repository) *service {
 	return &service{repository}
 }
 
-func (s *service) ListMasterData() (MasterData, error) {
-	listMasterData, listMasterDataErr := s.repository.ListMasterData()
+func (s *service) ListMasterData(iupopkId int) (MasterData, error) {
+	listMasterData, listMasterDataErr := s.repository.ListMasterData(iupopkId)
 
 	return listMasterData, listMasterDataErr
 }
