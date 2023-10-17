@@ -47,6 +47,7 @@ type Repository interface {
 	DeleteTransaction(id int, userId uint, transactionType string, iupopId int) (bool, error)
 	UpdateTransactionDN(idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error)
 	UploadDocumentTransaction(idTransaction uint, urlS3 string, userId uint, documentType string, transactionType string, iupopkId int) (transaction.Transaction, error)
+	DeleteDocumentTransaction(idTransaction uint, userId uint, documentType string, transactionType string, iupopkId int) (transaction.Transaction, error)
 	CreateTransactionLN(inputTransactionLN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error)
 	UpdateTransactionLN(id int, inputTransactionLN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error)
 	CreateMinerba(period string, updateTransaction []int, userId uint, iupopkId int) (minerba.Minerba, error)
@@ -492,6 +493,64 @@ func (r *repository) UploadDocumentTransaction(idTransaction uint, urlS3 string,
 
 	tx.Commit()
 	return uploadedTransaction, nil
+}
+
+func (r *repository) DeleteDocumentTransaction(idTransaction uint, userId uint, documentType string, transactionType string, iupopkId int) (transaction.Transaction, error) {
+	var transaction transaction.Transaction
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("id = ? AND transaction_type = ? AND seller_id = ?", idTransaction, transactionType, iupopkId).First(&transaction).Error
+
+	if errFind != nil {
+		return transaction, errFind
+	}
+
+	editData := make(map[string]interface{})
+
+	switch documentType {
+	case "skb":
+		editData["skb_document_link"] = nil
+	case "skab":
+		editData["skab_document_link"] = nil
+	case "bl":
+		editData["bl_document_link"] = nil
+	case "royalti_provision":
+		editData["royalti_provision_document_link"] = nil
+	case "royalti_final":
+		editData["royalti_final_document_link"] = nil
+	case "cow":
+		editData["cow_document_link"] = nil
+	case "coa":
+		editData["coa_document_link"] = nil
+	case "invoice":
+		editData["invoice_and_contract_document_link"] = nil
+	case "lhv":
+		editData["lhv_document_link"] = nil
+	}
+
+	errEdit := tx.Model(&transaction).Updates(editData).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return transaction, errEdit
+	}
+
+	var history History
+
+	history.TransactionId = &transaction.ID
+	history.UserId = userId
+	history.Status = fmt.Sprintf("Delete %s document", documentType)
+	history.IupopkId = transaction.SellerId
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return transaction, createHistoryErr
+	}
+
+	tx.Commit()
+	return transaction, nil
 }
 
 // Transaction LN
