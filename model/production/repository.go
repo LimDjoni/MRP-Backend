@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Repository interface {
@@ -44,7 +45,7 @@ func (r *repository) GetListProduction(page int, filter FilterListProduction, iu
 		queryFilter = queryFilter + " AND cast(quantity AS TEXT) LIKE '%" + filter.Quantity + "%'"
 	}
 
-	errFind := r.db.Where(queryFilter).Order(querySort).Scopes(paginateProduction(listProduction, &pagination, r.db, queryFilter)).Find(&listProduction).Error
+	errFind := r.db.Preload(clause.Associations).Where(queryFilter).Order(querySort).Scopes(paginateProduction(listProduction, &pagination, r.db, queryFilter)).Find(&listProduction).Error
 
 	if errFind != nil {
 		return pagination, errFind
@@ -58,7 +59,7 @@ func (r *repository) GetListProduction(page int, filter FilterListProduction, iu
 func (r *repository) DetailProduction(id int, iupopkId int) (Production, error) {
 	var detailProduction Production
 
-	errFind := r.db.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&detailProduction).Error
+	errFind := r.db.Preload(clause.Associations).Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&detailProduction).Error
 
 	return detailProduction, errFind
 }

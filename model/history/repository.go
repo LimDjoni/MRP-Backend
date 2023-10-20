@@ -1934,7 +1934,11 @@ func (r *repository) CreateProduction(input production.InputCreateProduction, us
 
 	createdProduction.ProductionDate = input.ProductionDate
 	createdProduction.Quantity = math.Round(input.Quantity*1000) / 1000
+	createdProduction.RitaseQuantity = input.RitaseQuantity
+	createdProduction.PitId = input.PitId
+	createdProduction.JettyId = input.JettyId
 	createdProduction.IupopkId = uint(iupopkId)
+
 	tx := r.db.Begin()
 
 	errCreateProduction := tx.Create(&createdProduction).Error
@@ -1978,6 +1982,9 @@ func (r *repository) UpdateProduction(input production.InputCreateProduction, pr
 	editData := make(map[string]interface{})
 	editData["production_date"] = input.ProductionDate
 	editData["quantity"] = math.Round(input.Quantity*1000) / 1000
+	editData["ritase_quantity"] = input.RitaseQuantity
+	editData["pit_id"] = input.PitId
+	editData["jetty_id"] = input.JettyId
 
 	errUpdateProduction := tx.Model(&updatedProduction).Updates(editData).Error
 
