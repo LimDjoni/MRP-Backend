@@ -10,11 +10,13 @@ import (
 	"ajebackend/model/master/documenttype"
 	"ajebackend/model/master/industrytype"
 	"ajebackend/model/master/insurancecompany"
+	"ajebackend/model/master/isp"
 	"ajebackend/model/master/iupopk"
 	"ajebackend/model/master/jetty"
 	"ajebackend/model/master/navycompany"
 	"ajebackend/model/master/navyship"
 	"ajebackend/model/master/pabeanoffice"
+	"ajebackend/model/master/pit"
 	"ajebackend/model/master/portinsw"
 	"ajebackend/model/master/portlocation"
 	"ajebackend/model/master/ports"
@@ -81,11 +83,13 @@ func (r *repository) ListMasterData(iupopkId int) (MasterData, error) {
 	var documentType []documenttype.DocumentType
 	var industryType []industrytype.IndustryType
 	var insuranceCompany []insurancecompany.InsuranceCompany
+	var isp []isp.Isp
 	var iupopk []iupopk.Iupopk
 	var jetty []jetty.Jetty
 	var navyCompany []navycompany.NavyCompany
 	var navyShip []navyship.NavyShip
 	var pabeanOffice []pabeanoffice.PabeanOffice
+	var pit []pit.Pit
 	var portInsw []portinsw.PortInsw
 	var portLocation []portlocation.PortLocation
 	var ports []ports.Port
@@ -149,6 +153,12 @@ func (r *repository) ListMasterData(iupopkId int) (MasterData, error) {
 		return masterData, findInsuranceCompanyErr
 	}
 
+	findIspErr := r.db.Order("name asc").Order("created_at desc").Find(&isp).Error
+
+	if findIspErr != nil {
+		return masterData, findIspErr
+	}
+
 	findIupopkErr := r.db.Order("name asc").Order("created_at desc").Find(&iupopk).Error
 
 	if findIupopkErr != nil {
@@ -177,6 +187,12 @@ func (r *repository) ListMasterData(iupopkId int) (MasterData, error) {
 
 	if findPabeanOfficeErr != nil {
 		return masterData, findPabeanOfficeErr
+	}
+
+	findPitErr := r.db.Order("name asc").Order("created_at desc").Find(&pit).Error
+
+	if findPitErr != nil {
+		return masterData, findPitErr
 	}
 
 	findPortInswErr := r.db.Order("name asc").Order("created_at desc").Find(&portInsw).Error
@@ -244,11 +260,13 @@ func (r *repository) ListMasterData(iupopkId int) (MasterData, error) {
 	masterData.DocumentType = documentType
 	masterData.IndustryType = industryType
 	masterData.InsuranceCompany = insuranceCompany
+	masterData.Isp = isp
 	masterData.Iupopk = iupopk
 	masterData.Jetty = jetty
 	masterData.NavyCompany = navyCompany
 	masterData.NavyShip = navyShip
 	masterData.PabeanOffice = pabeanOffice
+	masterData.Pit = pit
 	masterData.PortInsw = portInsw
 	masterData.PortLocation = portLocation
 	masterData.Ports = ports

@@ -10,6 +10,7 @@ import (
 	"ajebackend/model/rkab"
 	"ajebackend/model/transaction"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -1399,67 +1400,2027 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 	companyElectricity := make(map[string][]string)
 	companyCement := make(map[string][]string)
 	companyNonElectricity := make(map[string][]string)
+	jettyProductionList := make(map[string][]string)
 
 	// Production Query
 	var listProduction []production.Production
 
 	queryFilterProduction := fmt.Sprintf("production_date >= '%s' AND production_date <= '%s' AND iupopk_id = %v", startFilter, endFilter, iupopkId)
 
-	errFindProduction := r.db.Where(queryFilterProduction).Order("id ASC").Find(&listProduction).Error
+	errFindProduction := r.db.Preload(clause.Associations).Where(queryFilterProduction).Order("id ASC").Find(&listProduction).Error
 
 	if errFindProduction != nil {
 		return saleDetail, errFindProduction
 	}
 
+	var salesJetty SalesJetty
+
+	salesJetty.January = make(map[string]float64)
+	salesJetty.February = make(map[string]float64)
+	salesJetty.March = make(map[string]float64)
+	salesJetty.April = make(map[string]float64)
+	salesJetty.May = make(map[string]float64)
+	salesJetty.June = make(map[string]float64)
+	salesJetty.July = make(map[string]float64)
+	salesJetty.August = make(map[string]float64)
+	salesJetty.September = make(map[string]float64)
+	salesJetty.October = make(map[string]float64)
+	salesJetty.November = make(map[string]float64)
+	salesJetty.December = make(map[string]float64)
+
+	var productionJetty ProductionJetty
+
+	productionJetty.January = make(map[string]map[string]map[string]float64)
+	productionJetty.February = make(map[string]map[string]map[string]float64)
+	productionJetty.March = make(map[string]map[string]map[string]float64)
+	productionJetty.April = make(map[string]map[string]map[string]float64)
+	productionJetty.May = make(map[string]map[string]map[string]float64)
+	productionJetty.June = make(map[string]map[string]map[string]float64)
+	productionJetty.July = make(map[string]map[string]map[string]float64)
+	productionJetty.August = make(map[string]map[string]map[string]float64)
+	productionJetty.September = make(map[string]map[string]map[string]float64)
+	productionJetty.October = make(map[string]map[string]map[string]float64)
+	productionJetty.November = make(map[string]map[string]map[string]float64)
+	productionJetty.December = make(map[string]map[string]map[string]float64)
+
 	for _, v := range listProduction {
+
 		date, _ := time.Parse("2006-01-02T00:00:00Z", v.ProductionDate)
 		_, month, _ := date.Date()
 		switch int(month) {
 		case 1:
 			saleDetail.Production.January += v.Quantity
 			saleDetail.Production.Total += v.Quantity
+
+			if v.Jetty != nil {
+				_, okJetty := jettyProductionList[v.Jetty.Name]
+
+				if !okJetty {
+					jettyProductionList[v.Jetty.Name] = []string{}
+				}
+
+				_, ok := productionJetty.January[v.Jetty.Name]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.January[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.January[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.January[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.January[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.January[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.January[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.January[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.January[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.January[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.January[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.January[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.January[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+					_, okJetty := jettyProductionList[v.Jetty.Name]
+
+					if !okJetty {
+						jettyProductionList[v.Jetty.Name] = []string{}
+					}
+
+					productionJetty.January[v.Jetty.Name] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.January[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.January[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.January[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.January[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.January[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.January[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.January[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.January[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.January[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.January[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.January[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.January[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			} else {
+				_, okJetty := jettyProductionList["-"]
+
+				if !okJetty {
+					jettyProductionList["-"] = []string{}
+				}
+
+				_, ok := productionJetty.January["-"]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+						_, okPit := productionJetty.January["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.January["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.January["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.January["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.January["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.January["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+						_, okPit := productionJetty.January["-"]["-"]
+
+						if okPit {
+							productionJetty.January["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.January["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.January["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.January["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.January["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+
+					productionJetty.January["-"] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.January["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.January["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.January["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.January["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.January["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.January["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+
+						_, okPit := productionJetty.January["-"]["-"]
+
+						if okPit {
+							productionJetty.January["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.January["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.January["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.January["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.January["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			}
+
 		case 2:
 			saleDetail.Production.February += v.Quantity
 			saleDetail.Production.Total += v.Quantity
+
+			if v.Jetty != nil {
+				_, okJetty := jettyProductionList[v.Jetty.Name]
+
+				if !okJetty {
+					jettyProductionList[v.Jetty.Name] = []string{}
+				}
+
+				_, ok := productionJetty.February[v.Jetty.Name]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.February[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.February[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.February[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.February[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.February[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.February[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.February[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.February[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.February[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.February[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.February[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.February[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+					_, okJetty := jettyProductionList[v.Jetty.Name]
+
+					if !okJetty {
+						jettyProductionList[v.Jetty.Name] = []string{}
+					}
+
+					productionJetty.February[v.Jetty.Name] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.February[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.February[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.February[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.February[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.February[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.February[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.February[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.February[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.February[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.February[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.February[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.February[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			} else {
+				_, okJetty := jettyProductionList["-"]
+
+				if !okJetty {
+					jettyProductionList["-"] = []string{}
+				}
+
+				_, ok := productionJetty.February["-"]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+						_, okPit := productionJetty.February["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.February["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.February["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.February["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.February["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.February["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+						_, okPit := productionJetty.February["-"]["-"]
+
+						if okPit {
+							productionJetty.February["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.February["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.February["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.February["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.February["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+
+					productionJetty.February["-"] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.February["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.February["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.February["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.February["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.February["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.February["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+
+						_, okPit := productionJetty.February["-"]["-"]
+
+						if okPit {
+							productionJetty.February["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.February["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.February["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.February["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.February["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			}
+
 		case 3:
 			saleDetail.Production.March += v.Quantity
 			saleDetail.Production.Total += v.Quantity
+
+			if v.Jetty != nil {
+				_, okJetty := jettyProductionList[v.Jetty.Name]
+
+				if !okJetty {
+					jettyProductionList[v.Jetty.Name] = []string{}
+				}
+
+				_, ok := productionJetty.March[v.Jetty.Name]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.March[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.March[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.March[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.March[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.March[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.March[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.March[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.March[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.March[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.March[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.March[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.March[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+					_, okJetty := jettyProductionList[v.Jetty.Name]
+
+					if !okJetty {
+						jettyProductionList[v.Jetty.Name] = []string{}
+					}
+
+					productionJetty.March[v.Jetty.Name] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.March[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.March[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.March[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.March[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.March[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.March[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.March[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.March[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.March[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.March[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.March[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.March[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			} else {
+				_, okJetty := jettyProductionList["-"]
+
+				if !okJetty {
+					jettyProductionList["-"] = []string{}
+				}
+
+				_, ok := productionJetty.March["-"]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+						_, okPit := productionJetty.March["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.March["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.March["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.March["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.March["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.March["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+						_, okPit := productionJetty.March["-"]["-"]
+
+						if okPit {
+							productionJetty.March["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.March["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.March["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.March["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.March["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+
+					productionJetty.March["-"] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.March["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.March["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.March["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.March["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.March["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.March["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+
+						_, okPit := productionJetty.March["-"]["-"]
+
+						if okPit {
+							productionJetty.March["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.March["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.March["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.March["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.March["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			}
+
 		case 4:
 			saleDetail.Production.April += v.Quantity
 			saleDetail.Production.Total += v.Quantity
+
+			if v.Jetty != nil {
+				_, okJetty := jettyProductionList[v.Jetty.Name]
+
+				if !okJetty {
+					jettyProductionList[v.Jetty.Name] = []string{}
+				}
+
+				_, ok := productionJetty.April[v.Jetty.Name]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.April[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.April[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.April[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.April[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.April[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.April[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.April[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.April[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.April[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.April[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.April[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.April[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+					_, okJetty := jettyProductionList[v.Jetty.Name]
+
+					if !okJetty {
+						jettyProductionList[v.Jetty.Name] = []string{}
+					}
+
+					productionJetty.April[v.Jetty.Name] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.April[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.April[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.April[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.April[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.April[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.April[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.April[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.April[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.April[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.April[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.April[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.April[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			} else {
+				_, okJetty := jettyProductionList["-"]
+
+				if !okJetty {
+					jettyProductionList["-"] = []string{}
+				}
+
+				_, ok := productionJetty.April["-"]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+						_, okPit := productionJetty.April["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.April["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.April["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.April["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.April["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.April["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+						_, okPit := productionJetty.April["-"]["-"]
+
+						if okPit {
+							productionJetty.April["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.April["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.April["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.April["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.April["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+
+					productionJetty.April["-"] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.April["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.April["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.April["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.April["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.April["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.April["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+
+						_, okPit := productionJetty.April["-"]["-"]
+
+						if okPit {
+							productionJetty.April["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.April["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.April["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.April["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.April["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			}
+
 		case 5:
 			saleDetail.Production.May += v.Quantity
 			saleDetail.Production.Total += v.Quantity
+
+			if v.Jetty != nil {
+				_, okJetty := jettyProductionList[v.Jetty.Name]
+
+				if !okJetty {
+					jettyProductionList[v.Jetty.Name] = []string{}
+				}
+
+				_, ok := productionJetty.May[v.Jetty.Name]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.May[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.May[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.May[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.May[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.May[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.May[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.May[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.May[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.May[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.May[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.May[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.May[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+					_, okJetty := jettyProductionList[v.Jetty.Name]
+
+					if !okJetty {
+						jettyProductionList[v.Jetty.Name] = []string{}
+					}
+
+					productionJetty.May[v.Jetty.Name] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.May[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.May[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.May[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.May[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.May[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.May[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.May[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.May[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.May[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.May[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.May[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.May[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			} else {
+				_, okJetty := jettyProductionList["-"]
+
+				if !okJetty {
+					jettyProductionList["-"] = []string{}
+				}
+
+				_, ok := productionJetty.May["-"]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+						_, okPit := productionJetty.May["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.May["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.May["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.May["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.May["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.May["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+						_, okPit := productionJetty.May["-"]["-"]
+
+						if okPit {
+							productionJetty.May["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.May["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.May["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.May["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.May["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+
+					productionJetty.May["-"] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.May["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.May["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.May["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.May["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.May["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.May["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+
+						_, okPit := productionJetty.May["-"]["-"]
+
+						if okPit {
+							productionJetty.May["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.May["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.May["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.May["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.May["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			}
+
 		case 6:
 			saleDetail.Production.June += v.Quantity
 			saleDetail.Production.Total += v.Quantity
+
+			if v.Jetty != nil {
+				_, okJetty := jettyProductionList[v.Jetty.Name]
+
+				if !okJetty {
+					jettyProductionList[v.Jetty.Name] = []string{}
+				}
+
+				_, ok := productionJetty.June[v.Jetty.Name]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.June[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.June[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.June[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.June[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.June[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.June[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.June[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.June[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.June[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.June[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.June[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.June[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+					_, okJetty := jettyProductionList[v.Jetty.Name]
+
+					if !okJetty {
+						jettyProductionList[v.Jetty.Name] = []string{}
+					}
+
+					productionJetty.June[v.Jetty.Name] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.June[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.June[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.June[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.June[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.June[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.June[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.June[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.June[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.June[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.June[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.June[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.June[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			} else {
+				_, okJetty := jettyProductionList["-"]
+
+				if !okJetty {
+					jettyProductionList["-"] = []string{}
+				}
+
+				_, ok := productionJetty.June["-"]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+						_, okPit := productionJetty.June["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.June["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.June["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.June["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.June["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.June["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+						_, okPit := productionJetty.June["-"]["-"]
+
+						if okPit {
+							productionJetty.June["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.June["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.June["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.June["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.June["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+
+					productionJetty.June["-"] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.June["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.June["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.June["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.June["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.June["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.June["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+
+						_, okPit := productionJetty.June["-"]["-"]
+
+						if okPit {
+							productionJetty.June["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.June["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.June["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.June["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.June["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			}
+
 		case 7:
 			saleDetail.Production.July += v.Quantity
 			saleDetail.Production.Total += v.Quantity
+
+			if v.Jetty != nil {
+				_, okJetty := jettyProductionList[v.Jetty.Name]
+
+				if !okJetty {
+					jettyProductionList[v.Jetty.Name] = []string{}
+				}
+
+				_, ok := productionJetty.July[v.Jetty.Name]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.July[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.July[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.July[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.July[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.July[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.July[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.July[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.July[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.July[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.July[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.July[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.July[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+					_, okJetty := jettyProductionList[v.Jetty.Name]
+
+					if !okJetty {
+						jettyProductionList[v.Jetty.Name] = []string{}
+					}
+
+					productionJetty.July[v.Jetty.Name] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.July[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.July[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.July[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.July[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.July[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.July[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.July[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.July[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.July[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.July[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.July[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.July[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			} else {
+				_, okJetty := jettyProductionList["-"]
+
+				if !okJetty {
+					jettyProductionList["-"] = []string{}
+				}
+
+				_, ok := productionJetty.July["-"]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+						_, okPit := productionJetty.July["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.July["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.July["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.July["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.July["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.July["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+						_, okPit := productionJetty.July["-"]["-"]
+
+						if okPit {
+							productionJetty.July["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.July["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.July["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.July["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.July["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+
+					productionJetty.July["-"] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.July["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.July["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.July["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.July["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.July["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.July["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+
+						_, okPit := productionJetty.July["-"]["-"]
+
+						if okPit {
+							productionJetty.July["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.July["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.July["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.July["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.July["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			}
+
 		case 8:
 			saleDetail.Production.August += v.Quantity
 			saleDetail.Production.Total += v.Quantity
+
+			if v.Jetty != nil {
+				_, okJetty := jettyProductionList[v.Jetty.Name]
+
+				if !okJetty {
+					jettyProductionList[v.Jetty.Name] = []string{}
+				}
+
+				_, ok := productionJetty.August[v.Jetty.Name]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.August[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.August[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.August[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.August[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.August[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.August[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.August[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.August[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.August[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.August[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.August[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.August[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+					_, okJetty := jettyProductionList[v.Jetty.Name]
+
+					if !okJetty {
+						jettyProductionList[v.Jetty.Name] = []string{}
+					}
+
+					productionJetty.August[v.Jetty.Name] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.August[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.August[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.August[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.August[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.August[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.August[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.August[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.August[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.August[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.August[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.August[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.August[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			} else {
+				_, okJetty := jettyProductionList["-"]
+
+				if !okJetty {
+					jettyProductionList["-"] = []string{}
+				}
+
+				_, ok := productionJetty.August["-"]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+						_, okPit := productionJetty.August["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.August["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.August["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.August["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.August["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.August["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+						_, okPit := productionJetty.August["-"]["-"]
+
+						if okPit {
+							productionJetty.August["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.August["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.August["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.August["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.August["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+
+					productionJetty.August["-"] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.August["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.August["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.August["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.August["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.August["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.August["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+
+						_, okPit := productionJetty.August["-"]["-"]
+
+						if okPit {
+							productionJetty.August["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.August["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.August["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.August["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.August["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			}
+
 		case 9:
 			saleDetail.Production.September += v.Quantity
 			saleDetail.Production.Total += v.Quantity
+
+			if v.Jetty != nil {
+				_, okJetty := jettyProductionList[v.Jetty.Name]
+
+				if !okJetty {
+					jettyProductionList[v.Jetty.Name] = []string{}
+				}
+
+				_, ok := productionJetty.September[v.Jetty.Name]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.September[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.September[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.September[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.September[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.September[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.September[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.September[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.September[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.September[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.September[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.September[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.September[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+					_, okJetty := jettyProductionList[v.Jetty.Name]
+
+					if !okJetty {
+						jettyProductionList[v.Jetty.Name] = []string{}
+					}
+
+					productionJetty.September[v.Jetty.Name] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.September[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.September[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.September[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.September[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.September[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.September[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.September[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.September[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.September[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.September[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.September[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.September[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			} else {
+				_, okJetty := jettyProductionList["-"]
+
+				if !okJetty {
+					jettyProductionList["-"] = []string{}
+				}
+
+				_, ok := productionJetty.September["-"]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+						_, okPit := productionJetty.September["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.September["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.September["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.September["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.September["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.September["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+						_, okPit := productionJetty.September["-"]["-"]
+
+						if okPit {
+							productionJetty.September["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.September["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.September["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.September["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.September["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+
+					productionJetty.September["-"] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.September["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.September["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.September["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.September["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.September["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.September["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+
+						_, okPit := productionJetty.September["-"]["-"]
+
+						if okPit {
+							productionJetty.September["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.September["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.September["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.September["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.September["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			}
+
 		case 10:
 			saleDetail.Production.October += v.Quantity
 			saleDetail.Production.Total += v.Quantity
+
+			if v.Jetty != nil {
+				_, okJetty := jettyProductionList[v.Jetty.Name]
+
+				if !okJetty {
+					jettyProductionList[v.Jetty.Name] = []string{}
+				}
+
+				_, ok := productionJetty.October[v.Jetty.Name]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.October[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.October[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.October[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.October[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.October[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.October[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.October[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.October[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.October[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.October[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.October[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.October[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+					_, okJetty := jettyProductionList[v.Jetty.Name]
+
+					if !okJetty {
+						jettyProductionList[v.Jetty.Name] = []string{}
+					}
+
+					productionJetty.October[v.Jetty.Name] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.October[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.October[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.October[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.October[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.October[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.October[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.October[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.October[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.October[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.October[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.October[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.October[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			} else {
+				_, okJetty := jettyProductionList["-"]
+
+				if !okJetty {
+					jettyProductionList["-"] = []string{}
+				}
+
+				_, ok := productionJetty.October["-"]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+						_, okPit := productionJetty.October["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.October["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.October["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.October["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.October["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.October["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+						_, okPit := productionJetty.October["-"]["-"]
+
+						if okPit {
+							productionJetty.October["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.October["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.October["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.October["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.October["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+
+					productionJetty.October["-"] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.October["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.October["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.October["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.October["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.October["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.October["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+
+						_, okPit := productionJetty.October["-"]["-"]
+
+						if okPit {
+							productionJetty.October["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.October["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.October["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.October["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.October["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			}
+
 		case 11:
 			saleDetail.Production.November += v.Quantity
 			saleDetail.Production.Total += v.Quantity
+
+			if v.Jetty != nil {
+				_, okJetty := jettyProductionList[v.Jetty.Name]
+
+				if !okJetty {
+					jettyProductionList[v.Jetty.Name] = []string{}
+				}
+
+				_, ok := productionJetty.November[v.Jetty.Name]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.November[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.November[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.November[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.November[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.November[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.November[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.November[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.November[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.November[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.November[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.November[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.November[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+					_, okJetty := jettyProductionList[v.Jetty.Name]
+
+					if !okJetty {
+						jettyProductionList[v.Jetty.Name] = []string{}
+					}
+
+					productionJetty.November[v.Jetty.Name] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.November[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.November[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.November[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.November[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.November[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.November[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.November[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.November[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.November[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.November[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.November[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.November[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			} else {
+				_, okJetty := jettyProductionList["-"]
+
+				if !okJetty {
+					jettyProductionList["-"] = []string{}
+				}
+
+				_, ok := productionJetty.November["-"]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+						_, okPit := productionJetty.November["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.November["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.November["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.November["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.November["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.November["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+						_, okPit := productionJetty.November["-"]["-"]
+
+						if okPit {
+							productionJetty.November["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.November["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.November["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.November["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.November["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+
+					productionJetty.November["-"] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.November["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.November["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.November["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.November["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.November["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.November["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+
+						_, okPit := productionJetty.November["-"]["-"]
+
+						if okPit {
+							productionJetty.November["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.November["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.November["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.November["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.November["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			}
+
 		case 12:
 			saleDetail.Production.December += v.Quantity
 			saleDetail.Production.Total += v.Quantity
+
+			if v.Jetty != nil {
+				_, okJetty := jettyProductionList[v.Jetty.Name]
+
+				if !okJetty {
+					jettyProductionList[v.Jetty.Name] = []string{}
+				}
+
+				_, ok := productionJetty.December[v.Jetty.Name]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.December[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.December[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.December[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.December[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.December[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.December[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.December[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.December[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.December[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.December[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.December[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.December[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+					_, okJetty := jettyProductionList[v.Jetty.Name]
+
+					if !okJetty {
+						jettyProductionList[v.Jetty.Name] = []string{}
+					}
+
+					productionJetty.December[v.Jetty.Name] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList[v.Jetty.Name], v.Pit.Name) {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.December[v.Jetty.Name][v.Pit.Name]
+
+						if okPit {
+							productionJetty.December[v.Jetty.Name][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.December[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.December[v.Jetty.Name][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.December[v.Jetty.Name][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.December[v.Jetty.Name][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList[v.Jetty.Name], "-") {
+							jettyProductionList[v.Jetty.Name] = append(jettyProductionList[v.Jetty.Name], "-")
+						}
+
+						_, okPit := productionJetty.December[v.Jetty.Name]["-"]
+
+						if okPit {
+							productionJetty.December[v.Jetty.Name]["-"]["quantity"] += v.Quantity
+							productionJetty.December[v.Jetty.Name]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.December[v.Jetty.Name]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.December[v.Jetty.Name]["-"]["quantity"] = v.Quantity
+							productionJetty.December[v.Jetty.Name]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			} else {
+				_, okJetty := jettyProductionList["-"]
+
+				if !okJetty {
+					jettyProductionList["-"] = []string{}
+				}
+
+				_, ok := productionJetty.December["-"]
+
+				if ok {
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+						_, okPit := productionJetty.December["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.December["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.December["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.December["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.December["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.December["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+						_, okPit := productionJetty.December["-"]["-"]
+
+						if okPit {
+							productionJetty.December["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.December["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.December["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.December["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.December["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				} else {
+
+					productionJetty.December["-"] = map[string]map[string]float64{}
+
+					if v.Pit != nil {
+						if !helperString(jettyProductionList["-"], v.Pit.Name) {
+							jettyProductionList["-"] = append(jettyProductionList["-"], v.Pit.Name)
+						}
+
+						_, okPit := productionJetty.December["-"][v.Pit.Name]
+
+						if okPit {
+							productionJetty.December["-"][v.Pit.Name]["quantity"] += v.Quantity
+							productionJetty.December["-"][v.Pit.Name]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.December["-"][v.Pit.Name] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.December["-"][v.Pit.Name]["quantity"] = v.Quantity
+							productionJetty.December["-"][v.Pit.Name]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					} else {
+						if !helperString(jettyProductionList["-"], "-") {
+							jettyProductionList["-"] = append(jettyProductionList["-"], "-")
+						}
+
+						_, okPit := productionJetty.December["-"]["-"]
+
+						if okPit {
+							productionJetty.December["-"]["-"]["quantity"] += v.Quantity
+							productionJetty.December["-"]["-"]["ritase_quantity"] += float64(v.RitaseQuantity)
+						} else {
+							productionJetty.December["-"]["-"] = map[string]float64{"quantity": 0, "ritase_quantity": 0}
+							productionJetty.December["-"]["-"]["quantity"] = v.Quantity
+							productionJetty.December["-"]["-"]["ritase_quantity"] = float64(v.RitaseQuantity)
+						}
+					}
+				}
+			}
+
 		}
 	}
+
+	saleDetail.ProductionJetty = productionJetty
+
+	for key, _ := range jettyProductionList {
+		sort.Sort(sort.StringSlice(jettyProductionList[key]))
+	}
+
+	saleDetail.JettyProductionList = jettyProductionList
 
 	// Query Transaction
 	var listCurrentTransactions []transaction.Transaction
 
 	queryCurrentFilter := fmt.Sprintf("seller_id = %v AND shipping_date >= '%s' AND shipping_date <= '%s'", iupopkId, startFilter, endFilter)
 
-	errCurrentFind := r.db.Where(queryCurrentFilter).Order("shipping_date ASC").Find(&listCurrentTransactions).Error
+	errCurrentFind := r.db.Preload("LoadingPort").Where(queryCurrentFilter).Order("shipping_date ASC").Find(&listCurrentTransactions).Error
 
 	if errCurrentFind != nil {
 		return saleDetail, errCurrentFind
@@ -1571,6 +3532,28 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				saleDetail.Export.Total += v.Quantity
 			}
 
+			if v.LoadingPort != nil {
+				if !helperString(saleDetail.JettyList, v.LoadingPort.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.LoadingPort.Name)
+				}
+
+				_, ok := salesJetty.January[v.LoadingPort.Name]
+
+				if ok {
+					salesJetty.January[v.LoadingPort.Name] += v.Quantity
+				} else {
+					salesJetty.January[v.LoadingPort.Name] = v.Quantity
+				}
+			} else {
+				_, ok := salesJetty.January["-"]
+
+				if ok {
+					salesJetty.January["-"] += v.Quantity
+				} else {
+					salesJetty.January["-"] = v.Quantity
+				}
+			}
+
 		case 2:
 			if v.TransactionType == "DN" {
 				saleDetail.Domestic.February += v.Quantity
@@ -1578,6 +3561,28 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			} else {
 				saleDetail.Export.February += v.Quantity
 				saleDetail.Export.Total += v.Quantity
+			}
+
+			if v.LoadingPort != nil {
+				if !helperString(saleDetail.JettyList, v.LoadingPort.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.LoadingPort.Name)
+				}
+
+				_, ok := salesJetty.February[v.LoadingPort.Name]
+
+				if ok {
+					salesJetty.February[v.LoadingPort.Name] += v.Quantity
+				} else {
+					salesJetty.February[v.LoadingPort.Name] = v.Quantity
+				}
+			} else {
+				_, ok := salesJetty.February["-"]
+
+				if ok {
+					salesJetty.February["-"] += v.Quantity
+				} else {
+					salesJetty.February["-"] = v.Quantity
+				}
 			}
 
 		case 3:
@@ -1589,6 +3594,28 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				saleDetail.Export.Total += v.Quantity
 			}
 
+			if v.LoadingPort != nil {
+				if !helperString(saleDetail.JettyList, v.LoadingPort.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.LoadingPort.Name)
+				}
+
+				_, ok := salesJetty.March[v.LoadingPort.Name]
+
+				if ok {
+					salesJetty.March[v.LoadingPort.Name] += v.Quantity
+				} else {
+					salesJetty.March[v.LoadingPort.Name] = v.Quantity
+				}
+			} else {
+				_, ok := salesJetty.March["-"]
+
+				if ok {
+					salesJetty.March["-"] += v.Quantity
+				} else {
+					salesJetty.March["-"] = v.Quantity
+				}
+			}
+
 		case 4:
 			if v.TransactionType == "DN" {
 				saleDetail.Domestic.April += v.Quantity
@@ -1596,6 +3623,28 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			} else {
 				saleDetail.Export.April += v.Quantity
 				saleDetail.Export.Total += v.Quantity
+			}
+
+			if v.LoadingPort != nil {
+				if !helperString(saleDetail.JettyList, v.LoadingPort.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.LoadingPort.Name)
+				}
+
+				_, ok := salesJetty.April[v.LoadingPort.Name]
+
+				if ok {
+					salesJetty.April[v.LoadingPort.Name] += v.Quantity
+				} else {
+					salesJetty.April[v.LoadingPort.Name] = v.Quantity
+				}
+			} else {
+				_, ok := salesJetty.April["-"]
+
+				if ok {
+					salesJetty.April["-"] += v.Quantity
+				} else {
+					salesJetty.April["-"] = v.Quantity
+				}
 			}
 
 		case 5:
@@ -1607,6 +3656,28 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				saleDetail.Export.Total += v.Quantity
 			}
 
+			if v.LoadingPort != nil {
+				if !helperString(saleDetail.JettyList, v.LoadingPort.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.LoadingPort.Name)
+				}
+
+				_, ok := salesJetty.May[v.LoadingPort.Name]
+
+				if ok {
+					salesJetty.May[v.LoadingPort.Name] += v.Quantity
+				} else {
+					salesJetty.May[v.LoadingPort.Name] = v.Quantity
+				}
+			} else {
+				_, ok := salesJetty.May["-"]
+
+				if ok {
+					salesJetty.May["-"] += v.Quantity
+				} else {
+					salesJetty.May["-"] = v.Quantity
+				}
+			}
+
 		case 6:
 			if v.TransactionType == "DN" {
 				saleDetail.Domestic.June += v.Quantity
@@ -1616,6 +3687,28 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				saleDetail.Export.Total += v.Quantity
 			}
 
+			if v.LoadingPort != nil {
+				if !helperString(saleDetail.JettyList, v.LoadingPort.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.LoadingPort.Name)
+				}
+
+				_, ok := salesJetty.June[v.LoadingPort.Name]
+
+				if ok {
+					salesJetty.June[v.LoadingPort.Name] += v.Quantity
+				} else {
+					salesJetty.June[v.LoadingPort.Name] = v.Quantity
+				}
+			} else {
+				_, ok := salesJetty.June["-"]
+
+				if ok {
+					salesJetty.June["-"] += v.Quantity
+				} else {
+					salesJetty.June["-"] = v.Quantity
+				}
+			}
+
 		case 7:
 			if v.TransactionType == "DN" {
 				saleDetail.Domestic.July += v.Quantity
@@ -1623,6 +3716,27 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			} else {
 				saleDetail.Export.July += v.Quantity
 				saleDetail.Export.Total += v.Quantity
+			}
+			if v.LoadingPort != nil {
+				if !helperString(saleDetail.JettyList, v.LoadingPort.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.LoadingPort.Name)
+				}
+
+				_, ok := salesJetty.July[v.LoadingPort.Name]
+
+				if ok {
+					salesJetty.July[v.LoadingPort.Name] += v.Quantity
+				} else {
+					salesJetty.July[v.LoadingPort.Name] = v.Quantity
+				}
+			} else {
+				_, ok := salesJetty.July["-"]
+
+				if ok {
+					salesJetty.July["-"] += v.Quantity
+				} else {
+					salesJetty.July["-"] = v.Quantity
+				}
 			}
 
 		case 8:
@@ -1634,6 +3748,28 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				saleDetail.Export.Total += v.Quantity
 			}
 
+			if v.LoadingPort != nil {
+				if !helperString(saleDetail.JettyList, v.LoadingPort.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.LoadingPort.Name)
+				}
+
+				_, ok := salesJetty.August[v.LoadingPort.Name]
+
+				if ok {
+					salesJetty.August[v.LoadingPort.Name] += v.Quantity
+				} else {
+					salesJetty.August[v.LoadingPort.Name] = v.Quantity
+				}
+			} else {
+				_, ok := salesJetty.August["-"]
+
+				if ok {
+					salesJetty.August["-"] += v.Quantity
+				} else {
+					salesJetty.August["-"] = v.Quantity
+				}
+			}
+
 		case 9:
 			if v.TransactionType == "DN" {
 				saleDetail.Domestic.September += v.Quantity
@@ -1641,6 +3777,28 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			} else {
 				saleDetail.Export.September += v.Quantity
 				saleDetail.Export.Total += v.Quantity
+			}
+
+			if v.LoadingPort != nil {
+				if !helperString(saleDetail.JettyList, v.LoadingPort.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.LoadingPort.Name)
+				}
+
+				_, ok := salesJetty.September[v.LoadingPort.Name]
+
+				if ok {
+					salesJetty.September[v.LoadingPort.Name] += v.Quantity
+				} else {
+					salesJetty.September[v.LoadingPort.Name] = v.Quantity
+				}
+			} else {
+				_, ok := salesJetty.September["-"]
+
+				if ok {
+					salesJetty.September["-"] += v.Quantity
+				} else {
+					salesJetty.September["-"] = v.Quantity
+				}
 			}
 
 		case 10:
@@ -1652,6 +3810,28 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				saleDetail.Export.Total += v.Quantity
 			}
 
+			if v.LoadingPort != nil {
+				if !helperString(saleDetail.JettyList, v.LoadingPort.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.LoadingPort.Name)
+				}
+
+				_, ok := salesJetty.October[v.LoadingPort.Name]
+
+				if ok {
+					salesJetty.October[v.LoadingPort.Name] += v.Quantity
+				} else {
+					salesJetty.October[v.LoadingPort.Name] = v.Quantity
+				}
+			} else {
+				_, ok := salesJetty.October["-"]
+
+				if ok {
+					salesJetty.October["-"] += v.Quantity
+				} else {
+					salesJetty.October["-"] = v.Quantity
+				}
+			}
+
 		case 11:
 			if v.TransactionType == "DN" {
 				saleDetail.Domestic.November += v.Quantity
@@ -1659,6 +3839,28 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			} else {
 				saleDetail.Export.November += v.Quantity
 				saleDetail.Export.Total += v.Quantity
+			}
+
+			if v.LoadingPort != nil {
+				if !helperString(saleDetail.JettyList, v.LoadingPort.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.LoadingPort.Name)
+				}
+
+				_, ok := salesJetty.November[v.LoadingPort.Name]
+
+				if ok {
+					salesJetty.November[v.LoadingPort.Name] += v.Quantity
+				} else {
+					salesJetty.November[v.LoadingPort.Name] = v.Quantity
+				}
+			} else {
+				_, ok := salesJetty.November["-"]
+
+				if ok {
+					salesJetty.November["-"] += v.Quantity
+				} else {
+					salesJetty.November["-"] = v.Quantity
+				}
 			}
 
 		case 12:
@@ -1669,9 +3871,35 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				saleDetail.Export.December += v.Quantity
 				saleDetail.Export.Total += v.Quantity
 			}
+
+			if v.LoadingPort != nil {
+				if !helperString(saleDetail.JettyList, v.LoadingPort.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.LoadingPort.Name)
+				}
+
+				_, ok := salesJetty.December[v.LoadingPort.Name]
+
+				if ok {
+					salesJetty.December[v.LoadingPort.Name] += v.Quantity
+				} else {
+					salesJetty.December[v.LoadingPort.Name] = v.Quantity
+				}
+			} else {
+				_, ok := salesJetty.December["-"]
+
+				if ok {
+					salesJetty.December["-"] += v.Quantity
+				} else {
+					salesJetty.December["-"] = v.Quantity
+				}
+			}
+
 		}
 	}
 
+	sort.Sort(sort.StringSlice(saleDetail.JettyList))
+
+	saleDetail.SalesJetty = salesJetty
 	for _, v := range listTransactions {
 		if v.ReportDmoId == nil || (v.GroupingVesselDnId != nil && v.SalesSystem != nil && strings.Contains(v.SalesSystem.Name, "Vessel")) {
 			continue
