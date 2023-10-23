@@ -47,6 +47,7 @@ type Repository interface {
 	DeleteTransaction(id int, userId uint, transactionType string, iupopId int) (bool, error)
 	UpdateTransactionDN(idTransaction int, inputEditTransactionDN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error)
 	UploadDocumentTransaction(idTransaction uint, urlS3 string, userId uint, documentType string, transactionType string, iupopkId int) (transaction.Transaction, error)
+	DeleteDocumentTransaction(idTransaction uint, userId uint, documentType string, transactionType string, iupopkId int) (transaction.Transaction, error)
 	CreateTransactionLN(inputTransactionLN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error)
 	UpdateTransactionLN(id int, inputTransactionLN transaction.DataTransactionInput, userId uint, iupopkId int) (transaction.Transaction, error)
 	CreateMinerba(period string, updateTransaction []int, userId uint, iupopkId int) (minerba.Minerba, error)
@@ -492,6 +493,64 @@ func (r *repository) UploadDocumentTransaction(idTransaction uint, urlS3 string,
 
 	tx.Commit()
 	return uploadedTransaction, nil
+}
+
+func (r *repository) DeleteDocumentTransaction(idTransaction uint, userId uint, documentType string, transactionType string, iupopkId int) (transaction.Transaction, error) {
+	var transaction transaction.Transaction
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("id = ? AND transaction_type = ? AND seller_id = ?", idTransaction, transactionType, iupopkId).First(&transaction).Error
+
+	if errFind != nil {
+		return transaction, errFind
+	}
+
+	editData := make(map[string]interface{})
+
+	switch documentType {
+	case "skb":
+		editData["skb_document_link"] = nil
+	case "skab":
+		editData["skab_document_link"] = nil
+	case "bl":
+		editData["bl_document_link"] = nil
+	case "royalti_provision":
+		editData["royalti_provision_document_link"] = nil
+	case "royalti_final":
+		editData["royalti_final_document_link"] = nil
+	case "cow":
+		editData["cow_document_link"] = nil
+	case "coa":
+		editData["coa_document_link"] = nil
+	case "invoice":
+		editData["invoice_and_contract_document_link"] = nil
+	case "lhv":
+		editData["lhv_document_link"] = nil
+	}
+
+	errEdit := tx.Model(&transaction).Updates(editData).Error
+
+	if errEdit != nil {
+		tx.Rollback()
+		return transaction, errEdit
+	}
+
+	var history History
+
+	history.TransactionId = &transaction.ID
+	history.UserId = userId
+	history.Status = fmt.Sprintf("Delete %s document", documentType)
+	history.IupopkId = transaction.SellerId
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return transaction, createHistoryErr
+	}
+
+	tx.Commit()
+	return transaction, nil
 }
 
 // Transaction LN
@@ -1875,7 +1934,11 @@ func (r *repository) CreateProduction(input production.InputCreateProduction, us
 
 	createdProduction.ProductionDate = input.ProductionDate
 	createdProduction.Quantity = math.Round(input.Quantity*1000) / 1000
+	createdProduction.RitaseQuantity = input.RitaseQuantity
+	createdProduction.PitId = input.PitId
+	createdProduction.JettyId = input.JettyId
 	createdProduction.IupopkId = uint(iupopkId)
+
 	tx := r.db.Begin()
 
 	errCreateProduction := tx.Create(&createdProduction).Error
@@ -1919,6 +1982,9 @@ func (r *repository) UpdateProduction(input production.InputCreateProduction, pr
 	editData := make(map[string]interface{})
 	editData["production_date"] = input.ProductionDate
 	editData["quantity"] = math.Round(input.Quantity*1000) / 1000
+	editData["ritase_quantity"] = input.RitaseQuantity
+	editData["pit_id"] = input.PitId
+	editData["jetty_id"] = input.JettyId
 
 	errUpdateProduction := tx.Model(&updatedProduction).Updates(editData).Error
 
@@ -2170,7 +2236,6 @@ func (r *repository) EditGroupingVesselDn(id int, editGrouping groupingvesseldn.
 
 	updateTransactions["vessel_id"] = editGrouping.VesselId
 	updateTransactions["dmo_buyer_id"] = editGrouping.BuyerId
-	updateTransactions["loading_port_id"] = editGrouping.LoadingPortId
 	updateTransactions["dmo_destination_port_id"] = editGrouping.DmoDestinationPortId
 	updateTransactions["destination_country_id"] = editGrouping.DestinationCountryId
 	updateTransactions["destination_id"] = editGrouping.DestinationId
@@ -3761,7 +3826,7 @@ func (r *repository) DeleteCoaReport(id int, iupopkId int, userId uint) (bool, e
 
 	var history History
 
-	history.Status = fmt.Sprintf("Deleted Coa Report with id number %s and id %v", &coaReport.IdNumber, coaReport.ID)
+	history.Status = fmt.Sprintf("Deleted Coa Report with id number %s and id %v", coaReport.IdNumber, coaReport.ID)
 	history.UserId = userId
 	history.IupopkId = &iup.ID
 	history.BeforeData = coaReportData
@@ -3933,7 +3998,7 @@ func (r *repository) DeleteCoaReportLn(id int, iupopkId int, userId uint) (bool,
 
 	var history History
 
-	history.Status = fmt.Sprintf("Deleted Coa Report with id number %s and id %v", &coaReportLn.IdNumber, coaReportLn.ID)
+	history.Status = fmt.Sprintf("Deleted Coa Report with id number %s and id %v", coaReportLn.IdNumber, coaReportLn.ID)
 	history.UserId = userId
 	history.IupopkId = &iup.ID
 	history.BeforeData = coaReportLnData
@@ -4034,6 +4099,7 @@ func (r *repository) CreateRkab(input rkab.RkabInput, iupopkId int, userId uint)
 	createdRkab.DateOfIssue = input.DateOfIssue
 	createdRkab.Year = input.Year
 	createdRkab.ProductionQuota = input.ProductionQuota
+	createdRkab.SalesQuota = input.SalesQuota
 	createdRkab.DmoObligation = input.DmoObligation
 	createdRkab.IupopkId = uint(iupopkId)
 
@@ -4137,7 +4203,7 @@ func (r *repository) DeleteRkab(id int, iupopkId int, userId uint) (bool, error)
 
 	var history History
 
-	history.Status = fmt.Sprintf("Deleted Rkab with id number %s and id %v", &rkabDeleted.IdNumber, rkabDeleted.ID)
+	history.Status = fmt.Sprintf("Deleted Rkab with id number %s and id %v", rkabDeleted.IdNumber, rkabDeleted.ID)
 	history.UserId = userId
 	history.IupopkId = &iup.ID
 	history.BeforeData = rkabData
@@ -4595,7 +4661,7 @@ func (r *repository) DeleteElectricAssignment(id int, iupopkId int, userId uint)
 
 	var history History
 
-	history.Status = fmt.Sprintf("Deleted Electric Assignment with id number %s and id %v", &electricAssignmentDeleted.IdNumber, electricAssignmentDeleted.ID)
+	history.Status = fmt.Sprintf("Deleted Electric Assignment with id number %s and id %v", electricAssignmentDeleted.IdNumber, electricAssignmentDeleted.ID)
 	history.UserId = userId
 	history.IupopkId = &iup.ID
 	history.BeforeData = beforeData
@@ -4843,7 +4909,7 @@ func (r *repository) DeleteCafAssignment(id int, iupopkId int, userId uint) (boo
 
 	var history History
 
-	history.Status = fmt.Sprintf("Deleted Caf Assignment with id number %s and id %v", &cafAssignmentDeleted.IdNumber, cafAssignmentDeleted.ID)
+	history.Status = fmt.Sprintf("Deleted Caf Assignment with id number %s and id %v", cafAssignmentDeleted.IdNumber, cafAssignmentDeleted.ID)
 	history.UserId = userId
 	history.IupopkId = &iup.ID
 	history.BeforeData = beforeData
@@ -5157,7 +5223,7 @@ func (r *repository) DeleteRoyaltyRecon(id int, iupopkId int, userId uint) (bool
 
 	var history History
 
-	history.Status = fmt.Sprintf("Deleted Royalty Recon with id number %s and id %v", &royaltyRecon.IdNumber, royaltyRecon.ID)
+	history.Status = fmt.Sprintf("Deleted Royalty Recon with id number %s and id %v", royaltyRecon.IdNumber, royaltyRecon.ID)
 	history.UserId = userId
 	history.IupopkId = &iup.ID
 	history.BeforeData = royaltyReconData
@@ -5327,7 +5393,7 @@ func (r *repository) DeleteRoyaltyReport(id int, iupopkId int, userId uint) (boo
 
 	var history History
 
-	history.Status = fmt.Sprintf("Deleted Royalty Report with id number %s and id %v", &royaltyReport.IdNumber, royaltyReport.ID)
+	history.Status = fmt.Sprintf("Deleted Royalty Report with id number %s and id %v", royaltyReport.IdNumber, royaltyReport.ID)
 	history.UserId = userId
 	history.IupopkId = &iup.ID
 	history.BeforeData = royaltyReportData

@@ -537,7 +537,7 @@ func (h *transactionHandler) UpdateDocumentTransaction(c *fiber.Ctx) error {
 		return c.Status(400).JSON(responseErr)
 	}
 
-	if !strings.Contains(file.Filename, ".pdf") {
+	if !strings.Contains(strings.ToLower(file.Filename), ".pdf") {
 		responseErr["error"] = "document must be pdf"
 		return c.Status(400).JSON(responseErr)
 	}
@@ -817,4 +817,193 @@ func (h *transactionHandler) UpdateTransactionLN(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(updateTransaction)
+}
+
+func (h *transactionHandler) DeleteDocumentTransaction(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := fiber.Map{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	id := c.Params("id")
+	iupopkId := c.Params("iupopk_id")
+	idInt, err := strconv.Atoi(id)
+	iupopkIdInt, iupopkErr := strconv.Atoi(iupopkId)
+
+	if err != nil || iupopkErr != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "record not found",
+		})
+	}
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	documentType := c.Params("type")
+
+	switch documentType {
+	case "skb", "skab", "bl", "royalti_provision", "royalti_final", "cow", "coa", "invoice", "lhv":
+	default:
+		return c.Status(400).JSON(fiber.Map{
+			"error":   "document type not found",
+			"message": "failed to upload document",
+		})
+	}
+
+	typeTransaction := strings.ToUpper(c.Params("transaction_type"))
+
+	detailTransaction, detailTransactionErr := h.transactionService.DetailTransaction(idInt, typeTransaction, iupopkIdInt)
+
+	if detailTransactionErr != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"message": "failed to upload document",
+			"error":   detailTransactionErr.Error(),
+		})
+	}
+
+	var url string
+
+	switch documentType {
+	case "skb":
+		if detailTransaction.SkbDocumentLink == "" {
+			return c.Status(400).JSON(fiber.Map{
+				"message": "tidak ada document",
+			})
+		}
+		url = detailTransaction.SkbDocumentLink
+	case "skab":
+		if detailTransaction.SkabDocumentLink == "" {
+			return c.Status(400).JSON(fiber.Map{
+				"message": "tidak ada document",
+			})
+		}
+		url = detailTransaction.SkabDocumentLink
+	case "bl":
+		if detailTransaction.BLDocumentLink == "" {
+			return c.Status(400).JSON(fiber.Map{
+				"message": "tidak ada document",
+			})
+		}
+		url = detailTransaction.BLDocumentLink
+	case "royalti_provision":
+		if detailTransaction.RoyaltiProvisionDocumentLink == "" {
+			return c.Status(400).JSON(fiber.Map{
+				"message": "tidak ada document",
+			})
+		}
+		url = detailTransaction.RoyaltiProvisionDocumentLink
+	case "royalti_final":
+		if detailTransaction.RoyaltiFinalDocumentLink == "" {
+			return c.Status(400).JSON(fiber.Map{
+				"message": "tidak ada document",
+			})
+		}
+		url = detailTransaction.RoyaltiFinalDocumentLink
+	case "cow":
+		if detailTransaction.COWDocumentLink == "" {
+			return c.Status(400).JSON(fiber.Map{
+				"message": "tidak ada document",
+			})
+		}
+		url = detailTransaction.COWDocumentLink
+	case "coa":
+		if detailTransaction.COADocumentLink == "" {
+			return c.Status(400).JSON(fiber.Map{
+				"message": "tidak ada document",
+			})
+		}
+		url = detailTransaction.COADocumentLink
+	case "invoice":
+		if detailTransaction.InvoiceAndContractDocumentLink == "" {
+			return c.Status(400).JSON(fiber.Map{
+				"message": "tidak ada document",
+			})
+		}
+		url = detailTransaction.InvoiceAndContractDocumentLink
+	case "lhv":
+		if detailTransaction.LHVDocumentLink == "" {
+			return c.Status(400).JSON(fiber.Map{
+				"message": "tidak ada document",
+			})
+		}
+		url = detailTransaction.LHVDocumentLink
+	}
+
+	urlSplit := strings.Split(url, "amazonaws.com/")
+
+	_, isDeletedErr := awshelper.DeleteDocument(urlSplit[1])
+
+	if isDeletedErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["transaction_id"] = id
+
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error":         isDeletedErr.Error(),
+			"document_type": documentType,
+			"status":        "error delete document",
+		})
+
+		transactionId := uint(idInt)
+		createdErrLog := logs.Logs{
+			TransactionId: &transactionId,
+			Message:       messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		status := 400
+
+		if isDeletedErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"message": "failed to delete document transaction " + documentType,
+			"error":   isDeletedErr.Error(),
+		})
+	}
+
+	documentTransaction, deleteDocumentTransactionErr := h.historyService.DeleteDocumentTransaction(detailTransaction.ID, uint(claims["id"].(float64)), documentType, typeTransaction, iupopkIdInt)
+
+	if deleteDocumentTransactionErr != nil {
+		inputMap := make(map[string]interface{})
+		inputMap["user_id"] = claims["id"]
+		inputMap["transaction_id"] = id
+
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error":         deleteDocumentTransactionErr.Error(),
+			"document_type": documentType,
+			"status":        "error delete document database",
+		})
+
+		transactionId := uint(idInt)
+		createdErrLog := logs.Logs{
+			TransactionId: &transactionId,
+			Message:       messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		status := 400
+
+		if deleteDocumentTransactionErr.Error() == "record not found" {
+			status = 404
+		}
+
+		return c.Status(status).JSON(fiber.Map{
+			"message": "failed to delete document transaction database" + documentType,
+			"error":   deleteDocumentTransactionErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(documentTransaction)
 }

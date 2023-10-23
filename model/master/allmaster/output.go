@@ -10,10 +10,13 @@ import (
 	"ajebackend/model/master/documenttype"
 	"ajebackend/model/master/industrytype"
 	"ajebackend/model/master/insurancecompany"
+	"ajebackend/model/master/isp"
 	"ajebackend/model/master/iupopk"
+	"ajebackend/model/master/jetty"
 	"ajebackend/model/master/navycompany"
 	"ajebackend/model/master/navyship"
 	"ajebackend/model/master/pabeanoffice"
+	"ajebackend/model/master/pit"
 	"ajebackend/model/master/portinsw"
 	"ajebackend/model/master/portlocation"
 	"ajebackend/model/master/ports"
@@ -36,9 +39,12 @@ type MasterData struct {
 	IndustryType         []industrytype.IndustryType                 `json:"industry_type"`
 	InsuranceCompany     []insurancecompany.InsuranceCompany         `json:"insurance_company"`
 	Iupopk               []iupopk.Iupopk                             `json:"iupopk"`
+	Jetty                []jetty.Jetty                               `json:"jetty"`
 	NavyCompany          []navycompany.NavyCompany                   `json:"navy_company"`
 	NavyShip             []navyship.NavyShip                         `json:"navy_ship"`
 	PabeanOffice         []pabeanoffice.PabeanOffice                 `json:"pabean_office"`
+	Pit                  []pit.Pit                                   `json:"pit"`
+	Isp                  []isp.Isp                                   `json:"isp"`
 	PortInsw             []portinsw.PortInsw                         `json:"port_insw"`
 	PortLocation         []portlocation.PortLocation                 `json:"port_location"`
 	Ports                []ports.Port                                `json:"ports"`

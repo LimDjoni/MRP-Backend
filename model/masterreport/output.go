@@ -7,6 +7,7 @@ import (
 	"ajebackend/model/master/currency"
 	"ajebackend/model/master/destination"
 	"ajebackend/model/master/iupopk"
+	"ajebackend/model/master/jetty"
 	"ajebackend/model/master/ports"
 	"ajebackend/model/master/salessystem"
 	"ajebackend/model/master/surveyor"
@@ -187,6 +188,10 @@ type SaleDetail struct {
 	CompanyElectricity    map[string][]string `json:"company_electricity"`
 	CompanyCement         map[string][]string `json:"company_cement"`
 	CompanyNonElectricity map[string][]string `json:"company_non_electricity"`
+	ProductionJetty       ProductionJetty     `json:"production_jetty"`
+	JettyProductionList   map[string][]string `json:"jetty_production_list"`
+	SalesJetty            SalesJetty          `json:"sales_jetty"`
+	JettyList             []string            `json:"jetty_list"`
 }
 
 type Electricity struct {
@@ -294,7 +299,7 @@ type TransactionReport struct {
 	CustomerId                  *uint                    `json:"customer_id"`
 	Customer                    *company.Company         `json:"customer"`
 	LoadingPortId               *uint                    `json:"loading_port_id"`
-	LoadingPort                 *ports.Port              `json:"loading_port"`
+	LoadingPort                 *jetty.Jetty             `json:"loading_port"`
 	UnloadingPortId             *uint                    `json:"unloading_port_id"`
 	UnloadingPort               *ports.Port              `json:"unloading_port"`
 	DmoDestinationPortId        *uint                    `json:"dmo_destination_port_id"`
@@ -354,4 +359,34 @@ type TransactionReport struct {
 	DestinationId               *uint                    `json:"destination_id"`
 	Destination                 *destination.Destination `json:"destination"`
 	DmoDestinationPortLnName    string                   `json:"dmo_destination_port_ln_name"`
+}
+
+type ProductionJetty struct {
+	January   map[string]map[string]map[string]float64 `json:"january"`
+	February  map[string]map[string]map[string]float64 `json:"february"`
+	March     map[string]map[string]map[string]float64 `json:"march"`
+	April     map[string]map[string]map[string]float64 `json:"april"`
+	May       map[string]map[string]map[string]float64 `json:"may"`
+	June      map[string]map[string]map[string]float64 `json:"june"`
+	July      map[string]map[string]map[string]float64 `json:"july"`
+	August    map[string]map[string]map[string]float64 `json:"august"`
+	September map[string]map[string]map[string]float64 `json:"september"`
+	October   map[string]map[string]map[string]float64 `json:"october"`
+	November  map[string]map[string]map[string]float64 `json:"november"`
+	December  map[string]map[string]map[string]float64 `json:"december"`
+}
+
+type SalesJetty struct {
+	January   map[string]float64 `json:"january"`
+	February  map[string]float64 `json:"february"`
+	March     map[string]float64 `json:"march"`
+	April     map[string]float64 `json:"april"`
+	May       map[string]float64 `json:"may"`
+	June      map[string]float64 `json:"june"`
+	July      map[string]float64 `json:"july"`
+	August    map[string]float64 `json:"august"`
+	September map[string]float64 `json:"september"`
+	October   map[string]float64 `json:"october"`
+	November  map[string]float64 `json:"november"`
+	December  map[string]float64 `json:"december"`
 }
