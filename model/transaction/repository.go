@@ -567,7 +567,7 @@ func (r *repository) GetDetailReportDmo(id int, iupopkId int) (DetailReportDmo, 
 		return detailReportDmo, errFindTransactions
 	}
 
-	errFindGroupingVessel := r.db.Preload(clause.Associations).Preload("LoadingPort.Iupopk").Preload("DmoDestinationPort.PortLocation").Order("bl_date asc").Where("report_dmo_id = ? AND iupopk_id = ?", id, iupopkId).Find(&groupingVesselDn).Error
+	errFindGroupingVessel := r.db.Preload(clause.Associations).Preload("LoadingPort.PortLocation").Preload("DmoDestinationPort.PortLocation").Order("bl_date asc").Where("report_dmo_id = ? AND iupopk_id = ?", id, iupopkId).Find(&groupingVesselDn).Error
 
 	if errFindGroupingVessel != nil {
 		return detailReportDmo, errFindGroupingVessel
