@@ -4,7 +4,6 @@ import (
 	"ajebackend/model/master/isp"
 	"ajebackend/model/master/iupopk"
 	"ajebackend/model/master/pit"
-	"ajebackend/model/master/site"
 	"ajebackend/model/master/truck"
 	"ajebackend/model/user"
 
@@ -25,8 +24,6 @@ type TransactionToIsp struct {
 	Pit                   pit.Pit       `json:"pit"`
 	IspId                 uint          `json:"isp_id"`
 	Isp                   isp.Isp       `json:"isp"`
-	SiteId                uint          `json:"site_id"`
-	Site                  site.Site     `json:"site"`
 	Seam                  string        `json:"seam"`
 	Category              string        `json:"category"`
 	TopTruckPhotoLink     string        `json:"top_truck_photo_link"`

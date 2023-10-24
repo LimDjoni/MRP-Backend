@@ -4,7 +4,6 @@ import (
 	"ajebackend/model/master/isp"
 	"ajebackend/model/master/iupopk"
 	"ajebackend/model/master/jetty"
-	"ajebackend/model/master/site"
 	"ajebackend/model/master/truck"
 	"ajebackend/model/user"
 
@@ -21,8 +20,6 @@ type TransactionJetty struct {
 	Iupopk                iupopk.Iupopk `json:"iupopk"`
 	IspId                 uint          `json:"isp_id"`
 	Isp                   isp.Isp       `json:"isp"`
-	SiteId                uint          `json:"site_id"`
-	Site                  site.Site     `json:"site"`
 	JettyId               uint          `json:"jetty_id"`
 	Jetty                 jetty.Jetty   `json:"jetty"`
 	Seam                  string        `json:"seam"`
