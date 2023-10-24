@@ -6,7 +6,6 @@ import (
 	"ajebackend/model/master/iupopk"
 	"ajebackend/model/master/jetty"
 	"ajebackend/model/master/pit"
-	"ajebackend/model/master/site"
 	"ajebackend/model/master/truck"
 	"ajebackend/model/transactionshauling/transactionispjetty"
 	"ajebackend/model/transactionshauling/transactionjetty"
@@ -22,7 +21,6 @@ type SynchronizeInputMaster struct {
 	Iupopk     []iupopk.Iupopk         `json:"iupopk"`
 	Jetty      []jetty.Jetty           `json:"jetty"`
 	Pit        []pit.Pit               `json:"pit"`
-	Site       []site.Site             `json:"site"`
 	Truck      []truck.Truck           `json:"truck"`
 	User       []user.User             `json:"user"`
 	UserIupopk []useriupopk.UserIupopk `json:"user_iupopk"`
