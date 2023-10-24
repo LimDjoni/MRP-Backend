@@ -2,7 +2,6 @@ package pit
 
 import (
 	"ajebackend/model/master/iupopk"
-	"ajebackend/model/master/site"
 	"ajebackend/model/user"
 
 	"gorm.io/gorm"
@@ -13,8 +12,6 @@ type Pit struct {
 	Name        string        `json:"name" gorm:"UNIQUE"`
 	Latitude    string        `json:"latitude"`
 	Longitude   string        `json:"longitude"`
-	SiteId      uint          `json:"site_id"`
-	Site        site.Site     `json:"site"`
 	IupopkId    uint          `json:"iupopk_id"`
 	Iupopk      iupopk.Iupopk `json:"iupopk"`
 	CreatedById uint          `json:"created_by_id"`

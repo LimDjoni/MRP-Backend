@@ -59,7 +59,7 @@ func (r *repository) ListTransactionHauling(page int, iupopkId int) (Pagination,
 
 	queryFilter := fmt.Sprintf("iupopk_id = %v", iupopkId)
 
-	errFind := r.db.Preload(clause.Associations).Preload("TransactionToJetty.Truck.Contractor").Preload("TransactionToJetty.Isp").Preload("TransactionToJetty.Site").Preload("TransactionToJetty.CreatedBy").Preload("TransactionToJetty.UpdatedBy").Preload("TransactionJetty.Jetty").Preload("TransactionJetty.CreatedBy").Preload("TransactionJetty.UpdatedBy").Order(defaultSort).Where(queryFilter).Scopes(paginateData(listTransactionHauling, &pagination, r.db, queryFilter)).Find(&listTransactionHauling).Error
+	errFind := r.db.Preload(clause.Associations).Preload("TransactionToJetty.Truck.Contractor").Preload("TransactionToJetty.Isp").Preload("TransactionToJetty.CreatedBy").Preload("TransactionToJetty.UpdatedBy").Preload("TransactionJetty.Jetty").Preload("TransactionJetty.CreatedBy").Preload("TransactionJetty.UpdatedBy").Order(defaultSort).Where(queryFilter).Scopes(paginateData(listTransactionHauling, &pagination, r.db, queryFilter)).Find(&listTransactionHauling).Error
 
 	if errFind != nil {
 		return pagination, errFind
@@ -85,7 +85,7 @@ func (r *repository) DetailStockRom(iupopkId int, stockRomId int) (transactionto
 func (r *repository) DetailTransactionHauling(iupopkId int, transactionHaulingId int) (transactionispjetty.TransactionIspJetty, error) {
 	var transactionHauling transactionispjetty.TransactionIspJetty
 
-	errFind := r.db.Preload(clause.Associations).Preload("TransactionToJetty.Truck.Contractor").Preload("TransactionToJetty.Isp").Preload("TransactionToJetty.Site").Preload("TransactionToJetty.CreatedBy").Preload("TransactionToJetty.UpdatedBy").Preload("TransactionJetty.Jetty").Preload("TransactionJetty.CreatedBy").Preload("TransactionJetty.UpdatedBy").Where("id = ? and iupopk_id = ?", transactionHaulingId, iupopkId).First(&transactionHauling).Error
+	errFind := r.db.Preload(clause.Associations).Preload("TransactionToJetty.Truck.Contractor").Preload("TransactionToJetty.Isp").Preload("TransactionToJetty.CreatedBy").Preload("TransactionToJetty.UpdatedBy").Preload("TransactionJetty.Jetty").Preload("TransactionJetty.CreatedBy").Preload("TransactionJetty.UpdatedBy").Where("id = ? and iupopk_id = ?", transactionHaulingId, iupopkId).First(&transactionHauling).Error
 
 	if errFind != nil {
 		return transactionHauling, errFind
