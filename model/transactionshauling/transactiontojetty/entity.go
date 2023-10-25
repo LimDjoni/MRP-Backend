@@ -22,7 +22,7 @@ type TransactionToJetty struct {
 	PitId                 *uint         `json:"pit_id"`
 	Pit                   *pit.Pit      `json:"pit"`
 	Seam                  string        `json:"seam"`
-	Category              string        `json:"category"`
+	Origin                string        `json:"origin"`
 	ClockOutDate          string        `json:"clock_out_date" gorm:"DATETIME"`
 	TopTruckPhotoLink     string        `json:"top_truck_photo_link"`
 	TopTruckPhotoPath     string        `json:"top_truck_photo_path"`
