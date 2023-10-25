@@ -4,6 +4,7 @@ import (
 	"ajebackend/model/master/isp"
 	"ajebackend/model/master/iupopk"
 	"ajebackend/model/master/jetty"
+	"ajebackend/model/master/pit"
 	"ajebackend/model/master/truck"
 	"ajebackend/model/user"
 
@@ -18,8 +19,10 @@ type TransactionJetty struct {
 	NettQuantity          float64       `json:"nett_quantity"`
 	IupopkId              uint          `json:"iupopk_id"`
 	Iupopk                iupopk.Iupopk `json:"iupopk"`
-	IspId                 uint          `json:"isp_id"`
-	Isp                   isp.Isp       `json:"isp"`
+	IspId                 *uint         `json:"isp_id"`
+	Isp                   *isp.Isp      `json:"isp"`
+	PitId                 *uint         `json:"pit_id"`
+	Pit                   *pit.Pit      `json:"pit"`
 	JettyId               uint          `json:"jetty_id"`
 	Jetty                 jetty.Jetty   `json:"jetty"`
 	Seam                  string        `json:"seam"`
