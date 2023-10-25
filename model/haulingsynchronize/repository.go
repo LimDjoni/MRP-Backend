@@ -113,7 +113,7 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 			var rawQuery string
 
 			if v.TransactionToJetty.PitId == nil && v.TransactionToJetty.IspId == nil {
-				break
+				continue
 			}
 
 			if v.TransactionToJetty.PitId != nil {
