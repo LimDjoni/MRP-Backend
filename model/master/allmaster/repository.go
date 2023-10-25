@@ -189,7 +189,7 @@ func (r *repository) ListMasterData(iupopkId int) (MasterData, error) {
 		return masterData, findPabeanOfficeErr
 	}
 
-	findPitErr := r.db.Order("name asc").Order("created_at desc").Find(&pit).Error
+	findPitErr := r.db.Order("name asc").Order("created_at desc").Where("iupopk_id = ?", iupopkId).Find(&pit).Error
 
 	if findPitErr != nil {
 		return masterData, findPitErr

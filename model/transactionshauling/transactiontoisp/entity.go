@@ -20,10 +20,10 @@ type TransactionToIsp struct {
 	Gar                   float64       `json:"gar"`
 	IupopkId              uint          `json:"iupopk_id"`
 	Iupopk                iupopk.Iupopk `json:"iupopk"`
-	PitId                 uint          `json:"pit_id"`
-	Pit                   pit.Pit       `json:"pit"`
-	IspId                 uint          `json:"isp_id"`
-	Isp                   isp.Isp       `json:"isp"`
+	PitId                 *uint         `json:"pit_id"`
+	Pit                   *pit.Pit      `json:"pit"`
+	IspId                 *uint         `json:"isp_id"`
+	Isp                   *isp.Isp      `json:"isp"`
 	Seam                  string        `json:"seam"`
 	Category              string        `json:"category"`
 	TopTruckPhotoLink     string        `json:"top_truck_photo_link"`
