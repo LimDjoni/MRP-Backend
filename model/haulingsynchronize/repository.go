@@ -112,6 +112,10 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 
 			var rawQuery string
 
+			if v.TransactionToJetty.PitId == nil && v.TransactionToJetty.IspId == nil {
+				break
+			}
+
 			if v.TransactionToJetty.PitId != nil {
 				rawQuery = fmt.Sprintf(`select tj.* from transaction_jetties tj
 	LEFT JOIN transaction_isp_jetties tij on tij.transaction_jetty_id = tj.id
