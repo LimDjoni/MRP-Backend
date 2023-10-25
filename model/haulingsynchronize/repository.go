@@ -110,10 +110,21 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 		for _, v := range transactionIspJetty {
 			var tempTransactionJetty transactionjetty.TransactionJetty
 
-			rawQuery := fmt.Sprintf(`select tj.* from transaction_jetties tj
-LEFT JOIN transaction_isp_jetties tij on tij.transaction_jetty_id = tj.id
-where truck_id = %v and isp_id = %v and tj.iupopk_id = %v and tij.id IS NULL ORDER BY tj.created_at asc`, v.TransactionToJetty.TruckId,
-				*v.TransactionToJetty.IspId, syncData.IupopkId)
+			var rawQuery string
+
+			if v.TransactionToJetty.PitId != nil {
+				rawQuery = fmt.Sprintf(`select tj.* from transaction_jetties tj
+	LEFT JOIN transaction_isp_jetties tij on tij.transaction_jetty_id = tj.id
+	where truck_id = %v and isp_id IS NULL and pit_id = %v and tj.iupopk_id = %v and tij.id IS NULL ORDER BY tj.created_at asc`, v.TransactionToJetty.TruckId,
+					*v.TransactionToJetty.PitId, syncData.IupopkId)
+			}
+
+			if v.TransactionToJetty.IspId != nil {
+				rawQuery = fmt.Sprintf(`select tj.* from transaction_jetties tj
+	LEFT JOIN transaction_isp_jetties tij on tij.transaction_jetty_id = tj.id
+	where truck_id = %v and isp_id = %v and pit_id IS NULL and tj.iupopk_id = %v and tij.id IS NULL ORDER BY tj.created_at asc`, v.TransactionToJetty.TruckId,
+					*v.TransactionToJetty.IspId, syncData.IupopkId)
+			}
 
 			errFindTransactionJetty := tx.Raw(rawQuery).First(&tempTransactionJetty).Error
 
