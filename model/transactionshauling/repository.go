@@ -17,7 +17,7 @@ type Repository interface {
 	DetailStockRom(iupopkId int, stockRomId int) (transactiontoisp.TransactionToIsp, error)
 	DetailTransactionHauling(iupopkId int, transactionHaulingId int) (transactionispjetty.TransactionIspJetty, error)
 	SummaryJettyTransactionPerDay(iupopkId int) (SummaryJettyTransactionPerDay, error)
-	SummaryInventoryStockRom(iupopkId int) ([]InventoryStockRom, error)
+	SummaryInventoryStockRom(iupopkId int) (Summary, error)
 }
 
 type repository struct {
@@ -59,7 +59,7 @@ func (r *repository) ListTransactionHauling(page int, iupopkId int) (Pagination,
 
 	queryFilter := fmt.Sprintf("iupopk_id = %v", iupopkId)
 
-	errFind := r.db.Preload(clause.Associations).Preload("TransactionToJetty.Truck.Contractor").Preload("TransactionToJetty.Isp").Preload("TransactionToJetty.CreatedBy").Preload("TransactionToJetty.UpdatedBy").Preload("TransactionJetty.Jetty").Preload("TransactionJetty.CreatedBy").Preload("TransactionJetty.UpdatedBy").Order(defaultSort).Where(queryFilter).Scopes(paginateData(listTransactionHauling, &pagination, r.db, queryFilter)).Find(&listTransactionHauling).Error
+	errFind := r.db.Preload(clause.Associations).Preload("TransactionToJetty.Truck.Contractor").Preload("TransactionToJetty.Pit").Preload("TransactionToJetty.Isp").Preload("TransactionToJetty.CreatedBy").Preload("TransactionToJetty.UpdatedBy").Preload("TransactionJetty.Jetty").Preload("TransactionJetty.CreatedBy").Preload("TransactionJetty.UpdatedBy").Order(defaultSort).Where(queryFilter).Scopes(paginateData(listTransactionHauling, &pagination, r.db, queryFilter)).Find(&listTransactionHauling).Error
 
 	if errFind != nil {
 		return pagination, errFind
@@ -85,7 +85,7 @@ func (r *repository) DetailStockRom(iupopkId int, stockRomId int) (transactionto
 func (r *repository) DetailTransactionHauling(iupopkId int, transactionHaulingId int) (transactionispjetty.TransactionIspJetty, error) {
 	var transactionHauling transactionispjetty.TransactionIspJetty
 
-	errFind := r.db.Preload(clause.Associations).Preload("TransactionToJetty.Truck.Contractor").Preload("TransactionToJetty.Isp").Preload("TransactionToJetty.CreatedBy").Preload("TransactionToJetty.UpdatedBy").Preload("TransactionJetty.Jetty").Preload("TransactionJetty.CreatedBy").Preload("TransactionJetty.UpdatedBy").Where("id = ? and iupopk_id = ?", transactionHaulingId, iupopkId).First(&transactionHauling).Error
+	errFind := r.db.Preload(clause.Associations).Preload("TransactionToJetty.Truck.Contractor").Preload("TransactionToJetty.Pit").Preload("TransactionToJetty.Isp").Preload("TransactionToJetty.CreatedBy").Preload("TransactionToJetty.UpdatedBy").Preload("TransactionJetty.Jetty").Preload("TransactionJetty.CreatedBy").Preload("TransactionJetty.UpdatedBy").Where("id = ? and iupopk_id = ?", transactionHaulingId, iupopkId).First(&transactionHauling).Error
 
 	if errFind != nil {
 		return transactionHauling, errFind
@@ -111,13 +111,15 @@ func (r *repository) SummaryJettyTransactionPerDay(iupopkId int) (SummaryJettyTr
 	return summary, nil
 }
 
-func (r *repository) SummaryInventoryStockRom(iupopkId int) ([]InventoryStockRom, error) {
+func (r *repository) SummaryInventoryStockRom(iupopkId int) (Summary, error) {
+	var summary Summary
+
 	var inventory []InventoryStockRom
 
 	errFind := r.db.Preload(clause.Associations).Table("isps").Select("quantity as stock, id as isp_id").Where("iupopk_id = ?", iupopkId).Group("id").Find(&inventory).Error
 
 	if errFind != nil {
-		return inventory, errFind
+		return summary, errFind
 	}
 
 	var sumTransactionJetty []SumTransactionJetty
@@ -126,13 +128,13 @@ func (r *repository) SummaryInventoryStockRom(iupopkId int) ([]InventoryStockRom
 	errFindSum := r.db.Table("transaction_jetties").Select("SUM(nett_quantity) as quantity, isp_id").Where("iupopk_id = ? ", iupopkId).Group("isp_id").Find(&sumTransactionJetty).Error
 
 	if errFindSum != nil {
-		return inventory, errFindSum
+		return summary, errFindSum
 	}
 
 	errFindCount := r.db.Table("transaction_isp_jetties tij").Select("Count(*) as count, ttj.isp_id").Joins("LEFT JOIN transaction_to_jetties ttj on ttj.id = tij.transaction_to_jetty_id").Where("tij.iupopk_id = ? and tij.transaction_jetty_id IS NULL", iupopkId).Group("ttj.isp_id").Find(&countInTransit).Error
 
 	if errFindCount != nil {
-		return inventory, errFindCount
+		return summary, errFindCount
 	}
 
 	var newInventory []InventoryStockRom
@@ -155,5 +157,53 @@ func (r *repository) SummaryInventoryStockRom(iupopkId int) ([]InventoryStockRom
 		newInventory = append(newInventory, v)
 	}
 
-	return newInventory, nil
+	summary.InventoryStockRom = newInventory
+
+	var inventoryStockJetty []InventoryStockJetty
+
+	errFindJetty := r.db.Preload(clause.Associations).Table("jetties").Select("quantity as stock, id as jetty_id").Where("iupopk_id = ?", iupopkId).Group("id").Find(&inventoryStockJetty).Error
+
+	if errFindJetty != nil {
+		return summary, errFindJetty
+	}
+
+	var sumTransaction []SumTransaction
+
+	errFindSumJetty := r.db.Table("transactions").Select("SUM(quantity) as quantity, loading_port_id as jetty_id").Where("seller_id = ? ", iupopkId).Group("loading_port_id").Find(&sumTransaction).Error
+
+	if errFindSumJetty != nil {
+		return summary, errFindSumJetty
+	}
+
+	var sumStockJetty []SumTransaction
+
+	errFindSumStockJetty := r.db.Table("transaction_jetties").Select("SUM(nett_quantity) as quantity, jetty_id").Where("iupopk_id = ? ", iupopkId).Group("jetty_id").Find(&sumStockJetty).Error
+
+	if errFindSumStockJetty != nil {
+		return summary, errFindSumStockJetty
+	}
+
+	var newInventoryStockJetty []InventoryStockJetty
+
+	for _, v := range inventoryStockJetty {
+		for _, vSum := range sumTransaction {
+			if v.JettyId == vSum.JettyId {
+				v.Stock -= vSum.Quantity
+				break
+			}
+		}
+
+		for _, vStock := range sumStockJetty {
+			if v.JettyId == vStock.JettyId {
+				v.Stock += vStock.Quantity
+				break
+			}
+		}
+
+		newInventoryStockJetty = append(newInventoryStockJetty, v)
+	}
+
+	summary.InventoryStockJetty = newInventoryStockJetty
+
+	return summary, nil
 }
