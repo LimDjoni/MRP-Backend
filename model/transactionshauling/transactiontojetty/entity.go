@@ -3,6 +3,7 @@ package transactiontojetty
 import (
 	"ajebackend/model/master/isp"
 	"ajebackend/model/master/iupopk"
+	"ajebackend/model/master/jetty"
 	"ajebackend/model/master/pit"
 	"ajebackend/model/master/truck"
 	"ajebackend/model/user"
@@ -21,6 +22,8 @@ type TransactionToJetty struct {
 	Isp                   *isp.Isp      `json:"isp"`
 	PitId                 *uint         `json:"pit_id"`
 	Pit                   *pit.Pit      `json:"pit"`
+	JettyId               uint          `json:"jetty_id"`
+	Jetty                 jetty.Jetty   `json:"jetty"`
 	Seam                  string        `json:"seam"`
 	Origin                string        `json:"origin"`
 	ClockOutDate          string        `json:"clock_out_date" gorm:"DATETIME"`
