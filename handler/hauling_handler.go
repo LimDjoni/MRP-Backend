@@ -375,20 +375,7 @@ func (h *haulingHandler) SummaryInventoryStockRom(c *fiber.Ctx) error {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
-	c.Query("shipping_end")
-
-	startDate := ""
-	endDate := ""
-
-	if c.Query("start_date") != "" {
-		startDate = c.Query("start_date")
-	}
-
-	if c.Query("end_date") != "" {
-		endDate = c.Query("end_date")
-	}
-
-	summary, summaryErr := h.transactionsHaulingService.SummaryInventoryStockRom(iupopkIdInt, startDate, endDate)
+	summary, summaryErr := h.transactionsHaulingService.SummaryInventoryStockRom(iupopkIdInt)
 
 	if summaryErr != nil {
 		return c.Status(400).JSON(fiber.Map{
