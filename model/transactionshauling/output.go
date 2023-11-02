@@ -11,20 +11,14 @@ type SummaryJettyTransactionPerDay struct {
 }
 
 type InventoryStockRom struct {
-	IspId          uint    `json:"isp_id"`
-	Isp            isp.Isp `json:"isp"`
-	Stock          float64 `json:"stock"`
-	CountInTransit int     `json:"count_in_transit"`
+	IspId uint    `json:"isp_id"`
+	Isp   isp.Isp `json:"isp"`
+	Stock float64 `json:"stock"`
 }
 
 type SumTransactionJetty struct {
 	IspId    uint    `json:"isp_id"`
 	Quantity float64 `json:"quantity"`
-}
-
-type CountInTransit struct {
-	IspId uint `json:"isp_id"`
-	Count int  `json:"count"`
 }
 
 type InventoryStockJetty struct {
