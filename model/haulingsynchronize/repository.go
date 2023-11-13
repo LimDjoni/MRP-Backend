@@ -94,6 +94,7 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 		errCreateJetty := tx.Create(&transactionJetty).Error
 
 		if errCreateJetty != nil {
+			fmt.Println("1", errCreateJetty.Error())
 			tx.Rollback()
 			return false, errCreateJetty
 		}
@@ -136,9 +137,12 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 				errUpdIspJetty := tx.Table("transaction_isp_jetties").Where("id = ?", v.ID).Update("transaction_jetty_id", tempTransactionJetty.ID).Error
 
 				if errUpdIspJetty != nil {
+					fmt.Println("2", errUpdIspJetty.Error())
 					tx.Rollback()
 					return false, errUpdIspJetty
 				}
+			} else {
+				fmt.Println("2.1", errFindTransactionJetty.Error())
 			}
 		}
 	}
@@ -148,6 +152,7 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 	errFindSynchronize := tx.Where("iupopk_id = ?", syncData.IupopkId).First(&haulingSync).Error
 
 	if errFindSynchronize != nil {
+		fmt.Println("3", errFindSynchronize.Error())
 		tx.Rollback()
 		return false, errFindSynchronize
 	}
@@ -156,6 +161,7 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 
 	if errUpdSynchronize != nil {
 		tx.Rollback()
+		fmt.Println("4", errFindSynchronize.Error())
 		return false, errUpdSynchronize
 	}
 

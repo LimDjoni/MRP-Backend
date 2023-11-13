@@ -194,6 +194,7 @@ func main() {
 		seedingmaster.SeedingVessel(db)
 		seedingmaster.SeedingCounter(db)
 		seedingmaster.SeedingCategoryIndustryType(db)
+		seedingmaster.SeedingUserRole(db)
 		seeding.UpdateIupopk(db)
 		fmt.Println(errMigrate)
 	}
