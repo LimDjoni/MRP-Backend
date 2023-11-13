@@ -69,9 +69,9 @@ func (r *repository) LoginUser(input user.LoginUserInput) (user.TokenUser, error
 		"email":    "",
 		"role":     "",
 	}
-	usernameErr := r.db.Where("username = ?", input.Data).First(&username).Error
+	usernameErr := r.db.Preload(clause.Associations).Where("username = ?", input.Data).First(&username).Error
 
-	emailErr := r.db.Where("email = ?", strings.ToLower(input.Data)).First(&email).Error
+	emailErr := r.db.Preload(clause.Associations).Where("email = ?", strings.ToLower(input.Data)).First(&email).Error
 
 	if emailErr != nil && usernameErr != nil {
 		return tokenUser, errors.New("invalid Email / Username / Password")
@@ -81,7 +81,11 @@ func (r *repository) LoginUser(input user.LoginUserInput) (user.TokenUser, error
 		dataUser["username"] = email.Username
 		dataUser["email"] = email.Email
 		dataUser["id"] = email.ID
-		dataUser["role"] = email.Role
+		if email.UserRole != nil {
+			dataUser["role"] = email.UserRole.Name
+		} else {
+			dataUser["role"] = ""
+		}
 		isValidPassword = helper.CheckPassword(input.Password, email.Password)
 	}
 
@@ -89,7 +93,11 @@ func (r *repository) LoginUser(input user.LoginUserInput) (user.TokenUser, error
 		dataUser["username"] = username.Username
 		dataUser["email"] = username.Email
 		dataUser["id"] = username.ID
-		dataUser["role"] = username.Role
+		if username.UserRole != nil {
+			dataUser["role"] = username.UserRole.Name
+		} else {
+			dataUser["role"] = ""
+		}
 		isValidPassword = helper.CheckPassword(input.Password, username.Password)
 	}
 
