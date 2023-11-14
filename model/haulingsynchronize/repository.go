@@ -40,7 +40,7 @@ func (r *repository) SynchronizeTransactionIsp(syncData SynchronizeInputTransact
 	tx := r.db.Begin()
 
 	if len(inputTransactionToIsp) > 0 {
-		errCreateToIsp := tx.Model(&transactionToIsp).Create(&inputTransactionToIsp).Error
+		errCreateToIsp := tx.Model(&transactionToIsp{}).Create(&inputTransactionToIsp).Error
 
 		if errCreateToIsp != nil {
 			fmt.Println(errCreateToIsp.Error())
@@ -50,7 +50,7 @@ func (r *repository) SynchronizeTransactionIsp(syncData SynchronizeInputTransact
 	}
 
 	if len(inputTransactionToJetty) > 0 {
-		errCreateToJetty := tx.Model(&transactionToJetty).Create(&inputTransactionToJetty).Error
+		errCreateToJetty := tx.Model(&transactionToJetty{}).Create(&inputTransactionToJetty).Error
 
 		if errCreateToJetty != nil {
 			fmt.Println(errCreateToJetty.Error())
@@ -76,7 +76,7 @@ func (r *repository) SynchronizeTransactionIsp(syncData SynchronizeInputTransact
 	}
 
 	if len(transactionIspJetties) > 0 {
-		errCreateIspJetty := tx.Model(&transactionIspJetty).Create(&transactionIspJetties).Error
+		errCreateIspJetty := tx.Model(&transactionIspJetty{}).Create(&transactionIspJetties).Error
 
 		if errCreateIspJetty != nil {
 			fmt.Println(errCreateIspJetty.Error())
