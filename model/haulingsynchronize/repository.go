@@ -97,16 +97,18 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 			tx.Rollback()
 			return false, errCreateJetty
 		}
+	}
 
-		var transactionIspJetty []transactionispjetty.TransactionIspJetty
+	var transactionIspJetty []transactionispjetty.TransactionIspJetty
 
-		errFindIspJetty := tx.Preload(clause.Associations).Where("transaction_jetty_id IS NULL").Order("created_at asc").Find(&transactionIspJetty).Error
+	errFindIspJetty := tx.Preload(clause.Associations).Where("transaction_jetty_id IS NULL").Order("created_at asc").Find(&transactionIspJetty).Error
 
-		if errFindIspJetty != nil {
-			tx.Rollback()
-			return false, errFindIspJetty
-		}
+	if errFindIspJetty != nil {
+		tx.Rollback()
+		return false, errFindIspJetty
+	}
 
+	if len(transactionIspJetty > 0) {
 		for _, v := range transactionIspJetty {
 			var tempTransactionJetty transactionjetty.TransactionJetty
 
