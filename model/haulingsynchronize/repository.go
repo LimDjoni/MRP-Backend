@@ -60,7 +60,7 @@ func (r *repository) SynchronizeTransactionIsp(syncData SynchronizeInputTransact
 			splitId := strings.Split(v.IdNumber, "PHU-")
 
 			temp := make(map[string]interface{})
-			temp["transaction_to_jetties"] = v.ID
+			temp["transaction_to_jetty_id"] = v.ID
 			temp["iupopk_id"] = syncData.IupopkId
 			temp["id_number"] = "HAU-" + splitId[1]
 
