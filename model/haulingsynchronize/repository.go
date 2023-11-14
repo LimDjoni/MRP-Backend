@@ -26,34 +26,27 @@ func NewRepository(db *gorm.DB) *repository {
 }
 
 func (r *repository) SynchronizeTransactionIsp(syncData SynchronizeInputTransactionIsp) (bool, error) {
-	var transactionIspJetty []transactionispjetty.TransactionIspJetty
-
 	var transactionToIsp []transactiontoisp.TransactionToIsp
 	var transactionToJetty []transactiontojetty.TransactionToJetty
 
-	var inputTransactionToIsp []transactiontoisp.InputTransactionToIsp
-	var inputTransactionToJetty []transactiontojetty.InputTransactionToJetty
-
-	inputTransactionToIsp = syncData.TransactionToIsp
-	inputTransactionToJetty = syncData.TransactionToJetty
+	transactionToIsp = syncData.TransactionToIsp
+	transactionToJetty = syncData.TransactionToJetty
 
 	tx := r.db.Begin()
 
-	if len(inputTransactionToIsp) > 0 {
-		errCreateToIsp := tx.Model(&transactionToIsp{}).Create(&inputTransactionToIsp).Error
+	if len(transactionToIsp) > 0 {
+		errCreateToIsp := tx.Create(&transactionToIsp).Error
 
 		if errCreateToIsp != nil {
-			fmt.Println(errCreateToIsp.Error())
 			tx.Rollback()
 			return false, errCreateToIsp
 		}
 	}
 
-	if len(inputTransactionToJetty) > 0 {
-		errCreateToJetty := tx.Model(&transactionToJetty{}).Create(&inputTransactionToJetty).Error
+	if len(transactionToJetty) > 0 {
+		errCreateToJetty := tx.Create(&transactionToJetty).Error
 
 		if errCreateToJetty != nil {
-			fmt.Println(errCreateToJetty.Error())
 			tx.Rollback()
 			return false, errCreateToJetty
 		}
@@ -76,10 +69,9 @@ func (r *repository) SynchronizeTransactionIsp(syncData SynchronizeInputTransact
 	}
 
 	if len(transactionIspJetties) > 0 {
-		errCreateIspJetty := tx.Model(&transactionIspJetty{}).Create(&transactionIspJetties).Error
+		errCreateIspJetty := tx.Model(&transactionispjetty.TransactionIspJetty{}).Create(&transactionIspJetties).Error
 
 		if errCreateIspJetty != nil {
-			fmt.Println(errCreateIspJetty.Error())
 			tx.Rollback()
 			return false, errCreateIspJetty
 		}
@@ -108,14 +100,12 @@ func (r *repository) SynchronizeTransactionIsp(syncData SynchronizeInputTransact
 func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransactionJetty) (bool, error) {
 	var transactionJetty []transactionjetty.TransactionJetty
 
-	var inputTransactionJetty []transactionjetty.InputTransactionJetty
-
-	inputTransactionJetty = syncData.TransactionJetty
+	transactionJetty = syncData.TransactionJetty
 
 	tx := r.db.Begin()
 
-	if len(inputTransactionJetty) > 0 {
-		errCreateJetty := tx.Model(&transactionJetty).Create(&inputTransactionJetty).Error
+	if len(transactionJetty) > 0 {
+		errCreateJetty := tx.Create(&transactionJetty).Error
 
 		if errCreateJetty != nil {
 			tx.Rollback()
