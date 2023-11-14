@@ -6,6 +6,7 @@ import (
 	"ajebackend/model/transactionshauling/transactiontoisp"
 	"ajebackend/model/transactionshauling/transactiontojetty"
 	"fmt"
+	"strings"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -26,17 +27,20 @@ func NewRepository(db *gorm.DB) *repository {
 
 func (r *repository) SynchronizeTransactionIsp(syncData SynchronizeInputTransactionIsp) (bool, error) {
 	var transactionIspJetty []transactionispjetty.TransactionIspJetty
+
 	var transactionToIsp []transactiontoisp.TransactionToIsp
 	var transactionToJetty []transactiontojetty.TransactionToJetty
 
-	transactionIspJetty = syncData.TransactionIspJetty
-	transactionToIsp = syncData.TransactionToIsp
-	transactionToJetty = syncData.TransactionToJetty
+	var inputTransactionToIsp []transactiontoisp.InputTransactionToIsp
+	var inputTransactionToJetty []transactiontojetty.InputTransactionToJetty
+
+	inputTransactionToIsp = syncData.TransactionToIsp
+	inputTransactionToJetty = syncData.TransactionToJetty
 
 	tx := r.db.Begin()
 
-	if len(transactionToIsp) > 0 {
-		errCreateToIsp := tx.Create(&transactionToIsp).Error
+	if len(inputTransactionToIsp) > 0 {
+		errCreateToIsp := tx.Model(&transactionToIsp).Create(&inputTransactionToIsp).Error
 
 		if errCreateToIsp != nil {
 			tx.Rollback()
@@ -44,17 +48,33 @@ func (r *repository) SynchronizeTransactionIsp(syncData SynchronizeInputTransact
 		}
 	}
 
-	if len(transactionToJetty) > 0 {
-		errCreateToJetty := tx.Create(&transactionToJetty).Error
+	if len(inputTransactionToJetty) > 0 {
+		errCreateToJetty := tx.Model(&transactionToJetty).Create(&inputTransactionToJetty).Error
 
 		if errCreateToJetty != nil {
 			tx.Rollback()
 			return false, errCreateToJetty
 		}
+
 	}
 
-	if len(transactionIspJetty) > 0 {
-		errCreateIspJetty := tx.Create(&transactionIspJetty).Error
+	var transactionIspJetties []map[string]interface{}
+
+	if len(transactionToJetty) > 0 {
+		for _, v := range transactionToJetty {
+			splitId := strings.Split(v.IdNumber, "PHU-")
+
+			temp := make(map[string]interface{})
+			temp["transaction_to_jetties"] = v.ID
+			temp["iupopk_id"] = syncData.IupopkId
+			temp["id_number"] = "HAU-" + splitId[1]
+
+			transactionIspJetties = append(transactionIspJetties, temp)
+		}
+	}
+
+	if len(transactionIspJetties) > 0 {
+		errCreateIspJetty := tx.Model(&transactionIspJetty).Create(&transactionIspJetties).Error
 
 		if errCreateIspJetty != nil {
 			tx.Rollback()
@@ -83,15 +103,16 @@ func (r *repository) SynchronizeTransactionIsp(syncData SynchronizeInputTransact
 }
 
 func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransactionJetty) (bool, error) {
-
 	var transactionJetty []transactionjetty.TransactionJetty
 
-	transactionJetty = syncData.TransactionJetty
+	var inputTransactionJetty []transactionjetty.InputTransactionJetty
+
+	inputTransactionJetty = syncData.InputTransactionJetty
 
 	tx := r.db.Begin()
 
-	if len(transactionJetty) > 0 {
-		errCreateJetty := tx.Create(&transactionJetty).Error
+	if len(inputTransactionJetty) > 0 {
+		errCreateJetty := tx.Model(&transactionJetty).Create(&inputTransactionJetty).Error
 
 		if errCreateJetty != nil {
 			tx.Rollback()
