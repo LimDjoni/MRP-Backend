@@ -53,23 +53,23 @@ func (r *repository) SynchronizeTransactionIsp(syncData SynchronizeInputTransact
 
 	}
 
-	var transactionIspJetties []map[string]interface{}
+	var transactionIspJetties []transactionispjetty.TransactionIspJetty
 
 	if len(transactionToJetty) > 0 {
 		for _, v := range transactionToJetty {
 			splitId := strings.Split(v.IdNumber, "PHU-")
 
-			temp := make(map[string]interface{})
-			temp["transaction_to_jetty_id"] = v.ID
-			temp["iupopk_id"] = syncData.IupopkId
-			temp["id_number"] = "HAU-" + splitId[1]
+			var temp transactionispjetty.TransactionIspJetty
+			temp.TransactionToJettyId = v.ID
+			temp.IupopkId = syncData.IupopkId
+			temp.IdNumber = "HAU-" + splitId[1]
 
 			transactionIspJetties = append(transactionIspJetties, temp)
 		}
 	}
 
 	if len(transactionIspJetties) > 0 {
-		errCreateIspJetty := tx.Model(&transactionispjetty.TransactionIspJetty{}).Create(&transactionIspJetties).Error
+		errCreateIspJetty := tx.Create(&transactionIspJetties).Error
 
 		if errCreateIspJetty != nil {
 			tx.Rollback()
