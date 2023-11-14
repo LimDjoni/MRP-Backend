@@ -107,7 +107,7 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 
 	var inputTransactionJetty []transactionjetty.InputTransactionJetty
 
-	inputTransactionJetty = syncData.InputTransactionJetty
+	inputTransactionJetty = syncData.TransactionJetty
 
 	tx := r.db.Begin()
 
