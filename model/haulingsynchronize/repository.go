@@ -43,6 +43,7 @@ func (r *repository) SynchronizeTransactionIsp(syncData SynchronizeInputTransact
 		errCreateToIsp := tx.Model(&transactionToIsp).Create(&inputTransactionToIsp).Error
 
 		if errCreateToIsp != nil {
+			fmt.Println(errCreateToIsp.Error())
 			tx.Rollback()
 			return false, errCreateToIsp
 		}
@@ -52,6 +53,7 @@ func (r *repository) SynchronizeTransactionIsp(syncData SynchronizeInputTransact
 		errCreateToJetty := tx.Model(&transactionToJetty).Create(&inputTransactionToJetty).Error
 
 		if errCreateToJetty != nil {
+			fmt.Println(errCreateToJetty.Error())
 			tx.Rollback()
 			return false, errCreateToJetty
 		}
@@ -77,6 +79,7 @@ func (r *repository) SynchronizeTransactionIsp(syncData SynchronizeInputTransact
 		errCreateIspJetty := tx.Model(&transactionIspJetty).Create(&transactionIspJetties).Error
 
 		if errCreateIspJetty != nil {
+			fmt.Println(errCreateIspJetty.Error())
 			tx.Rollback()
 			return false, errCreateIspJetty
 		}
