@@ -108,7 +108,7 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 		return false, errFindIspJetty
 	}
 
-	if len(transactionIspJetty > 0) {
+	if len(transactionIspJetty) > 0 {
 		for _, v := range transactionIspJetty {
 			var tempTransactionJetty transactionjetty.TransactionJetty
 
