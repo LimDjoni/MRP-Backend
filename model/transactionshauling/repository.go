@@ -73,7 +73,7 @@ func (r *repository) ListTransactionHauling(page int, iupopkId int) (Pagination,
 func (r *repository) DetailStockRom(iupopkId int, stockRomId int) (transactiontoisp.TransactionToIsp, error) {
 	var transactionStockRom transactiontoisp.TransactionToIsp
 
-	errFind := r.db.Preload(clause.Associations).Where("id = ? and iupopk_id = ?", stockRomId, iupopkId).First(&transactionStockRom).Error
+	errFind := r.db.Preload(clause.Associations).Preload("Truck.Contractor").Where("id = ? and iupopk_id = ?", stockRomId, iupopkId).First(&transactionStockRom).Error
 
 	if errFind != nil {
 		return transactionStockRom, errFind
