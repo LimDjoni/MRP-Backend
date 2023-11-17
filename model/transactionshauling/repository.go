@@ -38,7 +38,7 @@ func (r *repository) ListStockRom(page int, iupopkId int) (Pagination, error) {
 
 	queryFilter := fmt.Sprintf("iupopk_id = %v", iupopkId)
 
-	errFind := r.db.Preload(clause.Associations).Order(defaultSort).Where(queryFilter).Scopes(paginateData(listStockRom, &pagination, r.db, queryFilter)).Find(&listStockRom).Error
+	errFind := r.db.Preload(clause.Associations).Preload("Truck.Contractor").Order(defaultSort).Where(queryFilter).Scopes(paginateData(listStockRom, &pagination, r.db, queryFilter)).Find(&listStockRom).Error
 
 	if errFind != nil {
 		return pagination, errFind
@@ -59,7 +59,7 @@ func (r *repository) ListTransactionHauling(page int, iupopkId int) (Pagination,
 
 	queryFilter := fmt.Sprintf("iupopk_id = %v", iupopkId)
 
-	errFind := r.db.Preload(clause.Associations).Preload("TransactionToJetty.Truck.Contractor").Preload("TransactionToJetty.Pit").Preload("TransactionToJetty.Isp").Preload("TransactionToJetty.CreatedBy").Preload("TransactionToJetty.UpdatedBy").Preload("TransactionJetty.Jetty").Preload("TransactionJetty.CreatedBy").Preload("TransactionJetty.UpdatedBy").Order(defaultSort).Where(queryFilter).Scopes(paginateData(listTransactionHauling, &pagination, r.db, queryFilter)).Find(&listTransactionHauling).Error
+	errFind := r.db.Preload(clause.Associations).Preload("TransactionToJetty.Truck.Contractor").Preload("TransactionToJetty.Pit").Preload("TransactionToJetty.Isp").Preload("TransactionToJetty.Jetty").Preload("TransactionToJetty.CreatedBy").Preload("TransactionToJetty.UpdatedBy").Preload("TransactionJetty.Jetty").Preload("TransactionJetty.CreatedBy").Preload("TransactionJetty.UpdatedBy").Order(defaultSort).Where(queryFilter).Scopes(paginateData(listTransactionHauling, &pagination, r.db, queryFilter)).Find(&listTransactionHauling).Error
 
 	if errFind != nil {
 		return pagination, errFind
