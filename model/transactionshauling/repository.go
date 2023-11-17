@@ -38,7 +38,7 @@ func (r *repository) ListStockRom(page int, iupopkId int) (Pagination, error) {
 
 	queryFilter := fmt.Sprintf("iupopk_id = %v", iupopkId)
 
-	errFind := r.db.Preload(clause.Associations).Order(defaultSort).Where(queryFilter).Scopes(paginateData(listStockRom, &pagination, r.db, queryFilter)).Find(&listStockRom).Error
+	errFind := r.db.Preload(clause.Associations).Preload("Truck.Contractor").Order(defaultSort).Where(queryFilter).Scopes(paginateData(listStockRom, &pagination, r.db, queryFilter)).Find(&listStockRom).Error
 
 	if errFind != nil {
 		return pagination, errFind
