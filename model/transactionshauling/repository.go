@@ -85,7 +85,7 @@ func (r *repository) DetailStockRom(iupopkId int, stockRomId int) (transactionto
 func (r *repository) DetailTransactionHauling(iupopkId int, transactionHaulingId int) (transactionispjetty.TransactionIspJetty, error) {
 	var transactionHauling transactionispjetty.TransactionIspJetty
 
-	errFind := r.db.Preload(clause.Associations).Preload("TransactionToJetty.Truck.Contractor").Preload("TransactionToJetty.Pit").Preload("TransactionToJetty.Isp").Preload("TransactionToJetty.CreatedBy").Preload("TransactionToJetty.UpdatedBy").Preload("TransactionJetty.Jetty").Preload("TransactionJetty.CreatedBy").Preload("TransactionJetty.UpdatedBy").Where("id = ? and iupopk_id = ?", transactionHaulingId, iupopkId).First(&transactionHauling).Error
+	errFind := r.db.Preload(clause.Associations).Preload("TransactionToJetty.Truck.Contractor").Preload("TransactionToJetty.Pit").Preload("TransactionToJetty.Isp").Preload("TransactionToJetty.Jetty").Preload("TransactionToJetty.CreatedBy").Preload("TransactionToJetty.UpdatedBy").Preload("TransactionJetty.Jetty").Preload("TransactionJetty.CreatedBy").Preload("TransactionJetty.UpdatedBy").Where("id = ? and iupopk_id = ?", transactionHaulingId, iupopkId).First(&transactionHauling).Error
 
 	if errFind != nil {
 		return transactionHauling, errFind
