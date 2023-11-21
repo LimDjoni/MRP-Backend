@@ -14,6 +14,7 @@ import (
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/insw"
+	"ajebackend/model/jettybalance"
 	"ajebackend/model/master/company"
 	"ajebackend/model/master/currency"
 	"ajebackend/model/master/iupopk"
@@ -23,6 +24,7 @@ import (
 	"ajebackend/model/master/vessel"
 	"ajebackend/model/minerba"
 	"ajebackend/model/minerbaln"
+	"ajebackend/model/pitloss"
 	"ajebackend/model/production"
 	"ajebackend/model/reportdmo"
 	"ajebackend/model/rkab"
@@ -30,6 +32,7 @@ import (
 	"ajebackend/model/royaltyreport"
 	"ajebackend/model/traderdmo"
 	"ajebackend/model/transaction"
+
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -108,6 +111,9 @@ type Repository interface {
 	CreateRoyaltyReport(dateFrom string, dateTo string, iupopkId int, userId uint) (royaltyreport.RoyaltyReport, error)
 	DeleteRoyaltyReport(id int, iupopkId int, userId uint) (bool, error)
 	UpdateDocumentRoyaltyReport(id int, documentLink royaltyreport.InputUpdateDocumentRoyaltyReport, userId uint, iupopkId int) (royaltyreport.RoyaltyReport, error)
+	CreateJettyBalance(input pitloss.InputJettyPitLoss, iupopkId int, userId uint) (jettybalance.JettyBalance, error)
+	UpdateJettyBalance(id int, input pitloss.InputUpdateJettyPitLoss, iupopkId int, userId uint) (jettybalance.JettyBalance, error)
+	DeleteJettyBalance(id int, userId uint, iupopkId int) (bool, error)
 }
 
 type repository struct {
@@ -4079,11 +4085,19 @@ func (r *repository) CreateRkab(input rkab.RkabInput, iupopkId int, userId uint)
 		return createdRkab, errFindIup
 	}
 
-	errFindRkab := tx.Where("year = ? AND iupopk_id = ?", input.Year, iupopkId).Find(&findRkab).Error
+	var checkRkab rkab.Rkab
+	errFirstRkab := tx.Where("year_2 = ? or year_2 = ? or year_3 = ? or year_3 = ?", input.Year, input.Year3, input.Year, input.Year2).First(&checkRkab).Error
+
+	if errFirstRkab == nil {
+		tx.Rollback()
+		return createdRkab, errors.New("year is already used in another rkab")
+	}
+
+	errFindRkab := tx.Where("year = ? AND year_2 = ? AND year_3 = ? AND iupopk_id = ?", input.Year, input.Year2, input.Year3, iupopkId).Find(&findRkab).Error
 
 	if errFindRkab != nil {
 		tx.Rollback()
-		return createdRkab, nil
+		return createdRkab, errFindRkab
 	}
 
 	errFindCounterTransaction := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
@@ -4101,12 +4115,23 @@ func (r *repository) CreateRkab(input rkab.RkabInput, iupopkId int, userId uint)
 	createdRkab.ProductionQuota = input.ProductionQuota
 	createdRkab.SalesQuota = input.SalesQuota
 	createdRkab.DmoObligation = input.DmoObligation
+
+	createdRkab.Year2 = input.Year2
+	createdRkab.ProductionQuota2 = input.ProductionQuota2
+	createdRkab.SalesQuota2 = input.SalesQuota2
+	createdRkab.DmoObligation2 = input.DmoObligation2
+
+	createdRkab.Year3 = input.Year3
+	createdRkab.ProductionQuota3 = input.ProductionQuota3
+	createdRkab.SalesQuota3 = input.SalesQuota3
+	createdRkab.DmoObligation3 = input.DmoObligation3
+
 	createdRkab.IupopkId = uint(iupopkId)
 
 	if len(findRkab) > 0 {
 		createdRkab.IsRevision = true
 
-		errUpd := tx.Model(&findRkab).Where("year = ? AND iupopk_id = ?", input.Year, iupopkId).Update("is_revision", true).Error
+		errUpd := tx.Model(&findRkab).Where("year = ? AND year_2 = ? AND year_3 = ? AND iupopk_id = ?", input.Year, input.Year2, input.Year3, iupopkId).Update("is_revision", true).Error
 
 		if errUpd != nil {
 			return createdRkab, errUpd
@@ -4152,6 +4177,8 @@ func (r *repository) DeleteRkab(id int, iupopkId int, userId uint) (bool, error)
 	var iup iupopk.Iupopk
 
 	var rkabYear string
+	var rkabYear2 string
+	var rkabYear3 string
 
 	tx := r.db.Begin()
 
@@ -4170,6 +4197,9 @@ func (r *repository) DeleteRkab(id int, iupopkId int, userId uint) (bool, error)
 	}
 
 	rkabYear = rkabDeleted.Year
+	rkabYear2 = rkabDeleted.Year2
+	rkabYear3 = rkabDeleted.Year3
+
 	rkabData, _ := json.Marshal(rkabDeleted)
 
 	errDelete := tx.Unscoped().Where("id = ? AND iupopk_id = ?", id, iupopkId).Delete(&rkabDeleted).Error
@@ -4181,7 +4211,7 @@ func (r *repository) DeleteRkab(id int, iupopkId int, userId uint) (bool, error)
 
 	var listRkab []rkab.Rkab
 
-	errFindRkabWithYear := tx.Where("year = ?", rkabYear).Order("created_at desc").Find(&listRkab).Error
+	errFindRkabWithYear := tx.Where("year = ? AND year_2 = ? AND year_3 = ?", rkabYear, rkabYear2, rkabYear3).Order("created_at desc").Find(&listRkab).Error
 
 	if errFindRkabWithYear == nil {
 		var newUpdRkab rkab.Rkab
@@ -5454,4 +5484,222 @@ func (r *repository) UpdateDocumentRoyaltyReport(id int, documentLink royaltyrep
 
 	tx.Commit()
 	return royaltyReport, nil
+}
+
+// Jetty Balance & Pit Loss
+func (r *repository) CreateJettyBalance(input pitloss.InputJettyPitLoss, iupopkId int, userId uint) (jettybalance.JettyBalance, error) {
+	var jettyBalance jettybalance.JettyBalance
+
+	jettyBalance.Year = input.Year
+	jettyBalance.JettyId = input.JettyId
+	jettyBalance.StartBalance = input.StartBalance
+	jettyBalance.TotalLoss = input.TotalLoss
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("year = ? and jetty_id = ? and iupopk_id = ?", input.Year, input.JettyId, iupopkId).First(&jettyBalance).Error
+
+	if errFind == nil {
+		tx.Rollback()
+		return jettyBalance, errors.New("jetty and year is already created")
+	}
+
+	errCreate := tx.Create(&jettyBalance).Error
+
+	if errCreate != nil {
+		tx.Rollback()
+		return jettyBalance, errCreate
+	}
+
+	var pitLoss []pitloss.PitLoss
+
+	for _, v := range input.InputPitLoss {
+		var tempPitLoss pitloss.PitLoss
+
+		tempPitLoss.PitId = v.PitId
+		tempPitLoss.JanuaryLossQuantity = v.JanuaryLossQuantity
+		tempPitLoss.FebruaryLossQuantity = v.FebruaryLossQuantity
+		tempPitLoss.MarchLossQuantity = v.MarchLossQuantity
+		tempPitLoss.AprilLossQuantity = v.AprilLossQuantity
+		tempPitLoss.MayLossQuantity = v.MayLossQuantity
+		tempPitLoss.JuneLossQuantity = v.JuneLossQuantity
+		tempPitLoss.JulyLossQuantity = v.JulyLossQuantity
+		tempPitLoss.AugustLossQuantity = v.AugustLossQuantity
+		tempPitLoss.SeptemberLossQuantity = v.SeptemberLossQuantity
+		tempPitLoss.OctoberLossQuantity = v.OctoberLossQuantity
+		tempPitLoss.NovemberLossQuantity = v.NovemberLossQuantity
+		tempPitLoss.DecemberLossQuantity = v.DecemberLossQuantity
+		tempPitLoss.JettyBalanceId = jettyBalance.ID
+
+		pitLoss = append(pitLoss, tempPitLoss)
+	}
+
+	errCreatePitLoss := tx.Create(&pitLoss).Error
+
+	if errCreatePitLoss != nil {
+		tx.Rollback()
+		return jettyBalance, errCreatePitLoss
+	}
+
+	var history History
+
+	history.JettyBalanceId = &jettyBalance.ID
+	history.Status = "Created"
+	history.UserId = userId
+	history.IupopkId = iupopkId
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return jettyBalance, createHistoryErr
+	}
+
+	tx.Commit()
+	return jettyBalance, nil
+}
+
+func (r *repository) UpdateJettyBalance(id int, input pitloss.InputUpdateJettyPitLoss, iupopkId int, userId uint) (jettybalance.JettyBalance, error) {
+	var jettyBalance jettybalance.JettyBalance
+	var pitLossBefore pitloss.PitLoss
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("id = ? and iupopk_id = ?", id, iupopkId).First(&jettyBalance).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return jettyBalance, errFind
+	}
+
+	errFindPitLoss := tx.Where("jetty_balance_id = ?", id).Find(&pitLossBefore).Error
+
+	if errFindPitLoss != nil {
+		tx.Rollback()
+		return jettyBalance, errFindPitLoss
+	}
+
+	mapBefore := make(map[string]interface{})
+
+	mapBefore["jetty_balance"] = jettyBalance
+	mapBefore["pit_loss"] = pitLossBefore
+
+	beforeData, errorBeforeDataJsonMarshal := json.Marshal(mapBefore)
+
+	if errorBeforeDataJsonMarshal != nil {
+		tx.Rollback()
+		return jettyBalance, errorBeforeDataJsonMarshal
+	}
+
+	mapJettyBalance := make(map[string]interface{})
+
+	mapJettyBalance["start_balance"] = input.StartBalance
+	mapJettyBalance["total_loss"] = input.TotalLoss
+
+	errUpd := tx.Model(&jettyBalance).Where("id = ? and iupopk_id = ?", id, iupopkId).Updates(&mapJettyBalance).Error
+
+	if errUpd != nil {
+		tx.Rollback()
+		return jettyBalance, errUpd
+	}
+
+	for _, v := range input.InputPitLoss {
+		if v.ID > 0 {
+			errUpdPitLoss := tx.Model(&v).Where("id = ?", v.ID).Updates(v).Error
+
+			if errUpdPitLoss != nil {
+				tx.Rollback()
+				return jettyBalance, errUpdPitLoss
+			}
+		} else {
+			v.JettyBalanceId = jettyBalance.ID
+
+			errCreatePitLoss := tx.Create(&v).Error
+
+			if errCreatePitLoss != nil {
+				tx.Rollback()
+				return jettyBalance, errCreatePitLoss
+			}
+		}
+	}
+
+	afterData, errorAfterDataJsonMarshal := json.Marshal(input)
+
+	if errorBeforeDataJsonMarshal != nil {
+		tx.Rollback()
+		return jettyBalance, errorAfterDataJsonMarshal
+	}
+
+	var history History
+
+	history.JettyBalanceId = jettyBalance.ID
+	history.UserId = userId
+	history.Status = "Updated"
+	history.BeforeData = beforeData
+	history.AfterData = afterData
+	history.IupopkId = iupopkId
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return jettyBalance, createHistoryErr
+	}
+
+	tx.Commit()
+	return jettyBalance, nil
+}
+
+func (r *repository) DeleteJettyBalance(id int, userId uint, iupopkId int) (bool, error) {
+	var jettyBalance jettybalance.JettyBalance
+	var pitLossBefore pitloss.PitLoss
+
+	tx := r.db.Begin()
+
+	errFind := tx.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&jettyBalance).Error
+
+	if errFind != nil {
+		return false, errFind
+	}
+
+	errFindPitLoss := tx.Where("jetty_balance_id = ?", id).Find(&pitLossBefore).Error
+
+	if errFindPitLoss != nil {
+		tx.Rollback()
+		return false, errFindPitLoss
+	}
+
+	mapBefore := make(map[string]interface{})
+
+	mapBefore["jetty_balance"] = jettyBalance
+	mapBefore["pit_loss"] = pitLossBefore
+
+	beforeData, errorBeforeDataJsonMarshal := json.Marshal(mapBefore)
+
+	if errorBeforeDataJsonMarshal != nil {
+		tx.Rollback()
+		return false, errorBeforeDataJsonMarshal
+	}
+
+	errDelete := tx.Unscoped().Where("id = ? AND iupopk_id = ?", id, iupopkId).Delete(&jettyBalance).Error
+
+	if errDelete != nil {
+		tx.Rollback()
+		return false, errDelete
+	}
+
+	var history History
+
+	history.Status = fmt.Sprintf("Deleted Jetty Balance id %v and iupopk %v", jettyBalance.ID, iupopkId)
+	history.BeforeData = beforeData
+	history.UserId = userId
+	history.IupopkId = uint(iupopkId)
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return false, createHistoryErr
+	}
+
+	tx.Commit()
+	return true, createHistoryErr
 }

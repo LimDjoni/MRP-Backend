@@ -9,6 +9,7 @@ import (
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/insw"
+	"ajebackend/model/jettybalance"
 	"ajebackend/model/master/iupopk"
 	"ajebackend/model/minerba"
 	"ajebackend/model/minerbaln"
@@ -65,4 +66,6 @@ type History struct {
 	RoyaltyRecon         *royaltyrecon.RoyaltyRecon             `json:"royalty_recon" gorm:"constraint:OnDelete:CASCADE;"`
 	RoyaltyReportId      *uint                                  `json:"royalty_report_id"`
 	RoyaltyReport        *royaltyreport.RoyaltyReport           `json:"royalty_report" gorm:"constraint:OnDelete:CASCADE;"`
+	JettyBalanceId       *uint                                  `json:"jetty_balance_id"`
+	JettyBalance         *jettybalance.JettyBalance             `json:"jetty_balance" gorm:"constraint:OnDelete:CASCADE;"`
 }

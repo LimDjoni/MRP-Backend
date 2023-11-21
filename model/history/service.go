@@ -11,8 +11,10 @@ import (
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/insw"
+	"ajebackend/model/jettybalance"
 	"ajebackend/model/minerba"
 	"ajebackend/model/minerbaln"
+	"ajebackend/model/pitloss"
 	"ajebackend/model/production"
 	"ajebackend/model/reportdmo"
 	"ajebackend/model/rkab"
@@ -87,6 +89,9 @@ type Service interface {
 	CreateRoyaltyReport(dateFrom string, dateTo string, iupopkId int, userId uint) (royaltyreport.RoyaltyReport, error)
 	DeleteRoyaltyReport(id int, iupopkId int, userId uint) (bool, error)
 	UpdateDocumentRoyaltyReport(id int, documentLink royaltyreport.InputUpdateDocumentRoyaltyReport, userId uint, iupopkId int) (royaltyreport.RoyaltyReport, error)
+	CreateJettyBalance(input pitloss.InputJettyPitLoss, iupopkId int, userId uint) (jettybalance.JettyBalance, error)
+	UpdateJettyBalance(id int, input pitloss.InputUpdateJettyPitLoss, iupopkId int, userId uint) (jettybalance.JettyBalance, error)
+	DeleteJettyBalance(id int, userId uint, iupopkId int) (bool, error)
 }
 
 type service struct {
@@ -483,4 +488,22 @@ func (s *service) UpdateDocumentRoyaltyReport(id int, documentLink royaltyreport
 	royaltyReport, royaltyReportErr := s.repository.UpdateDocumentRoyaltyReport(id, documentLink, userId, iupopkId)
 
 	return royaltyReport, royaltyReportErr
+}
+
+func (s *service) CreateJettyBalance(input pitloss.InputJettyPitLoss, iupopkId int, userId uint) (jettybalance.JettyBalance, error) {
+	data, dataErr := s.repository.CreateJettyBalance(input, iupopkId, userId)
+
+	return data, dataErr
+}
+
+func (s *service) UpdateJettyBalance(id int, input pitloss.InputUpdateJettyPitLoss, iupopkId int, userId uint) (jettybalance.JettyBalance, error) {
+	data, dataErr := s.repository.UpdateJettyBalance(id, input, iupopkId, userId)
+
+	return data, dataErr
+}
+
+func (s *service) DeleteJettyBalance(id int, userId uint, iupopkId int) (bool, error) {
+	data, dataErr := s.repository.DeleteJettyBalance(id, userId, iupopkId)
+
+	return data, dataErr
 }
