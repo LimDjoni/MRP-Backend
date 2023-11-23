@@ -23,11 +23,11 @@ type Rkab struct {
 	ProductionQuota  float64       `json:"production_quota"`
 	SalesQuota       float64       `json:"sales_quota"`
 	DmoObligation    float64       `json:"dmo_obligation"`
-	Year2            string        `json:"year_2"`
+	Year2            *string       `json:"year_2"`
 	SalesQuota2      float64       `json:"sales_quota_2"`
 	ProductionQuota2 float64       `json:"production_quota_2"`
 	DmoObligation2   float64       `json:"dmo_obligation_2"`
-	Year3            string        `json:"year_3"`
+	Year3            *string       `json:"year_3"`
 	ProductionQuota3 float64       `json:"production_quota_3"`
 	SalesQuota3      float64       `json:"sales_quota_3"`
 	DmoObligation3   float64       `json:"dmo_obligation_3"`
