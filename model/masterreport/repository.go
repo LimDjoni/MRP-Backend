@@ -3465,9 +3465,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 	// Rkabs Query
 	var rkabs []rkab.Rkab
 
-	queryRkab := fmt.Sprintf("year = '%s' AND iupopk_id = %v", year, iupopkId)
+	queryRkab := fmt.Sprintf("year = '%s' OR year2 = '%s' OR year3 = '%s' AND iupopk_id = %v", year, year, year, iupopkId)
 
-	errFindRkab := r.db.Where(queryRkab).Order("id ASC").Find(&rkabs).Error
+	errFindRkab := r.db.Where(queryRkab).Order("id DESC").Find(&rkabs).Error
 
 	if errFindRkab != nil {
 		return saleDetail, errFindRkab
@@ -7741,6 +7741,17 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 		}
 	}
 
+	var jettyBalanceAndLoss []JettyBalanceLoss
+
+	rawQueryJettyBalance := fmt.Sprintf("Select jb.id as id, jb.jetty_id as jetty_id, j.* as jetty, start_balance, total_loss from jetty_balances jb left join jetties j on j.id = jb.jetty_id where jb.iupopk_id = %v and year = '%v'", iupopkId, year)
+
+	errFindJettyBalance := r.db.Preload(clause.Associations).Raw(rawQueryJettyBalance).Find(&jettyBalanceAndLoss).Error
+
+	if errFindJettyBalance != nil {
+		return saleDetail, errFindJettyBalance
+	}
+
+	saleDetail.JettyBalanceLoss = jettyBalanceAndLoss
 	saleDetail.CompanyElectricity = companyElectricity
 	saleDetail.CompanyCement = companyCement
 	saleDetail.CompanyNonElectricity = companyNonElectricity
