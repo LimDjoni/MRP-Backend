@@ -121,7 +121,7 @@ func (r *repository) DetailRkabWithYear(year int, iupopkId int) (DetailRkab, err
 		return detailRkab, errTrans
 	}
 
-	if *detail[0].Year2 != "" && detail[0].Year2 != nil {
+	if detail[0].Year2 != nil {
 		filterProduction2 := fmt.Sprintf("production_date >= '%v-01-01' AND production_date <= '%v-12-31' AND iupopk_id = %v", *detail[0].Year2, *detail[0].Year2, iupopkId)
 
 		errProd2 := r.db.Table("productions").Select("SUM(quantity) as total_production").Where(filterProduction2).Scan(&rkabProductionQuantity2).Error
@@ -139,7 +139,7 @@ func (r *repository) DetailRkabWithYear(year int, iupopkId int) (DetailRkab, err
 		}
 	}
 
-	if *detail[0].Year3 != "" && detail[0].Year3 != nil {
+	if detail[0].Year3 != nil {
 		filterProduction3 := fmt.Sprintf("production_date >= '%v-01-01' AND production_date <= '%v-12-31' AND iupopk_id = %v", *detail[0].Year3, *detail[0].Year3, iupopkId)
 
 		errProd3 := r.db.Table("productions").Select("SUM(quantity) as total_production").Where(filterProduction3).Scan(&rkabProductionQuantity3).Error
