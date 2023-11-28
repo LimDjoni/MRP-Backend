@@ -3465,7 +3465,7 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 	// Rkabs Query
 	var rkabs []rkab.Rkab
 
-	queryRkab := fmt.Sprintf("year = '%s' OR year2 = '%s' OR year3 = '%s' AND iupopk_id = %v", year, year, year, iupopkId)
+	queryRkab := fmt.Sprintf("(year = '%s' OR year2 = '%s' OR year3 = '%s') AND iupopk_id = %v", year, year, year, iupopkId)
 
 	errFindRkab := r.db.Where(queryRkab).Order("id DESC").Find(&rkabs).Error
 
