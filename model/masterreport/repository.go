@@ -6,6 +6,7 @@ import (
 	"ajebackend/model/electricassignment"
 	"ajebackend/model/electricassignmentenduser"
 	"ajebackend/model/groupingvesseldn"
+	"ajebackend/model/master/jetty"
 	"ajebackend/model/production"
 	"ajebackend/model/rkab"
 	"ajebackend/model/transaction"
@@ -1402,6 +1403,14 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 	companyCement := make(map[string][]string)
 	companyNonElectricity := make(map[string][]string)
 	jettyProductionList := make(map[string][]string)
+
+	var jetty []jetty.Jetty
+
+	errFindJetty := r.db.Where("iupopk_id = ?", iupopkId).Order("name asc").Find(&jetty).Error
+
+	if errFindJetty != nil {
+		return saleDetail, errFindJetty
+	}
 
 	// Production Query
 	var listProduction []production.Production
@@ -7752,9 +7761,20 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 		return saleDetail, errFindJettyBalance
 	}
 
-	var jettyBalance []JettyBalanceLoss
+	var jettyOutputBalance []JettyBalanceLoss
 
-	for _, v := range jettyBalanceAndLoss {
+	for _, v := range jetty {
+		var jettyBalance JettyBalanceLoss
+
+		rawQueryJettyBalance := fmt.Sprintf("Select jb.id as id, jb.jetty_id as jetty_id, j.* as jetty, start_balance, total_loss from jetty_balances jb left join jetties j on j.id = jb.jetty_id where jb.iupopk_id = %v and year = '%v' and jb.jetty_id = %v", iupopkId, year, v.ID)
+
+		errJettyBalance := r.db.Preload(clause.Associations).Raw(rawQueryJettyBalance).First(&jettyBalance).Error
+
+		if errJettyBalance != nil {
+			jettyBalance.JettyId = v.ID
+			jettyBalance.Jetty = v
+			jettyBalance.TotalLoss = 0
+		}
 
 		var production float64
 		var sales float64
@@ -7768,18 +7788,18 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			return saleDetail, err
 		}
 
-		errProd := r.db.Table("productions").Select("SUM(quantity)").Where("iupopk_id = ? and jetty_id = ? and production_date <= ?", iupopkId, v.JettyId, fmt.Sprintf("%v-12-31", yearInt-1)).Scan(&quantityProduction).Error
+		errProd := r.db.Table("productions").Select("SUM(quantity)").Where("iupopk_id = ? and jetty_id = ? and production_date <= ?", iupopkId, v.ID, fmt.Sprintf("%v-12-31", yearInt-1)).Scan(&quantityProduction).Error
 		if errProd != nil {
 			return saleDetail, errProd
 		}
 
-		errSales := r.db.Table("transactions").Select("SUM(quantity)").Where("seller_id = ? and loading_port_id = ? and shipping_date <= ?", iupopkId, v.JettyId, fmt.Sprintf("%v-12-31", yearInt-1)).Scan(&quantitySales).Error
+		errSales := r.db.Table("transactions").Select("SUM(quantity)").Where("seller_id = ? and loading_port_id = ? and shipping_date <= ?", iupopkId, v.ID, fmt.Sprintf("%v-12-31", yearInt-1)).Scan(&quantitySales).Error
 
 		if errProd != nil {
 			return saleDetail, errSales
 		}
 
-		errLoss := r.db.Table("jetty_balances").Select("SUM(total_loss)").Where("iupopk_id = ? and jetty_id = ? and cast(year AS INTEGER) < ?", iupopkId, v.JettyId, year).Scan(&quantityLoss).Error
+		errLoss := r.db.Table("jetty_balances").Select("SUM(total_loss)").Where("iupopk_id = ? and jetty_id = ? and cast(year AS INTEGER) < ?", iupopkId, v.ID, year).Scan(&quantityLoss).Error
 
 		if errLoss != nil {
 			return saleDetail, errLoss
@@ -7797,12 +7817,12 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			loss = *quantityLoss
 		}
 
-		v.StartBalance = production - sales - loss
+		jettyBalance.StartBalance = production - sales - loss
 
-		jettyBalance = append(jettyBalance, v)
+		jettyOutputBalance = append(jettyOutputBalance, jettyBalance)
 	}
 
-	saleDetail.JettyBalanceLoss = jettyBalance
+	saleDetail.JettyBalanceLoss = jettyOutputBalance
 	saleDetail.CompanyElectricity = companyElectricity
 	saleDetail.CompanyCement = companyCement
 	saleDetail.CompanyNonElectricity = companyNonElectricity
