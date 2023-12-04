@@ -5494,7 +5494,8 @@ func (r *repository) CreateJettyBalance(input pitloss.InputJettyPitLoss, iupopkI
 
 	jettyBalance.Year = input.Year
 	jettyBalance.JettyId = input.JettyId
-	jettyBalance.StartBalance = input.StartBalance
+	// Commented if start balance need to to be define
+	// jettyBalance.StartBalance = input.StartBalance
 	jettyBalance.TotalLoss = input.TotalLoss
 	jettyBalance.IupopkId = uint(iupopkId)
 	tx := r.db.Begin()
@@ -5609,7 +5610,7 @@ func (r *repository) UpdateJettyBalance(id int, input pitloss.InputUpdateJettyPi
 
 	mapJettyBalance := make(map[string]interface{})
 
-	mapJettyBalance["start_balance"] = input.StartBalance
+	// mapJettyBalance["start_balance"] = input.StartBalance
 	mapJettyBalance["total_loss"] = input.TotalLoss
 
 	errUpd := tx.Model(&jettyBalance).Where("id = ? and iupopk_id = ?", id, iupopkId).Updates(&mapJettyBalance).Error
