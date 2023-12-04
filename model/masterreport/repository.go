@@ -11,6 +11,7 @@ import (
 	"ajebackend/model/transaction"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -7751,7 +7752,57 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 		return saleDetail, errFindJettyBalance
 	}
 
-	saleDetail.JettyBalanceLoss = jettyBalanceAndLoss
+	var jettyBalance []JettyBalanceLoss
+
+	for _, v := range jettyBalanceAndLoss {
+
+		var production float64
+		var sales float64
+		var loss float64
+		var quantityProduction *float64
+		var quantitySales *float64
+		var quantityLoss *float64
+
+		yearInt, err := strconv.Atoi(year)
+		if err != nil {
+			return saleDetail, err
+		}
+
+		errProd := r.db.Table("productions").Select("SUM(quantity)").Where("iupopk_id = ? and jetty_id = ? and production_date <= ?", iupopkId, v.JettyId, fmt.Sprintf("%v-12-31", yearInt-1)).Scan(&quantityProduction).Error
+		if errProd != nil {
+			return saleDetail, errProd
+		}
+
+		errSales := r.db.Table("transactions").Select("SUM(quantity)").Where("seller_id = ? and loading_port_id = ? and shipping_date <= ?", iupopkId, v.JettyId, fmt.Sprintf("%v-12-31", yearInt-1)).Scan(&quantitySales).Error
+
+		if errProd != nil {
+			return saleDetail, errSales
+		}
+
+		errLoss := r.db.Table("jetty_balances").Select("SUM(total_loss)").Where("iupopk_id = ? and jetty_id = ? and cast(year AS INTEGER) < ?", iupopkId, v.JettyId, year).Scan(&quantityLoss).Error
+
+		if errLoss != nil {
+			return saleDetail, errLoss
+		}
+
+		if quantityProduction != nil {
+			production = *quantityProduction
+		}
+
+		if quantitySales != nil {
+			sales = *quantitySales
+		}
+
+		if quantityLoss != nil {
+			loss = *quantityLoss
+		}
+
+		v.StartBalance = production - sales - loss
+
+		jettyBalance = append(jettyBalance, v)
+	}
+
+	saleDetail.JettyBalanceLoss = jettyBalance
 	saleDetail.CompanyElectricity = companyElectricity
 	saleDetail.CompanyCement = companyCement
 	saleDetail.CompanyNonElectricity = companyNonElectricity

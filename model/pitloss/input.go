@@ -3,9 +3,9 @@ package pitloss
 type InputJettyPitLoss struct {
 	Year         string         `json:"year" validate:"required"`
 	JettyId      uint           `json:"jetty_id" validate:"required"`
-	StartBalance float64        `json:"start_balance"`
 	TotalLoss    float64        `json:"total_loss"`
 	InputPitLoss []InputPitLoss `json:"input_pit_loss" validate:"required,min=1"`
+	// StartBalance float64        `json:"start_balance"`
 }
 
 type InputPitLoss struct {
@@ -25,7 +25,7 @@ type InputPitLoss struct {
 }
 
 type InputUpdateJettyPitLoss struct {
-	StartBalance float64   `json:"start_balance"`
+	// StartBalance float64   `json:"start_balance"`
 	TotalLoss    float64   `json:"total_loss"`
 	InputPitLoss []PitLoss `json:"input_pit_loss"`
 }
