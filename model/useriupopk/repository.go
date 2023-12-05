@@ -6,7 +6,6 @@ import (
 	"ajebackend/model/user"
 	"ajebackend/model/userrole"
 	"errors"
-	"fmt"
 	"strings"
 
 	"gorm.io/gorm"
@@ -138,7 +137,7 @@ func (r *repository) LoginUser(input user.LoginUserInput) (user.TokenUser, error
 	tokenUser.Token = token
 	tokenUser.Username = dataUser["username"].(string)
 	tokenUser.Email = dataUser["email"].(string)
-	fmt.Println(listUserRole)
+
 	tokenUser.Role = listUserRole
 	tokenUser.Iupopk = iupopk
 
