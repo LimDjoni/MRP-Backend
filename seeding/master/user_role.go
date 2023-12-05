@@ -1,44 +1,44 @@
 package seeding
 
 import (
-	"ajebackend/model/master/userrole"
+	"ajebackend/model/master/role"
 	"fmt"
 
 	"gorm.io/gorm"
 )
 
-func SeedingUserRole(db *gorm.DB) {
+func SeedingRole(db *gorm.DB) {
 
 	tx := db.Begin()
-	var checkUserRole []userrole.UserRole
+	var checkRole []role.Role
 
-	tx.Find(&checkUserRole)
+	tx.Find(&checkRole)
 
-	if len(checkUserRole) > 0 {
+	if len(checkRole) > 0 {
 		return
 	}
 
-	var createUserRole []userrole.UserRole
+	var createRole []role.Role
 
-	createUserRole = append(createUserRole,
-		userrole.UserRole{
+	createRole = append(createRole,
+		role.Role{
 			Name: "superuser",
 		},
-		userrole.UserRole{
+		role.Role{
 			Name: "shipping",
 		},
-		userrole.UserRole{
+		role.Role{
 			Name: "accounting",
 		},
-		userrole.UserRole{
+		role.Role{
 			Name: "admin",
 		},
-		userrole.UserRole{
+		role.Role{
 			Name: "supervisor",
 		},
 	)
 
-	err := tx.Create(&createUserRole).Error
+	err := tx.Create(&createRole).Error
 
 	if err != nil {
 		tx.Rollback()
