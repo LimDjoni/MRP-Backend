@@ -7,7 +7,6 @@ import (
 	"ajebackend/model/master/jetty"
 	"ajebackend/model/master/pit"
 	"ajebackend/model/master/truck"
-	"ajebackend/model/transactionshauling/transactionispjetty"
 	"ajebackend/model/transactionshauling/transactionjetty"
 	"ajebackend/model/transactionshauling/transactiontoisp"
 	"ajebackend/model/transactionshauling/transactiontojetty"
@@ -27,11 +26,10 @@ type SynchronizeInputMaster struct {
 }
 
 type SynchronizeInputTransactionIsp struct {
-	TransactionIspJetty []transactionispjetty.TransactionIspJetty `json:"transaction_isp_jetty"`
-	TransactionToIsp    []transactiontoisp.TransactionToIsp       `json:"transaction_to_isp"`
-	TransactionToJetty  []transactiontojetty.TransactionToJetty   `json:"transaction_to_jetty"`
-	SynchronizeTime     string                                    `json:"syncrhonize_time"`
-	IupopkId            uint                                      `json:"iupopk_id"`
+	TransactionToIsp   []transactiontoisp.TransactionToIsp     `json:"transaction_to_isp"`
+	TransactionToJetty []transactiontojetty.TransactionToJetty `json:"transaction_to_jetty"`
+	SynchronizeTime    string                                  `json:"syncrhonize_time"`
+	IupopkId           uint                                    `json:"iupopk_id"`
 }
 
 type SynchronizeInputTransactionJetty struct {

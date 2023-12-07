@@ -14,6 +14,7 @@ import (
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/history"
 	"ajebackend/model/insw"
+	"ajebackend/model/jettybalance"
 	"ajebackend/model/logs"
 	"ajebackend/model/master/barge"
 	"ajebackend/model/master/categoryindustrytype"
@@ -41,6 +42,7 @@ import (
 	"ajebackend/model/minerbaln"
 	"ajebackend/model/notification"
 	"ajebackend/model/notificationuser"
+	"ajebackend/model/pitloss"
 	"ajebackend/model/production"
 	"ajebackend/model/rkab"
 	"ajebackend/model/royaltyrecon"
@@ -155,6 +157,9 @@ func main() {
 			&categoryindustrytype.CategoryIndustryType{},
 			&royaltyrecon.RoyaltyRecon{},
 			&royaltyreport.RoyaltyReport{},
+			&jettybalance.JettyBalance{},
+			&pitloss.PitLoss{},
+
 			// Hauling section
 			&contractor.Contractor{},
 			&isp.Isp{},
@@ -194,6 +199,7 @@ func main() {
 		seedingmaster.SeedingVessel(db)
 		seedingmaster.SeedingCounter(db)
 		seedingmaster.SeedingCategoryIndustryType(db)
+		seedingmaster.SeedingUserRole(db)
 		seeding.UpdateIupopk(db)
 		fmt.Println(errMigrate)
 	}
@@ -297,4 +303,5 @@ func Setup(db *gorm.DB, validate *validator.Validate, route fiber.Router) {
 	routing2.CafAssignmentRouting(db, route, validate)
 	routing2.HaulingSynchronizeRouting(db, route, validate)
 	routing2.HaulingTransactionRouting(db, route, validate)
+	routing2.JettyBalanceRouting(db, route, validate)
 }

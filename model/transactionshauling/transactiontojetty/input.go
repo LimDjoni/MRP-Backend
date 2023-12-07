@@ -7,12 +7,9 @@ import (
 	"ajebackend/model/master/pit"
 	"ajebackend/model/master/truck"
 	"ajebackend/model/user"
-
-	"gorm.io/gorm"
 )
 
-type TransactionToJetty struct {
-	gorm.Model
+type InputTransactionToJetty struct {
 	IdNumber              string        `json:"id_number"`
 	TruckId               uint          `json:"truck_id"`
 	Truck                 truck.Truck   `json:"truck"`

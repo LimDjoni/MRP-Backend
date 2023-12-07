@@ -6,6 +6,7 @@ import (
 	"ajebackend/model/transactionshauling/transactiontoisp"
 	"ajebackend/model/transactionshauling/transactiontojetty"
 	"fmt"
+	"strings"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -25,11 +26,9 @@ func NewRepository(db *gorm.DB) *repository {
 }
 
 func (r *repository) SynchronizeTransactionIsp(syncData SynchronizeInputTransactionIsp) (bool, error) {
-	var transactionIspJetty []transactionispjetty.TransactionIspJetty
 	var transactionToIsp []transactiontoisp.TransactionToIsp
 	var transactionToJetty []transactiontojetty.TransactionToJetty
 
-	transactionIspJetty = syncData.TransactionIspJetty
 	transactionToIsp = syncData.TransactionToIsp
 	transactionToJetty = syncData.TransactionToJetty
 
@@ -51,10 +50,26 @@ func (r *repository) SynchronizeTransactionIsp(syncData SynchronizeInputTransact
 			tx.Rollback()
 			return false, errCreateToJetty
 		}
+
 	}
 
-	if len(transactionIspJetty) > 0 {
-		errCreateIspJetty := tx.Create(&transactionIspJetty).Error
+	var transactionIspJetties []transactionispjetty.TransactionIspJetty
+
+	if len(transactionToJetty) > 0 {
+		for _, v := range transactionToJetty {
+			splitId := strings.Split(v.IdNumber, "PHU-")
+
+			var temp transactionispjetty.TransactionIspJetty
+			temp.TransactionToJettyId = v.ID
+			temp.IupopkId = syncData.IupopkId
+			temp.IdNumber = "HAU-" + splitId[1]
+
+			transactionIspJetties = append(transactionIspJetties, temp)
+		}
+	}
+
+	if len(transactionIspJetties) > 0 {
+		errCreateIspJetty := tx.Create(&transactionIspJetties).Error
 
 		if errCreateIspJetty != nil {
 			tx.Rollback()
@@ -83,7 +98,6 @@ func (r *repository) SynchronizeTransactionIsp(syncData SynchronizeInputTransact
 }
 
 func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransactionJetty) (bool, error) {
-
 	var transactionJetty []transactionjetty.TransactionJetty
 
 	transactionJetty = syncData.TransactionJetty
@@ -97,16 +111,18 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 			tx.Rollback()
 			return false, errCreateJetty
 		}
+	}
 
-		var transactionIspJetty []transactionispjetty.TransactionIspJetty
+	var transactionIspJetty []transactionispjetty.TransactionIspJetty
 
-		errFindIspJetty := tx.Preload(clause.Associations).Where("transaction_jetty_id IS NULL").Order("created_at asc").Find(&transactionIspJetty).Error
+	errFindIspJetty := tx.Preload(clause.Associations).Where("transaction_jetty_id IS NULL").Order("created_at asc").Find(&transactionIspJetty).Error
 
-		if errFindIspJetty != nil {
-			tx.Rollback()
-			return false, errFindIspJetty
-		}
+	if errFindIspJetty != nil {
+		tx.Rollback()
+		return false, errFindIspJetty
+	}
 
+	if len(transactionIspJetty) > 0 {
 		for _, v := range transactionIspJetty {
 			var tempTransactionJetty transactionjetty.TransactionJetty
 
@@ -119,15 +135,15 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 			if v.TransactionToJetty.PitId != nil {
 				rawQuery = fmt.Sprintf(`select tj.* from transaction_jetties tj
 	LEFT JOIN transaction_isp_jetties tij on tij.transaction_jetty_id = tj.id
-	where truck_id = %v and isp_id IS NULL and pit_id = %v and tj.iupopk_id = %v and tij.id IS NULL ORDER BY tj.created_at asc`, v.TransactionToJetty.TruckId,
-					*v.TransactionToJetty.PitId, syncData.IupopkId)
+	where truck_id = %v and isp_id IS NULL and pit_id = %v and tj.iupopk_id = %v and tij.id IS NULL and tj.jetty_id = %v and tj.seam = '%v' ORDER BY tj.created_at asc`, v.TransactionToJetty.TruckId,
+					*v.TransactionToJetty.PitId, syncData.IupopkId, v.TransactionToJetty.JettyId, v.TransactionToJetty.Seam)
 			}
 
 			if v.TransactionToJetty.IspId != nil {
 				rawQuery = fmt.Sprintf(`select tj.* from transaction_jetties tj
 	LEFT JOIN transaction_isp_jetties tij on tij.transaction_jetty_id = tj.id
-	where truck_id = %v and isp_id = %v and pit_id IS NULL and tj.iupopk_id = %v and tij.id IS NULL ORDER BY tj.created_at asc`, v.TransactionToJetty.TruckId,
-					*v.TransactionToJetty.IspId, syncData.IupopkId)
+	where truck_id = %v and isp_id = %v and pit_id IS NULL and tj.iupopk_id = %v and tij.id IS NULL and tj.jetty_id = %v and tj.seam = '%v' ORDER BY tj.created_at asc`, v.TransactionToJetty.TruckId,
+					*v.TransactionToJetty.IspId, syncData.IupopkId, v.TransactionToJetty.JettyId, v.TransactionToJetty.Seam)
 			}
 
 			errFindTransactionJetty := tx.Raw(rawQuery).First(&tempTransactionJetty).Error

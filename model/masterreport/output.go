@@ -192,6 +192,7 @@ type SaleDetail struct {
 	JettyProductionList   map[string][]string `json:"jetty_production_list"`
 	SalesJetty            SalesJetty          `json:"sales_jetty"`
 	JettyList             []string            `json:"jetty_list"`
+	JettyBalanceLoss      []JettyBalanceLoss  `json:"jetty_balance_loss"`
 }
 
 type Electricity struct {
@@ -389,4 +390,12 @@ type SalesJetty struct {
 	October   map[string]float64 `json:"october"`
 	November  map[string]float64 `json:"november"`
 	December  map[string]float64 `json:"december"`
+}
+
+type JettyBalanceLoss struct {
+	ID           uint        `json:"id"`
+	JettyId      uint        `json:"jetty_id"`
+	Jetty        jetty.Jetty `json:"jetty"`
+	StartBalance float64     `json:"start_balance"`
+	TotalLoss    float64     `json:"total_loss"`
 }
