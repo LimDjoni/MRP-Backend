@@ -7,6 +7,7 @@ import (
 	"ajebackend/model/electricassignmentenduser"
 	"ajebackend/model/groupingvesseldn"
 	"ajebackend/model/master/jetty"
+	"ajebackend/model/pitloss"
 	"ajebackend/model/production"
 	"ajebackend/model/rkab"
 	"ajebackend/model/transaction"
@@ -1438,6 +1439,19 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 	salesJetty.November = make(map[string]float64)
 	salesJetty.December = make(map[string]float64)
 
+	saleDetail.LossJetty.January = make(map[string]float64)
+	saleDetail.LossJetty.February = make(map[string]float64)
+	saleDetail.LossJetty.March = make(map[string]float64)
+	saleDetail.LossJetty.April = make(map[string]float64)
+	saleDetail.LossJetty.May = make(map[string]float64)
+	saleDetail.LossJetty.June = make(map[string]float64)
+	saleDetail.LossJetty.July = make(map[string]float64)
+	saleDetail.LossJetty.August = make(map[string]float64)
+	saleDetail.LossJetty.September = make(map[string]float64)
+	saleDetail.LossJetty.October = make(map[string]float64)
+	saleDetail.LossJetty.November = make(map[string]float64)
+	saleDetail.LossJetty.December = make(map[string]float64)
+
 	var productionJetty ProductionJetty
 
 	productionJetty.January = make(map[string]map[string]map[string]float64)
@@ -1463,6 +1477,10 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			saleDetail.Production.Total += v.Quantity
 
 			if v.Jetty != nil {
+				if !helperString(saleDetail.JettyList, v.Jetty.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.Jetty.Name)
+				}
+
 				_, okJetty := jettyProductionList[v.Jetty.Name]
 
 				if !okJetty {
@@ -1626,6 +1644,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			saleDetail.Production.Total += v.Quantity
 
 			if v.Jetty != nil {
+				if !helperString(saleDetail.JettyList, v.Jetty.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.Jetty.Name)
+				}
 				_, okJetty := jettyProductionList[v.Jetty.Name]
 
 				if !okJetty {
@@ -1789,6 +1810,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			saleDetail.Production.Total += v.Quantity
 
 			if v.Jetty != nil {
+				if !helperString(saleDetail.JettyList, v.Jetty.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.Jetty.Name)
+				}
 				_, okJetty := jettyProductionList[v.Jetty.Name]
 
 				if !okJetty {
@@ -1952,6 +1976,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			saleDetail.Production.Total += v.Quantity
 
 			if v.Jetty != nil {
+				if !helperString(saleDetail.JettyList, v.Jetty.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.Jetty.Name)
+				}
 				_, okJetty := jettyProductionList[v.Jetty.Name]
 
 				if !okJetty {
@@ -2115,6 +2142,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			saleDetail.Production.Total += v.Quantity
 
 			if v.Jetty != nil {
+				if !helperString(saleDetail.JettyList, v.Jetty.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.Jetty.Name)
+				}
 				_, okJetty := jettyProductionList[v.Jetty.Name]
 
 				if !okJetty {
@@ -2278,6 +2308,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			saleDetail.Production.Total += v.Quantity
 
 			if v.Jetty != nil {
+				if !helperString(saleDetail.JettyList, v.Jetty.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.Jetty.Name)
+				}
 				_, okJetty := jettyProductionList[v.Jetty.Name]
 
 				if !okJetty {
@@ -2441,6 +2474,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			saleDetail.Production.Total += v.Quantity
 
 			if v.Jetty != nil {
+				if !helperString(saleDetail.JettyList, v.Jetty.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.Jetty.Name)
+				}
 				_, okJetty := jettyProductionList[v.Jetty.Name]
 
 				if !okJetty {
@@ -2604,6 +2640,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			saleDetail.Production.Total += v.Quantity
 
 			if v.Jetty != nil {
+				if !helperString(saleDetail.JettyList, v.Jetty.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.Jetty.Name)
+				}
 				_, okJetty := jettyProductionList[v.Jetty.Name]
 
 				if !okJetty {
@@ -2767,6 +2806,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			saleDetail.Production.Total += v.Quantity
 
 			if v.Jetty != nil {
+				if !helperString(saleDetail.JettyList, v.Jetty.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.Jetty.Name)
+				}
 				_, okJetty := jettyProductionList[v.Jetty.Name]
 
 				if !okJetty {
@@ -2930,6 +2972,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			saleDetail.Production.Total += v.Quantity
 
 			if v.Jetty != nil {
+				if !helperString(saleDetail.JettyList, v.Jetty.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.Jetty.Name)
+				}
 				_, okJetty := jettyProductionList[v.Jetty.Name]
 
 				if !okJetty {
@@ -3093,6 +3138,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			saleDetail.Production.Total += v.Quantity
 
 			if v.Jetty != nil {
+				if !helperString(saleDetail.JettyList, v.Jetty.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.Jetty.Name)
+				}
 				_, okJetty := jettyProductionList[v.Jetty.Name]
 
 				if !okJetty {
@@ -3256,6 +3304,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			saleDetail.Production.Total += v.Quantity
 
 			if v.Jetty != nil {
+				if !helperString(saleDetail.JettyList, v.Jetty.Name) {
+					saleDetail.JettyList = append(saleDetail.JettyList, v.Jetty.Name)
+				}
 				_, okJetty := jettyProductionList[v.Jetty.Name]
 
 				if !okJetty {
@@ -7766,7 +7817,7 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 	for _, v := range jetty {
 		var jettyBalance JettyBalanceLoss
 
-		rawQueryJettyBalance := fmt.Sprintf("Select jb.id as id, jb.jetty_id as jetty_id, j.* as jetty, start_balance, total_loss from jetty_balances jb left join jetties j on j.id = jb.jetty_id where jb.iupopk_id = %v and year = '%v' and jb.jetty_id = %v", iupopkId, year, v.ID)
+		rawQueryJettyBalance := fmt.Sprintf("Select jb.id as id, jb.jetty_id as jetty_id, start_balance, total_loss from jetty_balances jb left join jetties j on j.id = jb.jetty_id where jb.iupopk_id = %v and year = '%v' and jb.jetty_id = %v", iupopkId, year, v.ID)
 
 		errJettyBalance := r.db.Preload(clause.Associations).Raw(rawQueryJettyBalance).First(&jettyBalance).Error
 
@@ -7774,6 +7825,84 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 			jettyBalance.JettyId = v.ID
 			jettyBalance.Jetty = v
 			jettyBalance.TotalLoss = 0
+		} else {
+			fmt.Println(jettyBalance)
+			fmt.Println(jettyBalance.ID)
+			var pitLoss []pitloss.PitLoss
+
+			errFindPitLoss := r.db.Where("jetty_balance_id = ?", jettyBalance.ID).Find(&pitLoss).Error
+
+			if errFindPitLoss != nil {
+				return saleDetail, errFindPitLoss
+			}
+
+			for _, p := range pitLoss {
+				if _, ok := saleDetail.LossJetty.January[v.Name]; ok {
+					saleDetail.LossJetty.January[v.Name] += p.JanuaryLossQuantity
+				} else {
+					saleDetail.LossJetty.January[v.Name] = p.JanuaryLossQuantity
+				}
+
+				if _, ok := saleDetail.LossJetty.February[v.Name]; ok {
+					saleDetail.LossJetty.February[v.Name] += p.FebruaryLossQuantity
+				} else {
+					saleDetail.LossJetty.February[v.Name] = p.FebruaryLossQuantity
+				}
+
+				if _, ok := saleDetail.LossJetty.March[v.Name]; ok {
+					saleDetail.LossJetty.March[v.Name] += p.MarchLossQuantity
+				} else {
+					saleDetail.LossJetty.March[v.Name] = p.MarchLossQuantity
+				}
+
+				if _, ok := saleDetail.LossJetty.April[v.Name]; ok {
+					saleDetail.LossJetty.April[v.Name] += p.AprilLossQuantity
+				} else {
+					saleDetail.LossJetty.April[v.Name] = p.AprilLossQuantity
+				}
+
+				if _, ok := saleDetail.LossJetty.May[v.Name]; ok {
+					saleDetail.LossJetty.May[v.Name] += p.MayLossQuantity
+				} else {
+					saleDetail.LossJetty.May[v.Name] = p.MayLossQuantity
+				}
+
+				if _, ok := saleDetail.LossJetty.June[v.Name]; ok {
+					saleDetail.LossJetty.June[v.Name] += p.JuneLossQuantity
+				} else {
+					saleDetail.LossJetty.June[v.Name] = p.JuneLossQuantity
+				}
+
+				if _, ok := saleDetail.LossJetty.July[v.Name]; ok {
+					saleDetail.LossJetty.July[v.Name] += p.JulyLossQuantity
+				} else {
+					saleDetail.LossJetty.July[v.Name] = p.JulyLossQuantity
+				}
+
+				if _, ok := saleDetail.LossJetty.August[v.Name]; ok {
+					saleDetail.LossJetty.August[v.Name] += p.AugustLossQuantity
+				} else {
+					saleDetail.LossJetty.August[v.Name] = p.AugustLossQuantity
+				}
+
+				if _, ok := saleDetail.LossJetty.October[v.Name]; ok {
+					saleDetail.LossJetty.October[v.Name] += p.OctoberLossQuantity
+				} else {
+					saleDetail.LossJetty.October[v.Name] = p.OctoberLossQuantity
+				}
+
+				if _, ok := saleDetail.LossJetty.November[v.Name]; ok {
+					saleDetail.LossJetty.November[v.Name] += p.NovemberLossQuantity
+				} else {
+					saleDetail.LossJetty.November[v.Name] = p.NovemberLossQuantity
+				}
+
+				if _, ok := saleDetail.LossJetty.December[v.Name]; ok {
+					saleDetail.LossJetty.December[v.Name] += p.DecemberLossQuantity
+				} else {
+					saleDetail.LossJetty.December[v.Name] = p.DecemberLossQuantity
+				}
+			}
 		}
 
 		var production float64
