@@ -81,6 +81,8 @@ func (h *productionHandler) ListProduction(c *fiber.Ctx) error {
 	filterProduction.Field = c.Query("field")
 	filterProduction.Sort = c.Query("sort")
 	filterProduction.Quantity = c.Query("quantity")
+	filterProduction.PitId = c.Query("pit_id")
+	filterProduction.JettyId = c.Query("jetty_id")
 
 	listProduction, listProductionErr := h.productionService.GetListProduction(pageNumber, filterProduction, iupopkIdInt)
 
@@ -364,4 +366,49 @@ func (h *productionHandler) DetailProduction(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(detailProduction)
+}
+
+func (h *productionHandler) SummaryProduction(c *fiber.Ctx) error {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := fiber.Map{
+		"error": "unauthorized",
+	}
+
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	iupopkId := c.Params("iupopk_id")
+
+	iupopkIdInt, err := strconv.Atoi(iupopkId)
+
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "iupopk record not found",
+		})
+	}
+
+	year := c.Query("year")
+
+	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
+
+	if checkUserErr != nil || checkUser.IsActive == false {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	summaryProduction, summaryProductionErr := h.productionService.SummaryProduction(year, iupopkIdInt)
+
+	if summaryProductionErr != nil {
+		status := 400
+
+		if summaryProductionErr.Error() == "record not found" {
+			status = 404
+		}
+		return c.Status(status).JSON(fiber.Map{
+			"error": summaryProductionErr.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(summaryProduction)
 }
