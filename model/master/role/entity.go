@@ -1,8 +1,8 @@
-package userrole
+package role
 
 import "gorm.io/gorm"
 
-type UserRole struct {
+type Role struct {
 	gorm.Model
 	Name string `json:"name"`
 }
