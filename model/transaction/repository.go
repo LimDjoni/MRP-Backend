@@ -1104,7 +1104,7 @@ func (r *repository) GetListForReport(iupopkId int) (ListForCreatingReportDmoOut
 		salesSystemBargeId = append(salesSystemBargeId, v.ID)
 	}
 
-	errFindTransaction := r.db.Preload(clause.Associations).Preload("DmoDestinationPort.PortLocation").Preload("UnloadingPort.PortLocation").Where("report_dmo_id IS NULL AND sales_system_id IN ? AND is_finance_check = ? AND transaction_type = ? AND seller_id = ?", salesSystemBargeId, true, "DN", iupopkId).Find(&transactions).Error
+	errFindTransaction := r.db.Preload(clause.Associations).Preload("DmoDestinationPort.PortLocation").Preload("UnloadingPort.PortLocation").Preload("DmoBuyer.IndustryType.CategoryIndustryType").Where("report_dmo_id IS NULL AND sales_system_id IN ? AND is_finance_check = ? AND transaction_type = ? AND seller_id = ?", salesSystemBargeId, true, "DN", iupopkId).Find(&transactions).Error
 
 	if errFindTransaction != nil {
 		return list, errFindTransaction

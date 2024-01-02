@@ -12,6 +12,8 @@ type FilterListProduction struct {
 	ProductionDateStart string
 	ProductionDateEnd   string
 	Quantity            string
+	PitId               string
+	JettyId             string
 	Field               string
 	Sort                string
 }

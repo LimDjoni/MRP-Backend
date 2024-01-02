@@ -4,6 +4,7 @@ import (
 	"ajebackend/helper"
 	"ajebackend/model/master/iupopk"
 	"ajebackend/model/user"
+	"ajebackend/model/userrole"
 	"errors"
 	"strings"
 
@@ -63,11 +64,12 @@ func (r *repository) LoginUser(input user.LoginUserInput) (user.TokenUser, error
 	var username user.User
 	var email user.User
 
+	var listUserRole []string
+
 	dataUser := map[string]interface{}{
 		"id":       0,
 		"username": "",
 		"email":    "",
-		"role":     "",
 	}
 	usernameErr := r.db.Preload(clause.Associations).Where("username = ?", input.Data).First(&username).Error
 
@@ -81,11 +83,15 @@ func (r *repository) LoginUser(input user.LoginUserInput) (user.TokenUser, error
 		dataUser["username"] = email.Username
 		dataUser["email"] = email.Email
 		dataUser["id"] = email.ID
-		if email.UserRole != nil {
-			dataUser["role"] = email.UserRole.Name
-		} else {
-			dataUser["role"] = ""
+
+		var userRole []userrole.UserRole
+
+		r.db.Preload(clause.Associations).Where("user_id = ?", email.ID).Find(&userRole)
+
+		for _, v := range userRole {
+			listUserRole = append(listUserRole, v.Role.Name)
 		}
+
 		isValidPassword = helper.CheckPassword(input.Password, email.Password)
 	}
 
@@ -93,11 +99,14 @@ func (r *repository) LoginUser(input user.LoginUserInput) (user.TokenUser, error
 		dataUser["username"] = username.Username
 		dataUser["email"] = username.Email
 		dataUser["id"] = username.ID
-		if username.UserRole != nil {
-			dataUser["role"] = username.UserRole.Name
-		} else {
-			dataUser["role"] = ""
+		var userRole []userrole.UserRole
+
+		r.db.Preload(clause.Associations).Where("user_id = ?", username.ID).Find(&userRole)
+
+		for _, v := range userRole {
+			listUserRole = append(listUserRole, v.Role.Name)
 		}
+
 		isValidPassword = helper.CheckPassword(input.Password, username.Password)
 	}
 
@@ -128,7 +137,8 @@ func (r *repository) LoginUser(input user.LoginUserInput) (user.TokenUser, error
 	tokenUser.Token = token
 	tokenUser.Username = dataUser["username"].(string)
 	tokenUser.Email = dataUser["email"].(string)
-	tokenUser.Role = dataUser["role"].(string)
+
+	tokenUser.Role = listUserRole
 	tokenUser.Iupopk = iupopk
 
 	if tokenErr != nil {

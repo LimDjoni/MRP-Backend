@@ -306,6 +306,13 @@ func (r *repository) DeleteTransaction(id int, userId uint, transactionType stri
 		return false, errFind
 	}
 
+	beforeData, errorBeforeDataJsonMarshal := json.Marshal(transaction)
+
+	if errorBeforeDataJsonMarshal != nil {
+		tx.Rollback()
+		return false, errorBeforeDataJsonMarshal
+	}
+
 	errDelete := tx.Unscoped().Where("id = ? AND transaction_type = ? AND seller_id = ?", id, transactionType, iupopId).Delete(&transaction).Error
 
 	if errDelete != nil {
@@ -317,6 +324,7 @@ func (r *repository) DeleteTransaction(id int, userId uint, transactionType stri
 
 	history.Status = fmt.Sprintf("Deleted Transaction %v with id number %s and id %v and iupop %v", transactionType, *transaction.IdNumber, transaction.ID, iupopId)
 	history.UserId = userId
+	history.BeforeData = beforeData
 	history.IupopkId = transaction.SellerId
 	createHistoryErr := tx.Create(&history).Error
 

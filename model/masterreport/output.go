@@ -189,10 +189,10 @@ type SaleDetail struct {
 	CompanyCement         map[string][]string `json:"company_cement"`
 	CompanyNonElectricity map[string][]string `json:"company_non_electricity"`
 	ProductionJetty       ProductionJetty     `json:"production_jetty"`
-	JettyProductionList   map[string][]string `json:"jetty_production_list"`
 	SalesJetty            SalesJetty          `json:"sales_jetty"`
 	JettyList             []string            `json:"jetty_list"`
 	JettyBalanceLoss      []JettyBalanceLoss  `json:"jetty_balance_loss"`
+	LossJetty             LossJetty           `json:"lost_jetty"`
 }
 
 type Electricity struct {
@@ -363,18 +363,18 @@ type TransactionReport struct {
 }
 
 type ProductionJetty struct {
-	January   map[string]map[string]map[string]float64 `json:"january"`
-	February  map[string]map[string]map[string]float64 `json:"february"`
-	March     map[string]map[string]map[string]float64 `json:"march"`
-	April     map[string]map[string]map[string]float64 `json:"april"`
-	May       map[string]map[string]map[string]float64 `json:"may"`
-	June      map[string]map[string]map[string]float64 `json:"june"`
-	July      map[string]map[string]map[string]float64 `json:"july"`
-	August    map[string]map[string]map[string]float64 `json:"august"`
-	September map[string]map[string]map[string]float64 `json:"september"`
-	October   map[string]map[string]map[string]float64 `json:"october"`
-	November  map[string]map[string]map[string]float64 `json:"november"`
-	December  map[string]map[string]map[string]float64 `json:"december"`
+	January   map[string]float64 `json:"january"`
+	February  map[string]float64 `json:"february"`
+	March     map[string]float64 `json:"march"`
+	April     map[string]float64 `json:"april"`
+	May       map[string]float64 `json:"may"`
+	June      map[string]float64 `json:"june"`
+	July      map[string]float64 `json:"july"`
+	August    map[string]float64 `json:"august"`
+	September map[string]float64 `json:"september"`
+	October   map[string]float64 `json:"october"`
+	November  map[string]float64 `json:"november"`
+	December  map[string]float64 `json:"december"`
 }
 
 type SalesJetty struct {
@@ -392,6 +392,20 @@ type SalesJetty struct {
 	December  map[string]float64 `json:"december"`
 }
 
+type LossJetty struct {
+	January   map[string]float64 `json:"january"`
+	February  map[string]float64 `json:"february"`
+	March     map[string]float64 `json:"march"`
+	April     map[string]float64 `json:"april"`
+	May       map[string]float64 `json:"may"`
+	June      map[string]float64 `json:"june"`
+	July      map[string]float64 `json:"july"`
+	August    map[string]float64 `json:"august"`
+	September map[string]float64 `json:"september"`
+	October   map[string]float64 `json:"october"`
+	November  map[string]float64 `json:"november"`
+	December  map[string]float64 `json:"december"`
+}
 type JettyBalanceLoss struct {
 	ID           uint        `json:"id"`
 	JettyId      uint        `json:"jetty_id"`

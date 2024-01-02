@@ -32,6 +32,7 @@ import (
 	"ajebackend/model/master/portinsw"
 	"ajebackend/model/master/portlocation"
 	"ajebackend/model/master/ports"
+	"ajebackend/model/master/role"
 	"ajebackend/model/master/salessystem"
 	"ajebackend/model/master/surveyor"
 	"ajebackend/model/master/trader"
@@ -52,6 +53,7 @@ import (
 	"ajebackend/model/transactionrequestreport"
 	"ajebackend/model/user"
 	"ajebackend/model/useriupopk"
+	"ajebackend/model/userrole"
 	routing2 "ajebackend/routing"
 
 	// Hauling
@@ -143,6 +145,8 @@ func main() {
 			&surveyor.Surveyor{},
 			&unit.Unit{},
 			&useriupopk.UserIupopk{},
+			&userrole.UserRole{},
+			&role.Role{},
 			&vessel.Vessel{},
 			&tugboat.Tugboat{},
 			&counter.Counter{},
@@ -199,7 +203,7 @@ func main() {
 		seedingmaster.SeedingVessel(db)
 		seedingmaster.SeedingCounter(db)
 		seedingmaster.SeedingCategoryIndustryType(db)
-		seedingmaster.SeedingUserRole(db)
+		seedingmaster.SeedingRole(db)
 		seeding.UpdateIupopk(db)
 		fmt.Println(errMigrate)
 	}

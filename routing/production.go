@@ -47,4 +47,5 @@ func ProductionRouting(db *gorm.DB, app fiber.Router, validate *validator.Valida
 	productionRouting.Delete("/delete/:id/:iupopk_id", productionHandler.DeleteProduction)
 	productionRouting.Get("/list/:iupopk_id", productionHandler.ListProduction)
 	productionRouting.Get("/detail/:id/:iupopk_id", productionHandler.DetailProduction)
+	productionRouting.Get("/summary/:iupopk_id", productionHandler.SummaryProduction)
 }
