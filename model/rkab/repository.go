@@ -96,6 +96,10 @@ func (r *repository) DetailRkabWithYear(year int, iupopkId int) (DetailRkab, err
 		return detailRkab, errFind
 	}
 
+	if len(detail) == 0 {
+		return detailRkab, nil
+	}
+
 	detailRkab.ListRkab = detail
 
 	var rkabProductionQuantity RkabProductionQuantity
