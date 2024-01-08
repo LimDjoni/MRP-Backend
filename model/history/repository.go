@@ -4101,12 +4101,7 @@ func (r *repository) CreateRkab(input rkab.RkabInput, iupopkId int, userId uint)
 		return createdRkab, errors.New("year is already used in another rkab")
 	}
 
-	errFindRkab := tx.Where("year = ? AND year2 = ? AND year3 = ? AND iupopk_id = ?", input.Year, input.Year2, input.Year3, iupopkId).Find(&findRkab).Error
-
-	if errFindRkab != nil {
-		tx.Rollback()
-		return createdRkab, errFindRkab
-	}
+	tx.Where("year = ? AND year2 = ? AND year3 = ? AND iupopk_id = ?", input.Year, input.Year2, input.Year3, iupopkId).Find(&findRkab)
 
 	errFindCounterTransaction := tx.Where("iupopk_id = ?", iupopkId).First(&counterTransaction).Error
 
