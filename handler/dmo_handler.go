@@ -288,7 +288,7 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 
 	}
 
-	splitPeriod := strings.Split(inputCreateDmo.Period, " ")
+	splitDocumentDate := strings.Split(inputCreateDmo.DocumentDate, "-")
 
 	createDmo, createDmoErr := h.historyService.CreateDmo(*inputCreateDmo, uint(claims["id"].(float64)), iupopkIdInt)
 
@@ -427,12 +427,12 @@ func (h *dmoHandler) CreateDmo(c *fiber.Ctx) error {
 				bastFormat += "/"
 			}
 		case "MM":
-			bastFormat += idNumberSplit[2]
+			bastFormat += splitDocumentDate[1]
 			if i < len(bastFormatSplit)-1 {
 				bastFormat += "/"
 			}
 		case "YYYY":
-			bastFormat += splitPeriod[1]
+			bastFormat += splitDocumentDate[0]
 			if i < len(bastFormatSplit)-1 {
 				bastFormat += "/"
 			}
@@ -696,7 +696,7 @@ func (h *dmoHandler) UpdateDmo(c *fiber.Ctx) error {
 		})
 	}
 
-	splitPeriod := strings.Split(detailDmo.Detail.Period, " ")
+	splitDocumentDate := strings.Split(detailDmo.Detail.DocumentDate, "-")
 	idNumberSplit := strings.Split(*detailDmo.Detail.IdNumber, "-")
 
 	counterDetail, counterDetailErr := h.counterService.GetCounter(iupopkIdInt)
@@ -753,12 +753,12 @@ func (h *dmoHandler) UpdateDmo(c *fiber.Ctx) error {
 				bastFormat += "/"
 			}
 		case "MM":
-			bastFormat += idNumberSplit[2]
+			bastFormat += splitDocumentDate[1]
 			if i < len(bastFormatSplit)-1 {
 				bastFormat += "/"
 			}
 		case "YYYY":
-			bastFormat += splitPeriod[1]
+			bastFormat += splitDocumentDate[0]
 			if i < len(bastFormatSplit)-1 {
 				bastFormat += "/"
 			}
