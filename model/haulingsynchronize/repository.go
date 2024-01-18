@@ -135,7 +135,7 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 						return false, errCreateProd
 					}
 				} else {
-					errUpdProd := tx.Updates(map[string]interface{}{"quantity": prod.Quantity + v.NettQuantity, "ritase_quantity": prod.RitaseQuantity + 1}).Error
+					errUpdProd := tx.Table("productions").Where("id = ?", prod.ID).Updates(map[string]interface{}{"quantity": prod.Quantity + v.NettQuantity, "ritase_quantity": prod.RitaseQuantity + 1}).Error
 
 					if errUpdProd != nil {
 						tx.Rollback()
@@ -161,7 +161,7 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 						return false, errCreateProd
 					}
 				} else {
-					errUpdProd := tx.Updates(map[string]interface{}{"quantity": prod.Quantity + v.NettQuantity, "ritase_quantity": prod.RitaseQuantity + 1}).Error
+					errUpdProd := tx.Table("productions").Where("id = ?", prod.ID).Updates(map[string]interface{}{"quantity": prod.Quantity + v.NettQuantity, "ritase_quantity": prod.RitaseQuantity + 1}).Error
 
 					if errUpdProd != nil {
 						tx.Rollback()
