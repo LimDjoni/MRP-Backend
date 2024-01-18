@@ -122,7 +122,7 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 				prod.Quantity = v.NettQuantity
 				prod.RitaseQuantity = 1
 				prod.IspId = v.IspId
-				prod.PitId = v.IspId
+				prod.PitId = v.PitId
 				prod.JettyId = &v.JettyId
 				prod.IupopkId = syncData.IupopkId
 				prod.ProductionDate = strings.Split(v.ClockInDate, "T")[0]
