@@ -116,31 +116,60 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 		for _, v := range transactionJetty {
 			var prod production.Production
 
-			errFind := tx.Where("production_date = ? AND pit_id = ? AND isp_id = ? AND jetty_id = ?", strings.Split(v.ClockInDate, "T")[0], v.PitId, v.IspId, v.JettyId).First(&prod).Error
+			if v.IspId == nil {
+				errFind := tx.Where("production_date = ? AND pit_id = ? AND isp_id IS NULL AND jetty_id = ?", strings.Split(v.ClockInDate, "T")[0], v.PitId, v.JettyId).First(&prod).Error
 
-			if errFind != nil {
-				prod.Quantity = v.NettQuantity
-				prod.RitaseQuantity = 1
-				prod.IspId = v.IspId
-				prod.PitId = v.PitId
-				prod.JettyId = &v.JettyId
-				prod.IupopkId = syncData.IupopkId
-				prod.ProductionDate = strings.Split(v.ClockInDate, "T")[0]
+				if errFind != nil {
+					prod.Quantity = v.NettQuantity
+					prod.RitaseQuantity = 1
+					prod.IspId = v.IspId
+					prod.PitId = v.PitId
+					prod.JettyId = &v.JettyId
+					prod.IupopkId = syncData.IupopkId
+					prod.ProductionDate = strings.Split(v.ClockInDate, "T")[0]
 
-				errCreateProd := tx.Create(&prod).Error
+					errCreateProd := tx.Create(&prod).Error
 
-				if errCreateProd != nil {
-					tx.Rollback()
-					return false, errCreateProd
+					if errCreateProd != nil {
+						tx.Rollback()
+						return false, errCreateProd
+					}
+				} else {
+					errUpdProd := tx.Updates(map[string]interface{}{"quantity": prod.Quantity + v.NettQuantity, "ritase_quantity": prod.RitaseQuantity + 1}).Error
+
+					if errUpdProd != nil {
+						tx.Rollback()
+						return false, errUpdProd
+					}
 				}
-			} else {
-				errUpdProd := tx.Updates(map[string]interface{}{"quantity": prod.Quantity + v.NettQuantity, "ritase_quantity": prod.RitaseQuantity + 1}).Error
+			} else if v.PitId == nil {
+				errFind := tx.Where("production_date = ? AND pit_id is NULL AND isp_id = ? AND jetty_id = ?", strings.Split(v.ClockInDate, "T")[0], v.IspId, v.JettyId).First(&prod).Error
 
-				if errUpdProd != nil {
-					tx.Rollback()
-					return false, errUpdProd
+				if errFind != nil {
+					prod.Quantity = v.NettQuantity
+					prod.RitaseQuantity = 1
+					prod.IspId = v.IspId
+					prod.PitId = v.PitId
+					prod.JettyId = &v.JettyId
+					prod.IupopkId = syncData.IupopkId
+					prod.ProductionDate = strings.Split(v.ClockInDate, "T")[0]
+
+					errCreateProd := tx.Create(&prod).Error
+
+					if errCreateProd != nil {
+						tx.Rollback()
+						return false, errCreateProd
+					}
+				} else {
+					errUpdProd := tx.Updates(map[string]interface{}{"quantity": prod.Quantity + v.NettQuantity, "ritase_quantity": prod.RitaseQuantity + 1}).Error
+
+					if errUpdProd != nil {
+						tx.Rollback()
+						return false, errUpdProd
+					}
 				}
 			}
+
 		}
 
 	}
