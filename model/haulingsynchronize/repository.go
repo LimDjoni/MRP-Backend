@@ -1,6 +1,7 @@
 package haulingsynchronize
 
 import (
+	"ajebackend/model/production"
 	"ajebackend/model/transactionshauling/transactionispjetty"
 	"ajebackend/model/transactionshauling/transactionjetty"
 	"ajebackend/model/transactionshauling/transactiontoisp"
@@ -111,6 +112,66 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 			tx.Rollback()
 			return false, errCreateJetty
 		}
+
+		for _, v := range transactionJetty {
+			var prod production.Production
+
+			if v.IspId == nil {
+				errFind := tx.Where("production_date = ? AND pit_id = ? AND isp_id IS NULL AND jetty_id = ?", strings.Split(v.ClockInDate, "T")[0], v.PitId, v.JettyId).First(&prod).Error
+
+				if errFind != nil {
+					prod.Quantity = v.NettQuantity
+					prod.RitaseQuantity = 1
+					prod.IspId = v.IspId
+					prod.PitId = v.PitId
+					prod.JettyId = &v.JettyId
+					prod.IupopkId = syncData.IupopkId
+					prod.ProductionDate = strings.Split(v.ClockInDate, "T")[0]
+
+					errCreateProd := tx.Create(&prod).Error
+
+					if errCreateProd != nil {
+						tx.Rollback()
+						return false, errCreateProd
+					}
+				} else {
+					errUpdProd := tx.Table("productions").Where("id = ?", prod.ID).Updates(map[string]interface{}{"quantity": prod.Quantity + v.NettQuantity, "ritase_quantity": prod.RitaseQuantity + 1}).Error
+
+					if errUpdProd != nil {
+						tx.Rollback()
+						return false, errUpdProd
+					}
+				}
+			} else if v.PitId == nil {
+				errFind := tx.Where("production_date = ? AND pit_id is NULL AND isp_id = ? AND jetty_id = ?", strings.Split(v.ClockInDate, "T")[0], v.IspId, v.JettyId).First(&prod).Error
+
+				if errFind != nil {
+					prod.Quantity = v.NettQuantity
+					prod.RitaseQuantity = 1
+					prod.IspId = v.IspId
+					prod.PitId = v.PitId
+					prod.JettyId = &v.JettyId
+					prod.IupopkId = syncData.IupopkId
+					prod.ProductionDate = strings.Split(v.ClockInDate, "T")[0]
+
+					errCreateProd := tx.Create(&prod).Error
+
+					if errCreateProd != nil {
+						tx.Rollback()
+						return false, errCreateProd
+					}
+				} else {
+					errUpdProd := tx.Table("productions").Where("id = ?", prod.ID).Updates(map[string]interface{}{"quantity": prod.Quantity + v.NettQuantity, "ritase_quantity": prod.RitaseQuantity + 1}).Error
+
+					if errUpdProd != nil {
+						tx.Rollback()
+						return false, errUpdProd
+					}
+				}
+			}
+
+		}
+
 	}
 
 	var transactionIspJetty []transactionispjetty.TransactionIspJetty
@@ -135,15 +196,15 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 			if v.TransactionToJetty.PitId != nil {
 				rawQuery = fmt.Sprintf(`select tj.* from transaction_jetties tj
 	LEFT JOIN transaction_isp_jetties tij on tij.transaction_jetty_id = tj.id
-	where truck_id = %v and isp_id IS NULL and pit_id = %v and tj.iupopk_id = %v and tij.id IS NULL and tj.jetty_id = %v and tj.seam = '%v' ORDER BY tj.created_at asc`, v.TransactionToJetty.TruckId,
-					*v.TransactionToJetty.PitId, syncData.IupopkId, v.TransactionToJetty.JettyId, v.TransactionToJetty.Seam)
+	where truck_id = %v and isp_id IS NULL and pit_id = %v and tj.iupopk_id = %v and tij.id IS NULL and tj.jetty_id = %v and tj.seam = '%v' and tj.gar = %v ORDER BY tj.created_at asc`, v.TransactionToJetty.TruckId,
+					*v.TransactionToJetty.PitId, syncData.IupopkId, v.TransactionToJetty.JettyId, v.TransactionToJetty.Seam, v.TransactionToJetty.Gar)
 			}
 
 			if v.TransactionToJetty.IspId != nil {
 				rawQuery = fmt.Sprintf(`select tj.* from transaction_jetties tj
 	LEFT JOIN transaction_isp_jetties tij on tij.transaction_jetty_id = tj.id
-	where truck_id = %v and isp_id = %v and pit_id IS NULL and tj.iupopk_id = %v and tij.id IS NULL and tj.jetty_id = %v and tj.seam = '%v' ORDER BY tj.created_at asc`, v.TransactionToJetty.TruckId,
-					*v.TransactionToJetty.IspId, syncData.IupopkId, v.TransactionToJetty.JettyId, v.TransactionToJetty.Seam)
+	where truck_id = %v and isp_id = %v and pit_id IS NULL and tj.iupopk_id = %v and tij.id IS NULL and tj.jetty_id = %v ORDER BY tj.created_at asc`, v.TransactionToJetty.TruckId,
+					*v.TransactionToJetty.IspId, syncData.IupopkId, v.TransactionToJetty.JettyId)
 			}
 
 			errFindTransactionJetty := tx.Raw(rawQuery).First(&tempTransactionJetty).Error
