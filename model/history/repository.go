@@ -115,8 +115,8 @@ type Repository interface {
 	CreateJettyBalance(input pitloss.InputJettyPitLoss, iupopkId int, userId uint) (jettybalance.JettyBalance, error)
 	UpdateJettyBalance(id int, input pitloss.InputUpdateJettyPitLoss, iupopkId int, userId uint) (jettybalance.JettyBalance, error)
 	DeleteJettyBalance(id int, userId uint, iupopkId int) (bool, error)
-	CreateContract(input contract.InputCreateUpdateContract, iupopkId int, userId uint) (contract.Contract, error)
-	UpdateContract(id int, input contract.InputCreateUpdateContract, iupopkId int, userId uint) (contract.Contract, error)
+	CreateContract(input contract.InputCreateUpdateContract, location string, iupopkId int, userId uint) (contract.Contract, error)
+	UpdateContract(id int, input contract.InputCreateUpdateContract, location string, iupopkId int, userId uint) (contract.Contract, error)
 }
 
 type repository struct {
@@ -5775,7 +5775,7 @@ func (r *repository) DeleteJettyBalance(id int, userId uint, iupopkId int) (bool
 }
 
 // Contract
-func (r *repository) CreateContract(input contract.InputCreateUpdateContract, iupopkId int, userId uint) (contract.Contract, error) {
+func (r *repository) CreateContract(input contract.InputCreateUpdateContract, location string, iupopkId int, userId uint) (contract.Contract, error) {
 	var createdContract contract.Contract
 
 	tx := r.db.Begin()
@@ -5795,17 +5795,18 @@ func (r *repository) CreateContract(input contract.InputCreateUpdateContract, iu
 	createdContract.Quantity = input.Quantity
 	createdContract.Validity = input.Validity
 	createdContract.IupopkId = uint(iupopkId)
+	createdContract.File = &location
 
-	createTransactionErr := tx.Create(&createdContract).Error
+	createContractErr := tx.Create(&createdContract).Error
 
-	if createTransactionErr != nil {
+	if createContractErr != nil {
 		tx.Rollback()
-		return createdContract, createTransactionErr
+		return createdContract, createContractErr
 	}
 
 	var history History
 
-	history.TransactionId = &createdContract.ID
+	history.ContractId = &createdContract.ID
 	history.Status = "Created"
 	history.UserId = userId
 	history.IupopkId = &iup.ID
@@ -5820,7 +5821,7 @@ func (r *repository) CreateContract(input contract.InputCreateUpdateContract, iu
 	return createdContract, nil
 }
 
-func (r *repository) UpdateContract(id int, input contract.InputCreateUpdateContract, iupopkId int, userId uint) (contract.Contract, error) {
+func (r *repository) UpdateContract(id int, input contract.InputCreateUpdateContract, location string, iupopkId int, userId uint) (contract.Contract, error) {
 	var updatedContract contract.Contract
 
 	tx := r.db.Begin()
@@ -5838,11 +5839,10 @@ func (r *repository) UpdateContract(id int, input contract.InputCreateUpdateCont
 		tx.Rollback()
 		return updatedContract, errorBeforeDataJsonMarshal
 	}
-	updatedContract.ContractDate = input.ContractDate
-	updatedContract.ContractNumber = input.ContractNumber
-	updatedContract.CustomerId = input.CustomerId
-	updatedContract.Quantity = input.Quantity
-	updatedContract.Validity = input.Validity
+
+	if updatedContract.File == nil {
+		input.File = &location
+	}
 
 	dataInput, errorMarshal := json.Marshal(input)
 

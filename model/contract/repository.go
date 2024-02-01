@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Repository interface {
@@ -61,7 +62,7 @@ func (r *repository) GetListReportContractAll(page int, filterContract FilterAnd
 		queryFilter = queryFilter + " AND customer_id = " + filterContract.CustomerId
 	}
 
-	errFind := r.db.Where(queryFilter).Order(sortFilter).Scopes(paginateContract(listReportContract, &pagination, r.db, queryFilter)).Find(&listReportContract).Error
+	errFind := r.db.Preload(clause.Associations).Where(queryFilter).Order(sortFilter).Scopes(paginateContract(listReportContract, &pagination, r.db, queryFilter)).Find(&listReportContract).Error
 
 	if errFind != nil {
 		return pagination, errFind
@@ -75,7 +76,7 @@ func (r *repository) GetListReportContractAll(page int, filterContract FilterAnd
 func (r *repository) GetDataContract(id int, iupopkId int) (Contract, error) {
 	var Contract Contract
 
-	errFind := r.db.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&Contract).Error
+	errFind := r.db.Preload(clause.Associations).Preload("Customer.IndustryType.CategoryIndustryType").Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&Contract).Error
 
 	return Contract, errFind
 }

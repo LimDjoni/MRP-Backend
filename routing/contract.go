@@ -6,6 +6,7 @@ import (
 	"ajebackend/model/contract"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
+	"ajebackend/model/master/allmaster"
 	"ajebackend/model/useriupopk"
 
 	"github.com/go-playground/validator/v10"
@@ -27,7 +28,10 @@ func ContractRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate
 	userIupopkRepository := useriupopk.NewRepository(db)
 	userIupopkService := useriupopk.NewService(userIupopkRepository)
 
-	contractHandler := handler.NewContractHandler(contractService, historyService, logService, validate, userIupopkService)
+	allMasterRepository := allmaster.NewRepository(db)
+	allMasterService := allmaster.NewService(allMasterRepository)
+
+	contractHandler := handler.NewContractHandler(contractService, historyService, logService, validate, userIupopkService, allMasterService)
 
 	contractRouting := app.Group("/contract")
 

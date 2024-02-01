@@ -2,10 +2,11 @@ package contract
 
 type InputCreateUpdateContract struct {
 	ContractDate   string  `form:"contract_date" json:"contract_date" gorm:"DATETIME"`
-	ContractNumber string  `json:"contract_number" gorm:"UNIQUE"`
+	ContractNumber string  `form:"contract_number" json:"contract_number" gorm:"UNIQUE"`
 	CustomerId     uint    `form:"customer_id" json:"customer_id"`
 	Quantity       float64 `form:"quantity" json:"quantity"`
 	Validity       string  `form:"validity" json:"validity" gorm:"DATETIME"`
+	File           *string `json:"file"`
 }
 
 type FilterAndSortContract struct {

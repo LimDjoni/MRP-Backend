@@ -1,12 +1,15 @@
 package handler
 
 import (
+	"ajebackend/model/awshelper"
 	"ajebackend/model/contract"
 	"ajebackend/model/history"
 	"ajebackend/model/logs"
+	"ajebackend/model/master/allmaster"
 	"ajebackend/model/useriupopk"
 	"ajebackend/validatorfunc"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"strconv"
 
@@ -21,15 +24,17 @@ type contractHandler struct {
 	logService        logs.Service
 	v                 *validator.Validate
 	userIupopkService useriupopk.Service
+	allMasterService  allmaster.Service
 }
 
-func NewContractHandler(contractService contract.Service, historyService history.Service, logService logs.Service, v *validator.Validate, userIupopkService useriupopk.Service) *contractHandler {
+func NewContractHandler(contractService contract.Service, historyService history.Service, logService logs.Service, v *validator.Validate, userIupopkService useriupopk.Service, allMasterService allmaster.Service) *contractHandler {
 	return &contractHandler{
 		contractService,
 		historyService,
 		logService,
 		v,
 		userIupopkService,
+		allMasterService,
 	}
 }
 
@@ -117,6 +122,14 @@ func (h *contractHandler) CreateContract(c *fiber.Ctx) error {
 		})
 	}
 
+	iupopkData, iupopkDataErr := h.allMasterService.FindIupopk(iupopkIdInt)
+
+	if iupopkDataErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": iupopkDataErr.Error(),
+		})
+	}
+
 	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
@@ -141,7 +154,48 @@ func (h *contractHandler) CreateContract(c *fiber.Ctx) error {
 		})
 	}
 
-	createdContract, createdContractErr := h.historyService.CreateContract(*contractInput, iupopkIdInt, uint(claims["id"].(float64)))
+	var location string
+	file, errFormFile := c.FormFile("file")
+
+	if errFormFile != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "failed to create contract file",
+			"error":   errFormFile.Error(),
+		})
+	}
+
+	if file != nil {
+		fileName := fmt.Sprintf("%s/CONTRACT/%s/%s.pdf", iupopkData.Code, contractInput.ContractNumber, contractInput.ContractNumber)
+
+		up, uploadErr := awshelper.UploadDocument(file, fileName)
+
+		if uploadErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["file"] = file
+			inputMap["user_id"] = claims["id"]
+			inputMap["type"] = "CONTRACT"
+
+			inputJson, _ := json.Marshal(inputMap)
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error": uploadErr.Error(),
+			})
+
+			createdErrLog := logs.Logs{
+				Input:   inputJson,
+				Message: messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			return c.Status(400).JSON(fiber.Map{
+				"message": "failed to create contract file",
+				"error":   uploadErr.Error(),
+			})
+		}
+		location = up.Location
+	}
+
+	createdContract, createdContractErr := h.historyService.CreateContract(*contractInput, location, iupopkIdInt, uint(claims["id"].(float64)))
 
 	if createdContractErr != nil {
 		inputJson, _ := json.Marshal(contractInput)
@@ -187,6 +241,14 @@ func (h *contractHandler) UpdateContract(c *fiber.Ctx) error {
 		})
 	}
 
+	iupopkData, iupopkDataErr := h.allMasterService.FindIupopk(iupopkIdInt)
+
+	if iupopkDataErr != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": iupopkDataErr.Error(),
+		})
+	}
+
 	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
 
 	if checkUserErr != nil || checkUser.IsActive == false {
@@ -211,7 +273,50 @@ func (h *contractHandler) UpdateContract(c *fiber.Ctx) error {
 		})
 	}
 
-	updateContract, updateContractErr := h.historyService.UpdateContract(idInt, *contractInput, iupopkIdInt, uint(claims["id"].(float64)))
+	var location string
+	file, errFormFile := c.FormFile("file")
+
+	if errFormFile != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "failed to update contract file",
+			"error":   errFormFile.Error(),
+		})
+	}
+
+	if file != nil {
+		fileName := fmt.Sprintf("%s/CONTRACT/%s/%s.pdf", iupopkData.Code, contractInput.ContractNumber, contractInput.ContractNumber)
+
+		up, uploadErr := awshelper.UploadDocument(file, fileName)
+
+		if uploadErr != nil {
+			inputMap := make(map[string]interface{})
+			inputMap["file"] = file
+			inputMap["user_id"] = claims["id"]
+			inputMap["contract_id"] = idInt
+
+			inputJson, _ := json.Marshal(inputMap)
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error": uploadErr.Error(),
+			})
+
+			contractId := uint(idInt)
+			createdErrLog := logs.Logs{
+				ContractId: &contractId,
+				Input:      inputJson,
+				Message:    messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			return c.Status(400).JSON(fiber.Map{
+				"message": "failed to update contract file",
+				"error":   uploadErr.Error(),
+			})
+		}
+		location = up.Location
+	}
+
+	updateContract, updateContractErr := h.historyService.UpdateContract(idInt, *contractInput, location, iupopkIdInt, uint(claims["id"].(float64)))
 
 	if updateContractErr != nil {
 		inputMap := make(map[string]interface{})
