@@ -13,6 +13,7 @@ import (
 	"ajebackend/model/electricassignmentenduser"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/history"
+	"ajebackend/model/ici"
 	"ajebackend/model/insw"
 	"ajebackend/model/jettybalance"
 	"ajebackend/model/logs"
@@ -70,8 +71,6 @@ import (
 
 	"ajebackend/model/haulingsynchronize"
 
-	"ajebackend/seeding"
-	seedingmaster "ajebackend/seeding/master"
 	"ajebackend/validatorfunc"
 	"fmt"
 	"os"
@@ -163,6 +162,7 @@ func main() {
 			&royaltyreport.RoyaltyReport{},
 			&jettybalance.JettyBalance{},
 			&pitloss.PitLoss{},
+			&ici.Ici{},
 
 			// Hauling section
 			&contractor.Contractor{},
@@ -181,30 +181,30 @@ func main() {
 			&haulingsynchronize.HaulingSynchronize{},
 		)
 
-		seeding.UpdateTransactionsRoyalty(db)
-		seeding.SeedingTraderAndCompanyData(db)
-		seeding.SeedingDestination(db)
-		seeding.UpdateNaming(db)
-		seeding.UpdateTransactionsQuantity(db)
-		seedingmaster.SeedingBarge(db)
-		seedingmaster.SeedingCountry(db)
-		seedingmaster.SeedingCurrency(db)
-		seedingmaster.SeedingDocumentType(db)
-		seedingmaster.SeedingIndustryType(db)
-		seedingmaster.SeedingInsuranceCompany(db)
-		seedingmaster.SeedingIupopk(db)
-		seedingmaster.SeedingPabeanOffice(db)
-		seedingmaster.SeedingPortInsw(db)
-		seedingmaster.SeedingPortsAndLocation(db)
-		seedingmaster.SeedingSalesSystem(db)
-		seedingmaster.SeedingSurveyor(db)
-		seedingmaster.SeedingTugboat(db)
-		seedingmaster.SeedingUnit(db)
-		seedingmaster.SeedingVessel(db)
-		seedingmaster.SeedingCounter(db)
-		seedingmaster.SeedingCategoryIndustryType(db)
-		seedingmaster.SeedingRole(db)
-		seeding.UpdateIupopk(db)
+		// seeding.UpdateTransactionsRoyalty(db)
+		// seeding.SeedingTraderAndCompanyData(db)
+		// seeding.SeedingDestination(db)
+		// seeding.UpdateNaming(db)
+		// seeding.UpdateTransactionsQuantity(db)
+		// seedingmaster.SeedingBarge(db)
+		// seedingmaster.SeedingCountry(db)
+		// seedingmaster.SeedingCurrency(db)
+		// seedingmaster.SeedingDocumentType(db)
+		// seedingmaster.SeedingIndustryType(db)
+		// seedingmaster.SeedingInsuranceCompany(db)
+		// seedingmaster.SeedingIupopk(db)
+		// seedingmaster.SeedingPabeanOffice(db)
+		// seedingmaster.SeedingPortInsw(db)
+		// seedingmaster.SeedingPortsAndLocation(db)
+		// seedingmaster.SeedingSalesSystem(db)
+		// seedingmaster.SeedingSurveyor(db)
+		// seedingmaster.SeedingTugboat(db)
+		// seedingmaster.SeedingUnit(db)
+		// seedingmaster.SeedingVessel(db)
+		// seedingmaster.SeedingCounter(db)
+		// seedingmaster.SeedingCategoryIndustryType(db)
+		// seedingmaster.SeedingRole(db)
+		// seeding.UpdateIupopk(db)
 		fmt.Println(errMigrate)
 	}
 
@@ -308,4 +308,5 @@ func Setup(db *gorm.DB, validate *validator.Validate, route fiber.Router) {
 	routing2.HaulingSynchronizeRouting(db, route, validate)
 	routing2.HaulingTransactionRouting(db, route, validate)
 	routing2.JettyBalanceRouting(db, route, validate)
+	routing2.IciRouting(db, route, validate)
 }
