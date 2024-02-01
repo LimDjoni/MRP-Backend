@@ -1,6 +1,11 @@
 package haulingsynchronize
 
 import (
+	"ajebackend/model/master/contractor"
+	"ajebackend/model/master/isp"
+	"ajebackend/model/master/jetty"
+	"ajebackend/model/master/pit"
+	"ajebackend/model/master/truck"
 	"ajebackend/model/production"
 	"ajebackend/model/transactionshauling/transactionispjetty"
 	"ajebackend/model/transactionshauling/transactionjetty"
@@ -169,9 +174,7 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 					}
 				}
 			}
-
 		}
-
 	}
 
 	var transactionIspJetty []transactionispjetty.TransactionIspJetty
@@ -215,6 +218,136 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 				if errUpdIspJetty != nil {
 					tx.Rollback()
 					return false, errUpdIspJetty
+				}
+			}
+		}
+	}
+
+	if len(syncData.Truck) > 0 {
+		for _, v := range syncData.Truck {
+			var tempTruck truck.Truck
+
+			errFind := tx.Where("id = ?", v.ID).First(&tempTruck).Error
+
+			if errFind != nil {
+				tempTruck = v
+
+				errUpd := tx.Save(&tempTruck).Error
+
+				if errUpd != nil {
+					tx.Rollback()
+					return false, errUpd
+				}
+			} else {
+				errCreate := tx.Create(&v).Error
+
+				if errCreate != nil {
+					tx.Rollback()
+					return false, errCreate
+				}
+			}
+		}
+	}
+
+	if len(syncData.Contractor) > 0 {
+		for _, v := range syncData.Contractor {
+			var tempContractor contractor.Contractor
+
+			errFind := tx.Where("id = ?", v.ID).First(&tempContractor).Error
+
+			if errFind != nil {
+				tempContractor = v
+
+				errUpd := tx.Save(&tempContractor).Error
+
+				if errUpd != nil {
+					tx.Rollback()
+					return false, errUpd
+				}
+			} else {
+				errCreate := tx.Create(&v).Error
+
+				if errCreate != nil {
+					tx.Rollback()
+					return false, errCreate
+				}
+			}
+		}
+	}
+
+	if len(syncData.Pit) > 0 {
+		for _, v := range syncData.Pit {
+			var tempPit pit.Pit
+
+			errFind := tx.Where("id = ?", v.ID).First(&tempPit).Error
+
+			if errFind != nil {
+				tempPit = v
+
+				errUpd := tx.Save(&tempPit).Error
+
+				if errUpd != nil {
+					tx.Rollback()
+					return false, errUpd
+				}
+			} else {
+				errCreate := tx.Create(&v).Error
+
+				if errCreate != nil {
+					tx.Rollback()
+					return false, errCreate
+				}
+			}
+		}
+	}
+
+	if len(syncData.Isp) > 0 {
+		for _, v := range syncData.Isp {
+			var tempIsp isp.Isp
+
+			errFind := tx.Where("id = ?", v.ID).First(&tempIsp).Error
+
+			if errFind != nil {
+				tempIsp = v
+
+				errUpd := tx.Save(&tempIsp).Error
+
+				if errUpd != nil {
+					tx.Rollback()
+					return false, errUpd
+				}
+			} else {
+				errCreate := tx.Create(&v).Error
+
+				if errCreate != nil {
+					tx.Rollback()
+					return false, errCreate
+				}
+			}
+		}
+	}
+
+	if len(syncData.Jetty) > 0 {
+		for _, v := range syncData.Jetty {
+			var tempJetty jetty.Jetty
+
+			errFind := tx.Where("id = ?", v.ID).First(&tempJetty).Error
+
+			if errFind != nil {
+				tempJetty = v
+
+				errUpd := tx.Save(&tempJetty).Error
+
+				if errUpd != nil {
+					tx.Rollback()
+					return false, errUpd
+				}
+			} else {
+				errCreate := tx.Create(&v).Error
+
+				if errCreate != nil {
+					tx.Rollback()
+					return false, errCreate
 				}
 			}
 		}
