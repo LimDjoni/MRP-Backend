@@ -9,8 +9,8 @@ import (
 
 type Truck struct {
 	gorm.Model
-	Rfid          string                `json:"rfid" gorm:"UNIQUE"`
-	NumberLambung string                `json:"number_lambung" gorm:"UNIQUE"`
+	Rfid          *string               `json:"rfid" gorm:"UNIQUE"`
+	NumberLambung string                `json:"number_lambung"`
 	TruckModel    string                `json:"truck_model"`
 	Tara          float64               `json:"tara"`
 	Capacity      float64               `json:"capacity"`
