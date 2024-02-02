@@ -229,7 +229,7 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 
 			errFind := tx.Where("id = ?", v.ID).First(&tempTruck).Error
 
-			if errFind != nil {
+			if errFind == nil {
 				tempTruck = v
 				fmt.Println(v.ID)
 				errUpd := tx.Save(&tempTruck).Error
@@ -255,7 +255,7 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 
 			errFind := tx.Where("id = ?", v.ID).First(&tempContractor).Error
 
-			if errFind != nil {
+			if errFind == nil {
 				tempContractor = v
 
 				errUpd := tx.Save(&tempContractor).Error
@@ -281,7 +281,7 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 
 			errFind := tx.Where("id = ?", v.ID).First(&tempPit).Error
 
-			if errFind != nil {
+			if errFind == nil {
 				tempPit = v
 
 				errUpd := tx.Save(&tempPit).Error
@@ -307,7 +307,7 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 
 			errFind := tx.Where("id = ?", v.ID).First(&tempIsp).Error
 
-			if errFind != nil {
+			if errFind == nil {
 				tempIsp = v
 
 				errUpd := tx.Save(&tempIsp).Error
@@ -333,7 +333,7 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 
 			errFind := tx.Where("id = ?", v.ID).First(&tempJetty).Error
 
-			if errFind != nil {
+			if errFind == nil {
 				tempJetty = v
 
 				errUpd := tx.Save(&tempJetty).Error
