@@ -4,5 +4,6 @@ import "gorm.io/gorm"
 
 type CategoryIndustryType struct {
 	gorm.Model
-	Name string `json:"name"`
+	Name       string `json:"name"`
+	SystemName string `json:"system_name"`
 }

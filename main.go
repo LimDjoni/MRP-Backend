@@ -6,7 +6,6 @@ import (
 	"ajebackend/model/cafassignmentenduser"
 	"ajebackend/model/coareport"
 	"ajebackend/model/coareportln"
-	"ajebackend/model/contract"
 	"ajebackend/model/counter"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"

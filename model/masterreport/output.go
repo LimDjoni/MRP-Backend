@@ -172,19 +172,26 @@ type RealizationTransaction struct {
 // Report Detail Output
 
 type SaleDetail struct {
-	Rkabs                 []rkab.Rkab         `json:"rkabs"`
-	Electricity           Electricity         `json:"electricity"`
-	Cement                Cement              `json:"cement"`
-	NonElectricity        NonElectricity      `json:"non_electricity"`
-	RecapElectricity      RecapElectricity    `json:"recap_electricity"`
-	RecapCement           RecapCement         `json:"recap_cement"`
-	RecapNonElectricity   RecapNonElectricity `json:"recap_non_electricity"`
-	NotClaimable          NotClaimable        `json:"not_claimable"`
-	Production            QuantityProduction  `json:"production"`
-	Domestic              Domestic            `json:"domestic"`
-	Export                Export              `json:"export"`
-	ElectricAssignment    ElectricAssignment  `json:"electric_assignment"`
-	CafAssignment         CafAssignment       `json:"caf_assignment"`
+	Rkabs               []rkab.Rkab         `json:"rkabs"`
+	Electricity         Electricity         `json:"electricity"`
+	Cement              Cement              `json:"cement"`
+	NonElectricity      NonElectricity      `json:"non_electricity"`
+	RecapElectricity    RecapElectricity    `json:"recap_electricity"`
+	RecapCement         RecapCement         `json:"recap_cement"`
+	RecapNonElectricity RecapNonElectricity `json:"recap_non_electricity"`
+	// try new flexible
+	DataDetailIndustry map[string]map[string]map[string]map[string]float64 `json:"data_detail_industry"`
+	DataRecapIndustry  map[string]map[string]float64                       `json:"data_recap_industry"`
+	//
+	NotClaimable       NotClaimable       `json:"not_claimable"`
+	Production         QuantityProduction `json:"production"`
+	Domestic           Domestic           `json:"domestic"`
+	Export             Export             `json:"export"`
+	ElectricAssignment ElectricAssignment `json:"electric_assignment"`
+	CafAssignment      CafAssignment      `json:"caf_assignment"`
+	// try new flexible
+	Company map[string]map[string][]string `json:"company"`
+	// try new flexible
 	CompanyElectricity    map[string][]string `json:"company_electricity"`
 	CompanyCement         map[string][]string `json:"company_cement"`
 	CompanyNonElectricity map[string][]string `json:"company_non_electricity"`
