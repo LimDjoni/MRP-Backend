@@ -6,6 +6,7 @@ import (
 	"ajebackend/model/cafassignmentenduser"
 	"ajebackend/model/coareport"
 	"ajebackend/model/coareportln"
+	"ajebackend/model/contract"
 	"ajebackend/model/counter"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
@@ -114,6 +115,8 @@ type Repository interface {
 	CreateJettyBalance(input pitloss.InputJettyPitLoss, iupopkId int, userId uint) (jettybalance.JettyBalance, error)
 	UpdateJettyBalance(id int, input pitloss.InputUpdateJettyPitLoss, iupopkId int, userId uint) (jettybalance.JettyBalance, error)
 	DeleteJettyBalance(id int, userId uint, iupopkId int) (bool, error)
+	CreateContract(input contract.InputCreateUpdateContract, location string, iupopkId int, userId uint) (contract.Contract, error)
+	UpdateContract(id int, input contract.InputCreateUpdateContract, location string, iupopkId int, userId uint) (contract.Contract, error)
 }
 
 type repository struct {
@@ -5769,4 +5772,123 @@ func (r *repository) DeleteJettyBalance(id int, userId uint, iupopkId int) (bool
 
 	tx.Commit()
 	return true, createHistoryErr
+}
+
+// Contract
+func (r *repository) CreateContract(input contract.InputCreateUpdateContract, location string, iupopkId int, userId uint) (contract.Contract, error) {
+	var createdContract contract.Contract
+
+	tx := r.db.Begin()
+
+	var iup iupopk.Iupopk
+
+	findIupErr := tx.Where("id = ?", iupopkId).First(&iup).Error
+
+	if findIupErr != nil {
+		tx.Rollback()
+		return createdContract, findIupErr
+	}
+
+	createdContract.ContractDate = input.ContractDate
+	createdContract.ContractNumber = input.ContractNumber
+	createdContract.CustomerId = input.CustomerId
+	createdContract.Quantity = input.Quantity
+	createdContract.Validity = input.Validity
+	createdContract.IupopkId = uint(iupopkId)
+	createdContract.File = &location
+
+	createContractErr := tx.Create(&createdContract).Error
+
+	if createContractErr != nil {
+		tx.Rollback()
+		return createdContract, createContractErr
+	}
+
+	var history History
+
+	history.ContractId = &createdContract.ID
+	history.Status = "Created"
+	history.UserId = userId
+	history.IupopkId = &iup.ID
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return createdContract, createHistoryErr
+	}
+
+	tx.Commit()
+	return createdContract, nil
+}
+
+func (r *repository) UpdateContract(id int, input contract.InputCreateUpdateContract, location string, iupopkId int, userId uint) (contract.Contract, error) {
+	var updatedContract contract.Contract
+
+	tx := r.db.Begin()
+
+	errFind := r.db.Where("id = ? AND iupopk_id = ?", id, iupopkId).First(&updatedContract).Error
+
+	if errFind != nil {
+		tx.Rollback()
+		return updatedContract, errFind
+	}
+
+	beforeData, errorBeforeDataJsonMarshal := json.Marshal(updatedContract)
+
+	if errorBeforeDataJsonMarshal != nil {
+		tx.Rollback()
+		return updatedContract, errorBeforeDataJsonMarshal
+	}
+
+	if updatedContract.File == nil {
+		input.File = &location
+	}
+
+	dataInput, errorMarshal := json.Marshal(input)
+
+	if errorMarshal != nil {
+		tx.Rollback()
+		return updatedContract, errorMarshal
+	}
+
+	var dataInputMapString map[string]interface{}
+
+	errorUnmarshal := json.Unmarshal(dataInput, &dataInputMapString)
+	if errorUnmarshal != nil {
+		tx.Rollback()
+		return updatedContract, errorUnmarshal
+	}
+
+	updateErr := tx.Model(&updatedContract).Updates(dataInputMapString).Error
+
+	if updateErr != nil {
+		tx.Rollback()
+		return updatedContract, updateErr
+	}
+
+	afterData, errorAfterDataJsonMarshal := json.Marshal(updatedContract)
+
+	if errorBeforeDataJsonMarshal != nil {
+		tx.Rollback()
+		return updatedContract, errorAfterDataJsonMarshal
+	}
+
+	var history History
+
+	history.ContractId = &updatedContract.ID
+	history.UserId = userId
+	history.Status = "Updated"
+	history.BeforeData = beforeData
+	history.AfterData = afterData
+	history.IupopkId = &updatedContract.IupopkId
+
+	createHistoryErr := tx.Create(&history).Error
+
+	if createHistoryErr != nil {
+		tx.Rollback()
+		return updatedContract, createHistoryErr
+	}
+
+	tx.Commit()
+	return updatedContract, nil
 }

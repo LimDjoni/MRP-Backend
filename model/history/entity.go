@@ -4,6 +4,7 @@ import (
 	"ajebackend/model/cafassignment"
 	"ajebackend/model/coareport"
 	"ajebackend/model/coareportln"
+	"ajebackend/model/contract"
 	"ajebackend/model/dmo"
 	"ajebackend/model/electricassignment"
 	"ajebackend/model/groupingvesseldn"
@@ -68,4 +69,6 @@ type History struct {
 	RoyaltyReport        *royaltyreport.RoyaltyReport           `json:"royalty_report" gorm:"constraint:OnDelete:CASCADE;"`
 	JettyBalanceId       *uint                                  `json:"jetty_balance_id"`
 	JettyBalance         *jettybalance.JettyBalance             `json:"jetty_balance" gorm:"constraint:OnDelete:CASCADE;"`
+	ContractId           *uint                                  `json:"contract_id"`
+	Contract             *contract.Contract                     `json:"contract" gorm:"constraint:OnDelete:CASCADE;"`
 }
