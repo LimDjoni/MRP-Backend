@@ -231,7 +231,7 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 
 			if errFind == nil {
 				tempTruck = v
-				if v.Rfid == nil || v.Rfid == "" {
+				if v.Rfid == nil || *v.Rfid == "" {
 					tempTruck.Rfid = nil
 				}
 				errUpd := tx.Save(&tempTruck).Error
@@ -241,7 +241,7 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 					return false, errUpd
 				}
 			} else {
-				if v.Rfid == nil || v.Rfid == "" {
+				if v.Rfid == nil || *v.Rfid == "" {
 					v.Rfid = nil
 				}
 				errCreate := tx.Create(&v).Error
