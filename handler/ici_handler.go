@@ -5,6 +5,7 @@ import (
 	"ajebackend/model/logs"
 	"ajebackend/validatorfunc"
 	"reflect"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -67,4 +68,53 @@ func (h *iciHandler) CreateIci(c *fiber.Ctx) error {
 	}
 
 	return c.Status(201).JSON(createIci)
+}
+
+func (h *iciHandler) UpdateIci(c *fiber.Ctx) error {
+	//Get User
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+	// Check User Login
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	//Get Input
+	inputUpdateIci := new(ici.InputCreateUpdateIci)
+	if err := c.BodyParser(inputUpdateIci); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	// Validate Input
+	errors := h.v.Struct(*inputUpdateIci)
+	if errors != nil {
+		dataErrors := validatorfunc.ValidateStruct(errors)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": dataErrors,
+		})
+	}
+
+	//Get ID
+	id := c.Params("id")
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "record not found",
+		})
+	}
+
+	updateIci, err := h.iciService.UpdateIci(*inputUpdateIci, idInt)
+
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": err,
+		})
+	}
+
+	return c.Status(201).JSON(updateIci)
 }

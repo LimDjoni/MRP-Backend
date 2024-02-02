@@ -37,7 +37,7 @@ func (r *repository) CreateIci(inputIci InputCreateUpdateIci) (Ici, error) {
 	var createIci Ici
 
 	createIci.Date = inputIci.Date
-	createIci.Avarage = inputIci.Avarage
+	createIci.Average = inputIci.Average
 	createIci.UnitPrice = inputIci.UnitPrice
 	createIci.Currency = inputIci.Currency
 	createIci.IciLevelId = inputIci.IciLevelId

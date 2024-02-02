@@ -35,5 +35,6 @@ func IciRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	}))
 
 	iciRouting.Post("/create", iciHandler.CreateIci)
+	iciRouting.Put("/update/:id", iciHandler.UpdateIci)
 
 }
