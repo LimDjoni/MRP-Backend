@@ -8,7 +8,7 @@ import (
 
 type Repository interface {
 	GetAllIci() ([]Ici, error)
-	CreateIci(inputIci InputCreateUpdateIci, IupopkId int) (Ici, error)
+	CreateIci(inputIci InputCreateUpdateIci) (Ici, error)
 	UpdateIci(inputIci InputCreateUpdateIci, id int) (Ici, error)
 	// DeleteIci(id int) (bool, error)
 }
@@ -33,15 +33,14 @@ func (r *repository) GetAllIci() ([]Ici, error) {
 	return icis, nil
 }
 
-func (r *repository) CreateIci(inputIci InputCreateUpdateIci, IupopkId int) (Ici, error) {
+func (r *repository) CreateIci(inputIci InputCreateUpdateIci) (Ici, error) {
 	var createIci Ici
 
 	createIci.Date = inputIci.Date
-	createIci.Level = inputIci.Level
 	createIci.Avarage = inputIci.Avarage
 	createIci.UnitPrice = inputIci.UnitPrice
 	createIci.Currency = inputIci.Currency
-	createIci.IupopkId = uint(IupopkId)
+	createIci.IciLevelId = inputIci.IciLevelId
 
 	errCreate := r.db.Create(&createIci).Error
 

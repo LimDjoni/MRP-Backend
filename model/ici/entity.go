@@ -1,18 +1,17 @@
 package ici
 
 import (
-	"ajebackend/model/master/iupopk"
+	"ajebackend/model/icilevel"
 
 	"gorm.io/gorm"
 )
 
 type Ici struct {
 	gorm.Model
-	Date      string        `json:"date"`
-	Level     string        `json:"level"`
-	Avarage   float64       `json:"average"`
-	UnitPrice float64       `json:"unit_price"`
-	Currency  string        `json:"currency"`
-	IupopkId  uint          `json:"iupopk_id"`
-	Iupopk    iupopk.Iupopk `json:"iupopk"`
+	Date       string            `json:"date"`
+	Avarage    float64           `json:"average"`
+	UnitPrice  float64           `json:"unit_price"`
+	Currency   string            `json:"currency"`
+	IciLevelId uint              `json:"ici_level_id`
+	IciLevel   icilevel.IciLevel `json:"icilevel"`
 }

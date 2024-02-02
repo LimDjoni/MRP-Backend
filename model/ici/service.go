@@ -2,7 +2,7 @@ package ici
 
 type Service interface {
 	GetAllIci() ([]Ici, error)
-	CreateIci(inputIci InputCreateUpdateIci, IupopkId int) (Ici, error)
+	CreateIci(inputIci InputCreateUpdateIci) (Ici, error)
 	UpdateIci(inputIci InputCreateUpdateIci, id int) (Ici, error)
 }
 
@@ -19,8 +19,8 @@ func (s *service) GetAllIci() ([]Ici, error) {
 	return listIci, listIciErr
 }
 
-func (s *service) CreateIci(inputIci InputCreateUpdateIci, iupopkId int) (Ici, error) {
-	createIci, createIciErr := s.repository.CreateIci(inputIci, iupopkId)
+func (s *service) CreateIci(inputIci InputCreateUpdateIci) (Ici, error) {
+	createIci, createIciErr := s.repository.CreateIci(inputIci)
 
 	return createIci, createIciErr
 }

@@ -3,10 +3,8 @@ package handler
 import (
 	"ajebackend/model/ici"
 	"ajebackend/model/logs"
-	"ajebackend/model/useriupopk"
 	"ajebackend/validatorfunc"
 	"reflect"
-	"strconv"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -14,18 +12,16 @@ import (
 )
 
 type iciHandler struct {
-	iciService        ici.Service
-	logService        logs.Service
-	v                 *validator.Validate
-	userIupopkService useriupopk.Service
+	iciService ici.Service
+	logService logs.Service
+	v          *validator.Validate
 }
 
-func NewIciHandler(iciService ici.Service, logService logs.Service, v *validator.Validate, userIupopkService useriupopk.Service) *iciHandler {
+func NewIciHandler(iciService ici.Service, logService logs.Service, v *validator.Validate) *iciHandler {
 	return &iciHandler{
 		iciService,
 		logService,
 		v,
-		userIupopkService,
 	}
 }
 
@@ -40,21 +36,6 @@ func (h *iciHandler) CreateIci(c *fiber.Ctx) error {
 
 	// Check User Login
 	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
-		return c.Status(401).JSON(responseUnauthorized)
-	}
-
-	// harus ada iupopk
-	iupopkId := c.Params("iupopk_id")
-	iupopkIdInt, err := strconv.Atoi(iupopkId)
-	if err != nil {
-		return c.Status(404).JSON(fiber.Map{
-			"error": "iupopk record not found",
-		})
-	}
-
-	checkUser, checkUserErr := h.userIupopkService.FindUser(uint(claims["id"].(float64)), iupopkIdInt)
-
-	if checkUserErr != nil || !checkUser.IsActive {
 		return c.Status(401).JSON(responseUnauthorized)
 	}
 
@@ -77,7 +58,7 @@ func (h *iciHandler) CreateIci(c *fiber.Ctx) error {
 		})
 	}
 
-	createIci, createIciErr := h.iciService.CreateIci(*inputIci, iupopkIdInt)
+	createIci, createIciErr := h.iciService.CreateIci(*inputIci)
 
 	if createIciErr != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{

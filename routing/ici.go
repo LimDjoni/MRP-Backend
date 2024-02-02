@@ -5,7 +5,6 @@ import (
 	"ajebackend/helper"
 	"ajebackend/model/ici"
 	"ajebackend/model/logs"
-	"ajebackend/model/useriupopk"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -17,13 +16,10 @@ func IciRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 	IciRepository := ici.NewRepository(db)
 	IciService := ici.NewService(IciRepository)
 
-	userIupopkRepository := useriupopk.NewRepository(db)
-	userIupopkService := useriupopk.NewService(userIupopkRepository)
-
 	logsRepository := logs.NewRepository(db)
 	logsService := logs.NewService(logsRepository)
 
-	iciHandler := handler.NewIciHandler(IciService, logsService, validate, userIupopkService)
+	iciHandler := handler.NewIciHandler(IciService, logsService, validate)
 
 	iciRouting := app.Group("/ici")
 
@@ -38,6 +34,6 @@ func IciRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
 		},
 	}))
 
-	iciRouting.Post("/create/:iupopk_id", iciHandler.CreateIci)
+	iciRouting.Post("/create", iciHandler.CreateIci)
 
 }
