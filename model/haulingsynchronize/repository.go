@@ -231,7 +231,7 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 
 			if errFind != nil {
 				tempTruck = v
-
+				fmt.Println(v.ID)
 				errUpd := tx.Save(&tempTruck).Error
 
 				if errUpd != nil {

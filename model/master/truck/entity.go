@@ -20,4 +20,5 @@ type Truck struct {
 	CreatedBy     user.User             `json:"created_by"`
 	UpdatedById   uint                  `json:"updated_by_id"`
 	UpdatedBy     user.User             `json:"updated_by"`
+	IsActive      bool                  `json:"is_active"`
 }
