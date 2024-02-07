@@ -26,6 +26,31 @@ func NewIciHandler(iciService ici.Service, logService logs.Service, v *validator
 	}
 }
 
+func (h *iciHandler) GetAllIci(c *fiber.Ctx) error {
+	//Get User
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	responseUnauthorized := map[string]interface{}{
+		"error": "unauthorized",
+	}
+
+	// Check User Login
+	if claims["id"] == nil || reflect.TypeOf(claims["id"]).Kind() != reflect.Float64 {
+		return c.Status(401).JSON(responseUnauthorized)
+	}
+
+	icis, err := h.iciService.GetAllIci()
+
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(icis)
+
+}
+
 func (h *iciHandler) CreateIci(c *fiber.Ctx) error {
 
 	//Get User

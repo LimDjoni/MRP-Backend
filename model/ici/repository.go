@@ -24,7 +24,7 @@ func NewRepository(db *gorm.DB) *repository {
 func (r *repository) GetAllIci() ([]Ici, error) {
 	var icis []Ici
 
-	errFind := r.db.Find(&icis).Error
+	errFind := r.db.Preload("IciLevel").Find(&icis).Error
 
 	if errFind != nil {
 		return icis, errFind
