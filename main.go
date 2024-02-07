@@ -14,6 +14,8 @@ import (
 	"ajebackend/model/electricassignmentenduser"
 	"ajebackend/model/groupingvesselln"
 	"ajebackend/model/history"
+	"ajebackend/model/ici"
+	"ajebackend/model/icilevel"
 	"ajebackend/model/insw"
 	"ajebackend/model/jettybalance"
 	"ajebackend/model/logs"
@@ -56,6 +58,8 @@ import (
 	"ajebackend/model/useriupopk"
 	"ajebackend/model/userrole"
 	routing2 "ajebackend/routing"
+	"ajebackend/seeding"
+	seedingmaster "ajebackend/seeding/master"
 
 	// Hauling
 	"ajebackend/model/master/contractor"
@@ -71,8 +75,6 @@ import (
 
 	"ajebackend/model/haulingsynchronize"
 
-	"ajebackend/seeding"
-	seedingmaster "ajebackend/seeding/master"
 	"ajebackend/validatorfunc"
 	"fmt"
 	"os"
@@ -164,6 +166,8 @@ func main() {
 			&royaltyreport.RoyaltyReport{},
 			&jettybalance.JettyBalance{},
 			&pitloss.PitLoss{},
+			&icilevel.IciLevel{},
+			&ici.Ici{},
 
 			// Hauling section
 			&contractor.Contractor{},
@@ -191,6 +195,7 @@ func main() {
 		seeding.UpdateTransactionsQuantity(db)
 		seedingmaster.SeedingBarge(db)
 		seedingmaster.SeedingCountry(db)
+		seedingmaster.SeedingIciLevel(db)
 		seedingmaster.SeedingCurrency(db)
 		seedingmaster.SeedingDocumentType(db)
 		seedingmaster.SeedingIndustryType(db)
@@ -311,5 +316,6 @@ func Setup(db *gorm.DB, validate *validator.Validate, route fiber.Router) {
 	routing2.HaulingSynchronizeRouting(db, route, validate)
 	routing2.HaulingTransactionRouting(db, route, validate)
 	routing2.JettyBalanceRouting(db, route, validate)
+	routing2.IciRouting(db, route, validate)
 	routing2.ContractRouting(db, route, validate)
 }
