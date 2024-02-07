@@ -6,6 +6,7 @@ import (
 	"ajebackend/model/cafassignmentenduser"
 	"ajebackend/model/coareport"
 	"ajebackend/model/coareportln"
+	"ajebackend/model/contract"
 	"ajebackend/model/counter"
 	"ajebackend/model/dmo"
 	"ajebackend/model/dmovessel"
@@ -183,6 +184,8 @@ func main() {
 			&transactiontojetty.TransactionToJetty{},
 
 			&haulingsynchronize.HaulingSynchronize{},
+
+			&contract.Contract{},
 		)
 
 		seeding.UpdateTransactionsRoyalty(db)
@@ -314,4 +317,5 @@ func Setup(db *gorm.DB, validate *validator.Validate, route fiber.Router) {
 	routing2.HaulingTransactionRouting(db, route, validate)
 	routing2.JettyBalanceRouting(db, route, validate)
 	routing2.IciRouting(db, route, validate)
+	routing2.ContractRouting(db, route, validate)
 }

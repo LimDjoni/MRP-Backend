@@ -26,6 +26,7 @@ type TransactionToJetty struct {
 	Jetty                 jetty.Jetty   `json:"jetty"`
 	Seam                  string        `json:"seam"`
 	Origin                string        `json:"origin"`
+	Gar                   float64       `json:"gar"`
 	ClockOutDate          string        `json:"clock_out_date" gorm:"DATETIME"`
 	TopTruckPhotoLink     string        `json:"top_truck_photo_link"`
 	TopTruckPhotoPath     string        `json:"top_truck_photo_path"`

@@ -36,4 +36,9 @@ type SynchronizeInputTransactionJetty struct {
 	TransactionJetty []transactionjetty.TransactionJetty `json:"transaction_jetty"`
 	SynchronizeTime  string                              `json:"syncrhonize_time"`
 	IupopkId         uint                                `json:"iupopk_id"`
+	Contractor       []contractor.Contractor             `json:"contractor"`
+	Isp              []isp.Isp                           `json:"isp"`
+	Jetty            []jetty.Jetty                       `json:"jetty"`
+	Pit              []pit.Pit                           `json:"pit"`
+	Truck            []truck.Truck                       `json:"truck"`
 }
