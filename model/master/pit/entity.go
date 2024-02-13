@@ -10,6 +10,7 @@ import (
 type Pit struct {
 	gorm.Model
 	Name        string        `json:"name" gorm:"UNIQUE"`
+	Code        string        `json:"code" gorm:"UNIQUE;primaryKey"`
 	Latitude    string        `json:"latitude"`
 	Longitude   string        `json:"longitude"`
 	IupopkId    uint          `json:"iupopk_id"`

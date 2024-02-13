@@ -19,12 +19,12 @@ type TransactionJetty struct {
 	NettQuantity          float64       `json:"nett_quantity"`
 	IupopkId              uint          `json:"iupopk_id"`
 	Iupopk                iupopk.Iupopk `json:"iupopk"`
-	IspId                 *uint         `json:"isp_id"`
-	Isp                   *isp.Isp      `json:"isp"`
-	PitId                 *uint         `json:"pit_id"`
-	Pit                   *pit.Pit      `json:"pit"`
-	JettyId               uint          `json:"jetty_id"`
-	Jetty                 jetty.Jetty   `json:"jetty"`
+	IspCode               *string       `json:"isp_code"`
+	Isp                   *isp.Isp      `json:"isp" gorm:"foreignKey:IspCode;references:Code"`
+	PitCode               *string       `json:"pit_code"`
+	Pit                   *pit.Pit      `json:"pit" gorm:"foreignKey:PitCode;references:Code"`
+	JettyCode             string        `json:"jetty_code"`
+	Jetty                 jetty.Jetty   `json:"jetty" gorm:"foreignKey:JettyCode;references:Code"`
 	Seam                  string        `json:"seam"`
 	Gar                   float64       `json:"gar"`
 	ClockInDate           string        `json:"clock_in_date" gorm:"DATETIME"`
@@ -32,8 +32,11 @@ type TransactionJetty struct {
 	TopTruckPhotoPath     string        `json:"top_truck_photo_path"`
 	LambungTruckPhotoLink string        `json:"lambung_truck_photo_link"`
 	LambungTruckPhotoPath string        `json:"lambung_truck_photo_path"`
+	WeightBridgePhotoLink string        `json:"weight_bridge_photo_link"`
+	WeightBridgePhotoPath string        `json:"weight_bridge_photo_path"`
 	CreatedById           uint          `json:"created_by_id"`
 	CreatedBy             user.User     `json:"created_by"`
 	UpdatedById           uint          `json:"updated_by_id"`
 	UpdatedBy             user.User     `json:"updated_by"`
+	IsFailedUpload        bool          `json:"is_failed_upload"`
 }

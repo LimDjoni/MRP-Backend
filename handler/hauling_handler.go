@@ -107,6 +107,50 @@ func (h *haulingHandler) SyncHaulingDataJetty(c *fiber.Ctx) error {
 		})
 	}
 
+	getData, getDataErr := h.haulingSynchronizeService.GetSynchronizeMasterData(*haulingDataInput.IupopkId)
+
+	if getDataErr != nil {
+		inputJson, _ := json.Marshal(haulingDataInput)
+
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": getDataErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error":   getDataErr.Error(),
+			"message": "failed synchronize get data master",
+		})
+	}
+
+	syncIsp, syncIspErr := h.haulingSynchronizeService.SynchronizeToIsp(getData)
+
+	if syncIspErr != nil {
+		inputJson, _ := json.Marshal(haulingDataInput)
+
+		messageJson, _ := json.Marshal(map[string]interface{}{
+			"error": syncIspErr.Error(),
+		})
+
+		createdErrLog := logs.Logs{
+			Input:   inputJson,
+			Message: messageJson,
+		}
+
+		h.logService.CreateLogs(createdErrLog)
+
+		return c.Status(400).JSON(fiber.Map{
+			"error":   syncIspErr.Error(),
+			"message": "failed synchronize to isp",
+		})
+	}
+
 	return c.Status(200).JSON(fiber.Map{
 		"message": "success synchronize",
 	})

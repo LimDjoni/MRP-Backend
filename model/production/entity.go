@@ -18,8 +18,11 @@ type Production struct {
 	RitaseQuantity int           `json:"ritase_quantity"`
 	PitId          *uint         `json:"pit_id"`
 	Pit            *pit.Pit      `json:"pit"`
+	PitCode        *string       `json:"pit_code"`
 	IspId          *uint         `json:"isp_id"`
 	Isp            *isp.Isp      `json:"isp"`
+	IspCode        *string       `json:"isp_code"`
 	JettyId        *uint         `json:"jetty_id"`
 	Jetty          *jetty.Jetty  `json:"jetty"`
+	JettyCode      *string       `json:"jetty_code"`
 }

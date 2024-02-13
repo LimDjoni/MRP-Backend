@@ -14,16 +14,17 @@ import (
 type TransactionToJetty struct {
 	gorm.Model
 	IdNumber              string        `json:"id_number"`
-	TruckId               uint          `json:"truck_id"`
-	Truck                 truck.Truck   `json:"truck"`
+	Quantity              float64       `json:"quantity"`
+	TruckCode             string        `json:"truck_code"`
+	Truck                 truck.Truck   `json:"truck" gorm:"foreignKey:TruckCode;references:Code"`
 	IupopkId              uint          `json:"iupopk_id"`
 	Iupopk                iupopk.Iupopk `json:"iupopk"`
-	IspId                 *uint         `json:"isp_id"`
-	Isp                   *isp.Isp      `json:"isp"`
-	PitId                 *uint         `json:"pit_id"`
-	Pit                   *pit.Pit      `json:"pit"`
-	JettyId               uint          `json:"jetty_id"`
-	Jetty                 jetty.Jetty   `json:"jetty"`
+	IspCode               string        `json:"isp_code"`
+	Isp                   *isp.Isp      `json:"isp" gorm:"foreignKey:IspCode;references:Code"`
+	PitCode               *string       `json:"pit_code"`
+	Pit                   *pit.Pit      `json:"pit" gorm:"foreignKey:PitCode;references:Code"`
+	JettyCode             *string       `json:"jetty_code"`
+	Jetty                 *jetty.Jetty  `json:"jetty" gorm:"foreignKey:JettyCode;references:Code"`
 	Seam                  string        `json:"seam"`
 	Origin                string        `json:"origin"`
 	Gar                   float64       `json:"gar"`
@@ -36,4 +37,5 @@ type TransactionToJetty struct {
 	CreatedBy             user.User     `json:"created_by"`
 	UpdatedById           uint          `json:"updated_by_id"`
 	UpdatedBy             user.User     `json:"updated_by"`
+	IsFailedUpload        bool          `json:"is_failed_upload"`
 }
