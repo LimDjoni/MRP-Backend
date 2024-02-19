@@ -1,19 +1,17 @@
 package haulingsynchronize
 
 import (
-	"ajebackend/helper"
-
-	"bytes"
 	"encoding/base64"
-	"encoding/json"
-	"net/http"
+	"time"
 )
 
 type Service interface {
 	SynchronizeTransactionIsp(syncData SynchronizeInputTransactionIsp) (bool, error)
 	SynchronizeTransactionJetty(syncData SynchronizeInputTransactionJetty) (bool, error)
-	GetSynchronizeMasterData(iupopkId int) (SynchronizeInputMaster, error)
-	UpdateSynchronizeMaster(iupopkId int) (bool, error)
+	UpdateSyncMasterIsp(iupopkId uint, dateTime time.Time) (bool, error)
+	UpdateSyncMasterJetty(iupopkId uint, dateTime time.Time) (bool, error)
+	GetSyncMasterDataIsp(iupopkId uint) (MasterDataIsp, error)
+	GetSyncMasterDataJetty(iupopkId uint) (MasterDataJetty, error)
 }
 
 type service struct {
@@ -41,51 +39,26 @@ func (s *service) SynchronizeTransactionJetty(syncData SynchronizeInputTransacti
 	return isSync, isSyncErr
 }
 
-func (s *service) UpdateSynchronizeMaster(iupopkId int) (bool, error) {
-	upd, updErr := s.repository.UpdateSynchronizeMaster(iupopkId)
+func (s *service) UpdateSyncMasterIsp(iupopkId uint, dateTime time.Time) (bool, error) {
+	isUpdated, isUpdatedErr := s.repository.UpdateSyncMasterIsp(iupopkId, dateTime)
 
-	return upd, updErr
+	return isUpdated, isUpdatedErr
 }
 
-func (s *service) GetSynchronizeMasterData(iupopkId int) (SynchronizeInputMaster, error) {
-	syncData, syncDataErr := s.repository.GetSynchronizeMasterData(iupopkId)
+func (s *service) UpdateSyncMasterJetty(iupopkId uint, dateTime time.Time) (bool, error) {
+	isUpdated, isUpdatedErr := s.repository.UpdateSyncMasterJetty(iupopkId, dateTime)
 
-	return syncData, syncDataErr
+	return isUpdated, isUpdatedErr
 }
 
-func (s *service) SynchronizeToIsp(syncData SynchronizeInputMaster) (map[string]interface{}, error) {
+func (s *service) GetSyncMasterDataIsp(iupopkId uint) (MasterDataIsp, error) {
+	getSyncMaster, getSyncMasterErr := s.repository.GetSyncMasterDataIsp(iupopkId)
 
-	var res map[string]interface{}
-	baseURL := helper.GetEnvWithKey("ISP_URL")
+	return getSyncMaster, getSyncMasterErr
+}
 
-	userBasic := helper.GetEnvWithKey("USERNAME_BASIC")
-	passBasic := helper.GetEnvWithKey("PASSWORD_BASIC")
+func (s *service) GetSyncMasterDataJetty(iupopkId uint) (MasterDataJetty, error) {
+	getSyncMaster, getSyncMasterErr := s.repository.GetSyncMasterDataJetty(iupopkId)
 
-	urlPost := baseURL
-
-	body, bodyErr := json.Marshal(syncData)
-
-	if bodyErr != nil {
-		return res, bodyErr
-	}
-	var payload = bytes.NewBufferString(string(body))
-
-	req, doReqErr := http.NewRequest("POST", urlPost, payload)
-
-	if req != nil {
-		req.Header.Add("Content-Type", "application/json")
-		req.Header.Add("Accept", "application/json")
-		req.Header.Add("Authorization", "Basic "+basicAuth(userBasic, passBasic))
-	}
-
-	client := &http.Client{}
-	resp, doReqErr := client.Do(req)
-
-	if doReqErr != nil {
-		return res, doReqErr
-	}
-
-	json.NewDecoder(resp.Body).Decode(&res)
-
-	return res, doReqErr
+	return getSyncMaster, getSyncMasterErr
 }

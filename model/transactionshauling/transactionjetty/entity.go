@@ -14,17 +14,17 @@ import (
 type TransactionJetty struct {
 	gorm.Model
 	IdNumber              string        `json:"id_number"`
-	Truck                 truck.Truck   `json:"truck" `
-	TruckId               uint          `json:"truck_id"`
+	TruckCode             string        `json:"truck_code"`
+	Truck                 truck.Truck   `json:"truck" gorm:"foreignKey:TruckCode;references:Code"`
 	NettQuantity          float64       `json:"nett_quantity"`
 	IupopkId              uint          `json:"iupopk_id"`
 	Iupopk                iupopk.Iupopk `json:"iupopk"`
-	IspCode               *string       `json:"isp_code"`
-	Isp                   *isp.Isp      `json:"isp" gorm:"foreignKey:IspCode;references:Code"`
-	PitCode               *string       `json:"pit_code"`
-	Pit                   *pit.Pit      `json:"pit" gorm:"foreignKey:PitCode;references:Code"`
-	JettyCode             string        `json:"jetty_code"`
-	Jetty                 jetty.Jetty   `json:"jetty" gorm:"foreignKey:JettyCode;references:Code"`
+	IspId                 *uint         `json:"isp_id"`
+	Isp                   *isp.Isp      `json:"isp"`
+	PitId                 *uint         `json:"pit_id"`
+	Pit                   *pit.Pit      `json:"pit"`
+	JettyId               *uint         `json:"jetty_id"`
+	Jetty                 jetty.Jetty   `json:"jetty"`
 	Seam                  string        `json:"seam"`
 	Gar                   float64       `json:"gar"`
 	ClockInDate           string        `json:"clock_in_date" gorm:"DATETIME"`

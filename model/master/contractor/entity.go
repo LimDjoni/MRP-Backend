@@ -10,7 +10,6 @@ import (
 type Contractor struct {
 	gorm.Model
 	Name        string        `json:"name"`
-	Code        string        `json:"code" gorm:"UNIQUE;primaryKey"`
 	Address     string        `json:"address"`
 	PhoneNumber string        `json:"phone_number"`
 	Email       string        `json:"email" gorm:"UNIQUE"`

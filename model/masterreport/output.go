@@ -306,8 +306,8 @@ type TransactionReport struct {
 	Seller                      *iupopk.Iupopk           `json:"seller"`
 	CustomerId                  *uint                    `json:"customer_id"`
 	Customer                    *company.Company         `json:"customer"`
-	LoadingPortId               *uint                    `json:"loading_port_id"`
-	LoadingPort                 *jetty.Jetty             `json:"loading_port"`
+	LoadingPortCode             *string                  `json:"loading_port_code"`
+	LoadingPort                 *jetty.Jetty             `json:"loading_port" gorm:"foreignKey:JettyCode;references:Code"`
 	UnloadingPortId             *uint                    `json:"unloading_port_id"`
 	UnloadingPort               *ports.Port              `json:"unloading_port"`
 	DmoDestinationPortId        *uint                    `json:"dmo_destination_port_id"`

@@ -10,7 +10,6 @@ import (
 type Isp struct {
 	gorm.Model
 	Name              string        `json:"name" gorm:"UNIQUE"`
-	Code              string        `json:"code" gorm:"UNIQUE;primaryKey"`
 	Latitude          string        `json:"latitude"`
 	Longitude         string        `json:"longitude"`
 	Quantity          float64       `json:"quantity"`
