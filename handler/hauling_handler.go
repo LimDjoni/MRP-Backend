@@ -70,6 +70,7 @@ func (h *haulingHandler) SyncHaulingDataIsp(c *fiber.Ctx) error {
 
 	iupopkId := &haulingDataInput.IupopkId
 
+	syncTime := &haulingDataInput.SynchronizeTime
 	getData, getDataErr := h.haulingSynchronizeService.GetSyncMasterDataIsp(*iupopkId)
 
 	if getDataErr != nil {
@@ -92,7 +93,7 @@ func (h *haulingHandler) SyncHaulingDataIsp(c *fiber.Ctx) error {
 		})
 	}
 
-	_, updDataErr := h.haulingSynchronizeService.UpdateSyncMasterIsp(*iupopkId, *haulingDataInput.SynchronizeTime)
+	_, updDataErr := h.haulingSynchronizeService.UpdateSyncMasterIsp(*iupopkId, *syncTime)
 
 	if updDataErr != nil {
 		inputJson, _ := json.Marshal(haulingDataInput)
@@ -153,6 +154,7 @@ func (h *haulingHandler) SyncHaulingDataJetty(c *fiber.Ctx) error {
 
 	iupopkId := &haulingDataInput.IupopkId
 
+	syncTime := &haulingDataInput.SynchronizeTime
 	getData, getDataErr := h.haulingSynchronizeService.GetSyncMasterDataJetty(*iupopkId)
 
 	if getDataErr != nil {
@@ -175,7 +177,7 @@ func (h *haulingHandler) SyncHaulingDataJetty(c *fiber.Ctx) error {
 		})
 	}
 
-	_, updDataErr := h.haulingSynchronizeService.UpdateSyncMasterJetty(*iupopkId, *haulingDataInput.SynchronizeTime)
+	_, updDataErr := h.haulingSynchronizeService.UpdateSyncMasterJetty(*iupopkId, *syncTime)
 
 	if updDataErr != nil {
 		inputJson, _ := json.Marshal(haulingDataInput)
