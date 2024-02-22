@@ -99,7 +99,8 @@ func (h *haulingHandler) SyncHaulingDataIsp(c *fiber.Ctx) error {
 		inputJson, _ := json.Marshal(haulingDataInput)
 
 		messageJson, _ := json.Marshal(map[string]interface{}{
-			"error": updDataErr.Error(),
+			"error":     updDataErr.Error(),
+			"sync_time": syncTime,
 		})
 
 		createdErrLog := logs.Logs{
@@ -183,7 +184,8 @@ func (h *haulingHandler) SyncHaulingDataJetty(c *fiber.Ctx) error {
 		inputJson, _ := json.Marshal(haulingDataInput)
 
 		messageJson, _ := json.Marshal(map[string]interface{}{
-			"error": updDataErr.Error(),
+			"error":     updDataErr.Error(),
+			"sync_time": syncTime,
 		})
 
 		createdErrLog := logs.Logs{
