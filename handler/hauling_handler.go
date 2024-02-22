@@ -71,6 +71,10 @@ func (h *haulingHandler) SyncHaulingDataIsp(c *fiber.Ctx) error {
 
 	dateTime := time.Now()
 
+	layoutFormat := "2006-01-02 15:04:05"
+
+	dateNow, _ := time.Parse(layoutFormat, dateTime.String())
+
 	iupopkId := &haulingDataInput.IupopkId
 
 	getData, getDataErr := h.haulingSynchronizeService.GetSyncMasterDataIsp(*iupopkId)
@@ -95,7 +99,7 @@ func (h *haulingHandler) SyncHaulingDataIsp(c *fiber.Ctx) error {
 		})
 	}
 
-	_, updDataErr := h.haulingSynchronizeService.UpdateSyncMasterIsp(*iupopkId, dateTime)
+	_, updDataErr := h.haulingSynchronizeService.UpdateSyncMasterIsp(*iupopkId, dateNow)
 
 	if updDataErr != nil {
 		inputJson, _ := json.Marshal(haulingDataInput)
@@ -156,6 +160,10 @@ func (h *haulingHandler) SyncHaulingDataJetty(c *fiber.Ctx) error {
 
 	dateTime := time.Now()
 
+	layoutFormat := "2006-01-02 15:04:05"
+
+	dateNow, _ := time.Parse(layoutFormat, dateTime.String())
+
 	iupopkId := &haulingDataInput.IupopkId
 
 	getData, getDataErr := h.haulingSynchronizeService.GetSyncMasterDataJetty(*iupopkId)
@@ -180,7 +188,7 @@ func (h *haulingHandler) SyncHaulingDataJetty(c *fiber.Ctx) error {
 		})
 	}
 
-	_, updDataErr := h.haulingSynchronizeService.UpdateSyncMasterJetty(*iupopkId, dateTime)
+	_, updDataErr := h.haulingSynchronizeService.UpdateSyncMasterJetty(*iupopkId, dateNow)
 
 	if updDataErr != nil {
 		inputJson, _ := json.Marshal(haulingDataInput)
