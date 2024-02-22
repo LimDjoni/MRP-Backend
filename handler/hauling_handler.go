@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"reflect"
 	"strconv"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
@@ -69,8 +68,6 @@ func (h *haulingHandler) SyncHaulingDataIsp(c *fiber.Ctx) error {
 		})
 	}
 
-	dateTime := time.Now().Format("2006-01-02 15:04:05")
-
 	iupopkId := &haulingDataInput.IupopkId
 
 	getData, getDataErr := h.haulingSynchronizeService.GetSyncMasterDataIsp(*iupopkId)
@@ -95,7 +92,7 @@ func (h *haulingHandler) SyncHaulingDataIsp(c *fiber.Ctx) error {
 		})
 	}
 
-	_, updDataErr := h.haulingSynchronizeService.UpdateSyncMasterIsp(*iupopkId, dateTime)
+	_, updDataErr := h.haulingSynchronizeService.UpdateSyncMasterIsp(*iupopkId, *haulingDataInput.SynchronizeTime)
 
 	if updDataErr != nil {
 		inputJson, _ := json.Marshal(haulingDataInput)
@@ -154,8 +151,6 @@ func (h *haulingHandler) SyncHaulingDataJetty(c *fiber.Ctx) error {
 		})
 	}
 
-	dateTime := time.Now().Format("2006-01-02 15:04:05")
-
 	iupopkId := &haulingDataInput.IupopkId
 
 	getData, getDataErr := h.haulingSynchronizeService.GetSyncMasterDataJetty(*iupopkId)
@@ -180,7 +175,7 @@ func (h *haulingHandler) SyncHaulingDataJetty(c *fiber.Ctx) error {
 		})
 	}
 
-	_, updDataErr := h.haulingSynchronizeService.UpdateSyncMasterJetty(*iupopkId, dateTime)
+	_, updDataErr := h.haulingSynchronizeService.UpdateSyncMasterJetty(*iupopkId, *haulingDataInput.SynchronizeTime)
 
 	if updDataErr != nil {
 		inputJson, _ := json.Marshal(haulingDataInput)
