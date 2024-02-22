@@ -9,7 +9,6 @@ import (
 	"ajebackend/model/transactionshauling/transactiontojetty"
 	"fmt"
 	"strings"
-	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -18,8 +17,8 @@ import (
 type Repository interface {
 	SynchronizeTransactionIsp(syncData SynchronizeInputTransactionIsp) (bool, error)
 	SynchronizeTransactionJetty(syncData SynchronizeInputTransactionJetty) (bool, error)
-	UpdateSyncMasterIsp(iupopkId uint, dateTime time.Time) (bool, error)
-	UpdateSyncMasterJetty(iupopkId uint, dateTime time.Time) (bool, error)
+	UpdateSyncMasterIsp(iupopkId uint, dateTime string) (bool, error)
+	UpdateSyncMasterJetty(iupopkId uint, dateTime string) (bool, error)
 	GetSyncMasterDataIsp(iupopkId uint) (MasterDataIsp, error)
 	GetSyncMasterDataJetty(iupopkId uint) (MasterDataJetty, error)
 }
@@ -280,7 +279,7 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 	return true, nil
 }
 
-func (r *repository) UpdateSyncMasterIsp(iupopkId uint, dateTime time.Time) (bool, error) {
+func (r *repository) UpdateSyncMasterIsp(iupopkId uint, dateTime string) (bool, error) {
 	var haulingSync HaulingSynchronize
 
 	errFirst := r.db.Where("iupopk_id = ?", iupopkId).First(&haulingSync).Error
@@ -299,7 +298,7 @@ func (r *repository) UpdateSyncMasterIsp(iupopkId uint, dateTime time.Time) (boo
 	return true, nil
 }
 
-func (r *repository) UpdateSyncMasterJetty(iupopkId uint, dateTime time.Time) (bool, error) {
+func (r *repository) UpdateSyncMasterJetty(iupopkId uint, dateTime string) (bool, error) {
 	var haulingSync HaulingSynchronize
 
 	errFirst := r.db.Where("iupopk_id = ?", iupopkId).First(&haulingSync).Error

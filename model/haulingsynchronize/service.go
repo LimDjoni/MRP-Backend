@@ -2,14 +2,13 @@ package haulingsynchronize
 
 import (
 	"encoding/base64"
-	"time"
 )
 
 type Service interface {
 	SynchronizeTransactionIsp(syncData SynchronizeInputTransactionIsp) (bool, error)
 	SynchronizeTransactionJetty(syncData SynchronizeInputTransactionJetty) (bool, error)
-	UpdateSyncMasterIsp(iupopkId uint, dateTime time.Time) (bool, error)
-	UpdateSyncMasterJetty(iupopkId uint, dateTime time.Time) (bool, error)
+	UpdateSyncMasterIsp(iupopkId uint, dateTime string) (bool, error)
+	UpdateSyncMasterJetty(iupopkId uint, dateTime string) (bool, error)
 	GetSyncMasterDataIsp(iupopkId uint) (MasterDataIsp, error)
 	GetSyncMasterDataJetty(iupopkId uint) (MasterDataJetty, error)
 }
@@ -39,13 +38,13 @@ func (s *service) SynchronizeTransactionJetty(syncData SynchronizeInputTransacti
 	return isSync, isSyncErr
 }
 
-func (s *service) UpdateSyncMasterIsp(iupopkId uint, dateTime time.Time) (bool, error) {
+func (s *service) UpdateSyncMasterIsp(iupopkId uint, dateTime string) (bool, error) {
 	isUpdated, isUpdatedErr := s.repository.UpdateSyncMasterIsp(iupopkId, dateTime)
 
 	return isUpdated, isUpdatedErr
 }
 
-func (s *service) UpdateSyncMasterJetty(iupopkId uint, dateTime time.Time) (bool, error) {
+func (s *service) UpdateSyncMasterJetty(iupopkId uint, dateTime string) (bool, error) {
 	isUpdated, isUpdatedErr := s.repository.UpdateSyncMasterJetty(iupopkId, dateTime)
 
 	return isUpdated, isUpdatedErr
