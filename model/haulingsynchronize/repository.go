@@ -378,13 +378,13 @@ func (r *repository) GetSyncMasterDataIsp(iupopkId uint) (MasterDataIsp, error) 
 			return masterDataIsp, errFindUser
 		}
 
-		errFindUserIupopk := r.db.Table("user_iupopks").Joins("left join users u on u.id = user_iupopks.user_id").Where("updated_at >= ? AND u.is_ho = false", haulingSync.LastSynchronizeMasterToIsp).Find(&masterDataIsp.UserIupopk).Error
+		errFindUserIupopk := r.db.Table("user_iupopks").Joins("left join users u on u.id = user_iupopks.user_id").Where("user_iupopks.updated_at >= ? AND u.is_ho = false", haulingSync.LastSynchronizeMasterToIsp).Find(&masterDataIsp.UserIupopk).Error
 
 		if errFindUserIupopk != nil {
 			return masterDataIsp, errFindUserIupopk
 		}
 
-		errFindUserRole := r.db.Table("user_roles").Joins("left join users u on u.id = user_roles.user_id").Where("updated_at >= ? AND u.is_ho = false", haulingSync.LastSynchronizeMasterToIsp).Find(&masterDataIsp.UserRole).Error
+		errFindUserRole := r.db.Table("user_roles").Joins("left join users u on u.id = user_roles.user_id").Where("user_roles.updated_at >= ? AND u.is_ho = false", haulingSync.LastSynchronizeMasterToIsp).Find(&masterDataIsp.UserRole).Error
 
 		if errFindUserRole != nil {
 			return masterDataIsp, errFindUserRole
@@ -508,13 +508,13 @@ func (r *repository) GetSyncMasterDataJetty(iupopkId uint) (MasterDataJetty, err
 			return masterDataJetty, errFindUser
 		}
 
-		errFindUserIupopk := r.db.Table("user_iupopks").Joins("left join users u on u.id = user_iupopks.user_id").Where("updated_at >= ? AND u.is_ho = false", haulingSync.LastSynchronizeMasterToJetty).Find(&masterDataJetty.UserIupopk).Error
+		errFindUserIupopk := r.db.Table("user_iupopks").Joins("left join users u on u.id = user_iupopks.user_id").Where("user_iupopks.updated_at >= ? AND u.is_ho = false", haulingSync.LastSynchronizeMasterToJetty).Find(&masterDataJetty.UserIupopk).Error
 
 		if errFindUserIupopk != nil {
 			return masterDataJetty, errFindUserIupopk
 		}
 
-		errFindUserRole := r.db.Table("user_roles").Joins("left join users u on u.id = user_roles.user_id").Where("updated_at >= ? AND u.is_ho = false", haulingSync.LastSynchronizeMasterToJetty).Find(&masterDataJetty.UserRole).Error
+		errFindUserRole := r.db.Table("user_roles").Joins("left join users u on u.id = user_roles.user_id").Where("user_roles.updated_at >= ? AND u.is_ho = false", haulingSync.LastSynchronizeMasterToJetty).Find(&masterDataJetty.UserRole).Error
 
 		if errFindUserRole != nil {
 			return masterDataJetty, errFindUserRole
