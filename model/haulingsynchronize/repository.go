@@ -290,7 +290,7 @@ func (r *repository) UpdateSyncMasterIsp(iupopkId uint, dateTime time.Time) (boo
 	}
 
 	// Update latest time synchronize master to ISP
-	errUpdate := r.db.Update("last_synchronize_master_to_isp", dateTime).Error
+	errUpdate := r.db.Model(&haulingSync).Update("last_synchronize_master_to_isp", dateTime).Error
 
 	if errUpdate != nil {
 		return false, errUpdate
@@ -310,7 +310,7 @@ func (r *repository) UpdateSyncMasterJetty(iupopkId uint, dateTime time.Time) (b
 
 	// Update latest time synchronize master to Jetty
 
-	errUpdate := r.db.Update("last_synchronize_master_to_jetty", dateTime).Error
+	errUpdate := r.db.Model(&haulingSync).Update("last_synchronize_master_to_jetty", dateTime).Error
 
 	if errUpdate != nil {
 		return false, errUpdate
