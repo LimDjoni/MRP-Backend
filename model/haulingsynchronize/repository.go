@@ -1,10 +1,6 @@
 package haulingsynchronize
 
 import (
-	"ajebackend/model/master/contractor"
-	"ajebackend/model/master/isp"
-	"ajebackend/model/master/jetty"
-	"ajebackend/model/master/pit"
 	"ajebackend/model/master/truck"
 	"ajebackend/model/production"
 	"ajebackend/model/transactionshauling/transactionispjetty"
@@ -13,6 +9,7 @@ import (
 	"ajebackend/model/transactionshauling/transactiontojetty"
 	"fmt"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -21,6 +18,10 @@ import (
 type Repository interface {
 	SynchronizeTransactionIsp(syncData SynchronizeInputTransactionIsp) (bool, error)
 	SynchronizeTransactionJetty(syncData SynchronizeInputTransactionJetty) (bool, error)
+	UpdateSyncMasterIsp(iupopkId uint, dateTime time.Time) (bool, error)
+	UpdateSyncMasterJetty(iupopkId uint, dateTime time.Time) (bool, error)
+	GetSyncMasterDataIsp(iupopkId uint) (MasterDataIsp, error)
+	GetSyncMasterDataJetty(iupopkId uint) (MasterDataJetty, error)
 }
 
 type repository struct {
@@ -40,6 +41,7 @@ func (r *repository) SynchronizeTransactionIsp(syncData SynchronizeInputTransact
 
 	tx := r.db.Begin()
 
+	// Create Transaction Transaction To Isp (Stock Rom)
 	if len(transactionToIsp) > 0 {
 		errCreateToIsp := tx.Create(&transactionToIsp).Error
 
@@ -49,6 +51,7 @@ func (r *repository) SynchronizeTransactionIsp(syncData SynchronizeInputTransact
 		}
 	}
 
+	// Create Transaction To Jetty
 	if len(transactionToJetty) > 0 {
 		errCreateToJetty := tx.Create(&transactionToJetty).Error
 
@@ -56,11 +59,11 @@ func (r *repository) SynchronizeTransactionIsp(syncData SynchronizeInputTransact
 			tx.Rollback()
 			return false, errCreateToJetty
 		}
-
 	}
 
 	var transactionIspJetties []transactionispjetty.TransactionIspJetty
 
+	// Create Data Transaction Isp Jetties
 	if len(transactionToJetty) > 0 {
 		for _, v := range transactionToJetty {
 			splitId := strings.Split(v.IdNumber, "PHU-")
@@ -74,6 +77,7 @@ func (r *repository) SynchronizeTransactionIsp(syncData SynchronizeInputTransact
 		}
 	}
 
+	// Create Transaction Isp Jetties Database
 	if len(transactionIspJetties) > 0 {
 		errCreateIspJetty := tx.Create(&transactionIspJetties).Error
 
@@ -110,6 +114,39 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 
 	tx := r.db.Begin()
 
+	// Create / Update Truck Database
+	if len(syncData.Truck) > 0 {
+		for _, v := range syncData.Truck {
+			var tempTruck truck.Truck
+
+			errFind := tx.Where("code = ?", v.Code).First(&tempTruck).Error
+
+			if errFind == nil {
+				tempTruck = v
+				if v.Rfid == nil || *v.Rfid == "" {
+					tempTruck.Rfid = nil
+				}
+				errUpd := tx.Save(&tempTruck).Error
+
+				if errUpd != nil {
+					tx.Rollback()
+					return false, errUpd
+				}
+			} else {
+				if v.Rfid == nil || *v.Rfid == "" {
+					v.Rfid = nil
+				}
+				errCreate := tx.Create(&v).Error
+
+				if errCreate != nil {
+					tx.Rollback()
+					return false, errCreate
+				}
+			}
+		}
+	}
+
+	// Create Transaction Jetty
 	if len(transactionJetty) > 0 {
 		errCreateJetty := tx.Create(&transactionJetty).Error
 
@@ -127,9 +164,8 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 				if errFind != nil {
 					prod.Quantity = v.NettQuantity
 					prod.RitaseQuantity = 1
-					prod.IspId = v.IspId
 					prod.PitId = v.PitId
-					prod.JettyId = &v.JettyId
+					prod.JettyId = v.JettyId
 					prod.IupopkId = syncData.IupopkId
 					prod.ProductionDate = strings.Split(v.ClockInDate, "T")[0]
 
@@ -154,8 +190,7 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 					prod.Quantity = v.NettQuantity
 					prod.RitaseQuantity = 1
 					prod.IspId = v.IspId
-					prod.PitId = v.PitId
-					prod.JettyId = &v.JettyId
+					prod.JettyId = v.JettyId
 					prod.IupopkId = syncData.IupopkId
 					prod.ProductionDate = strings.Split(v.ClockInDate, "T")[0]
 
@@ -186,6 +221,8 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 		return false, errFindIspJetty
 	}
 
+	// Connect Transaction to Jetty & Transaction Jetty in Transaction Isp Jetty
+
 	if len(transactionIspJetty) > 0 {
 		for _, v := range transactionIspJetty {
 			var tempTransactionJetty transactionjetty.TransactionJetty
@@ -199,14 +236,14 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 			if v.TransactionToJetty.PitId != nil {
 				rawQuery = fmt.Sprintf(`select tj.* from transaction_jetties tj
 	LEFT JOIN transaction_isp_jetties tij on tij.transaction_jetty_id = tj.id
-	where truck_id = %v and isp_id IS NULL and pit_id = %v and tj.iupopk_id = %v and tij.id IS NULL and tj.jetty_id = %v and tj.seam = '%v' and tj.gar = %v ORDER BY tj.created_at asc`, v.TransactionToJetty.TruckId,
+	where truck_code = %v and isp_id IS NULL and pit_id = '%v' and tj.iupopk_id = %v and tij.id IS NULL and tj.jetty_id = '%v' and tj.seam = '%v' and tj.gar = %v ORDER BY tj.created_at asc`, v.TransactionToJetty.TruckCode,
 					*v.TransactionToJetty.PitId, syncData.IupopkId, v.TransactionToJetty.JettyId, v.TransactionToJetty.Seam, v.TransactionToJetty.Gar)
 			}
 
 			if v.TransactionToJetty.IspId != nil {
 				rawQuery = fmt.Sprintf(`select tj.* from transaction_jetties tj
 	LEFT JOIN transaction_isp_jetties tij on tij.transaction_jetty_id = tj.id
-	where truck_id = %v and isp_id = %v and pit_id IS NULL and tj.iupopk_id = %v and tij.id IS NULL and tj.jetty_id = %v ORDER BY tj.created_at asc`, v.TransactionToJetty.TruckId,
+	where truck_code = %v and isp_id = '%v' and pit_id IS NULL and tj.iupopk_id = %v and tij.id IS NULL and tj.jetty_id = '%v' ORDER BY tj.created_at asc`, v.TransactionToJetty.TruckCode,
 					*v.TransactionToJetty.IspId, syncData.IupopkId, v.TransactionToJetty.JettyId)
 			}
 
@@ -218,141 +255,6 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 				if errUpdIspJetty != nil {
 					tx.Rollback()
 					return false, errUpdIspJetty
-				}
-			}
-		}
-	}
-
-	if len(syncData.Truck) > 0 {
-		for _, v := range syncData.Truck {
-			var tempTruck truck.Truck
-
-			errFind := tx.Where("id = ?", v.ID).First(&tempTruck).Error
-
-			if errFind == nil {
-				tempTruck = v
-				if v.Rfid == nil || *v.Rfid == "" {
-					tempTruck.Rfid = nil
-				}
-				errUpd := tx.Save(&tempTruck).Error
-
-				if errUpd != nil {
-					tx.Rollback()
-					return false, errUpd
-				}
-			} else {
-				if v.Rfid == nil || *v.Rfid == "" {
-					v.Rfid = nil
-				}
-				errCreate := tx.Create(&v).Error
-
-				if errCreate != nil {
-					tx.Rollback()
-					return false, errCreate
-				}
-			}
-		}
-	}
-
-	if len(syncData.Contractor) > 0 {
-		for _, v := range syncData.Contractor {
-			var tempContractor contractor.Contractor
-
-			errFind := tx.Where("id = ?", v.ID).First(&tempContractor).Error
-
-			if errFind == nil {
-				tempContractor = v
-
-				errUpd := tx.Save(&tempContractor).Error
-
-				if errUpd != nil {
-					tx.Rollback()
-					return false, errUpd
-				}
-			} else {
-				errCreate := tx.Create(&v).Error
-
-				if errCreate != nil {
-					tx.Rollback()
-					return false, errCreate
-				}
-			}
-		}
-	}
-
-	if len(syncData.Pit) > 0 {
-		for _, v := range syncData.Pit {
-			var tempPit pit.Pit
-
-			errFind := tx.Where("id = ?", v.ID).First(&tempPit).Error
-
-			if errFind == nil {
-				tempPit = v
-
-				errUpd := tx.Save(&tempPit).Error
-
-				if errUpd != nil {
-					tx.Rollback()
-					return false, errUpd
-				}
-			} else {
-				errCreate := tx.Create(&v).Error
-
-				if errCreate != nil {
-					tx.Rollback()
-					return false, errCreate
-				}
-			}
-		}
-	}
-
-	if len(syncData.Isp) > 0 {
-		for _, v := range syncData.Isp {
-			var tempIsp isp.Isp
-
-			errFind := tx.Where("id = ?", v.ID).First(&tempIsp).Error
-
-			if errFind == nil {
-				tempIsp = v
-
-				errUpd := tx.Save(&tempIsp).Error
-
-				if errUpd != nil {
-					tx.Rollback()
-					return false, errUpd
-				}
-			} else {
-				errCreate := tx.Create(&v).Error
-
-				if errCreate != nil {
-					tx.Rollback()
-					return false, errCreate
-				}
-			}
-		}
-	}
-
-	if len(syncData.Jetty) > 0 {
-		for _, v := range syncData.Jetty {
-			var tempJetty jetty.Jetty
-
-			errFind := tx.Where("id = ?", v.ID).First(&tempJetty).Error
-
-			if errFind == nil {
-				tempJetty = v
-
-				errUpd := tx.Save(&tempJetty).Error
-
-				if errUpd != nil {
-					tx.Rollback()
-					return false, errUpd
-				}
-			} else {
-				errCreate := tx.Create(&v).Error
-
-				if errCreate != nil {
-					tx.Rollback()
-					return false, errCreate
 				}
 			}
 		}
@@ -376,4 +278,303 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 
 	tx.Commit()
 	return true, nil
+}
+
+func (r *repository) UpdateSyncMasterIsp(iupopkId uint, dateTime time.Time) (bool, error) {
+	var haulingSync HaulingSynchronize
+
+	errFirst := r.db.Where("iupopk_id = ?", iupopkId).First(&haulingSync).Error
+
+	if errFirst != nil {
+		return false, errFirst
+	}
+
+	// Update latest time synchronize master to ISP
+	errUpdate := r.db.Update("last_synchronize_master_to_isp", dateTime).Error
+
+	if errUpdate != nil {
+		return false, errUpdate
+	}
+
+	return true, nil
+}
+
+func (r *repository) UpdateSyncMasterJetty(iupopkId uint, dateTime time.Time) (bool, error) {
+	var haulingSync HaulingSynchronize
+
+	errFirst := r.db.Where("iupopk_id = ?", iupopkId).First(&haulingSync).Error
+
+	if errFirst != nil {
+		return false, errFirst
+	}
+
+	// Update latest time synchronize master to Jetty
+
+	errUpdate := r.db.Update("last_synchronize_master_to_jetty", dateTime).Error
+
+	if errUpdate != nil {
+		return false, errUpdate
+	}
+
+	return true, nil
+}
+
+func (r *repository) GetSyncMasterDataIsp(iupopkId uint) (MasterDataIsp, error) {
+	var masterDataIsp MasterDataIsp
+
+	var haulingSync HaulingSynchronize
+
+	errFirst := r.db.Where("iupopk_id = ?", iupopkId).First(&haulingSync).Error
+
+	if errFirst != nil {
+		return masterDataIsp, errFirst
+	}
+
+	if haulingSync.LastSynchronizeMasterToIsp != nil {
+		errFindContractor := r.db.Table("contractors").Where("updated_at >= ?", haulingSync.LastSynchronizeMasterToIsp).Find(&masterDataIsp.Contractor).Error
+
+		if errFindContractor != nil {
+			return masterDataIsp, errFindContractor
+		}
+
+		errFindIsp := r.db.Table("isps").Where("updated_at >= ?", haulingSync.LastSynchronizeMasterToIsp).Find(&masterDataIsp.Isp).Error
+
+		if errFindIsp != nil {
+			return masterDataIsp, errFindIsp
+		}
+
+		errFindIupopk := r.db.Where("updated_at >= ?", haulingSync.LastSynchronizeMasterToIsp).Find(&masterDataIsp.Iupopk).Error
+
+		if errFindIupopk != nil {
+			return masterDataIsp, errFindIupopk
+		}
+
+		errFindJetty := r.db.Table("jetties").Where("updated_at >= ?", haulingSync.LastSynchronizeMasterToIsp).Find(&masterDataIsp.Jetty).Error
+
+		if errFindJetty != nil {
+			return masterDataIsp, errFindJetty
+		}
+
+		errFindPit := r.db.Table("pits").Where("updated_at >= ?", haulingSync.LastSynchronizeMasterToIsp).Find(&masterDataIsp.Pit).Error
+
+		if errFindPit != nil {
+			return masterDataIsp, errFindPit
+		}
+
+		errFindTruck := r.db.Table("trucks").Where("updated_at >= ?", haulingSync.LastSynchronizeMasterToIsp).Find(&masterDataIsp.Truck).Error
+
+		if errFindTruck != nil {
+			return masterDataIsp, errFindTruck
+		}
+
+		errFindRole := r.db.Where("updated_at >= ?", haulingSync.LastSynchronizeMasterToIsp).Find(&masterDataIsp.Role).Error
+
+		if errFindRole != nil {
+			return masterDataIsp, errFindRole
+		}
+
+		errFindUser := r.db.Where("updated_at >= ? AND is_ho = false", haulingSync.LastSynchronizeMasterToIsp).Find(&masterDataIsp.User).Error
+
+		if errFindUser != nil {
+			return masterDataIsp, errFindUser
+		}
+
+		errFindUserIupopk := r.db.Table("user_iupopks").Joins("left join users u on u.id = user_iupopks.user_id").Where("updated_at >= ? AND u.is_ho = false", haulingSync.LastSynchronizeMasterToIsp).Find(&masterDataIsp.UserIupopk).Error
+
+		if errFindUserIupopk != nil {
+			return masterDataIsp, errFindUserIupopk
+		}
+
+		errFindUserRole := r.db.Table("user_roles").Joins("left join users u on u.id = user_roles.user_id").Where("updated_at >= ? AND u.is_ho = false", haulingSync.LastSynchronizeMasterToIsp).Find(&masterDataIsp.UserRole).Error
+
+		if errFindUserRole != nil {
+			return masterDataIsp, errFindUserRole
+		}
+	} else {
+		errFindContractor := r.db.Table("contractors").Find(&masterDataIsp.Contractor).Error
+
+		if errFindContractor != nil {
+			return masterDataIsp, errFindContractor
+		}
+
+		errFindIsp := r.db.Table("isps").Find(&masterDataIsp.Isp).Error
+
+		if errFindIsp != nil {
+			return masterDataIsp, errFindIsp
+		}
+
+		errFindIupopk := r.db.Find(&masterDataIsp.Iupopk).Error
+
+		if errFindIupopk != nil {
+			return masterDataIsp, errFindIupopk
+		}
+
+		errFindJetty := r.db.Table("jetties").Find(&masterDataIsp.Jetty).Error
+
+		if errFindJetty != nil {
+			return masterDataIsp, errFindJetty
+		}
+
+		errFindPit := r.db.Table("pits").Find(&masterDataIsp.Pit).Error
+
+		if errFindPit != nil {
+			return masterDataIsp, errFindPit
+		}
+
+		errFindTruck := r.db.Table("trucks").Find(&masterDataIsp.Truck).Error
+
+		if errFindTruck != nil {
+			return masterDataIsp, errFindTruck
+		}
+
+		errFindRole := r.db.Find(&masterDataIsp.Role).Error
+
+		if errFindRole != nil {
+			return masterDataIsp, errFindRole
+		}
+
+		errFindUser := r.db.Where("is_ho = false").Find(&masterDataIsp.User).Error
+
+		if errFindUser != nil {
+			return masterDataIsp, errFindUser
+		}
+
+		errFindUserIupopk := r.db.Table("user_iupopks").Joins("left join users u on u.id = user_iupopks.user_id").Where("u.is_ho = false").Find(&masterDataIsp.UserIupopk).Error
+
+		if errFindUserIupopk != nil {
+			return masterDataIsp, errFindUserIupopk
+		}
+
+		errFindUserRole := r.db.Table("user_roles").Joins("left join users u on u.id = user_roles.user_id").Where("u.is_ho = false").Find(&masterDataIsp.UserRole).Error
+
+		if errFindUserRole != nil {
+			return masterDataIsp, errFindUserRole
+		}
+	}
+
+	return masterDataIsp, nil
+}
+
+func (r *repository) GetSyncMasterDataJetty(iupopkId uint) (MasterDataJetty, error) {
+	var masterDataJetty MasterDataJetty
+
+	var haulingSync HaulingSynchronize
+
+	errFirst := r.db.Where("iupopk_id = ?", iupopkId).First(&haulingSync).Error
+
+	if errFirst != nil {
+		return masterDataJetty, errFirst
+	}
+
+	if haulingSync.LastSynchronizeMasterToJetty != nil {
+		errFindContractor := r.db.Table("contractors").Where("updated_at >= ?", haulingSync.LastSynchronizeMasterToJetty).Find(&masterDataJetty.Contractor).Error
+
+		if errFindContractor != nil {
+			return masterDataJetty, errFindContractor
+		}
+
+		errFindIsp := r.db.Table("isps").Where("updated_at >= ?", haulingSync.LastSynchronizeMasterToJetty).Find(&masterDataJetty.Isp).Error
+
+		if errFindIsp != nil {
+			return masterDataJetty, errFindIsp
+		}
+
+		errFindIupopk := r.db.Where("updated_at >= ?", haulingSync.LastSynchronizeMasterToJetty).Find(&masterDataJetty.Iupopk).Error
+
+		if errFindIupopk != nil {
+			return masterDataJetty, errFindIupopk
+		}
+
+		errFindJetty := r.db.Table("jetties").Where("updated_at >= ?", haulingSync.LastSynchronizeMasterToJetty).Find(&masterDataJetty.Jetty).Error
+
+		if errFindJetty != nil {
+			return masterDataJetty, errFindJetty
+		}
+
+		errFindPit := r.db.Table("pits").Where("updated_at >= ?", haulingSync.LastSynchronizeMasterToJetty).Find(&masterDataJetty.Pit).Error
+
+		if errFindPit != nil {
+			return masterDataJetty, errFindPit
+		}
+
+		errFindRole := r.db.Where("updated_at >= ?", haulingSync.LastSynchronizeMasterToJetty).Find(&masterDataJetty.Role).Error
+
+		if errFindRole != nil {
+			return masterDataJetty, errFindRole
+		}
+
+		errFindUser := r.db.Where("updated_at >= ? AND is_ho = false", haulingSync.LastSynchronizeMasterToJetty).Find(&masterDataJetty.User).Error
+
+		if errFindUser != nil {
+			return masterDataJetty, errFindUser
+		}
+
+		errFindUserIupopk := r.db.Table("user_iupopks").Joins("left join users u on u.id = user_iupopks.user_id").Where("updated_at >= ? AND u.is_ho = false", haulingSync.LastSynchronizeMasterToJetty).Find(&masterDataJetty.UserIupopk).Error
+
+		if errFindUserIupopk != nil {
+			return masterDataJetty, errFindUserIupopk
+		}
+
+		errFindUserRole := r.db.Table("user_roles").Joins("left join users u on u.id = user_roles.user_id").Where("updated_at >= ? AND u.is_ho = false", haulingSync.LastSynchronizeMasterToJetty).Find(&masterDataJetty.UserRole).Error
+
+		if errFindUserRole != nil {
+			return masterDataJetty, errFindUserRole
+		}
+	} else {
+		errFindContractor := r.db.Table("contractors").Find(&masterDataJetty.Contractor).Error
+
+		if errFindContractor != nil {
+			return masterDataJetty, errFindContractor
+		}
+
+		errFindIsp := r.db.Table("isps").Find(&masterDataJetty.Isp).Error
+
+		if errFindIsp != nil {
+			return masterDataJetty, errFindIsp
+		}
+
+		errFindIupopk := r.db.Find(&masterDataJetty.Iupopk).Error
+
+		if errFindIupopk != nil {
+			return masterDataJetty, errFindIupopk
+		}
+
+		errFindJetty := r.db.Table("jetties").Find(&masterDataJetty.Jetty).Error
+
+		if errFindJetty != nil {
+			return masterDataJetty, errFindJetty
+		}
+
+		errFindPit := r.db.Table("pits").Find(&masterDataJetty.Pit).Error
+
+		if errFindPit != nil {
+			return masterDataJetty, errFindPit
+		}
+
+		errFindRole := r.db.Find(&masterDataJetty.Role).Error
+
+		if errFindRole != nil {
+			return masterDataJetty, errFindRole
+		}
+
+		errFindUser := r.db.Where("is_ho = false").Find(&masterDataJetty.User).Error
+
+		if errFindUser != nil {
+			return masterDataJetty, errFindUser
+		}
+
+		errFindUserIupopk := r.db.Table("user_iupopks").Joins("left join users u on u.id = user_iupopks.user_id").Where("u.is_ho = false").Find(&masterDataJetty.UserIupopk).Error
+
+		if errFindUserIupopk != nil {
+			return masterDataJetty, errFindUserIupopk
+		}
+
+		errFindUserRole := r.db.Table("user_roles").Joins("left join users u on u.id = user_roles.user_id").Where("u.is_ho = false").Find(&masterDataJetty.UserRole).Error
+
+		if errFindUserRole != nil {
+			return masterDataJetty, errFindUserRole
+		}
+	}
+
+	return masterDataJetty, nil
 }
