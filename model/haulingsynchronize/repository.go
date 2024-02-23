@@ -125,7 +125,7 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 				if v.Rfid == nil || *v.Rfid == "" {
 					tempTruck.Rfid = nil
 				}
-				errUpd := tx.Save(&tempTruck).Error
+				errUpd := tx.Where("code = ?", v.Code).Updates(&tempTruck).Error
 
 				if errUpd != nil {
 					tx.Rollback()
@@ -213,12 +213,7 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 
 	var transactionIspJetty []transactionispjetty.TransactionIspJetty
 
-	errFindIspJetty := tx.Preload(clause.Associations).Where("transaction_jetty_id IS NULL").Order("created_at asc").Find(&transactionIspJetty).Error
-
-	if errFindIspJetty != nil {
-		tx.Rollback()
-		return false, errFindIspJetty
-	}
+	tx.Preload(clause.Associations).Where("transaction_jetty_id IS NULL").Order("created_at asc").Find(&transactionIspJetty)
 
 	// Connect Transaction to Jetty & Transaction Jetty in Transaction Isp Jetty
 
