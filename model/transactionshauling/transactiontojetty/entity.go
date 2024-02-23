@@ -23,8 +23,8 @@ type TransactionToJetty struct {
 	Isp                   *isp.Isp      `json:"isp"`
 	PitId                 *uint         `json:"pit_id"`
 	Pit                   *pit.Pit      `json:"pit"`
-	JettyId               *uint         `json:"jetty_id"`
-	Jetty                 *jetty.Jetty  `json:"jetty"`
+	JettyId               uint          `json:"jetty_id"`
+	Jetty                 jetty.Jetty   `json:"jetty"`
 	Seam                  string        `json:"seam"`
 	Origin                string        `json:"origin"`
 	Gar                   float64       `json:"gar"`
