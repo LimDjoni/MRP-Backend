@@ -158,13 +158,13 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 			var prod production.Production
 
 			if v.IspId == nil {
-				errFind := tx.Where("production_date = ? AND pit_id = ? AND isp_id IS NULL AND jetty_id = ?", strings.Split(v.ClockInDate, "T")[0], v.PitId, v.JettyId).First(&prod).Error
+				errFind := tx.Where("production_date = ? AND pit_id = ? AND isp_id IS NULL AND jetty_id = ?", strings.Split(v.ClockInDate, "T")[0], v.PitId, &v.JettyId).First(&prod).Error
 
 				if errFind != nil {
 					prod.Quantity = v.NettQuantity
 					prod.RitaseQuantity = 1
 					prod.PitId = v.PitId
-					prod.JettyId = v.JettyId
+					prod.JettyId = &v.JettyId
 					prod.IupopkId = syncData.IupopkId
 					prod.ProductionDate = strings.Split(v.ClockInDate, "T")[0]
 
@@ -183,13 +183,13 @@ func (r *repository) SynchronizeTransactionJetty(syncData SynchronizeInputTransa
 					}
 				}
 			} else if v.PitId == nil {
-				errFind := tx.Where("production_date = ? AND pit_id is NULL AND isp_id = ? AND jetty_id = ?", strings.Split(v.ClockInDate, "T")[0], v.IspId, v.JettyId).First(&prod).Error
+				errFind := tx.Where("production_date = ? AND pit_id is NULL AND isp_id = ? AND jetty_id = ?", strings.Split(v.ClockInDate, "T")[0], v.IspId, &v.JettyId).First(&prod).Error
 
 				if errFind != nil {
 					prod.Quantity = v.NettQuantity
 					prod.RitaseQuantity = 1
 					prod.IspId = v.IspId
-					prod.JettyId = v.JettyId
+					prod.JettyId = &v.JettyId
 					prod.IupopkId = syncData.IupopkId
 					prod.ProductionDate = strings.Split(v.ClockInDate, "T")[0]
 
