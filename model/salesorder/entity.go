@@ -1,4 +1,4 @@
-package royaltyreport
+package salesorder
 
 import (
 	"ajebackend/model/contract"
@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type RoyaltyReport struct {
+type SalesOrder struct {
 	gorm.Model
 	PicName               string             `json:"pic_name"`
 	ContractNumber        string             `json:"contract_number" gorm:"UNIQUE"`
@@ -31,11 +31,4 @@ type RoyaltyReport struct {
 	SubTotal              float64            `json:"sub_total"`
 	ContractId            *uint              `json:"contract_id"`
 	Contract              *contract.Contract `json:"contract" gorm:"constraint:OnDelete:SET NULL;"`
-}
-
-type SortFilterRoyaltyReport struct {
-	Field     string
-	Sort      string
-	DateStart string
-	DateEnd   string
 }
