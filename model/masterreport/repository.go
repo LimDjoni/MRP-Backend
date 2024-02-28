@@ -2396,7 +2396,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.Quantity
 									}
 								} else {
@@ -2407,7 +2409,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.DmoBuyer.CompanyName]["-"]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.DmoBuyer.CompanyName]["-"] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.DmoBuyer.CompanyName]["-"] = v.Quantity
 									}
 								}
@@ -2423,7 +2427,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory]; okDestination {
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] += v.Quantity
 								} else {
-									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.DmoBuyer.CompanyName]; !okCompany {
+										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									}
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] = v.Quantity
 								}
 							}
@@ -2457,7 +2463,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 							}
 
-							saleDetail.DataDetailIndustry["non_electricity"]["january"]["-"] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["january"]["-"]; !okCompany {
+								saleDetail.DataDetailIndustry["non_electricity"]["january"]["-"] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry["non_electricity"]["january"]["-"]["-"] += v.Quantity
 						}
 
@@ -2619,7 +2627,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.Quantity
 									}
 								} else {
@@ -2630,7 +2640,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.DmoBuyer.CompanyName]["-"]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.DmoBuyer.CompanyName]["-"] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.DmoBuyer.CompanyName]["-"] = v.Quantity
 									}
 								}
@@ -2646,7 +2658,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory]; okDestination {
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] += v.Quantity
 								} else {
-									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.DmoBuyer.CompanyName]; !okCompany {
+										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									}
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] = v.Quantity
 								}
 							}
@@ -2679,7 +2693,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 							}
 
-							saleDetail.DataDetailIndustry["non_electricity"]["february"]["-"] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["february"]["-"]; !okCompany {
+								saleDetail.DataDetailIndustry["non_electricity"]["february"]["-"] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry["non_electricity"]["february"]["-"]["-"] += v.Quantity
 						}
 
@@ -2842,7 +2858,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.Quantity
 									}
 								} else {
@@ -2853,7 +2871,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.DmoBuyer.CompanyName]["-"]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.DmoBuyer.CompanyName]["-"] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.DmoBuyer.CompanyName]["-"] = v.Quantity
 									}
 								}
@@ -2869,7 +2889,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory]; okDestination {
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] += v.Quantity
 								} else {
-									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.DmoBuyer.CompanyName]; !okCompany {
+										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									}
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] = v.Quantity
 								}
 							}
@@ -2903,7 +2925,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 							}
 
-							saleDetail.DataDetailIndustry["non_electricity"]["march"]["-"] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["march"]["-"]; !okCompany {
+								saleDetail.DataDetailIndustry["non_electricity"]["march"]["-"] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry["non_electricity"]["march"]["-"]["-"] += v.Quantity
 						}
 
@@ -3066,7 +3090,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.Quantity
 									}
 								} else {
@@ -3077,7 +3103,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.DmoBuyer.CompanyName]["-"]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.DmoBuyer.CompanyName]["-"] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.DmoBuyer.CompanyName]["-"] = v.Quantity
 									}
 								}
@@ -3093,7 +3121,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory]; okDestination {
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] += v.Quantity
 								} else {
-									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.DmoBuyer.CompanyName]; !okCompany {
+										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									}
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] = v.Quantity
 								}
 							}
@@ -3127,7 +3157,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 							}
 
-							saleDetail.DataDetailIndustry["non_electricity"]["april"]["-"] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["april"]["-"]; !okCompany {
+								saleDetail.DataDetailIndustry["non_electricity"]["april"]["-"] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry["non_electricity"]["april"]["-"]["-"] += v.Quantity
 						}
 
@@ -3290,7 +3322,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.Quantity
 									}
 								} else {
@@ -3301,7 +3335,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.DmoBuyer.CompanyName]["-"]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.DmoBuyer.CompanyName]["-"] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.DmoBuyer.CompanyName]["-"] = v.Quantity
 									}
 								}
@@ -3317,7 +3353,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory]; okDestination {
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] += v.Quantity
 								} else {
-									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.DmoBuyer.CompanyName]; !okCompany {
+										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									}
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] = v.Quantity
 								}
 							}
@@ -3351,7 +3389,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 							}
 
-							saleDetail.DataDetailIndustry["non_electricity"]["may"]["-"] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["may"]["-"]; !okCompany {
+								saleDetail.DataDetailIndustry["non_electricity"]["may"]["-"] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry["non_electricity"]["may"]["-"]["-"] += v.Quantity
 						}
 
@@ -3514,7 +3554,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.Quantity
 									}
 								} else {
@@ -3525,7 +3567,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.DmoBuyer.CompanyName]["-"]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.DmoBuyer.CompanyName]["-"] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.DmoBuyer.CompanyName]["-"] = v.Quantity
 									}
 								}
@@ -3541,7 +3585,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory]; okDestination {
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] += v.Quantity
 								} else {
-									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.DmoBuyer.CompanyName]; !okCompany {
+										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									}
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] = v.Quantity
 								}
 							}
@@ -3575,7 +3621,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 							}
 
-							saleDetail.DataDetailIndustry["non_electricity"]["june"]["-"] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["june"]["-"]; !okCompany {
+								saleDetail.DataDetailIndustry["non_electricity"]["june"]["-"] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry["non_electricity"]["june"]["-"]["-"] += v.Quantity
 						}
 
@@ -3738,7 +3786,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.Quantity
 									}
 								} else {
@@ -3749,7 +3799,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.DmoBuyer.CompanyName]["-"]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.DmoBuyer.CompanyName]["-"] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.DmoBuyer.CompanyName]["-"] = v.Quantity
 									}
 								}
@@ -3765,7 +3817,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory]; okDestination {
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] += v.Quantity
 								} else {
-									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.DmoBuyer.CompanyName]; !okCompany {
+										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									}
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] = v.Quantity
 								}
 							}
@@ -3799,9 +3853,12 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 							}
 
-							saleDetail.DataDetailIndustry["non_electricity"]["july"]["-"] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["july"]["-"]; !okCompany {
+								saleDetail.DataDetailIndustry["non_electricity"]["july"]["-"] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry["non_electricity"]["july"]["-"]["-"] += v.Quantity
 						}
+
 						saleDetail.DataRecapIndustry["non_electricity"]["july"] += v.Quantity
 						saleDetail.DataRecapIndustry["non_electricity"]["total"] += v.Quantity
 					}
@@ -3961,7 +4018,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.Quantity
 									}
 								} else {
@@ -3972,7 +4031,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.DmoBuyer.CompanyName]["-"]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.DmoBuyer.CompanyName]["-"] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.DmoBuyer.CompanyName]["-"] = v.Quantity
 									}
 								}
@@ -3988,7 +4049,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory]; okDestination {
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] += v.Quantity
 								} else {
-									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.DmoBuyer.CompanyName]; !okCompany {
+										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									}
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] = v.Quantity
 								}
 							}
@@ -4022,7 +4085,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 							}
 
-							saleDetail.DataDetailIndustry["non_electricity"]["august"]["-"] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["august"]["-"]; !okCompany {
+								saleDetail.DataDetailIndustry["non_electricity"]["august"]["-"] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry["non_electricity"]["august"]["-"]["-"] += v.Quantity
 						}
 
@@ -4174,8 +4239,6 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						if v.DmoBuyer.IndustryType != nil {
 							if v.DmoBuyer.IndustryType.CategoryIndustryType.Name == "Kelistrikan" {
 								if v.DmoDestinationPort != nil {
-									fmt.Println(v.Quantity, v.DmoDestinationPort.Name)
-
 									if _, ok := saleDetail.Company[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName][v.DmoBuyer.CompanyName]; ok {
 										if !helperString(saleDetail.Company[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName][v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name) {
 											saleDetail.Company[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName][v.DmoBuyer.CompanyName] = append(saleDetail.Company[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName][v.DmoBuyer.CompanyName], v.DmoDestinationPort.Name)
@@ -4187,11 +4250,11 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.Quantity
 									}
-
-									fmt.Println(saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["september"])
 								} else {
 									if !helperString(saleDetail.Company[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName][v.DmoBuyer.CompanyName], "-") {
 										saleDetail.Company[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName][v.DmoBuyer.CompanyName] = append(saleDetail.Company[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName][v.DmoBuyer.CompanyName], "-")
@@ -4200,7 +4263,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.DmoBuyer.CompanyName]["-"]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.DmoBuyer.CompanyName]["-"] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.DmoBuyer.CompanyName]["-"] = v.Quantity
 									}
 								}
@@ -4216,7 +4281,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory]; okDestination {
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] += v.Quantity
 								} else {
-									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.DmoBuyer.CompanyName]; !okCompany {
+										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									}
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] = v.Quantity
 								}
 							}
@@ -4250,7 +4317,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 							}
 
-							saleDetail.DataDetailIndustry["non_electricity"]["september"]["-"] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["september"]["-"]; !okCompany {
+								saleDetail.DataDetailIndustry["non_electricity"]["september"]["-"] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry["non_electricity"]["september"]["-"]["-"] += v.Quantity
 						}
 
@@ -4413,7 +4482,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.Quantity
 									}
 								} else {
@@ -4424,7 +4495,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.DmoBuyer.CompanyName]["-"]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.DmoBuyer.CompanyName]["-"] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.DmoBuyer.CompanyName]["-"] = v.Quantity
 									}
 								}
@@ -4440,7 +4513,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory]; okDestination {
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] += v.Quantity
 								} else {
-									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.DmoBuyer.CompanyName]; !okCompany {
+										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									}
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] = v.Quantity
 								}
 							}
@@ -4474,7 +4549,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 							}
 
-							saleDetail.DataDetailIndustry["non_electricity"]["october"]["-"] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["october"]["-"]; !okCompany {
+								saleDetail.DataDetailIndustry["non_electricity"]["october"]["-"] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry["non_electricity"]["october"]["-"]["-"] += v.Quantity
 						}
 
@@ -4637,7 +4714,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.Quantity
 									}
 								} else {
@@ -4648,7 +4727,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.DmoBuyer.CompanyName]["-"]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.DmoBuyer.CompanyName]["-"] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.DmoBuyer.CompanyName]["-"] = v.Quantity
 									}
 								}
@@ -4664,7 +4745,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory]; okDestination {
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] += v.Quantity
 								} else {
-									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.DmoBuyer.CompanyName]; !okCompany {
+										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									}
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] = v.Quantity
 								}
 							}
@@ -4698,9 +4781,12 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 							}
 
-							saleDetail.DataDetailIndustry["non_electricity"]["november"]["-"] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["november"]["-"]; !okCompany {
+								saleDetail.DataDetailIndustry["non_electricity"]["november"]["-"] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry["non_electricity"]["november"]["-"]["-"] += v.Quantity
 						}
+
 						saleDetail.DataRecapIndustry["non_electricity"]["november"] += v.Quantity
 						saleDetail.DataRecapIndustry["non_electricity"]["total"] += v.Quantity
 					}
@@ -4860,7 +4946,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.DmoBuyer.CompanyName][v.DmoDestinationPort.Name] = v.Quantity
 									}
 								} else {
@@ -4871,7 +4959,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 									if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.DmoBuyer.CompanyName]["-"]; okDestination {
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.DmoBuyer.CompanyName]["-"] += v.Quantity
 									} else {
-										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.DmoBuyer.CompanyName]; !okCompany {
+											saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+										}
 										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.DmoBuyer.CompanyName]["-"] = v.Quantity
 									}
 								}
@@ -4887,7 +4977,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								if _, okDestination := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory]; okDestination {
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] += v.Quantity
 								} else {
-									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									if _, okCompany := saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.DmoBuyer.CompanyName]; !okCompany {
+										saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.DmoBuyer.CompanyName] = make(map[string]float64)
+									}
 									saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.DmoBuyer.CompanyName][v.DmoBuyer.IndustryType.SystemCategory] = v.Quantity
 								}
 							}
@@ -4921,7 +5013,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 							}
 
-							saleDetail.DataDetailIndustry["non_electricity"]["december"]["-"] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["december"]["-"]; !okCompany {
+								saleDetail.DataDetailIndustry["non_electricity"]["december"]["-"] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry["non_electricity"]["december"]["-"]["-"] += v.Quantity
 						}
 
@@ -5171,7 +5265,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.Buyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] = v.GrandTotalQuantity
 							}
 						} else {
@@ -5182,7 +5278,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.Buyer.CompanyName]["-"]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.Buyer.CompanyName]["-"] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.Buyer.CompanyName]["-"] = v.GrandTotalQuantity
 							}
 						}
@@ -5198,7 +5296,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory]; okDestination {
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] += v.GrandTotalQuantity
 						} else {
-							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.Buyer.CompanyName] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.Buyer.CompanyName]; !okCompany {
+								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.Buyer.CompanyName] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["january"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] = v.GrandTotalQuantity
 						}
 					}
@@ -5231,7 +5331,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 					}
 
-					saleDetail.DataDetailIndustry["non_electricity"]["january"]["-"] = make(map[string]float64)
+					if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["january"]["-"]; !okCompany {
+						saleDetail.DataDetailIndustry["non_electricity"]["january"]["-"] = make(map[string]float64)
+					}
 					saleDetail.DataDetailIndustry["non_electricity"]["january"]["-"]["-"] += v.GrandTotalQuantity
 				}
 
@@ -5392,7 +5494,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.Buyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] = v.GrandTotalQuantity
 							}
 						} else {
@@ -5403,7 +5507,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.Buyer.CompanyName]["-"]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.Buyer.CompanyName]["-"] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.Buyer.CompanyName]["-"] = v.GrandTotalQuantity
 							}
 						}
@@ -5419,7 +5525,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory]; okDestination {
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] += v.GrandTotalQuantity
 						} else {
-							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.Buyer.CompanyName] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.Buyer.CompanyName]; !okCompany {
+								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.Buyer.CompanyName] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["february"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] = v.GrandTotalQuantity
 						}
 					}
@@ -5453,7 +5561,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 					}
 
-					saleDetail.DataDetailIndustry["non_electricity"]["february"]["-"] = make(map[string]float64)
+					if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["february"]["-"]; !okCompany {
+						saleDetail.DataDetailIndustry["non_electricity"]["february"]["-"] = make(map[string]float64)
+					}
 					saleDetail.DataDetailIndustry["non_electricity"]["february"]["-"]["-"] += v.GrandTotalQuantity
 				}
 
@@ -5614,7 +5724,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.Buyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] = v.GrandTotalQuantity
 							}
 						} else {
@@ -5625,7 +5737,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.Buyer.CompanyName]["-"]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.Buyer.CompanyName]["-"] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.Buyer.CompanyName]["-"] = v.GrandTotalQuantity
 							}
 						}
@@ -5641,7 +5755,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory]; okDestination {
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] += v.GrandTotalQuantity
 						} else {
-							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.Buyer.CompanyName] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.Buyer.CompanyName]; !okCompany {
+								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.Buyer.CompanyName] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["march"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] = v.GrandTotalQuantity
 						}
 					}
@@ -5675,7 +5791,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 					}
 
-					saleDetail.DataDetailIndustry["non_electricity"]["march"]["-"] = make(map[string]float64)
+					if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["march"]["-"]; !okCompany {
+						saleDetail.DataDetailIndustry["non_electricity"]["march"]["-"] = make(map[string]float64)
+					}
 					saleDetail.DataDetailIndustry["non_electricity"]["march"]["-"]["-"] += v.GrandTotalQuantity
 				}
 
@@ -5836,7 +5954,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.Buyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] = v.GrandTotalQuantity
 							}
 						} else {
@@ -5847,7 +5967,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.Buyer.CompanyName]["-"]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.Buyer.CompanyName]["-"] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.Buyer.CompanyName]["-"] = v.GrandTotalQuantity
 							}
 						}
@@ -5863,7 +5985,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory]; okDestination {
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] += v.GrandTotalQuantity
 						} else {
-							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.Buyer.CompanyName] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.Buyer.CompanyName]; !okCompany {
+								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.Buyer.CompanyName] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["april"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] = v.GrandTotalQuantity
 						}
 					}
@@ -5897,7 +6021,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 					}
 
-					saleDetail.DataDetailIndustry["non_electricity"]["april"]["-"] = make(map[string]float64)
+					if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["april"]["-"]; !okCompany {
+						saleDetail.DataDetailIndustry["non_electricity"]["april"]["-"] = make(map[string]float64)
+					}
 					saleDetail.DataDetailIndustry["non_electricity"]["april"]["-"]["-"] += v.GrandTotalQuantity
 				}
 
@@ -6058,7 +6184,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.Buyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] = v.GrandTotalQuantity
 							}
 						} else {
@@ -6069,7 +6197,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.Buyer.CompanyName]["-"]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.Buyer.CompanyName]["-"] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.Buyer.CompanyName]["-"] = v.GrandTotalQuantity
 							}
 						}
@@ -6085,7 +6215,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory]; okDestination {
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] += v.GrandTotalQuantity
 						} else {
-							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.Buyer.CompanyName] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.Buyer.CompanyName]; !okCompany {
+								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.Buyer.CompanyName] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["may"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] = v.GrandTotalQuantity
 						}
 					}
@@ -6119,7 +6251,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 					}
 
-					saleDetail.DataDetailIndustry["non_electricity"]["may"]["-"] = make(map[string]float64)
+					if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["may"]["-"]; !okCompany {
+						saleDetail.DataDetailIndustry["non_electricity"]["may"]["-"] = make(map[string]float64)
+					}
 					saleDetail.DataDetailIndustry["non_electricity"]["may"]["-"]["-"] += v.GrandTotalQuantity
 				}
 
@@ -6280,7 +6414,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.Buyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] = v.GrandTotalQuantity
 							}
 						} else {
@@ -6291,7 +6427,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.Buyer.CompanyName]["-"]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.Buyer.CompanyName]["-"] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.Buyer.CompanyName]["-"] = v.GrandTotalQuantity
 							}
 						}
@@ -6307,7 +6445,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory]; okDestination {
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] += v.GrandTotalQuantity
 						} else {
-							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.Buyer.CompanyName] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.Buyer.CompanyName]; !okCompany {
+								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.Buyer.CompanyName] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["june"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] = v.GrandTotalQuantity
 						}
 					}
@@ -6341,7 +6481,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 					}
 
-					saleDetail.DataDetailIndustry["non_electricity"]["june"]["-"] = make(map[string]float64)
+					if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["june"]["-"]; !okCompany {
+						saleDetail.DataDetailIndustry["non_electricity"]["june"]["-"] = make(map[string]float64)
+					}
 					saleDetail.DataDetailIndustry["non_electricity"]["june"]["-"]["-"] += v.GrandTotalQuantity
 				}
 
@@ -6502,7 +6644,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.Buyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] = v.GrandTotalQuantity
 							}
 						} else {
@@ -6513,7 +6657,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.Buyer.CompanyName]["-"]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.Buyer.CompanyName]["-"] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.Buyer.CompanyName]["-"] = v.GrandTotalQuantity
 							}
 						}
@@ -6529,7 +6675,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory]; okDestination {
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] += v.GrandTotalQuantity
 						} else {
-							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.Buyer.CompanyName] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.Buyer.CompanyName]; !okCompany {
+								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.Buyer.CompanyName] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["july"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] = v.GrandTotalQuantity
 						}
 					}
@@ -6563,7 +6711,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 					}
 
-					saleDetail.DataDetailIndustry["non_electricity"]["july"]["-"] = make(map[string]float64)
+					if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["july"]["-"]; !okCompany {
+						saleDetail.DataDetailIndustry["non_electricity"]["july"]["-"] = make(map[string]float64)
+					}
 					saleDetail.DataDetailIndustry["non_electricity"]["july"]["-"]["-"] += v.GrandTotalQuantity
 				}
 
@@ -6724,7 +6874,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.Buyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] = v.GrandTotalQuantity
 							}
 						} else {
@@ -6735,7 +6887,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.Buyer.CompanyName]["-"]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.Buyer.CompanyName]["-"] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.Buyer.CompanyName]["-"] = v.GrandTotalQuantity
 							}
 						}
@@ -6751,7 +6905,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory]; okDestination {
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] += v.GrandTotalQuantity
 						} else {
-							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.Buyer.CompanyName] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.Buyer.CompanyName]; !okCompany {
+								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.Buyer.CompanyName] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["august"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] = v.GrandTotalQuantity
 						}
 					}
@@ -6785,7 +6941,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 					}
 
-					saleDetail.DataDetailIndustry["non_electricity"]["august"]["-"] = make(map[string]float64)
+					if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["august"]["-"]; !okCompany {
+						saleDetail.DataDetailIndustry["non_electricity"]["august"]["-"] = make(map[string]float64)
+					}
 					saleDetail.DataDetailIndustry["non_electricity"]["august"]["-"]["-"] += v.GrandTotalQuantity
 				}
 
@@ -6935,8 +7093,6 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				if v.Buyer.IndustryType != nil {
 					if v.Buyer.IndustryType.CategoryIndustryType.Name == "Kelistrikan" {
 						if v.DmoDestinationPort != nil {
-							fmt.Println(saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"])
-							fmt.Println(v.DmoDestinationPort.Name, v.GrandTotalQuantity)
 							if _, ok := saleDetail.Company[v.Buyer.IndustryType.CategoryIndustryType.SystemName][v.Buyer.CompanyName]; ok {
 								if !helperString(saleDetail.Company[v.Buyer.IndustryType.CategoryIndustryType.SystemName][v.Buyer.CompanyName], v.DmoDestinationPort.Name) {
 									saleDetail.Company[v.Buyer.IndustryType.CategoryIndustryType.SystemName][v.Buyer.CompanyName] = append(saleDetail.Company[v.Buyer.IndustryType.CategoryIndustryType.SystemName][v.Buyer.CompanyName], v.DmoDestinationPort.Name)
@@ -6948,12 +7104,12 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.Buyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] = v.GrandTotalQuantity
 							}
-							fmt.Println(saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"])
 						} else {
-							fmt.Println(saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"])
 							if !helperString(saleDetail.Company[v.Buyer.IndustryType.CategoryIndustryType.SystemName][v.Buyer.CompanyName], "-") {
 								saleDetail.Company[v.Buyer.IndustryType.CategoryIndustryType.SystemName][v.Buyer.CompanyName] = append(saleDetail.Company[v.Buyer.IndustryType.CategoryIndustryType.SystemName][v.Buyer.CompanyName], "-")
 							}
@@ -6961,10 +7117,11 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.Buyer.CompanyName]["-"]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.Buyer.CompanyName]["-"] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.Buyer.CompanyName]["-"] = v.GrandTotalQuantity
 							}
-							fmt.Println(saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"])
 						}
 					} else {
 						if _, ok := saleDetail.Company[v.Buyer.IndustryType.CategoryIndustryType.SystemName][v.Buyer.CompanyName]; ok {
@@ -6978,7 +7135,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory]; okDestination {
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] += v.GrandTotalQuantity
 						} else {
-							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.Buyer.CompanyName] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.Buyer.CompanyName]; !okCompany {
+								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.Buyer.CompanyName] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] = v.GrandTotalQuantity
 						}
 					}
@@ -7012,7 +7171,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 					}
 
-					saleDetail.DataDetailIndustry["non_electricity"]["september"]["-"] = make(map[string]float64)
+					if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["september"]["-"]; !okCompany {
+						saleDetail.DataDetailIndustry["non_electricity"]["september"]["-"] = make(map[string]float64)
+					}
 					saleDetail.DataDetailIndustry["non_electricity"]["september"]["-"]["-"] += v.GrandTotalQuantity
 				}
 
@@ -7173,7 +7334,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.Buyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] = v.GrandTotalQuantity
 							}
 						} else {
@@ -7184,7 +7347,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.Buyer.CompanyName]["-"]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.Buyer.CompanyName]["-"] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.Buyer.CompanyName]["-"] = v.GrandTotalQuantity
 							}
 						}
@@ -7200,7 +7365,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory]; okDestination {
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] += v.GrandTotalQuantity
 						} else {
-							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.Buyer.CompanyName] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.Buyer.CompanyName]; !okCompany {
+								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.Buyer.CompanyName] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["october"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] = v.GrandTotalQuantity
 						}
 					}
@@ -7234,7 +7401,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 					}
 
-					saleDetail.DataDetailIndustry["non_electricity"]["october"]["-"] = make(map[string]float64)
+					if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["october"]["-"]; !okCompany {
+						saleDetail.DataDetailIndustry["non_electricity"]["october"]["-"] = make(map[string]float64)
+					}
 					saleDetail.DataDetailIndustry["non_electricity"]["october"]["-"]["-"] += v.GrandTotalQuantity
 				}
 
@@ -7395,7 +7564,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.Buyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] = v.GrandTotalQuantity
 							}
 						} else {
@@ -7406,7 +7577,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.Buyer.CompanyName]["-"]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.Buyer.CompanyName]["-"] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.Buyer.CompanyName]["-"] = v.GrandTotalQuantity
 							}
 						}
@@ -7422,7 +7595,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory]; okDestination {
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] += v.GrandTotalQuantity
 						} else {
-							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.Buyer.CompanyName] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.Buyer.CompanyName]; !okCompany {
+								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.Buyer.CompanyName] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["november"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] = v.GrandTotalQuantity
 						}
 					}
@@ -7456,7 +7631,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 					}
 
-					saleDetail.DataDetailIndustry["non_electricity"]["november"]["-"] = make(map[string]float64)
+					if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["november"]["-"]; !okCompany {
+						saleDetail.DataDetailIndustry["non_electricity"]["november"]["-"] = make(map[string]float64)
+					}
 					saleDetail.DataDetailIndustry["non_electricity"]["november"]["-"]["-"] += v.GrandTotalQuantity
 				}
 
@@ -7617,7 +7794,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.Buyer.CompanyName][v.DmoDestinationPort.Name]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] = v.GrandTotalQuantity
 							}
 						} else {
@@ -7628,7 +7807,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.Buyer.CompanyName]["-"]; okDestination {
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.Buyer.CompanyName]["-"] += v.GrandTotalQuantity
 							} else {
-								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.Buyer.CompanyName] = make(map[string]float64)
+								if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.Buyer.CompanyName]; !okCompany {
+									saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.Buyer.CompanyName] = make(map[string]float64)
+								}
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.Buyer.CompanyName]["-"] = v.GrandTotalQuantity
 							}
 						}
@@ -7644,7 +7825,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						if _, okDestination := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory]; okDestination {
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] += v.GrandTotalQuantity
 						} else {
-							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.Buyer.CompanyName] = make(map[string]float64)
+							if _, okCompany := saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.Buyer.CompanyName]; !okCompany {
+								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.Buyer.CompanyName] = make(map[string]float64)
+							}
 							saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["december"][v.Buyer.CompanyName][v.Buyer.IndustryType.SystemCategory] = v.GrandTotalQuantity
 						}
 					}
@@ -7678,7 +7861,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 						saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
 					}
 
-					saleDetail.DataDetailIndustry["non_electricity"]["december"]["-"] = make(map[string]float64)
+					if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["december"]["-"]; !okCompany {
+						saleDetail.DataDetailIndustry["non_electricity"]["december"]["-"] = make(map[string]float64)
+					}
 					saleDetail.DataDetailIndustry["non_electricity"]["december"]["-"]["-"] += v.GrandTotalQuantity
 				}
 
