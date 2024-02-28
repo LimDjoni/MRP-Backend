@@ -6953,6 +6953,7 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							}
 							fmt.Println(saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"])
 						} else {
+							fmt.Println(saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"])
 							if !helperString(saleDetail.Company[v.Buyer.IndustryType.CategoryIndustryType.SystemName][v.Buyer.CompanyName], "-") {
 								saleDetail.Company[v.Buyer.IndustryType.CategoryIndustryType.SystemName][v.Buyer.CompanyName] = append(saleDetail.Company[v.Buyer.IndustryType.CategoryIndustryType.SystemName][v.Buyer.CompanyName], "-")
 							}
@@ -6963,6 +6964,7 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.Buyer.CompanyName] = make(map[string]float64)
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.Buyer.CompanyName]["-"] = v.GrandTotalQuantity
 							}
+							fmt.Println(saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"])
 						}
 					} else {
 						if _, ok := saleDetail.Company[v.Buyer.IndustryType.CategoryIndustryType.SystemName][v.Buyer.CompanyName]; ok {
