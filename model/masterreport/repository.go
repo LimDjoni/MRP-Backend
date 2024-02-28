@@ -6935,6 +6935,8 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 				if v.Buyer.IndustryType != nil {
 					if v.Buyer.IndustryType.CategoryIndustryType.Name == "Kelistrikan" {
 						if v.DmoDestinationPort != nil {
+							fmt.Println(saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["september"])
+							fmt.Println(v.DmoDestinationPort.Name, v.GrandTotalQuantity)
 							if _, ok := saleDetail.Company[v.Buyer.IndustryType.CategoryIndustryType.SystemName][v.Buyer.CompanyName]; ok {
 								if !helperString(saleDetail.Company[v.Buyer.IndustryType.CategoryIndustryType.SystemName][v.Buyer.CompanyName], v.DmoDestinationPort.Name) {
 									saleDetail.Company[v.Buyer.IndustryType.CategoryIndustryType.SystemName][v.Buyer.CompanyName] = append(saleDetail.Company[v.Buyer.IndustryType.CategoryIndustryType.SystemName][v.Buyer.CompanyName], v.DmoDestinationPort.Name)
@@ -6949,6 +6951,7 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.Buyer.CompanyName] = make(map[string]float64)
 								saleDetail.DataDetailIndustry[v.Buyer.IndustryType.CategoryIndustryType.SystemName]["september"][v.Buyer.CompanyName][v.DmoDestinationPort.Name] = v.GrandTotalQuantity
 							}
+							fmt.Println(saleDetail.DataDetailIndustry[v.DmoBuyer.IndustryType.CategoryIndustryType.SystemName]["september"])
 						} else {
 							if !helperString(saleDetail.Company[v.Buyer.IndustryType.CategoryIndustryType.SystemName][v.Buyer.CompanyName], "-") {
 								saleDetail.Company[v.Buyer.IndustryType.CategoryIndustryType.SystemName][v.Buyer.CompanyName] = append(saleDetail.Company[v.Buyer.IndustryType.CategoryIndustryType.SystemName][v.Buyer.CompanyName], "-")
