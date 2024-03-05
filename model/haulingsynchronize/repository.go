@@ -318,10 +318,12 @@ func (r *repository) GetSyncMasterDataIsp(iupopkId uint) (MasterDataIsp, error) 
 
 	var haulingSync HaulingSynchronize
 
-	errFirst := r.db.Where("iupopk_id = ?", iupopkId).First(&haulingSync).Error
+	if iupopkId != 0 {
+		errFirst := r.db.Where("iupopk_id = ?", iupopkId).First(&haulingSync).Error
 
-	if errFirst != nil {
-		return masterDataIsp, errFirst
+		if errFirst != nil {
+			return masterDataIsp, errFirst
+		}
 	}
 
 	if haulingSync.LastSynchronizeMasterToIsp != nil {
@@ -454,10 +456,12 @@ func (r *repository) GetSyncMasterDataJetty(iupopkId uint) (MasterDataJetty, err
 
 	var haulingSync HaulingSynchronize
 
-	errFirst := r.db.Where("iupopk_id = ?", iupopkId).First(&haulingSync).Error
+	if iupopkId != 0 {
+		errFirst := r.db.Where("iupopk_id = ?", iupopkId).First(&haulingSync).Error
 
-	if errFirst != nil {
-		return masterDataJetty, errFirst
+		if errFirst != nil {
+			return masterDataJetty, errFirst
+		}
 	}
 
 	if haulingSync.LastSynchronizeMasterToJetty != nil {
