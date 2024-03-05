@@ -45,30 +45,31 @@ func (h *haulingHandler) SyncHaulingDataIsp(c *fiber.Ctx) error {
 			"message": "failed synchronize data isp",
 		})
 	}
-
-	_, syncTransactionErr := h.haulingSynchronizeService.SynchronizeTransactionIsp(*haulingDataInput)
-
-	if syncTransactionErr != nil {
-		inputJson, _ := json.Marshal(haulingDataInput)
-
-		messageJson, _ := json.Marshal(map[string]interface{}{
-			"error": syncTransactionErr.Error(),
-		})
-
-		createdErrLog := logs.Logs{
-			Input:   inputJson,
-			Message: messageJson,
-		}
-
-		h.logService.CreateLogs(createdErrLog)
-
-		return c.Status(400).JSON(fiber.Map{
-			"error":   syncTransactionErr.Error(),
-			"message": "failed synchronize data isp",
-		})
-	}
-
 	iupopkId := &haulingDataInput.IupopkId
+
+	if *iupopkId > 0 {
+		_, syncTransactionErr := h.haulingSynchronizeService.SynchronizeTransactionIsp(*haulingDataInput)
+
+		if syncTransactionErr != nil {
+			inputJson, _ := json.Marshal(haulingDataInput)
+
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error": syncTransactionErr.Error(),
+			})
+
+			createdErrLog := logs.Logs{
+				Input:   inputJson,
+				Message: messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			return c.Status(400).JSON(fiber.Map{
+				"error":   syncTransactionErr.Error(),
+				"message": "failed synchronize data isp",
+			})
+		}
+	}
 
 	syncTime := &haulingDataInput.SynchronizeTime
 
@@ -139,30 +140,32 @@ func (h *haulingHandler) SyncHaulingDataJetty(c *fiber.Ctx) error {
 			"message": "failed synchronize data jetty",
 		})
 	}
+	iupopkId := &haulingDataInput.IupopkId
 
-	_, syncTransactionErr := h.haulingSynchronizeService.SynchronizeTransactionJetty(*haulingDataInput)
+	if *iupopkId > 0 {
+		_, syncTransactionErr := h.haulingSynchronizeService.SynchronizeTransactionJetty(*haulingDataInput)
 
-	if syncTransactionErr != nil {
-		inputJson, _ := json.Marshal(haulingDataInput)
+		if syncTransactionErr != nil {
+			inputJson, _ := json.Marshal(haulingDataInput)
 
-		messageJson, _ := json.Marshal(map[string]interface{}{
-			"error": syncTransactionErr.Error(),
-		})
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error": syncTransactionErr.Error(),
+			})
 
-		createdErrLog := logs.Logs{
-			Input:   inputJson,
-			Message: messageJson,
+			createdErrLog := logs.Logs{
+				Input:   inputJson,
+				Message: messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			return c.Status(400).JSON(fiber.Map{
+				"error":   syncTransactionErr.Error(),
+				"message": "failed synchronize data jetty",
+			})
 		}
 
-		h.logService.CreateLogs(createdErrLog)
-
-		return c.Status(400).JSON(fiber.Map{
-			"error":   syncTransactionErr.Error(),
-			"message": "failed synchronize data jetty",
-		})
 	}
-
-	iupopkId := &haulingDataInput.IupopkId
 
 	syncTime := &haulingDataInput.SynchronizeTime
 
