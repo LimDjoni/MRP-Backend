@@ -480,7 +480,7 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 
 	var listTransactions []transaction.Transaction
 
-	queryFilter := fmt.Sprintf("transactions.seller_id = %v AND transactions.transaction_type = 'DN' AND dmos.period LIKE '%%%v' AND dmo_id IS NOT NULL", iupopkId, year)
+	queryFilter := fmt.Sprintf("transactions.seller_id = %v AND transactions.transaction_type = 'DN' AND transactions.is_not_claim = FALSE AND dmos.period LIKE '%%%v' AND dmo_id IS NOT NULL", iupopkId, year)
 
 	errFind := r.db.Preload(clause.Associations).Preload("Customer.IndustryType.CategoryIndustryType").Preload("DmoBuyer.IndustryType.CategoryIndustryType").Table("transactions").Select("transactions.*").Joins("left join dmos on dmos.id = transactions.dmo_id").Where(queryFilter).Order("shipping_date ASC").Find(&listTransactions).Error
 
