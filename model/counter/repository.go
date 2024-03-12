@@ -1,6 +1,7 @@
 package counter
 
 import (
+	"ajebackend/model/haulingsynchronize"
 	"ajebackend/model/master/iupopk"
 	"errors"
 	"time"
@@ -79,6 +80,17 @@ func (r *repository) CreateIupopk(input iupopk.InputIupopk) (iupopk.Iupopk, erro
 	if createIupopkErr != nil {
 		tx.Rollback()
 		return createdIupopk, createIupopkErr
+	}
+
+	var haulingSynchronize haulingsynchronize.HaulingSynchronize
+
+	haulingSynchronize.IupopkId = createdIupopk.ID
+
+	createHaulingSyncErr := tx.Create(&haulingSynchronize).Error
+
+	if createHaulingSyncErr != nil {
+		tx.Rollback()
+		return createdIupopk, createHaulingSyncErr
 	}
 
 	var createdCounter Counter
