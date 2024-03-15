@@ -96,9 +96,7 @@ func (h *contractHandler) ListContract(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(200).JSON(fiber.Map{
-		"companies": listContract,
-	})
+	return c.Status(200).JSON(listContract)
 }
 
 func (h *contractHandler) CreateContract(c *fiber.Ctx) error {
