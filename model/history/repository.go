@@ -5842,6 +5842,12 @@ func (r *repository) UpdateContract(id int, input contract.InputCreateUpdateCont
 
 	if updatedContract.File == nil {
 		input.File = &location
+	} else {
+		input.File = updatedContract.File
+	}
+
+	if location == "" {
+		input.File = updatedContract.File
 	}
 
 	dataInput, errorMarshal := json.Marshal(input)
