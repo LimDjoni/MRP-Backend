@@ -272,14 +272,14 @@ func (h *contractHandler) UpdateContract(c *fiber.Ctx) error {
 	}
 
 	var location string
-	file, errFormFile := c.FormFile("file")
+	file, _ := c.FormFile("file")
 
-	if errFormFile != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"message": "failed to update contract file",
-			"error":   errFormFile.Error(),
-		})
-	}
+	// if errFormFile != nil {
+	// 	return c.Status(400).JSON(fiber.Map{
+	// 		"message": "failed to update contract file",
+	// 		"error":   errFormFile.Error(),
+	// 	})
+	// }
 
 	if file != nil {
 		fileName := fmt.Sprintf("%s/CONTRACT/%s/%s.pdf", iupopkData.Code, contractInput.ContractNumber, contractInput.ContractNumber)
