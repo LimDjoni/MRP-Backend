@@ -1399,9 +1399,9 @@ func (r *repository) SaleDetailReport(date string, iupopkId int) (SaleDetail, er
 
 	// startFilter := fmt.Sprintf("%v-01-01", year)
 	// endFilter := fmt.Sprintf("%v-12-31", year)
-	// year := date[0:4]
+	year := date[0:4]
 	startFilter := fmt.Sprintf("%v-01-01", date[0:4])
-	endFilter := date
+	endFilter := date // 19 - feb - 2023
 
 	companyElectricity := make(map[string][]string)
 	companyCement := make(map[string][]string)
