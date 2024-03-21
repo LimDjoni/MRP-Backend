@@ -1395,11 +1395,14 @@ func (r *repository) RealizationReport(year string, iupopkId int) (RealizationOu
 	return realizationOutput, nil
 }
 
-func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, error) {
+func (r *repository) SaleDetailReport(date string, iupopkId int) (SaleDetail, error) {
 	var saleDetail SaleDetail
 
-	startFilter := fmt.Sprintf("%v-01-01", year)
-	endFilter := fmt.Sprintf("%v-12-31", year)
+	// startFilter := fmt.Sprintf("%v-01-01", year)
+	// endFilter := fmt.Sprintf("%v-12-31", year)
+	year := date[0:4]
+	startFilter := fmt.Sprintf("%v-01-01", date[0:4])
+	endFilter := date // 19 - feb - 2023
 
 	companyElectricity := make(map[string][]string)
 	companyCement := make(map[string][]string)
