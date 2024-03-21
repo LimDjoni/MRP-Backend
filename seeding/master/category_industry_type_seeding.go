@@ -21,13 +21,19 @@ func SeedingCategoryIndustryType(db *gorm.DB) {
 
 	createCategory = append(createCategory,
 		categoryindustrytype.CategoryIndustryType{
-			Name: "Kelistrikan",
+			Name:       "Kelistrikan",
+			SystemName: "electricity",
+			Order:      1,
 		},
 		categoryindustrytype.CategoryIndustryType{
-			Name: "Semen",
+			Name:       "Semen",
+			SystemName: "cement",
+			Order:      2,
 		},
 		categoryindustrytype.CategoryIndustryType{
-			Name: "Smelter",
+			Name:       "Smelter",
+			SystemName: "non_electricity",
+			Order:      3,
 		},
 	)
 

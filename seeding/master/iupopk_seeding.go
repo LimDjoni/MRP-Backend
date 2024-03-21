@@ -2,6 +2,7 @@ package seeding
 
 import (
 	"ajebackend/model/counter"
+	"ajebackend/model/haulingsynchronize"
 	"ajebackend/model/master/iupopk"
 	"fmt"
 
@@ -60,6 +61,7 @@ func SeedingIupopk(db *gorm.DB) {
 
 	formatAje := "YYYY/BAST/CODE/MM/COUNTER"
 	formatTmd := "BAST/CODE/YYYY/MM/COUNTER"
+	var haulingSync []haulingsynchronize.HaulingSynchronize
 
 	for _, v := range createIupopk {
 		var formatBast string
@@ -73,18 +75,29 @@ func SeedingIupopk(db *gorm.DB) {
 		}
 
 		counters = append(counters, counter.Counter{
-			IupopkId:      v.ID,
-			TransactionDn: 1,
-			TransactionLn: 1,
-			GroupingMvDn:  1,
-			GroupingMvLn:  1,
-			Sp3medn:       1,
-			Sp3meln:       1,
-			BaEndUser:     1,
-			Dmo:           1,
-			Production:    1,
-			Insw:          1,
-			BastFormat:    formatBast,
+			IupopkId:           v.ID,
+			TransactionDn:      1,
+			TransactionLn:      1,
+			GroupingMvDn:       1,
+			GroupingMvLn:       1,
+			Sp3medn:            1,
+			Sp3meln:            1,
+			BaEndUser:          1,
+			Dmo:                1,
+			Production:         1,
+			Insw:               1,
+			CoaReport:          1,
+			CoaReportLn:        1,
+			Rkab:               1,
+			ElectricAssignment: 1,
+			CafAssignment:      1,
+			RoyaltyRecon:       1,
+			RoyaltyReport:      1,
+			BastFormat:         formatBast,
+		})
+
+		haulingSync = append(haulingSync, haulingsynchronize.HaulingSynchronize{
+			IupopkId: v.ID,
 		})
 	}
 
@@ -92,6 +105,14 @@ func SeedingIupopk(db *gorm.DB) {
 
 	if createCounterErr != nil {
 		fmt.Println(createCounterErr.Error())
+		tx.Rollback()
+		fmt.Println("Failed Seeding Iupopk")
+		return
+	}
+
+	createHaulingSyncErr := tx.Create(&haulingSync).Error
+
+	if createHaulingSyncErr != nil {
 		tx.Rollback()
 		fmt.Println("Failed Seeding Iupopk")
 		return
