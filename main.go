@@ -203,6 +203,7 @@ func main() {
 		seedingmaster.SeedingVessel(db)
 		seedingmaster.SeedingCounter(db)
 		seedingmaster.SeedingCategoryIndustryType(db)
+		seedingmaster.SeedingHaulingSynchronize(db)
 		seedingmaster.SeedingRole(db)
 		seeding.UpdateIupopk(db)
 		fmt.Println(errMigrate)

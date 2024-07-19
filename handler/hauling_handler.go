@@ -6,6 +6,7 @@ import (
 	"ajebackend/model/transactionshauling"
 	"ajebackend/model/useriupopk"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"strconv"
 
@@ -77,6 +78,7 @@ func (h *haulingHandler) SyncHaulingDataJetty(c *fiber.Ctx) error {
 
 	haulingDataInput := new(haulingsynchronize.SynchronizeInputTransactionJetty)
 
+	fmt.Println(haulingDataInput)
 	// Binds the request body to the Person struct
 	if err := c.BodyParser(haulingDataInput); err != nil {
 		return c.Status(400).JSON(fiber.Map{

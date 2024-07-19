@@ -22,40 +22,49 @@ func SeedingIndustryType(db *gorm.DB) {
 
 	createIndustryType = append(createIndustryType,
 		industrytype.IndustryType{
-			Name:     "Pembangkit Listrik",
-			Category: "ELECTRICITY",
+			Name:                   "Pembangkit Listrik",
+			Category:               "ELECTRICITY",
+			CategoryIndustryTypeId: 1,
 		},
 		industrytype.IndustryType{
-			Name:     "Pabrik Besi",
-			Category: "NON ELECTRICITY",
+			Name:                   "Pabrik Besi",
+			Category:               "NON ELECTRICITY",
+			CategoryIndustryTypeId: 3,
 		},
 		industrytype.IndustryType{
-			Name:     "Pabrik Nikel",
-			Category: "NON ELECTRICITY",
+			Name:                   "Pabrik Nikel",
+			Category:               "NON ELECTRICITY",
+			CategoryIndustryTypeId: 3,
 		},
 		industrytype.IndustryType{
-			Name:     "Pabrik Gula",
-			Category: "NON ELECTRICITY",
+			Name:                   "Pabrik Gula",
+			Category:               "NON ELECTRICITY",
+			CategoryIndustryTypeId: 3,
 		},
 		industrytype.IndustryType{
-			Name:     "Pabrik Kertas",
-			Category: "NON ELECTRICITY",
+			Name:                   "Pabrik Kertas",
+			Category:               "NON ELECTRICITY",
+			CategoryIndustryTypeId: 3,
 		},
 		industrytype.IndustryType{
-			Name:     "Pabrik Semen",
-			Category: "NON ELECTRICITY",
+			Name:                   "Pabrik Semen",
+			Category:               "NON ELECTRICITY",
+			CategoryIndustryTypeId: 2,
 		},
 		industrytype.IndustryType{
-			Name:     "Pabrik Tekstil",
-			Category: "NON ELECTRICITY",
+			Name:                   "Pabrik Tekstil",
+			Category:               "NON ELECTRICITY",
+			CategoryIndustryTypeId: 3,
 		},
 		industrytype.IndustryType{
-			Name:     "Perdagangan Besar Bahan Bakar Padat, Cair, dan Gas dan Produk Ybdi",
-			Category: "NON ELECTRICITY",
+			Name:                   "Perdagangan Besar Bahan Bakar Padat, Cair, dan Gas dan Produk Ybdi",
+			Category:               "NON ELECTRICITY",
+			CategoryIndustryTypeId: 3,
 		},
 		industrytype.IndustryType{
-			Name:     "Trader Batubara",
-			Category: "NON ELECTRICITY",
+			Name:                   "Trader Batubara",
+			Category:               "NON ELECTRICITY",
+			CategoryIndustryTypeId: 3,
 		},
 	)
 

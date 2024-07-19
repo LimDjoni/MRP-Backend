@@ -1400,6 +1400,9 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 	startFilter := fmt.Sprintf("%v-01-01", year)
 	endFilter := fmt.Sprintf("%v-12-31", year)
 
+	fmt.Println(startFilter)
+	fmt.Println(endFilter)
+
 	companyElectricity := make(map[string][]string)
 	companyCement := make(map[string][]string)
 	companyNonElectricity := make(map[string][]string)

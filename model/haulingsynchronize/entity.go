@@ -12,4 +12,5 @@ type HaulingSynchronize struct {
 	LastSynchronizeJetty *string       `json:"last_synchronize_jetty" gorm:"DATETIME"`
 	IupopkId             uint          `json:"iupopk_id"`
 	Iupopk               iupopk.Iupopk `json:"iupopk"`
+	FailedCount          int           `json:"failed_count"`
 }
