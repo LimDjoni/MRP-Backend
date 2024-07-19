@@ -5,6 +5,7 @@ import (
 	"ajebackend/model/cafassignmentenduser"
 	"ajebackend/model/coareport"
 	"ajebackend/model/coareportln"
+	"ajebackend/model/contract"
 	"ajebackend/model/dmo"
 	"ajebackend/model/electricassignment"
 	"ajebackend/model/electricassignmentenduser"
@@ -92,6 +93,8 @@ type Service interface {
 	CreateJettyBalance(input pitloss.InputJettyPitLoss, iupopkId int, userId uint) (jettybalance.JettyBalance, error)
 	UpdateJettyBalance(id int, input pitloss.InputUpdateJettyPitLoss, iupopkId int, userId uint) (jettybalance.JettyBalance, error)
 	DeleteJettyBalance(id int, userId uint, iupopkId int) (bool, error)
+	CreateContract(input contract.InputCreateUpdateContract, location string, iupopkId int, userId uint) (contract.Contract, error)
+	UpdateContract(id int, input contract.InputCreateUpdateContract, location string, iupopkId int, userId uint) (contract.Contract, error)
 }
 
 type service struct {
@@ -506,4 +509,16 @@ func (s *service) DeleteJettyBalance(id int, userId uint, iupopkId int) (bool, e
 	data, dataErr := s.repository.DeleteJettyBalance(id, userId, iupopkId)
 
 	return data, dataErr
+}
+
+func (s *service) CreateContract(input contract.InputCreateUpdateContract, location string, iupopkId int, userId uint) (contract.Contract, error) {
+	contract, contractErr := s.repository.CreateContract(input, location, iupopkId, userId)
+
+	return contract, contractErr
+}
+
+func (s *service) UpdateContract(id int, input contract.InputCreateUpdateContract, location string, iupopkId int, userId uint) (contract.Contract, error) {
+	updateContract, updateContractErr := s.repository.UpdateContract(id, input, location, iupopkId, userId)
+
+	return updateContract, updateContractErr
 }

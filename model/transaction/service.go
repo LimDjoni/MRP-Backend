@@ -113,6 +113,7 @@ func (s *service) RequestCreateExcel(reqInput InputRequestCreateExcelMinerba) (m
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("Accept", "application/json")
 	}
+
 	client := &http.Client{}
 	resp, doReqErr := client.Do(req)
 

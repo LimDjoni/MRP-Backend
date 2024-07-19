@@ -9,14 +9,15 @@ import (
 
 type Isp struct {
 	gorm.Model
-	Name        string        `json:"name" gorm:"UNIQUE"`
-	Latitude    string        `json:"latitude"`
-	Longitude   string        `json:"longitude"`
-	Quantity    float64       `json:"quantity"`
-	IupopkId    uint          `json:"iupopk_id"`
-	Iupopk      iupopk.Iupopk `json:"iupopk"`
-	CreatedById uint          `json:"created_by_id"`
-	CreatedBy   user.User     `json:"created_by"`
-	UpdatedById uint          `json:"updated_by_id"`
-	UpdatedBy   user.User     `json:"updated_by"`
+	Name              string        `json:"name" gorm:"UNIQUE"`
+	Latitude          string        `json:"latitude"`
+	Longitude         string        `json:"longitude"`
+	Quantity          float64       `json:"quantity"`
+	TransportQuantity float64       `json:"transport_quantity"`
+	IupopkId          uint          `json:"iupopk_id"`
+	Iupopk            iupopk.Iupopk `json:"iupopk"`
+	CreatedById       uint          `json:"created_by_id"`
+	CreatedBy         user.User     `json:"created_by"`
+	UpdatedById       uint          `json:"updated_by_id"`
+	UpdatedBy         user.User     `json:"updated_by"`
 }

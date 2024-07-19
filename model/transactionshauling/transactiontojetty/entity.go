@@ -14,8 +14,9 @@ import (
 type TransactionToJetty struct {
 	gorm.Model
 	IdNumber              string        `json:"id_number"`
-	TruckId               uint          `json:"truck_id"`
-	Truck                 truck.Truck   `json:"truck"`
+	Quantity              float64       `json:"quantity"`
+	TruckCode             string        `json:"truck_code"`
+	Truck                 truck.Truck   `json:"truck" gorm:"foreignKey:TruckCode;references:Code"`
 	IupopkId              uint          `json:"iupopk_id"`
 	Iupopk                iupopk.Iupopk `json:"iupopk"`
 	IspId                 *uint         `json:"isp_id"`
@@ -26,6 +27,7 @@ type TransactionToJetty struct {
 	Jetty                 jetty.Jetty   `json:"jetty"`
 	Seam                  string        `json:"seam"`
 	Origin                string        `json:"origin"`
+	Gar                   float64       `json:"gar"`
 	ClockOutDate          string        `json:"clock_out_date" gorm:"DATETIME"`
 	TopTruckPhotoLink     string        `json:"top_truck_photo_link"`
 	TopTruckPhotoPath     string        `json:"top_truck_photo_path"`
@@ -35,4 +37,5 @@ type TransactionToJetty struct {
 	CreatedBy             user.User     `json:"created_by"`
 	UpdatedById           uint          `json:"updated_by_id"`
 	UpdatedBy             user.User     `json:"updated_by"`
+	IsFailedUpload        bool          `json:"is_failed_upload"`
 }

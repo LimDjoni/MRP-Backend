@@ -10,4 +10,5 @@ type User struct {
 	Password string `json:"password"`
 	Email    string `json:"email" gorm:"UNIQUE"`
 	IsActive bool   `json:"is_active"`
+	IsHo     bool   `json:"is_ho"`
 }
