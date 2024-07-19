@@ -1404,6 +1404,9 @@ func (r *repository) SaleDetailReport(date string, iupopkId int) (SaleDetail, er
 	startFilter := fmt.Sprintf("%v-01-01", date[0:4])
 	endFilter := date // 19 - feb - 2023
 
+	fmt.Println(startFilter)
+	fmt.Println(endFilter)
+
 	companyElectricity := make(map[string][]string)
 	companyCement := make(map[string][]string)
 	companyNonElectricity := make(map[string][]string)

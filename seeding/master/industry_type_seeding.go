@@ -22,31 +22,49 @@ func SeedingIndustryType(db *gorm.DB) {
 
 	createIndustryType = append(createIndustryType,
 		industrytype.IndustryType{
-			Name: "Pembangkit Listrik",
+			Name:                   "Pembangkit Listrik",
+			Category:               "ELECTRICITY",
+			CategoryIndustryTypeId: 1,
 		},
 		industrytype.IndustryType{
-			Name: "Pabrik Besi",
+			Name:                   "Pabrik Besi",
+			Category:               "NON ELECTRICITY",
+			CategoryIndustryTypeId: 3,
 		},
 		industrytype.IndustryType{
-			Name: "Pabrik Nikel",
+			Name:                   "Pabrik Nikel",
+			Category:               "NON ELECTRICITY",
+			CategoryIndustryTypeId: 3,
 		},
 		industrytype.IndustryType{
-			Name: "Pabrik Gula",
+			Name:                   "Pabrik Gula",
+			Category:               "NON ELECTRICITY",
+			CategoryIndustryTypeId: 3,
 		},
 		industrytype.IndustryType{
-			Name: "Pabrik Kertas",
+			Name:                   "Pabrik Kertas",
+			Category:               "NON ELECTRICITY",
+			CategoryIndustryTypeId: 3,
 		},
 		industrytype.IndustryType{
-			Name: "Pabrik Semen",
+			Name:                   "Pabrik Semen",
+			Category:               "NON ELECTRICITY",
+			CategoryIndustryTypeId: 2,
 		},
 		industrytype.IndustryType{
-			Name: "Pabrik Tekstil",
+			Name:                   "Pabrik Tekstil",
+			Category:               "NON ELECTRICITY",
+			CategoryIndustryTypeId: 3,
 		},
 		industrytype.IndustryType{
-			Name: "Perdagangan Besar Bahan Bakar Padat, Cair, dan Gas dan Produk Ybdi",
+			Name:                   "Perdagangan Besar Bahan Bakar Padat, Cair, dan Gas dan Produk Ybdi",
+			Category:               "NON ELECTRICITY",
+			CategoryIndustryTypeId: 3,
 		},
 		industrytype.IndustryType{
-			Name: "Trader Batubara",
+			Name:                   "Trader Batubara",
+			Category:               "NON ELECTRICITY",
+			CategoryIndustryTypeId: 3,
 		},
 	)
 

@@ -19,6 +19,7 @@ func SeedingIupopk(db *gorm.DB) {
 		return
 	}
 
+	emailTriop := "triop@gmail.com"
 	emailAJE := "angsanajayaenergi123@gmail.com"
 	emailTantra := "traffic.operationtmd@gmail.com"
 
@@ -47,6 +48,18 @@ func SeedingIupopk(db *gorm.DB) {
 			Position:     "Direktur",
 			Code:         "TMD",
 			Location:     "Tanah Bumbu, Provinsi Kalimantan Selatan",
+		},
+		iupopk.Iupopk{
+			Name:         "PT Tri Oetama Persada",
+			Address:      "Jl. Triop",
+			Province:     "Kalimantan Tengah",
+			Email:        &emailTriop,
+			PhoneNumber:  nil,
+			FaxNumber:    nil,
+			DirectorName: "Triop",
+			Position:     "Direktur",
+			Code:         "TRP",
+			Location:     "Tanah Bumbu, Provinsi Kalimantan Tengah",
 		},
 	)
 
