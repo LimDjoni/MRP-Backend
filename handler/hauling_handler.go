@@ -6,6 +6,7 @@ import (
 	"ajebackend/model/transactionshauling"
 	"ajebackend/model/useriupopk"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"strconv"
 
@@ -45,14 +46,47 @@ func (h *haulingHandler) SyncHaulingDataIsp(c *fiber.Ctx) error {
 			"message": "failed synchronize data isp",
 		})
 	}
+	iupopkId := &haulingDataInput.IupopkId
 
-	_, syncTransactionErr := h.haulingSynchronizeService.SynchronizeTransactionIsp(*haulingDataInput)
+	if *iupopkId > 0 {
+		_, syncTransactionErr := h.haulingSynchronizeService.SynchronizeTransactionIsp(*haulingDataInput)
 
-	if syncTransactionErr != nil {
+		if syncTransactionErr != nil {
+			inputJson, _ := json.Marshal(haulingDataInput)
+
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error": syncTransactionErr.Error(),
+			})
+
+			createdErrLog := logs.Logs{
+				Input:   inputJson,
+				Message: messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			return c.Status(400).JSON(fiber.Map{
+				"error":   syncTransactionErr.Error(),
+				"message": "failed synchronize data isp",
+			})
+		}
+	}
+
+	syncTime := &haulingDataInput.SynchronizeTime
+
+	var idEmpty uint = 0
+
+	if &iupopkId == nil || *iupopkId == 0 {
+		iupopkId = &idEmpty
+	}
+
+	getData, getDataErr := h.haulingSynchronizeService.GetSyncMasterDataIsp(*iupopkId)
+
+	if getDataErr != nil {
 		inputJson, _ := json.Marshal(haulingDataInput)
 
 		messageJson, _ := json.Marshal(map[string]interface{}{
-			"error": syncTransactionErr.Error(),
+			"error": getDataErr.Error(),
 		})
 
 		createdErrLog := logs.Logs{
@@ -63,20 +97,44 @@ func (h *haulingHandler) SyncHaulingDataIsp(c *fiber.Ctx) error {
 		h.logService.CreateLogs(createdErrLog)
 
 		return c.Status(400).JSON(fiber.Map{
-			"error":   syncTransactionErr.Error(),
-			"message": "failed synchronize data isp",
+			"error":   getDataErr.Error(),
+			"message": "failed synchronize get data master",
 		})
 	}
 
-	return c.Status(200).JSON(fiber.Map{
-		"message": "success synchronize",
-	})
+	if *iupopkId > 0 {
+		_, updDataErr := h.haulingSynchronizeService.UpdateSyncMasterIsp(*iupopkId, *syncTime)
+
+		if updDataErr != nil {
+			inputJson, _ := json.Marshal(haulingDataInput)
+
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error":     updDataErr.Error(),
+				"sync_time": syncTime,
+			})
+
+			createdErrLog := logs.Logs{
+				Input:   inputJson,
+				Message: messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			return c.Status(400).JSON(fiber.Map{
+				"error":   updDataErr.Error(),
+				"message": "failed update sync hauling synchronize isp",
+			})
+		}
+	}
+
+	return c.Status(200).JSON(getData)
 }
 
 func (h *haulingHandler) SyncHaulingDataJetty(c *fiber.Ctx) error {
 
 	haulingDataInput := new(haulingsynchronize.SynchronizeInputTransactionJetty)
 
+	fmt.Println(haulingDataInput)
 	// Binds the request body to the Person struct
 	if err := c.BodyParser(haulingDataInput); err != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -84,14 +142,48 @@ func (h *haulingHandler) SyncHaulingDataJetty(c *fiber.Ctx) error {
 			"message": "failed synchronize data jetty",
 		})
 	}
+	iupopkId := &haulingDataInput.IupopkId
 
-	_, syncTransactionErr := h.haulingSynchronizeService.SynchronizeTransactionJetty(*haulingDataInput)
+	if *iupopkId > 0 {
+		_, syncTransactionErr := h.haulingSynchronizeService.SynchronizeTransactionJetty(*haulingDataInput)
 
-	if syncTransactionErr != nil {
+		if syncTransactionErr != nil {
+			inputJson, _ := json.Marshal(haulingDataInput)
+
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error": syncTransactionErr.Error(),
+			})
+
+			createdErrLog := logs.Logs{
+				Input:   inputJson,
+				Message: messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			return c.Status(400).JSON(fiber.Map{
+				"error":   syncTransactionErr.Error(),
+				"message": "failed synchronize data jetty",
+			})
+		}
+
+	}
+
+	syncTime := &haulingDataInput.SynchronizeTime
+
+	var idEmpty uint = 0
+
+	if &iupopkId == nil || *iupopkId == 0 {
+		iupopkId = &idEmpty
+	}
+
+	getData, getDataErr := h.haulingSynchronizeService.GetSyncMasterDataJetty(*iupopkId)
+
+	if getDataErr != nil {
 		inputJson, _ := json.Marshal(haulingDataInput)
 
 		messageJson, _ := json.Marshal(map[string]interface{}{
-			"error": syncTransactionErr.Error(),
+			"error": getDataErr.Error(),
 		})
 
 		createdErrLog := logs.Logs{
@@ -102,14 +194,37 @@ func (h *haulingHandler) SyncHaulingDataJetty(c *fiber.Ctx) error {
 		h.logService.CreateLogs(createdErrLog)
 
 		return c.Status(400).JSON(fiber.Map{
-			"error":   syncTransactionErr.Error(),
-			"message": "failed synchronize data jetty",
+			"error":   getDataErr.Error(),
+			"message": "failed synchronize get data master",
 		})
 	}
 
-	return c.Status(200).JSON(fiber.Map{
-		"message": "success synchronize",
-	})
+	if *iupopkId > 0 {
+		_, updDataErr := h.haulingSynchronizeService.UpdateSyncMasterJetty(*iupopkId, *syncTime)
+
+		if updDataErr != nil {
+			inputJson, _ := json.Marshal(haulingDataInput)
+
+			messageJson, _ := json.Marshal(map[string]interface{}{
+				"error":     updDataErr.Error(),
+				"sync_time": syncTime,
+			})
+
+			createdErrLog := logs.Logs{
+				Input:   inputJson,
+				Message: messageJson,
+			}
+
+			h.logService.CreateLogs(createdErrLog)
+
+			return c.Status(400).JSON(fiber.Map{
+				"error":   updDataErr.Error(),
+				"message": "failed update sync hauling synchronize jetty",
+			})
+		}
+	}
+
+	return c.Status(200).JSON(getData)
 }
 
 func (h *haulingHandler) ListStockRom(c *fiber.Ctx) error {
