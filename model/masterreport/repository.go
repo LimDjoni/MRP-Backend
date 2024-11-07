@@ -4552,17 +4552,19 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 							saleDetail.DataDetailIndustry["non_electricity"]["october"]["-"]["-"] += v.Quantity
 						} else {
 							if !helperString(saleDetail.Company["non_electricity"]["-"], "-") {
-								saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
+								if saleDetail.Company["non_electricity"]["-"] != nil {
+									saleDetail.Company["non_electricity"]["-"] = append(saleDetail.Company["non_electricity"]["-"], "-")
+								}
 							}
-
-							if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["october"]["-"]; !okCompany {
-								saleDetail.DataDetailIndustry["non_electricity"]["october"]["-"] = make(map[string]float64)
+							if saleDetail.Company["non_electricity"]["-"] != nil {
+								if _, okCompany := saleDetail.DataDetailIndustry["non_electricity"]["october"]["-"]; !okCompany {
+									saleDetail.DataDetailIndustry["non_electricity"]["october"]["-"] = make(map[string]float64)
+								}
+								saleDetail.DataDetailIndustry["non_electricity"]["october"]["-"]["-"] += v.Quantity
+								saleDetail.DataRecapIndustry["non_electricity"]["october"] += v.Quantity
+								saleDetail.DataRecapIndustry["non_electricity"]["total"] += v.Quantity
 							}
-							saleDetail.DataDetailIndustry["non_electricity"]["october"]["-"]["-"] += v.Quantity
 						}
-
-						saleDetail.DataRecapIndustry["non_electricity"]["october"] += v.Quantity
-						saleDetail.DataRecapIndustry["non_electricity"]["total"] += v.Quantity
 					}
 				}
 
