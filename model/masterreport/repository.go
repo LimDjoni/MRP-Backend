@@ -7962,6 +7962,12 @@ func (r *repository) SaleDetailReport(year string, iupopkId int) (SaleDetail, er
 					saleDetail.LossJetty.August[v.Name] = p.AugustLossQuantity
 				}
 
+				if _, ok := saleDetail.LossJetty.September[v.Name]; ok {
+					saleDetail.LossJetty.September[v.Name] += p.SeptemberLossQuantity
+				} else {
+					saleDetail.LossJetty.September[v.Name] = p.SeptemberLossQuantity
+				}
+
 				if _, ok := saleDetail.LossJetty.October[v.Name]; ok {
 					saleDetail.LossJetty.October[v.Name] += p.OctoberLossQuantity
 				} else {
