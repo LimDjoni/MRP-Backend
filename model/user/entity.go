@@ -1,14 +1,19 @@
 package user
 
 import (
+	"mrpbackend/model/employee"
+
 	"gorm.io/gorm"
 )
 
 type User struct {
 	gorm.Model
-	Username string `json:"username" gorm:"UNIQUE"`
-	Password string `json:"password"`
-	Email    string `json:"email" gorm:"UNIQUE"`
-	IsActive bool   `json:"is_active"`
-	IsHo     bool   `json:"is_ho"`
+	EmployeeId uint   `json:"employee_id" gorm:"unique"` // note: unique should be lowercase
+	Username   string `json:"username" gorm:"unique"`
+	Password   string `json:"password"`
+	Email      string `json:"email" gorm:"unique"`
+	IsActive   bool   `json:"is_active"`
+	CodeEmp    uint   `json:"code_emp"`
+
+	Employee employee.Employee `gorm:"foreignKey:EmployeeId;references:ID" json:"employee"`
 }

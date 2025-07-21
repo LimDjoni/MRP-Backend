@@ -1,11 +1,8 @@
-JWT_SECRET_KEY=
-DATABASE_URL_STAGING=
-BASE_DATABASE_URL_STAGING=
-AWS_SECRET_KEY=
-AWS_ID=
-AWS_BUCKET_NAME=
-AWS_REGION=
-BASE_JOB_URL=
-DATABASE_NAME=
-USERNAME_BASIC=
-PASSWORD_BASIC=
+JWT_SECRET_KEY=aFhQ534iiG
+DATABASE_URL=host=localhost user=postgres password=P@ssw0rdDeli123! dbname=deli_mrp_development port=5432 sslmode=disable TimeZone=Asia/Shanghai
+DATABASE_URL_STAGING=host=localhost user=postgres password=P@ssw0rdDeli123! dbname=deli_mrp_development port=5432 sslmode=disable TimeZone=Asia/Shanghai
+BASE_DATABASE_URL_STAGING=host=localhost user=postgres password=P@ssw0rdDeli123! dbname=postgres port=5432 sslmode=disable TimeZone=Asia/Shanghai
+BASE_JOB_URL=http://localhost:8000
+DATABASE_NAME=deli_mrp_development
+USERNAME_BASIC=emon
+PASSWORD_BASIC=3m0n73rb4n9

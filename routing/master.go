@@ -1,74 +1,98 @@
 package routing
 
 import (
-	"ajebackend/handler"
-	"ajebackend/helper"
-	"ajebackend/model/counter"
-	"ajebackend/model/master/allmaster"
-	"ajebackend/model/master/destination"
-	"ajebackend/model/user"
+	"mrpbackend/handler"
+	"mrpbackend/helper"
+	"mrpbackend/model/allmaster"
+	"mrpbackend/model/user"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/basicauth"
+	jwtware "github.com/gofiber/jwt/v3"
 	"gorm.io/gorm"
 )
 
 func MasterRouting(db *gorm.DB, app fiber.Router, validate *validator.Validate) {
-	destinationRepository := destination.NewRepository(db)
-	destinationService := destination.NewService(destinationRepository)
-
 	userRepository := user.NewRepository(db)
 	userService := user.NewService(userRepository)
 
 	allMasterRepository := allmaster.NewRepository(db)
 	allMasterService := allmaster.NewService(allMasterRepository)
 
-	counterRepository := counter.NewRepository(db)
-	counterService := counter.NewService(counterRepository)
-
-	masterHandler := handler.NewMasterHandler(destinationService, userService, allMasterService, counterService, validate)
+	masterHandler := handler.NewMasterHandler(userService, allMasterService, validate)
 
 	masterRouting := app.Group("/master")
 
-	masterRouting.Use(basicauth.New(basicauth.Config{
-		Users: map[string]string{
-			helper.GetEnvWithKey("USERNAME_BASIC"): helper.GetEnvWithKey("PASSWORD_BASIC"),
+	masterRouting.Use(jwtware.New(jwtware.Config{
+		SigningKey:    []byte(helper.GetEnvWithKey("JWT_SECRET_KEY")),
+		SigningMethod: jwtware.HS256,
+		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
+			return ctx.Status(401).JSON(fiber.Map{
+				"error": "unauthorized",
+				"err":   err.Error(),
+			})
 		},
 	}))
 
-	masterRouting.Get("/global/:iupopk_id", masterHandler.GetListMaster)
-	masterRouting.Put("/update/counter", masterHandler.UpdateCounter)
+	masterRouting.Post("/create/brand", masterHandler.CreateBrand)
+	masterRouting.Post("/create/heavyequipment", masterHandler.CreateHeavyEquipment)
+	masterRouting.Post("/create/series", masterHandler.CreateSeries)
+	masterRouting.Post("/create/kartukeluarga", masterHandler.CreateKartuKeluarga)
+	masterRouting.Post("/create/ktp", masterHandler.CreateKTP)
+	masterRouting.Post("/create/pendidikan", masterHandler.CreatePendidikan)
+	masterRouting.Post("/create/doh", masterHandler.CreateDOH)
+	masterRouting.Post("/create/jabatan", masterHandler.CreateJabatan)
+	masterRouting.Post("/create/sertifikat", masterHandler.CreateSertifikat)
+	masterRouting.Post("/create/mcu", masterHandler.CreateMCU)
+	masterRouting.Post("/create/history", masterHandler.CreateHistory)
 
-	masterRouting.Get("/list/trader", masterHandler.ListTrader)
-	masterRouting.Get("/list/company", masterHandler.ListCompany)
+	masterRouting.Get("/list/brand", masterHandler.GetBrand)
+	masterRouting.Get("/list/heavyequipment", masterHandler.GetHeavyEquipment)
+	masterRouting.Get("/list/series", masterHandler.GetSeries)
+	masterRouting.Get("/list/department", masterHandler.GetDepartment)
+	masterRouting.Get("/list/role", masterHandler.GetRole)
+	masterRouting.Get("/list/position", masterHandler.GetPosition)
+	masterRouting.Get("/list/expireddoh", masterHandler.GetDohKontrak)
 
-	masterRouting.Post("/create/iupopk", masterHandler.CreateIupopk)
-	masterRouting.Post("/create/barge", masterHandler.CreateBarge)
-	masterRouting.Post("/create/tugboat", masterHandler.CreateTugboat)
-	masterRouting.Post("/create/vessel", masterHandler.CreateVessel)
-	masterRouting.Post("/create/portlocation", masterHandler.CreatePortLocation)
-	masterRouting.Post("/create/port", masterHandler.CreatePort)
-	masterRouting.Post("/create/company", masterHandler.CreateCompany)
-	masterRouting.Post("/create/trader", masterHandler.CreateTrader)
-	masterRouting.Post("/create/industrytype", masterHandler.CreateIndustryType)
+	masterRouting.Get("/detail/brand/:id", masterHandler.GetBrandById)
+	masterRouting.Get("/detail/heavyequipment/:id", masterHandler.GetHeavyEquipmentById)
+	masterRouting.Get("/detail/heavyequipment/brand/:brandId", masterHandler.GetHeavyEquipmentByBrandId)
+	masterRouting.Get("/detail/series/:id", masterHandler.GetSeriesById)
+	masterRouting.Get("/detail/series/heavyequipment/:brandId/:heavyequipmentId", masterHandler.GetSeriesByBrandAndEquipmentdID)
 
-	masterRouting.Put("/update/barge/:id", masterHandler.UpdateBarge)
-	masterRouting.Put("/update/tugboat/:id", masterHandler.UpdateTugboat)
-	masterRouting.Put("/update/vessel/:id", masterHandler.UpdateVessel)
-	masterRouting.Put("/update/portlocation/:id", masterHandler.UpdatePortLocation)
-	masterRouting.Put("/update/port/:id", masterHandler.UpdatePort)
-	masterRouting.Put("/update/company/:id", masterHandler.UpdateCompany)
-	masterRouting.Put("/update/trader/:id", masterHandler.UpdateTrader)
-	masterRouting.Put("/update/industrytype/:id", masterHandler.UpdateIndustryType)
+	masterRouting.Put("/update/doh/:id", masterHandler.UpdateDOH)
+	masterRouting.Delete("/delete/doh/:id", masterHandler.DeleteDOH)
 
-	masterRouting.Delete("/delete/barge/:id", masterHandler.DeleteBarge)
-	masterRouting.Delete("/delete/tugboat/:id", masterHandler.DeleteTugboat)
-	masterRouting.Delete("/delete/vessel/:id", masterHandler.DeleteVessel)
-	masterRouting.Delete("/delete/portlocation/:id", masterHandler.DeletePortLocation)
-	masterRouting.Delete("/delete/port/:id", masterHandler.DeletePort)
-	masterRouting.Delete("/delete/company/:id", masterHandler.DeleteCompany)
-	masterRouting.Delete("/delete/trader/:id", masterHandler.DeleteTrader)
-	masterRouting.Delete("/delete/industrytype/:id", masterHandler.DeleteIndustryType)
+	masterRouting.Put("/update/jabatan/:id", masterHandler.UpdateJabatan)
+	masterRouting.Delete("/delete/jabatan/:id", masterHandler.DeleteJabatan)
+
+	masterRouting.Put("/update/sertifikat/:id", masterHandler.UpdateSertifikat)
+	masterRouting.Delete("/delete/sertifikat/:id", masterHandler.DeleteSertifikat)
+
+	masterRouting.Put("/update/mcu/:id", masterHandler.UpdateMCU)
+	masterRouting.Delete("/delete/mcu/:id", masterHandler.DeleteMCU)
+	masterRouting.Get("/list/mcuberkala", masterHandler.GetMCUBerkala)
+
+	masterRouting.Put("/update/history/:id", masterHandler.UpdateHistory)
+	masterRouting.Delete("/delete/history/:id", masterHandler.DeleteHistory)
+
+	masterRouting.Get("/sidebar/:userId", masterHandler.GenerateSideBar)
+
+	userRoleRouting := app.Group("/userRole") // /api
+
+	userRoleRouting.Use(jwtware.New(jwtware.Config{
+		SigningKey:    []byte(helper.GetEnvWithKey("JWT_SECRET_KEY")),
+		SigningMethod: jwtware.HS256,
+		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
+			return ctx.Status(401).JSON(fiber.Map{
+				"error": "unauthorized",
+				"err":   err.Error(),
+			})
+		},
+	}))
+
+	userRoleRouting.Post("/create", masterHandler.CreateUserRole)
+	userRoleRouting.Get("/list", masterHandler.GetUserRole)
+	userRoleRouting.Get("/detail/:id", masterHandler.GetUserRoleById)
 
 }

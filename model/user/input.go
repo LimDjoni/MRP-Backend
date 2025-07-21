@@ -1,9 +1,11 @@
 package user
 
 type RegisterUserInput struct {
-	Username string `json:"username" validate:"required"`
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=8,max=12"`
+	EmployeeId uint   `json:"employee_id" validate:"required"`
+	Username   string `json:"username" validate:"required"`
+	Email      string `json:"email" validate:"required,email"`
+	Password   string `json:"password" validate:"required,min=8,max=12"`
+	CodeEmp    uint   `json:"code_emp" validate:"required"`
 }
 
 type LoginUserInput struct {
