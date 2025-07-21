@@ -208,6 +208,7 @@ func (h *fuelratiosHandler) GetFindFuelRatioExport(c *fiber.Ctx) error {
 	filterFuelRatio.LastHM = c.Query("last_hm")
 	filterFuelRatio.Field = c.Query("field")
 	filterFuelRatio.Sort = c.Query("sort")
+	filterFuelRatio.TotalKonsumsiBBM = c.Query("total_konsumsi_bbm")
 
 	listFuelRatio, listFuelRatioErr := h.fuelratiosService.FindFuelRatioExport(filterFuelRatio)
 
