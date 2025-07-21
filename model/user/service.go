@@ -2,6 +2,7 @@ package user
 
 type Service interface {
 	RegisterUser(user RegisterUserInput) (User, error)
+	LoginUser(input LoginUserInput) (TokenUser, error)
 	FindUser(id uint) (User, error)
 	ChangePassword(newPassword string, id uint) (User, error)
 	ResetPassword(email string, newPassword string) (User, error)
@@ -19,6 +20,12 @@ func (s *service) RegisterUser(user RegisterUserInput) (User, error) {
 	newUser, err := s.repository.RegisterUser(user)
 
 	return newUser, err
+}
+
+func (s *service) LoginUser(input LoginUserInput) (TokenUser, error) {
+	loginUser, loginUserErr := s.repository.LoginUser(input)
+
+	return loginUser, loginUserErr
 }
 
 func (s *service) FindUser(id uint) (User, error) {
