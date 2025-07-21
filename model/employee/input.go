@@ -135,6 +135,11 @@ type BasedOnAge struct {
 	Stage5 uint `json:"stage_5"`
 }
 
+type BasedOnLokal struct {
+	Lokal    uint `json:"lokal"`
+	NonLokal uint `json:"non_lokal"`
+}
+
 type DashboardEmployee struct {
 	TotalEmployee     uint              `json:"total_employee"`
 	TotalMale         uint              `json:"total_male"`
@@ -146,6 +151,7 @@ type DashboardEmployee struct {
 	BasedOnEducation  BasedOnEducation  `json:"based_on_education"`
 	BasedOnDepartment BasedOnDepartment `json:"based_on_department"`
 	BasedOnRing       BasedOnRing       `json:"based_on_ring"`
+	BasedOnLokal      BasedOnLokal      `json:"based_on_lokal"`
 }
 
 type SortFilterDashboardEmployee struct {
