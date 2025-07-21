@@ -798,6 +798,23 @@ func (r *repository) ListDashboard(empCode uint, dashboardSort SortFilterDashboa
 	}
 	dashboardEmployees.BasedOnRing = ring
 
+	// BASED ON LOKAL NON LOKAL
+	var lokalNonLokal BasedOnLokal
+
+	errLokal := r.db.Model(&Employee{}).
+		Joins("JOIN laporans ON employees.laporan_id = laporans.id").
+		Select(`
+			COUNT(CASE WHEN LOWER(laporans.kategori_lokal_non_lokal) LIKE 'lokal' THEN 1 END) AS lokal,
+			COUNT(CASE WHEN LOWER(laporans.kategori_lokal_non_lokal) LIKE 'non lokal' THEN 1 END) AS non_lokal
+		`).
+		Where(queryFilter).
+		Scan(&lokalNonLokal).Error
+
+	if errLokal != nil {
+		return dashboardEmployees, errLokal
+	}
+	dashboardEmployees.BasedOnLokal = lokalNonLokal
+
 	return dashboardEmployees, nil
 }
 
