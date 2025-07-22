@@ -31,7 +31,7 @@ func (r *repository) CreateFuelRatio(FuelRatioInput RegisterFuelRatioInput) (Fue
 	var newFuelRatio FuelRatio
 
 	newFuelRatio.UnitId = FuelRatioInput.UnitId
-	newFuelRatio.EmployeeId = FuelRatioInput.EmployeeId
+	newFuelRatio.OperatorName = FuelRatioInput.OperatorName
 	newFuelRatio.Shift = FuelRatioInput.Shift
 	newFuelRatio.FirstHM = FuelRatioInput.FirstHM
 	newFuelRatio.LastHM = FuelRatioInput.LastHM
@@ -58,8 +58,7 @@ func (r *repository) FindFuelRatio() ([]FuelRatio, error) {
 		Preload("Unit.HeavyEquipment").
 		Preload("Unit.Series").
 		Preload("Unit.Series.Brand").
-		Preload("Unit.Series.HeavyEquipment").
-		Preload("Employee").Find(&fuelratios).Error
+		Preload("Unit.Series.HeavyEquipment").Find(&fuelratios).Error
 
 	return fuelratios, errFind
 }
@@ -74,7 +73,6 @@ func (r *repository) FindFuelRatioById(id uint) (FuelRatio, error) {
 		Preload("Unit.Series").
 		Preload("Unit.Series.Brand").
 		Preload("Unit.Series.HeavyEquipment").
-		Preload("Employee").
 		Where("id = ?", id).First(&fuelratios).Error
 	return fuelratios, errFind
 }
@@ -96,8 +94,8 @@ func (r *repository) ListFuelRatio(page int, sortFilter SortFilterFuelRatio) (Pa
 		queryFilter = queryFilter + " AND cast(u.unit_name AS TEXT) LIKE '%" + sortFilter.UnitId + "%'"
 	}
 
-	if sortFilter.EmployeeId != "" {
-		queryFilter = queryFilter + " AND cast(o.firstname AS TEXT) LIKE '%" + sortFilter.EmployeeId + "%'"
+	if sortFilter.OperatorName != "" {
+		queryFilter = queryFilter + " AND LOWER(operator_name) LIKE '%" + strings.ToLower(sortFilter.OperatorName) + "%'"
 	}
 
 	if sortFilter.Shift != "" {
@@ -112,16 +110,14 @@ func (r *repository) ListFuelRatio(page int, sortFilter SortFilterFuelRatio) (Pa
 		queryFilter = queryFilter + " AND status = " + sortFilter.Status
 	}
 
-	errFind := r.db.
+	errFind := r.db.Debug().
 		Joins("JOIN units u ON fuel_ratios.unit_id = u.id").
-		Joins("JOIN employees o ON fuel_ratios.employee_id = o.id").
 		Preload("Unit").
 		Preload("Unit.Brand").
 		Preload("Unit.HeavyEquipment").
 		Preload("Unit.Series").
 		Preload("Unit.Series.Brand").
-		Preload("Unit.Series.HeavyEquipment").
-		Preload("Employee").Where(queryFilter).Order(querySort).Scopes(paginateData(listFuelRatio, &pagination, r.db, queryFilter)).Find(&listFuelRatio).Error
+		Preload("Unit.Series.HeavyEquipment").Where(queryFilter).Order(querySort).Scopes(paginateData(listFuelRatio, &pagination, r.db, queryFilter)).Find(&listFuelRatio).Error
 
 	if errFind != nil {
 		return pagination, errFind
@@ -224,7 +220,6 @@ func (r *repository) FindFuelRatioExport(sortFilter SortFilterFuelRatioSummary) 
 			) / NULLIF(ab.consumption, 0) AS total_konsumsi_bbm
 		`).
 		Joins("JOIN units u ON fr.unit_id = u.id").
-		Joins("JOIN employees o ON fr.employee_id = o.id").
 		Joins(`JOIN alat_berats ab 
 			ON ab.brand_id = u.brand_id 
 			AND ab.heavy_equipment_id = u.heavy_equipment_id 
@@ -346,7 +341,6 @@ func (r *repository) ListRangkuman(page int, sortFilter SortFilterFuelRatioSumma
 			) / NULLIF(ab.consumption, 0) AS total_konsumsi_bbm
 		`).
 		Joins("JOIN units u ON fr.unit_id = u.id").
-		Joins("JOIN employees o ON fr.employee_id = o.id").
 		Joins(`JOIN alat_berats ab 
 			ON ab.brand_id = u.brand_id 
 			AND ab.heavy_equipment_id = u.heavy_equipment_id 

@@ -2,7 +2,7 @@ package fuelratio
 
 type RegisterFuelRatioInput struct {
 	UnitId       uint    `json:"unit_id" validate:"required"`
-	EmployeeId   uint    `json:"employee_id" validate:"required"`
+	OperatorName string  `json:"operator_name" validate:"required"`
 	Shift        string  `json:"shift"`
 	Tanggal      string  `json:"tanggal"`
 	FirstHM      float64 `json:"first_hm"`
@@ -14,13 +14,13 @@ type RegisterFuelRatioInput struct {
 }
 
 type SortFilterFuelRatio struct {
-	Field      string
-	Sort       string
-	UnitId     string
-	EmployeeId string
-	Shift      string
-	FirstHM    string
-	Status     string
+	Field        string
+	Sort         string
+	UnitId       string
+	OperatorName string
+	Shift        string
+	FirstHM      string
+	Status       string
 }
 
 type SortFilterFuelRatioSummary struct {
