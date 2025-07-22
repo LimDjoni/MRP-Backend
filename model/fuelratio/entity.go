@@ -1,7 +1,6 @@
 package fuelratio
 
 import (
-	"mrpbackend/model/employee"
 	"mrpbackend/model/unit"
 
 	"gorm.io/gorm"
@@ -10,7 +9,7 @@ import (
 type FuelRatio struct {
 	gorm.Model
 	UnitId       uint    `json:"unit_id"`
-	EmployeeId   uint    `json:"employee_id"`
+	OperatorName string  `json:"operator_name"`
 	Shift        string  `json:"shift"`
 	Tanggal      string  `json:"tanggal"`
 	FirstHM      float64 `json:"first_hm"`
@@ -20,6 +19,5 @@ type FuelRatio struct {
 	TotalRefill  uint    `json:"total_refill"`
 	Status       bool    `json:"status"`
 
-	Unit     unit.Unit         `gorm:"foreignKey:UnitId;references:ID" json:"Unit"`
-	Employee employee.Employee `gorm:"foreignKey:EmployeeId;references:ID" json:"Employee"`
+	Unit unit.Unit `gorm:"foreignKey:UnitId;references:ID" json:"Unit"`
 }
