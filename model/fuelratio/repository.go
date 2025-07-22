@@ -110,7 +110,7 @@ func (r *repository) ListFuelRatio(page int, sortFilter SortFilterFuelRatio) (Pa
 		queryFilter = queryFilter + " AND status = " + sortFilter.Status
 	}
 
-	errFind := r.db.Debug().
+	errFind := r.db.
 		Joins("JOIN units u ON fuel_ratios.unit_id = u.id").
 		Preload("Unit").
 		Preload("Unit.Brand").
@@ -175,7 +175,12 @@ func (r *repository) FindFuelRatioExport(sortFilter SortFilterFuelRatioSummary) 
 		querySort = sortFilter.Field + " " + sortFilter.Sort
 	}
 
-	// Subquery
+	// 👇 alat_berats subquery with DISTINCT ON
+	subAlatBerat := `
+		(SELECT DISTINCT ON (brand_id, heavy_equipment_id, series_id) *
+		FROM alat_berats) ab`
+
+	// 👇 Build the subQuery
 	subQuery := r.db.Table("fuel_ratios fr").
 		Select(`
 			fr.unit_id, 
@@ -184,46 +189,31 @@ func (r *repository) FindFuelRatioExport(sortFilter SortFilterFuelRatioSummary) 
 			SUM(fr.total_refill) AS total_refill, 
 			ab.consumption, 
 			ab.tolerance, 
-			SUM(
-				CASE
-					WHEN fr.tanggal_awal IS NOT NULL AND fr.tanggal_akhir IS NOT NULL 
-						AND fr.tanggal_awal != '' AND fr.tanggal_akhir != ''
-					THEN EXTRACT(EPOCH FROM (fr.tanggal_akhir::timestamp - fr.tanggal_awal::timestamp)) / 3600
-					ELSE fr.last_hm - fr.first_hm
-				END
-			) AS duration,
-			SUM(
-				CASE
-					WHEN fr.tanggal_awal IS NOT NULL AND fr.tanggal_akhir IS NOT NULL 
-						AND fr.tanggal_awal != '' AND fr.tanggal_akhir != ''
-					THEN (EXTRACT(EPOCH FROM (fr.tanggal_akhir::timestamp - fr.tanggal_awal::timestamp)) / 3600) * ab.consumption
-					ELSE (fr.last_hm - fr.first_hm) * ab.consumption
-				END
-			) AS batas_bawah,
-			SUM(
-				CASE
-					WHEN fr.tanggal_awal IS NOT NULL AND fr.tanggal_akhir IS NOT NULL 
-						AND fr.tanggal_awal != '' AND fr.tanggal_akhir != ''
-					THEN (EXTRACT(EPOCH FROM (fr.tanggal_akhir::timestamp - fr.tanggal_awal::timestamp)) / 3600) * 
-						(ab.consumption + (ab.consumption * ab.tolerance / 100))
-					ELSE (fr.last_hm - fr.first_hm) * 
-						(ab.consumption + (ab.consumption * ab.tolerance / 100))
-				END
-			) AS batas_atas,
-			SUM(
-				CASE
-					WHEN fr.tanggal_awal IS NOT NULL AND fr.tanggal_akhir IS NOT NULL 
-						AND fr.tanggal_awal != '' AND fr.tanggal_akhir != ''
-					THEN EXTRACT(EPOCH FROM (fr.tanggal_akhir::timestamp - fr.tanggal_awal::timestamp)) / 3600
-					ELSE fr.last_hm - fr.first_hm
-				END
-			) / NULLIF(ab.consumption, 0) AS total_konsumsi_bbm
+			SUM(CASE
+				WHEN fr.tanggal_awal IS NOT NULL AND fr.tanggal_akhir IS NOT NULL AND fr.tanggal_awal != '' AND fr.tanggal_akhir != ''
+				THEN EXTRACT(EPOCH FROM (fr.tanggal_akhir::timestamp - fr.tanggal_awal::timestamp)) / 3600
+				ELSE fr.last_hm - fr.first_hm
+			END) AS duration,
+			SUM(CASE
+				WHEN fr.tanggal_awal IS NOT NULL AND fr.tanggal_akhir IS NOT NULL AND fr.tanggal_awal != '' AND fr.tanggal_akhir != ''
+				THEN (EXTRACT(EPOCH FROM (fr.tanggal_akhir::timestamp - fr.tanggal_awal::timestamp)) / 3600) * ab.consumption
+				ELSE (fr.last_hm - fr.first_hm) * ab.consumption
+			END) AS batas_bawah,
+			SUM(CASE
+				WHEN fr.tanggal_awal IS NOT NULL AND fr.tanggal_akhir IS NOT NULL AND fr.tanggal_awal != '' AND fr.tanggal_akhir != ''
+				THEN (EXTRACT(EPOCH FROM (fr.tanggal_akhir::timestamp - fr.tanggal_awal::timestamp)) / 3600) * 
+					(ab.consumption + (ab.consumption * ab.tolerance / 100))
+				ELSE (fr.last_hm - fr.first_hm) * 
+					(ab.consumption + (ab.consumption * ab.tolerance / 100))
+			END) AS batas_atas,
+			SUM(CASE
+				WHEN fr.tanggal_awal IS NOT NULL AND fr.tanggal_akhir IS NOT NULL AND fr.tanggal_awal != '' AND fr.tanggal_akhir != ''
+				THEN EXTRACT(EPOCH FROM (fr.tanggal_akhir::timestamp - fr.tanggal_awal::timestamp)) / 3600
+				ELSE fr.last_hm - fr.first_hm
+			END) / NULLIF(ab.consumption, 0) AS total_konsumsi_bbm
 		`).
 		Joins("JOIN units u ON fr.unit_id = u.id").
-		Joins(`JOIN alat_berats ab 
-			ON ab.brand_id = u.brand_id 
-			AND ab.heavy_equipment_id = u.heavy_equipment_id 
-			AND ab.series_id = u.series_id`).
+		Joins("JOIN "+subAlatBerat+" ON ab.brand_id = u.brand_id AND ab.heavy_equipment_id = u.heavy_equipment_id AND ab.series_id = u.series_id").
 		Where(strings.Join(filters, " AND "), args...).
 		Group("fr.unit_id, u.unit_name, fr.shift, ab.consumption, ab.tolerance")
 
@@ -253,7 +243,6 @@ func (r *repository) ListRangkuman(page int, sortFilter SortFilterFuelRatioSumma
 	pagination.Limit = 7
 	pagination.Page = page
 
-	// WHERE clauses
 	var filters []string
 	var args []interface{}
 
@@ -264,39 +253,38 @@ func (r *repository) ListRangkuman(page int, sortFilter SortFilterFuelRatioSumma
 		filters = append(filters, "fr.tanggal_akhir >= ?")
 		args = append(args, sortFilter.TanggalAkhir)
 	}
-
 	if sortFilter.TanggalAwal != "" {
 		filters = append(filters, "fr.tanggal_awal <= ?")
 		args = append(args, sortFilter.TanggalAwal)
 	}
-
 	if sortFilter.UnitName != "" {
 		filters = append(filters, "u.unit_name ILIKE ?")
 		args = append(args, "%"+sortFilter.UnitName+"%")
 	}
-
 	if sortFilter.Shift != "" {
 		filters = append(filters, "fr.shift ILIKE ?")
 		args = append(args, "%"+sortFilter.Shift+"%")
 	}
-
 	if sortFilter.Consumption != "" {
 		filters = append(filters, "CAST(ab.consumption AS TEXT) ILIKE ?")
 		args = append(args, "%"+sortFilter.Consumption+"%")
 	}
-
 	if sortFilter.Tolerance != "" {
 		filters = append(filters, "CAST(ab.tolerance AS TEXT) ILIKE ?")
 		args = append(args, "%"+sortFilter.Tolerance+"%")
 	}
 
-	// Default sort
 	querySort := "u.unit_name desc"
 	if sortFilter.Field != "" && sortFilter.Sort != "" {
 		querySort = sortFilter.Field + " " + sortFilter.Sort
 	}
 
-	// Build main query
+	// 👇 alat_berats subquery with DISTINCT ON
+	subAlatBerat := `
+		(SELECT DISTINCT ON (brand_id, heavy_equipment_id, series_id) *
+		FROM alat_berats) ab`
+
+	// 👇 Build the subQuery
 	subQuery := r.db.Table("fuel_ratios fr").
 		Select(`
 			fr.unit_id, 
@@ -305,75 +293,57 @@ func (r *repository) ListRangkuman(page int, sortFilter SortFilterFuelRatioSumma
 			SUM(fr.total_refill) AS total_refill, 
 			ab.consumption, 
 			ab.tolerance, 
-			SUM(
-				CASE
-					WHEN fr.tanggal_awal IS NOT NULL AND fr.tanggal_akhir IS NOT NULL 
-						AND fr.tanggal_awal != '' AND fr.tanggal_akhir != ''
-					THEN EXTRACT(EPOCH FROM (fr.tanggal_akhir::timestamp - fr.tanggal_awal::timestamp)) / 3600
-					ELSE fr.last_hm - fr.first_hm
-				END
-			) AS duration,
-			SUM(
-				CASE
-					WHEN fr.tanggal_awal IS NOT NULL AND fr.tanggal_akhir IS NOT NULL 
-						AND fr.tanggal_awal != '' AND fr.tanggal_akhir != ''
-					THEN (EXTRACT(EPOCH FROM (fr.tanggal_akhir::timestamp - fr.tanggal_awal::timestamp)) / 3600) * ab.consumption
-					ELSE (fr.last_hm - fr.first_hm) * ab.consumption
-				END
-			) AS batas_bawah,
-			SUM(
-				CASE
-					WHEN fr.tanggal_awal IS NOT NULL AND fr.tanggal_akhir IS NOT NULL 
-						AND fr.tanggal_awal != '' AND fr.tanggal_akhir != ''
-					THEN (EXTRACT(EPOCH FROM (fr.tanggal_akhir::timestamp - fr.tanggal_awal::timestamp)) / 3600) * 
-						(ab.consumption + (ab.consumption * ab.tolerance / 100))
-					ELSE (fr.last_hm - fr.first_hm) * 
-						(ab.consumption + (ab.consumption * ab.tolerance / 100))
-				END
-			) AS batas_atas,
-			SUM(
-				CASE
-					WHEN fr.tanggal_awal IS NOT NULL AND fr.tanggal_akhir IS NOT NULL 
-						AND fr.tanggal_awal != '' AND fr.tanggal_akhir != ''
-					THEN EXTRACT(EPOCH FROM (fr.tanggal_akhir::timestamp - fr.tanggal_awal::timestamp)) / 3600
-					ELSE fr.last_hm - fr.first_hm
-				END
-			) / NULLIF(ab.consumption, 0) AS total_konsumsi_bbm
+			SUM(CASE
+				WHEN fr.tanggal_awal IS NOT NULL AND fr.tanggal_akhir IS NOT NULL AND fr.tanggal_awal != '' AND fr.tanggal_akhir != ''
+				THEN EXTRACT(EPOCH FROM (fr.tanggal_akhir::timestamp - fr.tanggal_awal::timestamp)) / 3600
+				ELSE fr.last_hm - fr.first_hm
+			END) AS duration,
+			SUM(CASE
+				WHEN fr.tanggal_awal IS NOT NULL AND fr.tanggal_akhir IS NOT NULL AND fr.tanggal_awal != '' AND fr.tanggal_akhir != ''
+				THEN (EXTRACT(EPOCH FROM (fr.tanggal_akhir::timestamp - fr.tanggal_awal::timestamp)) / 3600) * ab.consumption
+				ELSE (fr.last_hm - fr.first_hm) * ab.consumption
+			END) AS batas_bawah,
+			SUM(CASE
+				WHEN fr.tanggal_awal IS NOT NULL AND fr.tanggal_akhir IS NOT NULL AND fr.tanggal_awal != '' AND fr.tanggal_akhir != ''
+				THEN (EXTRACT(EPOCH FROM (fr.tanggal_akhir::timestamp - fr.tanggal_awal::timestamp)) / 3600) * 
+					(ab.consumption + (ab.consumption * ab.tolerance / 100))
+				ELSE (fr.last_hm - fr.first_hm) * 
+					(ab.consumption + (ab.consumption * ab.tolerance / 100))
+			END) AS batas_atas,
+			SUM(CASE
+				WHEN fr.tanggal_awal IS NOT NULL AND fr.tanggal_akhir IS NOT NULL AND fr.tanggal_awal != '' AND fr.tanggal_akhir != ''
+				THEN EXTRACT(EPOCH FROM (fr.tanggal_akhir::timestamp - fr.tanggal_awal::timestamp)) / 3600
+				ELSE fr.last_hm - fr.first_hm
+			END) / NULLIF(ab.consumption, 0) AS total_konsumsi_bbm
 		`).
 		Joins("JOIN units u ON fr.unit_id = u.id").
-		Joins(`JOIN alat_berats ab 
-			ON ab.brand_id = u.brand_id 
-			AND ab.heavy_equipment_id = u.heavy_equipment_id 
-			AND ab.series_id = u.series_id`).
+		Joins("JOIN "+subAlatBerat+" ON ab.brand_id = u.brand_id AND ab.heavy_equipment_id = u.heavy_equipment_id AND ab.series_id = u.series_id").
 		Where(strings.Join(filters, " AND "), args...).
 		Group("fr.unit_id, u.unit_name, fr.shift, ab.consumption, ab.tolerance")
 
-	// Final query from subquery
+	// 👇 Wrap subquery
 	tx := r.db.Table("(?) AS sub", subQuery)
 
 	if sortFilter.TotalKonsumsiBBM != "" {
 		tx = tx.Where("CAST(total_konsumsi_bbm AS TEXT) ILIKE ?", "%"+sortFilter.TotalKonsumsiBBM+"%")
 	}
-
 	if sortFilter.TotalRefill != "" {
 		tx = tx.Where("CAST(total_refill AS TEXT) ILIKE ?", "%"+sortFilter.TotalRefill+"%")
 	}
-
 	if sortFilter.Duration != "" {
 		tx = tx.Where("CAST(duration AS TEXT) ILIKE ?", "%"+sortFilter.Duration+"%")
 	}
 
 	tx = tx.Order(querySort)
 
-	// Count total for pagination
 	var count int64
 	if err := tx.Count(&count).Error; err != nil {
 		return pagination, err
 	}
+
 	pagination.TotalRows = count
 	pagination.TotalPages = int(math.Ceil(float64(count) / float64(pagination.Limit)))
 
-	// Apply pagination
 	offset := (pagination.Page - 1) * pagination.Limit
 	if err := tx.Limit(pagination.Limit).Offset(offset).Scan(&results).Error; err != nil {
 		return pagination, err
