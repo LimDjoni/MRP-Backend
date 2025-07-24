@@ -257,8 +257,8 @@ func (r *repository) ListEmployee(page int, sortFilter SortFilterEmployee) (Pagi
 
 	pagination.Limit = 10
 	pagination.Page = page
-	queryFilter := "id > 0"
-	querySort := "id desc"
+	queryFilter := "employees.id > 0"
+	querySort := "employees.id desc"
 
 	if sortFilter.Field != "" && sortFilter.Sort != "" {
 		querySort = sortFilter.Field + " " + sortFilter.Sort
@@ -294,18 +294,62 @@ func (r *repository) ListEmployee(page int, sortFilter SortFilterEmployee) (Pagi
 		queryFilter = queryFilter + " AND (CAST(firstname AS TEXT) || ' ' || CAST(lastname AS TEXT)) ILIKE '%" + sortFilter.Firstname + "%'"
 	}
 
-	if sortFilter.PhoneNumber != "" {
-		queryFilter = queryFilter + " AND cast(phone_number AS TEXT) LIKE '%" + sortFilter.PhoneNumber + "%'"
+	if sortFilter.HireBy != "" {
+		queryFilter = queryFilter + " AND cast(hired_by AS TEXT) ILIKE '%" + sortFilter.HireBy + "%'"
 	}
 
-	if sortFilter.Email != "" {
-		queryFilter = queryFilter + " AND cast(email AS TEXT) LIKE '%" + sortFilter.Email + "%'"
+	if sortFilter.Agama != "" {
+		queryFilter = queryFilter + " AND cast(ktps.agama AS TEXT) LIKE '%" + sortFilter.Agama + "%'"
 	}
 
 	if sortFilter.Level != "" {
 		queryFilter = queryFilter + " AND cast(level AS TEXT) LIKE '%" + sortFilter.Level + "%'"
 	}
-	errFind := r.db.
+
+	if sortFilter.Gender != "" {
+		queryFilter = queryFilter + " AND cast(gender AS TEXT) ILIKE '" + sortFilter.Gender + "%'"
+	}
+
+	if sortFilter.KategoriLokalNonLokal != "" {
+		queryFilter = queryFilter + " AND cast(laporans.kategori_lokal_non_lokal AS TEXT) LIKE '" + sortFilter.KategoriLokalNonLokal + "'"
+	}
+
+	if sortFilter.KategoriTriwulan != "" {
+		queryFilter = queryFilter + " AND cast(laporans.kategori_laporan_twiwulan AS TEXT) LIKE '%" + sortFilter.KategoriTriwulan + "%'"
+	}
+
+	if sortFilter.Status != "" {
+		queryFilter = queryFilter + " AND cast(status AS TEXT) LIKE '%" + sortFilter.Status + "%'"
+	}
+
+	if sortFilter.Kontrak != "" {
+		queryFilter = queryFilter + " AND cast(latest_doh.status_kontrak AS TEXT) LIKE '%" + sortFilter.Kontrak + "%'"
+	}
+
+	if sortFilter.RoleId != "" {
+		queryFilter = queryFilter + " AND role_id = " + sortFilter.RoleId
+	}
+
+	if sortFilter.PositionId != "" {
+		queryFilter = queryFilter + " AND position_id = " + sortFilter.PositionId
+	}
+
+	query := r.db.
+		Model(&Employee{}).
+		Joins("LEFT JOIN ktps ON ktps.id = employees.ktp_id").
+		Joins("LEFT JOIN laporans ON laporans.id = employees.laporan_id").
+		Joins(`
+			LEFT JOIN (
+				SELECT DISTINCT ON (employee_id) *
+				FROM dohs
+				ORDER BY employee_id, tanggal_doh DESC
+			) latest_doh ON latest_doh.employee_id = employees.id
+		`).
+		Where(queryFilter)
+
+	paginationScope := paginateData(&Employee{}, &pagination, query)
+
+	errFind := query.
 		Preload("Department").
 		Preload("Role").
 		Preload("Position").
@@ -323,7 +367,9 @@ func (r *repository) ListEmployee(page int, sortFilter SortFilterEmployee) (Pagi
 		Preload("Sertifikat").
 		Preload("MCU").
 		Preload("History").
-		Preload(clause.Associations).Where(queryFilter).Order(querySort).Scopes(paginateData(listEmployee, &pagination, r.db, queryFilter)).Find(&listEmployee).Error
+		Preload(clause.Associations).
+		Order(querySort).Scopes(paginationScope).Find(&listEmployee).Error
+
 	if errFind != nil {
 		return pagination, errFind
 	}

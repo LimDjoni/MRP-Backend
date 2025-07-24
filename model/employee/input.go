@@ -78,15 +78,22 @@ type UpdateEmployeeInput struct {
 }
 
 type SortFilterEmployee struct {
-	Field         string
-	Sort          string
-	CodeEmp       string `json:"code_emp" validate:"required"`
-	NomorKaryawan string `json:"nomor_karyawan" validate:"required"`
-	DepartmentId  string `json:"department_id" validate:"required"`
-	Firstname     string `json:"firstname" validate:"required"`
-	PhoneNumber   string `json:"phone_number"`
-	Email         string `json:"email"`
-	Level         string `json:"level" validate:"required"`
+	Field                 string
+	Sort                  string
+	CodeEmp               string `json:"code_emp" validate:"required"`
+	NomorKaryawan         string `json:"nomor_karyawan" validate:"required"`
+	DepartmentId          string `json:"department_id" validate:"required"`
+	Firstname             string `json:"firstname" validate:"required"`
+	HireBy                string `json:"hire_by"`
+	Agama                 string `json:"agama"`
+	Level                 string `json:"level" validate:"required"`
+	Gender                string `json:"gender"`
+	KategoriLokalNonLokal string `json:"kategori_lokal_non_lokal"`
+	KategoriTriwulan      string `json:"kategori_triwulan"`
+	Status                string `json:"status"`
+	Kontrak               string `json:"kontrak"`
+	RoleId                string `json:"role_id"`
+	PositionId            string `json:"position_id"`
 }
 
 type BasedOnRing struct {
