@@ -130,9 +130,8 @@ func (r *repository) ListFuelRatio(page int, sortFilter SortFilterFuelRatio) (Pa
 
 func (r *repository) FindFuelRatioExport(sortFilter SortFilterFuelRatioSummary) ([]SortFilterFuelRatioSummary, error) {
 	var results []SortFilterFuelRatioSummary
-	var err error
 
-	// WHERE clauses
+	// Filters
 	var filters []string
 	var args []interface{}
 
@@ -143,34 +142,28 @@ func (r *repository) FindFuelRatioExport(sortFilter SortFilterFuelRatioSummary) 
 		filters = append(filters, "fr.tanggal_akhir >= ?")
 		args = append(args, sortFilter.TanggalAkhir)
 	}
-
 	if sortFilter.TanggalAwal != "" {
 		filters = append(filters, "fr.tanggal_awal <= ?")
 		args = append(args, sortFilter.TanggalAwal)
 	}
-
 	if sortFilter.UnitName != "" {
 		filters = append(filters, "u.unit_name ILIKE ?")
 		args = append(args, "%"+sortFilter.UnitName+"%")
 	}
-
 	if sortFilter.Shift != "" {
 		filters = append(filters, "fr.shift ILIKE ?")
 		args = append(args, "%"+sortFilter.Shift+"%")
 	}
-
 	if sortFilter.Consumption != "" {
 		filters = append(filters, "CAST(ab.consumption AS TEXT) ILIKE ?")
 		args = append(args, "%"+sortFilter.Consumption+"%")
 	}
-
 	if sortFilter.Tolerance != "" {
 		filters = append(filters, "CAST(ab.tolerance AS TEXT) ILIKE ?")
 		args = append(args, "%"+sortFilter.Tolerance+"%")
 	}
 
-	// Default sort
-	querySort := "unit_name desc"
+	querySort := "u.unit_name desc"
 	if sortFilter.Field != "" && sortFilter.Sort != "" {
 		querySort = sortFilter.Field + " " + sortFilter.Sort
 	}
@@ -180,7 +173,7 @@ func (r *repository) FindFuelRatioExport(sortFilter SortFilterFuelRatioSummary) 
 		(SELECT DISTINCT ON (brand_id, heavy_equipment_id, series_id) *
 		FROM alat_berats) ab`
 
-	// 👇 Build the subQuery
+	// 👇 Build subQuery (same as ListRangkuman)
 	subQuery := r.db.Table("fuel_ratios fr").
 		Select(`
 			fr.unit_id, 
@@ -217,23 +210,26 @@ func (r *repository) FindFuelRatioExport(sortFilter SortFilterFuelRatioSummary) 
 		Where(strings.Join(filters, " AND "), args...).
 		Group("fr.unit_id, u.unit_name, fr.shift, ab.consumption, ab.tolerance")
 
-	// Build final query from subquery
-	tx := r.db.Table("(?) as summary", subQuery)
+	// Wrap subquery
+	tx := r.db.Table("(?) AS sub", subQuery)
 
+	// Apply post-subquery filters
 	if sortFilter.TotalKonsumsiBBM != "" {
-		tx = tx.Where("CAST(summary.total_konsumsi_bbm AS TEXT) ILIKE ?", "%"+sortFilter.TotalKonsumsiBBM+"%")
+		tx = tx.Where("CAST(total_konsumsi_bbm AS TEXT) ILIKE ?", "%"+sortFilter.TotalKonsumsiBBM+"%")
 	}
-
 	if sortFilter.TotalRefill != "" {
-		tx = tx.Where("CAST(summary.total_refill AS TEXT) ILIKE ?", "%"+sortFilter.TotalRefill+"%")
+		tx = tx.Where("CAST(total_refill AS TEXT) ILIKE ?", "%"+sortFilter.TotalRefill+"%")
 	}
-
 	if sortFilter.Duration != "" {
-		tx = tx.Where("CAST(summary.duration AS TEXT) ILIKE ?", "%"+sortFilter.Duration+"%")
+		tx = tx.Where("CAST(duration AS TEXT) ILIKE ?", "%"+sortFilter.Duration+"%")
 	}
 
-	err = tx.Order(querySort).Scan(&results).Error
-	return results, err
+	// Final query execution without pagination
+	if err := tx.Order(querySort).Scan(&results).Error; err != nil {
+		return nil, err
+	}
+
+	return results, nil
 }
 
 func (r *repository) ListRangkuman(page int, sortFilter SortFilterFuelRatioSummary) (Pagination, error) {
