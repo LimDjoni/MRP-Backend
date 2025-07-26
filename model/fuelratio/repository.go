@@ -118,8 +118,8 @@ func (r *repository) ListFuelRatio(page int, sortFilter SortFilterFuelRatio) (Pa
 		queryFilter = queryFilter + " AND cast(shift AS TEXT) LIKE '%" + sortFilter.Shift + "%'"
 	}
 
-	if sortFilter.FirstHM != "" {
-		queryFilter = queryFilter + " AND first_hm >= '" + sortFilter.FirstHM + "'"
+	if sortFilter.Tanggal != "" {
+		queryFilter = queryFilter + " AND tanggal = '" + sortFilter.Tanggal + "'"
 	}
 
 	if sortFilter.Status != "" {
