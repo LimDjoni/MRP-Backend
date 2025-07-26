@@ -47,3 +47,17 @@ func paginateData(value interface{}, pagination *Pagination, db *gorm.DB, queryF
 		return db.Offset(pagination.GetOffset()).Limit(pagination.GetLimit())
 	}
 }
+
+func paginateDataPage(value interface{}, pagination *Pagination, baseQuery *gorm.DB) func(db *gorm.DB) *gorm.DB {
+	var totalRows int64
+
+	// Count using baseQuery (already includes JOINs and filters)
+	baseQuery.Model(value).Count(&totalRows)
+
+	pagination.TotalRows = totalRows
+	pagination.TotalPages = int(math.Ceil(float64(totalRows) / float64(pagination.Limit)))
+
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Offset(pagination.GetOffset()).Limit(pagination.GetLimit())
+	}
+}
