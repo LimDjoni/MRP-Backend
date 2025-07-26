@@ -133,7 +133,7 @@ func (r *repository) ListFuelRatio(page int, sortFilter SortFilterFuelRatio) (Pa
 		Preload("Unit.HeavyEquipment").
 		Preload("Unit.Series").
 		Preload("Unit.Series.Brand").
-		Preload("Unit.Series.HeavyEquipment").Where(queryFilter).Order(querySort).Scopes(paginateDataPage(listFuelRatio, &pagination, r.db)).Find(&listFuelRatio).Error
+		Preload("Unit.Series.HeavyEquipment").Where(queryFilter).Order(querySort).Scopes(paginateDataPage(listFuelRatio, &pagination, r.db, queryFilter)).Find(&listFuelRatio).Error
 
 	if errFind != nil {
 		return pagination, errFind
