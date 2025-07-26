@@ -154,13 +154,14 @@ func (r *repository) FindFuelRatioExport(sortFilter SortFilterFuelRatioSummary) 
 	filters = append(filters, "fr.status = ?")
 	args = append(args, true)
 
-	if sortFilter.TanggalAkhir != "" {
-		filters = append(filters, "fr.tanggal_akhir >= ?")
-		args = append(args, sortFilter.TanggalAkhir)
+	if sortFilter.FirstHM != "" {
+		filters = append(filters, "(fr.tanggal_awal >= ? OR fr.tanggal >= ?)")
+		args = append(args, sortFilter.FirstHM, sortFilter.FirstHM)
 	}
-	if sortFilter.TanggalAwal != "" {
-		filters = append(filters, "fr.tanggal_awal <= ?")
-		args = append(args, sortFilter.TanggalAwal)
+
+	if sortFilter.LastHM != "" {
+		filters = append(filters, "(fr.tanggal_akhir <= ? OR fr.tanggal <= ?)")
+		args = append(args, sortFilter.LastHM, sortFilter.LastHM)
 	}
 	if sortFilter.UnitName != "" {
 		filters = append(filters, "u.unit_name ILIKE ?")
@@ -215,11 +216,18 @@ func (r *repository) FindFuelRatioExport(sortFilter SortFilterFuelRatioSummary) 
 				ELSE (fr.last_hm - fr.first_hm) * 
 					(ab.consumption + (ab.consumption * ab.tolerance / 100))
 			END) AS batas_atas,
-			SUM(CASE
-				WHEN fr.tanggal_awal IS NOT NULL AND fr.tanggal_akhir IS NOT NULL AND fr.tanggal_awal != '' AND fr.tanggal_akhir != ''
-				THEN EXTRACT(EPOCH FROM (fr.tanggal_akhir::timestamp - fr.tanggal_awal::timestamp)) / 3600
-				ELSE fr.last_hm - fr.first_hm
-			END) / NULLIF(ab.consumption, 0) AS total_konsumsi_bbm
+			TO_CHAR(
+				CEIL((
+					SUM(
+						CASE
+							WHEN fr.tanggal_awal IS NOT NULL AND fr.tanggal_akhir IS NOT NULL AND fr.tanggal_awal != '' AND fr.tanggal_akhir != ''
+							THEN EXTRACT(EPOCH FROM (fr.tanggal_akhir::timestamp - fr.tanggal_awal::timestamp)) / 3600
+							ELSE fr.last_hm - fr.first_hm
+						END
+					) / NULLIF(ab.consumption, 0) * 10
+				)) / 10.0,
+				'FM999999990.0'
+			) AS total_konsumsi_bbm
 		`).
 		Joins("JOIN units u ON fr.unit_id = u.id").
 		Joins("JOIN "+subAlatBerat+" ON ab.brand_id = u.brand_id AND ab.heavy_equipment_id = u.heavy_equipment_id AND ab.series_id = u.series_id").
@@ -261,13 +269,14 @@ func (r *repository) ListRangkuman(page int, sortFilter SortFilterFuelRatioSumma
 	filters = append(filters, "fr.status = ?")
 	args = append(args, true)
 
-	if sortFilter.TanggalAkhir != "" {
-		filters = append(filters, "fr.tanggal_akhir >= ?")
-		args = append(args, sortFilter.TanggalAkhir)
+	if sortFilter.FirstHM != "" {
+		filters = append(filters, "(fr.tanggal_awal >= ? OR fr.tanggal >= ?)")
+		args = append(args, sortFilter.FirstHM, sortFilter.FirstHM)
 	}
-	if sortFilter.TanggalAwal != "" {
-		filters = append(filters, "fr.tanggal_awal <= ?")
-		args = append(args, sortFilter.TanggalAwal)
+
+	if sortFilter.LastHM != "" {
+		filters = append(filters, "(fr.tanggal_akhir <= ? OR fr.tanggal <= ?)")
+		args = append(args, sortFilter.LastHM, sortFilter.LastHM)
 	}
 	if sortFilter.UnitName != "" {
 		filters = append(filters, "u.unit_name ILIKE ?")
@@ -284,11 +293,6 @@ func (r *repository) ListRangkuman(page int, sortFilter SortFilterFuelRatioSumma
 	if sortFilter.Tolerance != "" {
 		filters = append(filters, "CAST(ab.tolerance AS TEXT) ILIKE ?")
 		args = append(args, "%"+sortFilter.Tolerance+"%")
-	}
-
-	querySort := "u.unit_name desc"
-	if sortFilter.Field != "" && sortFilter.Sort != "" {
-		querySort = sortFilter.Field + " " + sortFilter.Sort
 	}
 
 	// 👇 alat_berats subquery with DISTINCT ON
@@ -322,11 +326,18 @@ func (r *repository) ListRangkuman(page int, sortFilter SortFilterFuelRatioSumma
 				ELSE (fr.last_hm - fr.first_hm) * 
 					(ab.consumption + (ab.consumption * ab.tolerance / 100))
 			END) AS batas_atas,
-			SUM(CASE
-				WHEN fr.tanggal_awal IS NOT NULL AND fr.tanggal_akhir IS NOT NULL AND fr.tanggal_awal != '' AND fr.tanggal_akhir != ''
-				THEN EXTRACT(EPOCH FROM (fr.tanggal_akhir::timestamp - fr.tanggal_awal::timestamp)) / 3600
-				ELSE fr.last_hm - fr.first_hm
-			END) / NULLIF(ab.consumption, 0) AS total_konsumsi_bbm
+			TO_CHAR(
+				CEIL((
+					SUM(
+						CASE
+							WHEN fr.tanggal_awal IS NOT NULL AND fr.tanggal_akhir IS NOT NULL AND fr.tanggal_awal != '' AND fr.tanggal_akhir != ''
+							THEN EXTRACT(EPOCH FROM (fr.tanggal_akhir::timestamp - fr.tanggal_awal::timestamp)) / 3600
+							ELSE fr.last_hm - fr.first_hm
+						END
+					) / NULLIF(ab.consumption, 0) * 10
+				)) / 10.0,
+				'FM999999990.0'
+			) AS total_konsumsi_bbm
 		`).
 		Joins("JOIN units u ON fr.unit_id = u.id").
 		Joins("JOIN "+subAlatBerat+" ON ab.brand_id = u.brand_id AND ab.heavy_equipment_id = u.heavy_equipment_id AND ab.series_id = u.series_id").
@@ -344,6 +355,11 @@ func (r *repository) ListRangkuman(page int, sortFilter SortFilterFuelRatioSumma
 	}
 	if sortFilter.Duration != "" {
 		tx = tx.Where("CAST(duration AS TEXT) ILIKE ?", "%"+sortFilter.Duration+"%")
+	}
+
+	querySort := "unit_name desc"
+	if sortFilter.Field != "" && sortFilter.Sort != "" {
+		querySort = sortFilter.Field + " " + sortFilter.Sort
 	}
 
 	tx = tx.Order(querySort)
