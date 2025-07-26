@@ -170,7 +170,7 @@ func (h *fuelratiosHandler) GetListFuelRatio(c *fiber.Ctx) error {
 	filterFuelRatio.UnitId = c.Query("unit_id")
 	filterFuelRatio.OperatorName = c.Query("operator_name")
 	filterFuelRatio.Shift = c.Query("shift")
-	filterFuelRatio.FirstHM = c.Query("first_hm")
+	filterFuelRatio.Tanggal = c.Query("first_hm")
 	filterFuelRatio.Status = c.Query("status")
 	filterFuelRatio.Field = c.Query("field")
 	filterFuelRatio.Sort = c.Query("sort")

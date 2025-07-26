@@ -19,7 +19,7 @@ type SortFilterFuelRatio struct {
 	UnitId       string
 	OperatorName string
 	Shift        string
-	FirstHM      string
+	Tanggal      string
 	Status       string
 }
 
