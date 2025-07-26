@@ -155,13 +155,21 @@ func (r *repository) FindFuelRatioExport(sortFilter SortFilterFuelRatioSummary) 
 	args = append(args, true)
 
 	if sortFilter.FirstHM != "" {
-		filters = append(filters, "(fr.tanggal_awal >= ? OR fr.tanggal >= ?)")
-		args = append(args, sortFilter.FirstHM, sortFilter.FirstHM)
+		parsed, err := time.Parse("2006-01-02 15:04:05", sortFilter.FirstHM)
+		if err == nil {
+			dateOnly := parsed.Format("2006-01-02")
+			filters = append(filters, "(fr.tanggal_awal >= ? OR fr.tanggal >= ?)")
+			args = append(args, sortFilter.FirstHM, dateOnly)
+		}
 	}
 
 	if sortFilter.LastHM != "" {
-		filters = append(filters, "(fr.tanggal_akhir <= ? OR fr.tanggal <= ?)")
-		args = append(args, sortFilter.LastHM, sortFilter.LastHM)
+		parsed, err := time.Parse("2006-01-02 15:04:05", sortFilter.LastHM)
+		if err == nil {
+			dateOnly := parsed.Format("2006-01-02")
+			filters = append(filters, "(fr.tanggal_akhir <= ? OR fr.tanggal <= ?)")
+			args = append(args, sortFilter.LastHM, dateOnly)
+		}
 	}
 	if sortFilter.UnitName != "" {
 		filters = append(filters, "u.unit_name ILIKE ?")
@@ -270,13 +278,21 @@ func (r *repository) ListRangkuman(page int, sortFilter SortFilterFuelRatioSumma
 	args = append(args, true)
 
 	if sortFilter.FirstHM != "" {
-		filters = append(filters, "(fr.tanggal_awal >= ? OR fr.tanggal >= ?)")
-		args = append(args, sortFilter.FirstHM, sortFilter.FirstHM)
+		parsed, err := time.Parse("2006-01-02 15:04:05", sortFilter.FirstHM)
+		if err == nil {
+			dateOnly := parsed.Format("2006-01-02")
+			filters = append(filters, "(fr.tanggal_awal >= ? OR fr.tanggal >= ?)")
+			args = append(args, sortFilter.FirstHM, dateOnly)
+		}
 	}
 
 	if sortFilter.LastHM != "" {
-		filters = append(filters, "(fr.tanggal_akhir <= ? OR fr.tanggal <= ?)")
-		args = append(args, sortFilter.LastHM, sortFilter.LastHM)
+		parsed, err := time.Parse("2006-01-02 15:04:05", sortFilter.LastHM)
+		if err == nil {
+			dateOnly := parsed.Format("2006-01-02")
+			filters = append(filters, "(fr.tanggal_akhir <= ? OR fr.tanggal <= ?)")
+			args = append(args, sortFilter.LastHM, dateOnly)
+		}
 	}
 	if sortFilter.UnitName != "" {
 		filters = append(filters, "u.unit_name ILIKE ?")
