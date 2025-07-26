@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"math"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -27,6 +28,20 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
+func nullIfEmpty(s string) *string {
+	if strings.TrimSpace(s) == "" {
+		return nil
+	}
+	return &s
+}
+
+func dateIfNotZero(t time.Time) *time.Time {
+	if t.IsZero() {
+		return nil
+	}
+	return &t
+}
+
 func (r *repository) CreateFuelRatio(FuelRatioInput RegisterFuelRatioInput) (FuelRatio, error) {
 	var newFuelRatio FuelRatio
 
@@ -35,11 +50,12 @@ func (r *repository) CreateFuelRatio(FuelRatioInput RegisterFuelRatioInput) (Fue
 	newFuelRatio.Shift = FuelRatioInput.Shift
 	newFuelRatio.FirstHM = FuelRatioInput.FirstHM
 	newFuelRatio.LastHM = FuelRatioInput.LastHM
-	newFuelRatio.Tanggal = FuelRatioInput.Tanggal
-	newFuelRatio.TanggalAkhir = FuelRatioInput.TanggalAkhir
-	newFuelRatio.TanggalAwal = FuelRatioInput.TanggalAwal
 	newFuelRatio.TotalRefill = FuelRatioInput.TotalRefill
 	newFuelRatio.Status = FuelRatioInput.Status
+
+	newFuelRatio.Tanggal = nullIfEmpty(FuelRatioInput.Tanggal)
+	newFuelRatio.TanggalAwal = nullIfEmpty(FuelRatioInput.TanggalAwal)
+	newFuelRatio.TanggalAkhir = nullIfEmpty(FuelRatioInput.TanggalAkhir)
 
 	err := r.db.Create(&newFuelRatio).Error
 	if err != nil {
@@ -173,7 +189,7 @@ func (r *repository) FindFuelRatioExport(sortFilter SortFilterFuelRatioSummary) 
 		(SELECT DISTINCT ON (brand_id, heavy_equipment_id, series_id) *
 		FROM alat_berats) ab`
 
-	// 👇 Build subQuery (same as ListRangkuman)
+	// 👇 Build the subQuery
 	subQuery := r.db.Table("fuel_ratios fr").
 		Select(`
 			fr.unit_id, 
