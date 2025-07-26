@@ -257,6 +257,8 @@ func (h *fuelratiosHandler) GetListRangkuman(c *fiber.Ctx) error {
 	filterFuelRatio.LastHM = c.Query("last_hm")
 	filterFuelRatio.Field = c.Query("field")
 	filterFuelRatio.Sort = c.Query("sort")
+	filterFuelRatio.TanggalAwal = c.Query("tanggal_awal")
+	filterFuelRatio.TanggalAkhir = c.Query("tanggal_akhir")
 
 	listFuelRatio, listFuelRatioErr := h.fuelratiosService.ListRangkuman(pageNumber, filterFuelRatio)
 
