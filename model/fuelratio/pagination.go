@@ -48,14 +48,14 @@ func paginateData(value interface{}, pagination *Pagination, db *gorm.DB, queryF
 	}
 }
 
-func paginateDataPage(value interface{}, pagination *Pagination, baseQuery *gorm.DB) func(db *gorm.DB) *gorm.DB {
+func paginateDataPage(value interface{}, pagination *Pagination, db *gorm.DB, queryFilter string) func(db *gorm.DB) *gorm.DB {
 	var totalRows int64
-
-	// Count using baseQuery (already includes JOINs and filters)
-	baseQuery.Model(value).Count(&totalRows)
+	db.Debug().
+		Joins("JOIN units u ON fuel_ratios.unit_id = u.id").Preload(clause.Associations).Where(queryFilter).Model(value).Count(&totalRows)
 
 	pagination.TotalRows = totalRows
-	pagination.TotalPages = int(math.Ceil(float64(totalRows) / float64(pagination.Limit)))
+	totalPages := int(math.Ceil(float64(totalRows) / float64(pagination.Limit)))
+	pagination.TotalPages = totalPages
 
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Offset(pagination.GetOffset()).Limit(pagination.GetLimit())
