@@ -28,11 +28,11 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
-func nullIfEmpty(s string) *string {
-	if strings.TrimSpace(s) == "" {
+func nullIfEmpty(s *string) *string {
+	if s == nil || strings.TrimSpace(*s) == "" {
 		return nil
 	}
-	return &s
+	return s
 }
 
 func dateIfNotZero(t time.Time) *time.Time {
