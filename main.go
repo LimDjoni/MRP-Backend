@@ -2,8 +2,10 @@ package main
 
 import (
 	"mrpbackend/helper"
+	"mrpbackend/model/adjuststock"
 	"mrpbackend/model/alatberat"
 	"mrpbackend/model/employee"
+	"mrpbackend/model/fuelin"
 	"mrpbackend/model/fuelratio"
 	"mrpbackend/model/master/apd"
 	"mrpbackend/model/master/bpjskesehatan"
@@ -99,6 +101,8 @@ func main() {
 			&doh.DOH{},
 			&fuelratio.FuelRatio{},
 			&userposition.UserPosition{},
+			&fuelin.FuelIn{},
+			&adjuststock.AdjustStock{},
 		)
 		fmt.Println(errMigrate)
 	}
@@ -157,5 +161,7 @@ func Setup(db *gorm.DB, validate *validator.Validate, route fiber.Router) {
 	routing2.UnitRouting(db, route, validate)
 	routing2.FuelRatioRouting(db, route, validate)
 	routing2.EmployeeRouting(db, route, validate)
-
+	routing2.StockFuelRouting(db, route, validate)
+	routing2.FuelInRouting(db, route, validate)
+	routing2.AdjustStockRouting(db, route, validate)
 }
