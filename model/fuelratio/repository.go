@@ -119,7 +119,7 @@ func (r *repository) ListFuelRatio(page int, sortFilter SortFilterFuelRatio) (Pa
 	}
 
 	if sortFilter.Tanggal != "" {
-		queryFilter = queryFilter + " AND tanggal = '" + sortFilter.Tanggal + "'"
+		queryFilter = queryFilter + " AND tanggal = '" + sortFilter.Tanggal + "' OR tanggal_awal LIKE '" + sortFilter.Tanggal + "%')"
 	}
 
 	if sortFilter.Status != "" {
@@ -153,6 +153,8 @@ func (r *repository) FindFuelRatioExport(sortFilter SortFilterFuelRatioSummary) 
 
 	filters = append(filters, "fr.status = ?")
 	args = append(args, true)
+
+	filters = append(filters, "fr.deleted_at IS NULL") 
 
 	if sortFilter.FirstHM != "" {
 		parsed, err := time.Parse("2006-01-02 15:04:05", sortFilter.FirstHM)
@@ -276,6 +278,8 @@ func (r *repository) ListRangkuman(page int, sortFilter SortFilterFuelRatioSumma
 
 	filters = append(filters, "fr.status = ?")
 	args = append(args, true)
+
+	filters = append(filters, "fr.deleted_at IS NULL") 
 
 	if sortFilter.FirstHM != "" {
 		parsed, err := time.Parse("2006-01-02 15:04:05", sortFilter.FirstHM)
