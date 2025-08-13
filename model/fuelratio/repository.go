@@ -119,7 +119,7 @@ func (r *repository) ListFuelRatio(page int, sortFilter SortFilterFuelRatio) (Pa
 	}
 
 	if sortFilter.Tanggal != "" {
-		queryFilter = queryFilter + " AND tanggal = '" + sortFilter.Tanggal + "' OR tanggal_awal LIKE '" + sortFilter.Tanggal + "%'"
+		queryFilter = queryFilter + " AND (tanggal = '" + sortFilter.Tanggal + "' OR tanggal_awal LIKE '" + sortFilter.Tanggal + "%')"
 	}
 
 	if sortFilter.Status != "" {
