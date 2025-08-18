@@ -46,7 +46,7 @@ func (r *repository) FindUnit() ([]Unit, error) {
 	errFind := r.db.
 		Preload("Brand").
 		Preload("HeavyEquipment").
-		Preload("Series").Find(&units).Error
+		Preload("Series").Order("units.unit_name").Find(&units).Error
 
 	return units, errFind
 }
@@ -69,7 +69,7 @@ func (r *repository) ListUnit(page int, sortFilter SortFilterUnit) (Pagination, 
 	pagination.Limit = 7
 	pagination.Page = page
 	queryFilter := "units.id > 0"
-	querySort := "units.id desc"
+	querySort := "units.unit_name"
 
 	if sortFilter.Field != "" && sortFilter.Sort != "" {
 		querySort = sortFilter.Field + " " + sortFilter.Sort
