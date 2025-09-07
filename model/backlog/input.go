@@ -1,19 +1,21 @@
 package backlog
 
 type RegisterBackLogInput struct {
-	UnitId            uint     `json:"unit_id"`
-	HMBreakdown       float64  `json:"hm_breakdown"`
-	Problem           string   `json:"problem"`
-	Component         string   `json:"component"`
-	PartNumber        string   `json:"part_number"`
-	PartDescription   string   `json:"part_description"`
-	QtyOrder          uint     `json:"qty_order"`
-	DateOfInspection  string   `json:"date_of_inspection" gorm:"DATE"`
+	UnitId           uint    `json:"unit_id"`
+	HMBreakdown      float64 `json:"hm_breakdown"`
+	Problem          string  `json:"problem"`
+	Component        string  `json:"component"`
+	DateOfInspection string  `json:"date_of_inspection" gorm:"DATE"`
+	Status           string  `json:"status"`
+
+	// Array of Parts
+	Parts []BackLogPart `json:"parts"`
+
+	// Optional fields
 	PlanReplaceRepair *string  `json:"plan_replace_repair" gorm:"DATE"`
 	HMReady           *float64 `json:"hm_ready"`
 	PPNumber          *string  `json:"pp_number"`
 	PONumber          *string  `json:"po_number"`
-	Status            string   `json:"status"`
 }
 
 type SortFilterBackLog struct {
@@ -24,9 +26,6 @@ type SortFilterBackLog struct {
 	HMBreakdown        string
 	Problem            string
 	Component          string
-	PartNumber         string
-	PartDescription    string
-	QtyOrder           string
 	DateOfInspection   string
 	PlanReplaceRepair  string
 	AgingBacklogByDate string
