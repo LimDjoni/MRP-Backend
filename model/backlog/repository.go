@@ -41,26 +41,43 @@ func dateIfNotZero(t time.Time) *time.Time {
 	return &t
 }
 
-func (r *repository) CreateBackLog(BackLogInput RegisterBackLogInput) (BackLog, error) {
+func (r *repository) CreateBackLog(input RegisterBackLogInput) (BackLog, error) {
 	var newBackLog BackLog
 
-	newBackLog.UnitId = BackLogInput.UnitId
-	newBackLog.HMBreakdown = BackLogInput.HMBreakdown
-	newBackLog.Problem = BackLogInput.Problem
-	newBackLog.Component = BackLogInput.Component
-	newBackLog.PartNumber = BackLogInput.PartNumber
-	newBackLog.PartDescription = BackLogInput.PartDescription
-	newBackLog.QtyOrder = BackLogInput.QtyOrder
-	newBackLog.HMReady = BackLogInput.HMReady
-	newBackLog.PPNumber = BackLogInput.PPNumber
-	newBackLog.PONumber = BackLogInput.PONumber
-	newBackLog.Status = BackLogInput.Status
-	newBackLog.DateOfInspection = BackLogInput.DateOfInspection
+	// Step 1: Create the backlog record
+	newBackLog = BackLog{
+		UnitId:            input.UnitId,
+		HMBreakdown:       input.HMBreakdown,
+		Problem:           input.Problem,
+		Component:         input.Component,
+		DateOfInspection:  input.DateOfInspection,
+		PlanReplaceRepair: nullIfEmpty(input.PlanReplaceRepair),
+		HMReady:           input.HMReady,
+		PPNumber:          input.PPNumber,
+		PONumber:          input.PONumber,
+		Status:            input.Status,
+	}
 
-	newBackLog.PlanReplaceRepair = nullIfEmpty(BackLogInput.PlanReplaceRepair)
+	if err := r.db.Create(&newBackLog).Error; err != nil {
+		return newBackLog, err
+	}
 
-	err := r.db.Create(&newBackLog).Error
-	if err != nil {
+	// Step 2: Insert parts linked to this backlog
+	for _, part := range input.Parts {
+		backlogPart := BackLogPart{
+			BackLogID:       newBackLog.ID, // Link to backlog
+			PartNumber:      part.PartNumber,
+			PartDescription: part.PartDescription,
+			QtyOrder:        part.QtyOrder,
+		}
+
+		if err := r.db.Create(&backlogPart).Error; err != nil {
+			return newBackLog, err
+		}
+	}
+
+	// Load parts into the BackLog object to return
+	if err := r.db.Preload("Parts").First(&newBackLog, newBackLog.ID).Error; err != nil {
 		return newBackLog, err
 	}
 
@@ -76,7 +93,8 @@ func (r *repository) FindBackLog() ([]BackLog, error) {
 		Preload("Unit.HeavyEquipment").
 		Preload("Unit.Series").
 		Preload("Unit.Series.Brand").
-		Preload("Unit.Series.HeavyEquipment").Find(&backlogs).Error
+		Preload("Unit.Series.HeavyEquipment").
+		Preload("Parts").Find(&backlogs).Error
 
 	return backlogs, errFind
 }
@@ -91,6 +109,7 @@ func (r *repository) FindBackLogById(id uint) (BackLog, error) {
 		Preload("Unit.Series").
 		Preload("Unit.Series.Brand").
 		Preload("Unit.Series.HeavyEquipment").
+		Preload("Parts").
 		Where("id = ?", id).First(&backlogs).Error
 	return backlogs, errFind
 }
@@ -136,15 +155,6 @@ func (r *repository) ListBackLog(page int, sortFilter SortFilterBackLog) (Pagina
 	if sortFilter.Component != "" {
 		queryFilter = queryFilter + " AND CAST(bl.component AS TEXT) ILIKE '%" + sortFilter.Component + "%'"
 	}
-	if sortFilter.PartNumber != "" {
-		queryFilter = queryFilter + " AND CAST(bl.part_number AS TEXT) ILIKE '%" + sortFilter.PartNumber + "%'"
-	}
-	if sortFilter.PartDescription != "" {
-		queryFilter = queryFilter + " AND CAST(bl.part_description AS TEXT) ILIKE '%" + sortFilter.PartDescription + "%'"
-	}
-	if sortFilter.QtyOrder != "" {
-		queryFilter = queryFilter + " AND CAST(bl.qty_order AS TEXT) ILIKE '%" + sortFilter.QtyOrder + "%'"
-	}
 	if sortFilter.PPNumber != "" {
 		queryFilter = queryFilter + " AND CAST(bl.pp_number AS TEXT) ILIKE '%" + sortFilter.PPNumber + "%'"
 	}
@@ -186,32 +196,54 @@ func (r *repository) ListBackLog(page int, sortFilter SortFilterBackLog) (Pagina
 }
 
 func (r *repository) UpdateBackLog(inputBackLog RegisterBackLogInput, id int) (BackLog, error) {
-
 	var updatedBackLog BackLog
-	errFind := r.db.Where("id = ?", id).First(&updatedBackLog).Error
 
+	// Step 1: Find the existing backlog
+	errFind := r.db.Preload("Parts").Where("id = ?", id).First(&updatedBackLog).Error
 	if errFind != nil {
 		return updatedBackLog, errFind
 	}
 
-	dataInput, errorMarshal := json.Marshal(inputBackLog)
-
-	if errorMarshal != nil {
-		return updatedBackLog, errorMarshal
+	// Step 2: Update BackLog main fields (excluding parts)
+	dataInput, errMarshal := json.Marshal(inputBackLog)
+	if errMarshal != nil {
+		return updatedBackLog, errMarshal
 	}
 
-	var dataInputMapString map[string]interface{}
-
-	errorUnmarshal := json.Unmarshal(dataInput, &dataInputMapString)
-
-	if errorUnmarshal != nil {
-		return updatedBackLog, errorUnmarshal
+	var dataInputMap map[string]interface{}
+	errUnmarshal := json.Unmarshal(dataInput, &dataInputMap)
+	if errUnmarshal != nil {
+		return updatedBackLog, errUnmarshal
 	}
 
-	updateErr := r.db.Model(&updatedBackLog).Updates(dataInputMapString).Error
+	// Remove "parts" from map so it doesn't interfere with gorm.Updates
+	delete(dataInputMap, "parts")
 
+	updateErr := r.db.Model(&updatedBackLog).Updates(dataInputMap).Error
 	if updateErr != nil {
 		return updatedBackLog, updateErr
+	}
+
+	// Step 3: Handle Parts update
+	// - Delete old parts
+	delErr := r.db.Where("back_log_id = ?", id).Delete(&BackLogPart{}).Error
+	if delErr != nil {
+		return updatedBackLog, delErr
+	}
+
+	// - Insert new parts
+	for _, part := range inputBackLog.Parts {
+		part.ID = 0
+		part.BackLogID = uint(id)
+		if err := r.db.Create(&part).Error; err != nil {
+			return updatedBackLog, err
+		}
+	}
+
+	// Step 4: Reload the updated backlog with parts
+	errReload := r.db.Preload("Parts").Where("id = ?", id).First(&updatedBackLog).Error
+	if errReload != nil {
+		return updatedBackLog, errReload
 	}
 
 	return updatedBackLog, nil

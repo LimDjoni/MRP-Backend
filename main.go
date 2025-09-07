@@ -105,6 +105,7 @@ func main() {
 			&fuelin.FuelIn{},
 			&adjuststock.AdjustStock{},
 			&backlog.BackLog{},
+			&backlog.BackLogPart{},
 		)
 		fmt.Println(errMigrate)
 	}
