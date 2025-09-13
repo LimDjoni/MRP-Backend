@@ -88,6 +88,19 @@ func (r *repository) FindBackLog() ([]BackLog, error) {
 	var backlogs []BackLog
 
 	errFind := r.db.
+		Unscoped().
+		Table("back_logs bl").
+		Select(`bl.id, bl.unit_id, bl.hm_breakdown, bl.problem, bl.component, 
+         bl.part_number, bl.part_description, bl.qty_order, bl.date_of_inspection, 
+         bl.plan_replace_repair, bl.hm_ready, bl.pp_number, bl.po_number, bl.status, 
+         bl.created_at, bl.updated_at, bl.deleted_at,
+         CASE 
+			WHEN bl.plan_replace_repair IS NULL THEN 0
+			ELSE CAST(bl.plan_replace_repair AS DATE) - CAST(bl.date_of_inspection AS DATE) 
+		END AS aging_backlog_by_date`).
+		Joins("JOIN units u ON bl.unit_id = u.id").
+		Joins("JOIN brands b ON b.id = u.brand_id").
+		Joins("JOIN series s ON s.id = u.series_id").
 		Preload("Unit").
 		Preload("Unit.Brand").
 		Preload("Unit.HeavyEquipment").
