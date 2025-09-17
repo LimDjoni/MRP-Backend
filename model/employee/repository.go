@@ -220,25 +220,28 @@ func (r *repository) FindEmployee(empCode uint) ([]Employee, error) {
 func (r *repository) FindEmployeeById(id uint) (Employee, error) {
 	var employees Employee
 
+	orderByID := func(db *gorm.DB) *gorm.DB {
+		return db.Order("id ASC")
+	}
 	errFind := r.db.
-		Preload("Department").
-		Preload("Role").
-		Preload("Position").
-		Preload("KartuKeluarga").
-		Preload("KTP").
-		Preload("Pendidikan").
-		Preload("Laporan").
-		Preload("APD").
-		Preload("NPWP").
-		Preload("Bank").
-		Preload("BPJSKesehatan").
-		Preload("BPJSKetenagakerjaan").
-		Preload("DOH").
-		Preload("Jabatan").
-		Preload("Jabatan.Position").
-		Preload("Sertifikat").
-		Preload("MCU").
-		Preload("History").
+		Preload("Department", orderByID).
+		Preload("Role", orderByID).
+		Preload("Position", orderByID).
+		Preload("KartuKeluarga", orderByID).
+		Preload("KTP", orderByID).
+		Preload("Pendidikan", orderByID).
+		Preload("Laporan", orderByID).
+		Preload("APD", orderByID).
+		Preload("NPWP", orderByID).
+		Preload("Bank", orderByID).
+		Preload("BPJSKesehatan", orderByID).
+		Preload("BPJSKetenagakerjaan", orderByID).
+		Preload("DOH", orderByID).
+		Preload("Jabatan", orderByID).
+		Preload("Jabatan.Position", orderByID).
+		Preload("Sertifikat", orderByID).
+		Preload("MCU", orderByID).
+		Preload("History", orderByID).
 		Where("id = ?", id).First(&employees).Error
 	return employees, errFind
 }
